@@ -1,6 +1,6 @@
 const Ae = ["localhost", "127.0.0.1"].includes(window.location.hostname), Ee = Ae ? "http://localhost:3000" : "https://blitzapi.hashpi.app", Be = Ee, le = document.querySelector("#app");
 if (!le) throw new Error("\u672A\u627E\u5230\u540E\u53F0\u6302\u8F7D\u8282\u70B9");
-let _ = "overview", W = null, re = "", I = "all", G = "all", te = null, paymentStatusFilter = "all";
+let _ = "overview", W = null, re = "", I = "all", G = "all", te = null, paymentStatusFilter = "all", userListFilter = "all", ledgerListFilter = "all", withdrawListFilter = "all", growthRewardFilter = "all", logListFilter = "all";
 const V = 60, Z = {}, Te = "20260601-match-ops-v1";
 function fe() {
   return localStorage.getItem("blitz_admin_token") || "";
@@ -78,6 +78,46 @@ const PAYMENT_STATUS_FILTERS = [
   { key: "cancelled", label: "已取消", statuses: ["cancelled"] },
   { key: "failed", label: "失败", statuses: ["failed"] }
 ];
+const USER_LIST_FILTERS = [
+  { key: "all", label: "全部", match: () => true },
+  { key: "normal", label: "正常", match: (e) => e.status === 1 },
+  { key: "banned", label: "已封禁", match: (e) => e.status !== 1 },
+  { key: "profile_missing", label: "资料未完", match: (e) => !e.profileCompleted },
+  { key: "locked_balance", label: "有冻结", match: (e) => Number(e.wallet?.lockedBalance || 0) > 0 }
+];
+const LEDGER_LIST_FILTERS = [
+  { key: "all", label: "全部", match: () => true },
+  { key: "in", label: "收入", match: (e) => e.direction === "in" },
+  { key: "out", label: "支出", match: (e) => e.direction === "out" },
+  { key: "lock", label: "冻结", match: (e) => e.direction === "lock" },
+  { key: "unlock", label: "解冻", match: (e) => e.direction === "unlock" },
+  { key: "battle", label: "对战", match: (e) => String(e.type || "").startsWith("battle_") },
+  { key: "withdraw", label: "提现", match: (e) => String(e.type || "").startsWith("withdraw_") },
+  { key: "invite", label: "邀请", match: (e) => String(e.type || "").startsWith("invite_") }
+];
+const WITHDRAW_LIST_FILTERS = [
+  { key: "all", label: "全部", match: () => true },
+  { key: "pending", label: "待审核", match: (e) => e.status === "pending" },
+  { key: "approved", label: "待打款", match: (e) => e.status === "approved" },
+  { key: "paid", label: "已打款", match: (e) => e.status === "paid" },
+  { key: "rejected", label: "已拒绝", match: (e) => e.status === "rejected" },
+  { key: "auto_failed", label: "自动失败", match: (e) => e.autoPayoutStatus === "failed" }
+];
+const GROWTH_REWARD_FILTERS = [
+  { key: "all", label: "全部", match: () => true },
+  { key: "qualification", label: "对局奖励", match: (e) => e.rewardType === "qualification" },
+  { key: "battle_commission", label: "对战提成", match: (e) => e.rewardType === "battle_commission" },
+  { key: "completed", label: "已完成", match: (e) => e.status === "completed" },
+  { key: "pending", label: "待处理", match: (e) => e.status === "pending" }
+];
+const LOG_LIST_FILTERS = [
+  { key: "all", label: "全部", match: () => true },
+  { key: "user", label: "用户", match: (e) => e.targetType === "user" },
+  { key: "withdraw", label: "提现", match: (e) => e.targetType === "withdraw_order" },
+  { key: "battle", label: "对局", match: (e) => e.targetType === "battle_room" },
+  { key: "config", label: "配置", match: (e) => e.targetType === "config" },
+  { key: "auto_payout", label: "自动出款", match: (e) => String(e.action || "").startsWith("auto_payout_") }
+];
 function filterPaymentOrders(e = []) {
   const t = PAYMENT_STATUS_FILTERS.find((a) => a.key === paymentStatusFilter) || PAYMENT_STATUS_FILTERS[0];
   return t.key === "all" ? e : e.filter((a) => t.statuses.includes(a.status));
@@ -89,6 +129,20 @@ function renderPaymentStatusFilters(e = []) {
   return `
     <div class="payment-filter-bar">
       ${PAYMENT_STATUS_FILTERS.map((t) => `<button type="button" data-payment-status-filter="${t.key}" class="${paymentStatusFilter === t.key ? "active" : ""}">${i(t.label)} <b>${paymentStatusCount(e, t)}</b></button>`).join("")}
+    </div>
+  `;
+}
+function filterList(e = [], t = [], a = "all") {
+  const n = t.find((s) => s.key === a) || t[0];
+  return e.filter((s) => n.match(s));
+}
+function filterCount(e = [], t) {
+  return e.filter((a) => t.match(a)).length;
+}
+function renderListFilters(e = [], t = [], a = "all", n = "") {
+  return `
+    <div class="payment-filter-bar">
+      ${t.map((s) => `<button type="button" data-list-filter-group="${n}" data-list-filter-value="${s.key}" class="${a === s.key ? "active" : ""}">${i(s.label)} <b>${filterCount(e, s)}</b></button>`).join("")}
     </div>
   `;
 }
@@ -430,6 +484,31 @@ function Re(e) {
     a.addEventListener("click", () => {
       paymentStatusFilter = a.dataset.paymentStatusFilter || "all";
       Z["funds-payments"] = 1;
+      F();
+    });
+  }), document.querySelectorAll("[data-list-filter-group]").forEach((a) => {
+    a.addEventListener("click", () => {
+      const n = a.dataset.listFilterGroup || "", s = a.dataset.listFilterValue || "all";
+      if (n === "users") {
+        userListFilter = s;
+        Z.users = 1;
+      }
+      if (n === "ledgers") {
+        ledgerListFilter = s;
+        Z["funds-ledgers"] = 1;
+      }
+      if (n === "withdraw") {
+        withdrawListFilter = s;
+        Z["withdraw-orders"] = 1;
+      }
+      if (n === "growth-rewards") {
+        growthRewardFilter = s;
+        Z["growth-rewards"] = 1;
+      }
+      if (n === "logs") {
+        logListFilter = s;
+        Z.logs = 1;
+      }
       F();
     });
   }), document.querySelector("#rank-user-filter")?.addEventListener("change", (a) => {
@@ -913,7 +992,7 @@ function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, roo
       </section>
     `;
   if (_ === "funds") {
-    const filteredPayments = filterPaymentOrders(o), k = N("funds-payments", filteredPayments), c = N("funds-ledgers", R), activePaymentFilter = PAYMENT_STATUS_FILTERS.find((v) => v.key === paymentStatusFilter) || PAYMENT_STATUS_FILTERS[0];
+    const filteredPayments = filterPaymentOrders(o), filteredLedgers = filterList(R, LEDGER_LIST_FILTERS, ledgerListFilter), k = N("funds-payments", filteredPayments), c = N("funds-ledgers", filteredLedgers), activePaymentFilter = PAYMENT_STATUS_FILTERS.find((v) => v.key === paymentStatusFilter) || PAYMENT_STATUS_FILTERS[0], activeLedgerFilter = LEDGER_LIST_FILTERS.find((v) => v.key === ledgerListFilter) || LEDGER_LIST_FILTERS[0];
     return `
       <section class="panel">
         <div class="section-head">
@@ -930,11 +1009,18 @@ function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, roo
         ${P("funds-payments", filteredPayments.length)}
       </section>
       <section class="panel">
-        <h2>\u8D44\u4EA7\u6D41\u6C34</h2>
+        <div class="section-head">
+          <div>
+            <h2>\u8D44\u4EA7\u6D41\u6C34</h2>
+            <p class="meta">\u6309\u6536\u652F\u3001\u51BB\u7ED3\u3001\u5BF9\u6218\u3001\u63D0\u73B0\u7B49\u7C7B\u578B\u67E5\u770B\u3002</p>
+          </div>
+          <span class="pill">${i(activeLedgerFilter.label)} ${filteredLedgers.length} \u6761</span>
+        </div>
+        ${renderListFilters(R, LEDGER_LIST_FILTERS, ledgerListFilter, "ledgers")}
         <div class="table-list">
           ${c.items.map(Pe).join("") || '<p class="meta">\u6682\u65E0\u6D41\u6C34</p>'}
         </div>
-        ${P("funds-ledgers", R.length)}
+        ${P("funds-ledgers", filteredLedgers.length)}
       </section>
     `;
   }
@@ -942,15 +1028,25 @@ function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, roo
   if (_ === "growth") return ft(n, M);
   if (_ === "reconciliation") return St(j);
   if (_ === "risk") return Et(A);
-  if (_ === "users") return W ? Tt(W) : `
+  if (_ === "users") {
+    const filteredUsers = filterList(m, USER_LIST_FILTERS, userListFilter), activeUserFilter = USER_LIST_FILTERS.find((v) => v.key === userListFilter) || USER_LIST_FILTERS[0];
+    return W ? Tt(W) : `
       <section class="panel">
-        <h2>\u7528\u6237\u4E0E\u94B1\u5305</h2>
-        <div class="table-list">
-          ${N("users", m).items.map(Bt).join("") || '<p class="meta">\u6682\u65E0\u7528\u6237</p>'}
+        <div class="section-head">
+          <div>
+            <h2>\u7528\u6237\u4E0E\u94B1\u5305</h2>
+            <p class="meta">\u6309\u8D26\u53F7\u72B6\u6001\u3001\u8D44\u6599\u5B8C\u6210\u5EA6\u548C\u51BB\u7ED3\u4F59\u989D\u5206\u7C7B\u67E5\u770B\u3002</p>
+          </div>
+          <span class="pill">${i(activeUserFilter.label)} ${filteredUsers.length} \u4EBA</span>
         </div>
-        ${P("users", m.length)}
+        ${renderListFilters(m, USER_LIST_FILTERS, userListFilter, "users")}
+        <div class="table-list">
+          ${N("users", filteredUsers).items.map(Bt).join("") || '<p class="meta">\u6682\u65E0\u7528\u6237</p>'}
+        </div>
+        ${P("users", filteredUsers.length)}
       </section>
     `;
+  }
   if (_ === "ranks") {
     const k = n.operation?.ranks?.length ? n.operation.ranks : [], c = G === "all" ? m : m.filter((v) => v.rankKey === G || v.rankName === G), l = N("ranks-users", c), p = N("ranks-stars", w), u = N("ranks-chests", L), b = N("ranks-weekly", C), se = L.reduce((v, ie) => v + Number(ie.rewardAmount || 0), 0), z = C.reduce((v, ie) => v + Number(ie.rewardAmount || 0), 0), de = n.operation?.rankRules, xe = Se(de);
     return `
@@ -1071,13 +1167,21 @@ function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, roo
       </section>
     `;
   }
+  const filteredLogs = filterList(B, LOG_LIST_FILTERS, logListFilter), activeLogFilter = LOG_LIST_FILTERS.find((v) => v.key === logListFilter) || LOG_LIST_FILTERS[0];
   return `
     <section class="panel">
-      <h2>\u540E\u53F0\u64CD\u4F5C\u65E5\u5FD7</h2>
-      <div class="table-list">
-        ${N("logs", B).items.map(Ct).join("") || '<p class="meta">\u6682\u65E0\u64CD\u4F5C\u65E5\u5FD7</p>'}
+      <div class="section-head">
+        <div>
+          <h2>\u540E\u53F0\u64CD\u4F5C\u65E5\u5FD7</h2>
+          <p class="meta">\u6309\u64CD\u4F5C\u5BF9\u8C61\u5206\u7C7B\uFF0C\u5FEB\u901F\u8FFD\u8E2A\u7528\u6237\u3001\u63D0\u73B0\u3001\u5BF9\u5C40\u548C\u914D\u7F6E\u53D8\u66F4\u3002</p>
+        </div>
+        <span class="pill">${i(activeLogFilter.label)} ${filteredLogs.length} \u6761</span>
       </div>
-      ${P("logs", B.length)}
+      ${renderListFilters(B, LOG_LIST_FILTERS, logListFilter, "logs")}
+      <div class="table-list">
+        ${N("logs", filteredLogs).items.map(Ct).join("") || '<p class="meta">\u6682\u65E0\u64CD\u4F5C\u65E5\u5FD7</p>'}
+      </div>
+      ${P("logs", filteredLogs.length)}
     </section>
   `;
 }
@@ -1206,7 +1310,7 @@ function mt(e) {
   `;
 }
 function pt(e, t) {
-  const a = te, n = a?.summary || { pending: t.filter((m) => m.status === "pending").length, approved: t.filter((m) => m.status === "approved").length, queued: t.filter((m) => m.autoPayoutStatus === "queued").length, failed: t.filter((m) => m.autoPayoutStatus === "failed").length }, s = a?.config?.payoutRuntime, r = N("withdraw-orders", t), o = e.withdrawRisk;
+  const a = te, n = a?.summary || { pending: t.filter((m) => m.status === "pending").length, approved: t.filter((m) => m.status === "approved").length, queued: t.filter((m) => m.autoPayoutStatus === "queued").length, failed: t.filter((m) => m.autoPayoutStatus === "failed").length }, s = a?.config?.payoutRuntime, filteredWithdraws = filterList(t, WITHDRAW_LIST_FILTERS, withdrawListFilter), r = N("withdraw-orders", filteredWithdraws), o = e.withdrawRisk, activeWithdrawFilter = WITHDRAW_LIST_FILTERS.find((m) => m.key === withdrawListFilter) || WITHDRAW_LIST_FILTERS[0];
   return `
     <section class="panel">
       <div class="section-head">
@@ -1263,11 +1367,18 @@ function pt(e, t) {
     </section>
 
     <section class="panel">
-      <h2>\u63D0\u73B0\u961F\u5217</h2>
+      <div class="section-head">
+        <div>
+          <h2>\u63D0\u73B0\u961F\u5217</h2>
+          <p class="meta">\u6309\u5F85\u5BA1\u6838\u3001\u5F85\u6253\u6B3E\u3001\u5DF2\u6253\u6B3E\u548C\u5931\u8D25\u72B6\u6001\u5206\u7C7B\u5904\u7406\u3002</p>
+        </div>
+        <span class="pill">${i(activeWithdrawFilter.label)} ${filteredWithdraws.length} \u7B14</span>
+      </div>
+      ${renderListFilters(t, WITHDRAW_LIST_FILTERS, withdrawListFilter, "withdraw")}
       <div class="room-list">
         ${r.items.length ? r.items.map(mt).join("") : '<p class="meta">\u5F53\u524D\u6682\u65E0\u63D0\u73B0\u7533\u8BF7</p>'}
       </div>
-      ${P("withdraw-orders", t.length)}
+      ${P("withdraw-orders", filteredWithdraws.length)}
       <p id="withdraw-status" class="status"></p>
     </section>
   `;
@@ -1306,7 +1417,7 @@ function ht(e) {
   `;
 }
 function ft(e, t) {
-  const a = e.transfer || { enabled: true, minAmount: 0.01, maxAmount: 20, dailyLimitAmount: 50, feeRate: 0, feeMinAmount: 0, cooldownSeconds: 10 }, n = e.inviteRewards || { enabled: true, bindEnabled: true, qualificationEnabled: true, qualificationRequiredBattles: 2, qualificationRewardAmount: 0.02, battleCommissionEnabled: true, commissionBase: "entry_fee", maxCommissionRate: 0.2, levels: [] }, s = n.levels?.length ? n.levels : [{ key: "starter", name: "\u95EA\u7535\u4F19\u4F34", commissionRate: 0.03, minBalance: 0, minDirectInvites: 0, enabled: true }, { key: "silver", name: "\u94F6\u724C\u961F\u957F", commissionRate: 0.05, minBalance: 5, minDirectInvites: 5, enabled: true }, { key: "gold", name: "\u91D1\u724C\u961F\u957F", commissionRate: 0.08, minBalance: 20, minDirectInvites: 20, enabled: true }], r = t?.transfers || [], o = t?.relations || [], m = t?.rewards || [], R = N("growth-transfers", r), y = N("growth-relations", o), x = N("growth-rewards", m), j = m.reduce((B, w) => B + Number(w.amount || 0), 0), A = r.reduce((B, w) => B + Number(w.feeAmount || 0), 0);
+  const a = e.transfer || { enabled: true, minAmount: 0.01, maxAmount: 20, dailyLimitAmount: 50, feeRate: 0, feeMinAmount: 0, cooldownSeconds: 10 }, n = e.inviteRewards || { enabled: true, bindEnabled: true, qualificationEnabled: true, qualificationRequiredBattles: 2, qualificationRewardAmount: 0.02, battleCommissionEnabled: true, commissionBase: "entry_fee", maxCommissionRate: 0.2, levels: [] }, s = n.levels?.length ? n.levels : [{ key: "starter", name: "\u95EA\u7535\u4F19\u4F34", commissionRate: 0.03, minBalance: 0, minDirectInvites: 0, enabled: true }, { key: "silver", name: "\u94F6\u724C\u961F\u957F", commissionRate: 0.05, minBalance: 5, minDirectInvites: 5, enabled: true }, { key: "gold", name: "\u91D1\u724C\u961F\u957F", commissionRate: 0.08, minBalance: 20, minDirectInvites: 20, enabled: true }], r = t?.transfers || [], o = t?.relations || [], m = t?.rewards || [], filteredRewards = filterList(m, GROWTH_REWARD_FILTERS, growthRewardFilter), R = N("growth-transfers", r), y = N("growth-relations", o), x = N("growth-rewards", filteredRewards), j = m.reduce((B, w) => B + Number(w.amount || 0), 0), A = r.reduce((B, w) => B + Number(w.feeAmount || 0), 0), activeRewardFilter = GROWTH_REWARD_FILTERS.find((B) => B.key === growthRewardFilter) || GROWTH_REWARD_FILTERS[0];
   return `
     <section class="panel">
       <div class="section-head">
@@ -1389,9 +1500,16 @@ function ft(e, t) {
       ${P("growth-relations", o.length)}
     </section>
     <section class="panel">
-      <h2>\u5956\u52B1\u8BB0\u5F55</h2>
+      <div class="section-head">
+        <div>
+          <h2>\u5956\u52B1\u8BB0\u5F55</h2>
+          <p class="meta">\u6309\u5BF9\u5C40\u5956\u52B1\u3001\u5BF9\u6218\u63D0\u6210\u548C\u53D1\u653E\u72B6\u6001\u5206\u7C7B\u67E5\u770B\u3002</p>
+        </div>
+        <span class="pill">${i(activeRewardFilter.label)} ${filteredRewards.length} \u6761</span>
+      </div>
+      ${renderListFilters(m, GROWTH_REWARD_FILTERS, growthRewardFilter, "growth-rewards")}
       <div class="table-list">${x.items.map(ht).join("") || '<p class="meta">\u6682\u65E0\u5956\u52B1\u8BB0\u5F55</p>'}</div>
-      ${P("growth-rewards", m.length)}
+      ${P("growth-rewards", filteredRewards.length)}
     </section>
   `;
 }
