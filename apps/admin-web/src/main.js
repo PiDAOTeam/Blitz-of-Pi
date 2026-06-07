@@ -1,6 +1,6 @@
 const Ae = ["localhost", "127.0.0.1"].includes(window.location.hostname), Ee = Ae ? "http://localhost:3000" : "https://blitzapi.hashpi.app", Be = Ee, le = document.querySelector("#app");
 if (!le) throw new Error("\u672A\u627E\u5230\u540E\u53F0\u6302\u8F7D\u8282\u70B9");
-let _ = "overview", W = null, re = "", I = "all", G = "all", te = null;
+let _ = "overview", W = null, re = "", I = "all", G = "all", te = null, paymentStatusFilter = "all";
 const V = 60, Z = {}, Te = "20260601-match-ops-v1";
 function fe() {
   return localStorage.getItem("blitz_admin_token") || "";
@@ -70,6 +70,27 @@ function Ie(e) {
 function De(e) {
   const t = re.trim().toLowerCase();
   return e.filter((a) => I === "all" || I === "stale" && Ie(a) || a.status === I ? t ? [a.roomNo, a.status, H(a.status), a.mode, oe(a.mode), a.playerAUid, a.playerAPiUsername, a.playerANickname, a.playerBUid, a.playerBPiUsername, a.playerBNickname, a.winnerUid, a.winnerPiUsername, a.winnerNickname].join(" ").toLowerCase().includes(t) : true : false);
+}
+const PAYMENT_STATUS_FILTERS = [
+  { key: "all", label: "全部", statuses: [] },
+  { key: "open", label: "未闭环", statuses: ["created", "pending", "approved"] },
+  { key: "completed", label: "已完成", statuses: ["completed"] },
+  { key: "cancelled", label: "已取消", statuses: ["cancelled"] },
+  { key: "failed", label: "失败", statuses: ["failed"] }
+];
+function filterPaymentOrders(e = []) {
+  const t = PAYMENT_STATUS_FILTERS.find((a) => a.key === paymentStatusFilter) || PAYMENT_STATUS_FILTERS[0];
+  return t.key === "all" ? e : e.filter((a) => t.statuses.includes(a.status));
+}
+function paymentStatusCount(e = [], t) {
+  return t.key === "all" ? e.length : e.filter((a) => t.statuses.includes(a.status)).length;
+}
+function renderPaymentStatusFilters(e = []) {
+  return `
+    <div class="payment-filter-bar">
+      ${PAYMENT_STATUS_FILTERS.map((t) => `<button type="button" data-payment-status-filter="${t.key}" class="${paymentStatusFilter === t.key ? "active" : ""}">${i(t.label)} <b>${paymentStatusCount(e, t)}</b></button>`).join("")}
+    </div>
+  `;
 }
 function ye(e) {
   return `avatar-token ${/^avatar_[1-6]$/.test(e || "") ? e : "avatar_1"}`;
@@ -405,6 +426,12 @@ function Re(e) {
       const n = a.dataset.pageKey || "", s = Number(a.dataset.pageTarget || 1);
       !n || !Number.isFinite(s) || (Z[n] = s, F());
     });
+  }), document.querySelectorAll("[data-payment-status-filter]").forEach((a) => {
+    a.addEventListener("click", () => {
+      paymentStatusFilter = a.dataset.paymentStatusFilter || "all";
+      Z["funds-payments"] = 1;
+      F();
+    });
   }), document.querySelector("#rank-user-filter")?.addEventListener("change", (a) => {
     G = a.currentTarget.value, Z["ranks-users"] = 1, F();
   }), document.querySelector("#rank-weekly-settle")?.addEventListener("click", async (a) => {
@@ -468,8 +495,12 @@ function tt(e = 0) {
 function at(e) {
   return [e.mode ? oe(e.mode) : "", e.status || "", e.result || "", e.waitingSeconds ? `\u7B49\u5F85${e.waitingSeconds}s` : "", e.costMs ? `\u8017\u65F6${e.costMs}ms` : "", e.latencyMs ? `\u95F4\u9694${e.latencyMs}ms` : "", e.queueLength ? `\u961F\u5217${e.queueLength}` : "", e.network ? `\u7F51\u7EDC:${e.network}` : "", e.seq ? `seq:${e.seq}` : "", e.message || "", e.source || ""].filter(Boolean).join(" \xB7 ");
 }
+function isObserverActionable(e = {}) {
+  const t = e.stage || "";
+  return t === "settlement_retry" || t === "match_watch_failed" || t === "client_match_poll_failed" || t === "client_realtime_connect_slow" || t === "client_realtime_retry_failed" || t === "realtime_tick_slow" || t === "realtime_tick_skipped" || t === "realtime_broadcast_slow";
+}
 function nt(e) {
-  const t = e?.counters || {}, a = e?.recentEvents || [], n = [["\u8FDB\u5165\u961F\u5217", t.match_queue_join || 0, "\u4ECA\u65E5\u5339\u914D\u8BF7\u6C42"], ["\u7528\u6237\u70B9\u5339\u914D", t.client_match_start || 0, "\u524D\u7AEF\u53D1\u8D77\u6B21\u6570"], ["\u521B\u5EFA\u623F\u95F4", (t.match_room_created || 0) + (t.match_status_room_created || 0), "\u771F\u4EBA/\u8F6E\u8BE2\u6210\u623F"], ["\u63A8\u9001\u63A5\u5165", t.match_watch_join || 0, "\u670D\u52A1\u7AEF\u5339\u914DWS"], ["\u7528\u6237\u8FDB\u623F", t.client_match_enter_room || 0, "\u5339\u914D\u6210\u529F\u5230\u8FDB\u623F"], ["WS\u8FDB\u623F", t.realtime_join || 0, "\u8FDB\u5165\u5B9E\u65F6\u623F\u95F4"], ["\u6536\u5230\u9996\u5305", t.client_realtime_first_state || 0, "\u7528\u6237\u7AEF\u9996\u4E2A\u623F\u95F4\u5305"], ["\u6B63\u5F0F\u5F00\u5C40", t.realtime_started || 0, "\u53CC\u65B9\u51C6\u5907\u5B8C\u6210"], ["\u4EA4\u6362\u5F02\u5E38", t.realtime_swap_error || 0, "\u9650\u9891/\u975E\u6CD5/\u623F\u95F4\u5F02\u5E38"], ["\u7528\u6237\u5F31\u7F51", t.client_realtime_slow || 0, "\u623F\u95F4\u5305\u95F4\u9694\u8FC7\u9AD8"], ["Tick\u6162", t.realtime_tick_slow || 0, "\u670D\u52A1\u7AEF\u5FAA\u73AF\u8017\u65F6\u9AD8"], ["\u5E7F\u64AD\u6162", t.realtime_broadcast_slow || 0, "\u623F\u95F4\u72B6\u6001\u4E0B\u53D1\u6162"], ["\u7ED3\u7B97\u5B8C\u6210", t.settlement_done || 0, "\u5B9E\u65F6\u7ED3\u7B97\u95ED\u73AF"]], s = Number(t.realtime_swap_error || 0) + Number(t.settlement_retry || 0) + Number(t.client_match_poll_failed || 0) + Number(t.match_watch_failed || 0) + Number(t.client_realtime_connect_slow || 0) + Number(t.client_realtime_retry_failed || 0) + Number(t.client_swap_rejected || 0) + Number(t.realtime_tick_slow || 0) + Number(t.realtime_tick_skipped || 0) + Number(t.realtime_broadcast_slow || 0);
+  const t = e?.counters || {}, a = e?.recentEvents || [], n = [["\u8FDB\u5165\u961F\u5217", t.match_queue_join || 0, "\u4ECA\u65E5\u5339\u914D\u8BF7\u6C42"], ["\u7528\u6237\u70B9\u5339\u914D", t.client_match_start || 0, "\u524D\u7AEF\u53D1\u8D77\u6B21\u6570"], ["\u521B\u5EFA\u623F\u95F4", (t.match_room_created || 0) + (t.match_status_room_created || 0), "\u771F\u4EBA/\u8F6E\u8BE2\u6210\u623F"], ["\u63A8\u9001\u63A5\u5165", t.match_watch_join || 0, "\u670D\u52A1\u7AEF\u5339\u914DWS"], ["\u7528\u6237\u8FDB\u623F", t.client_match_enter_room || 0, "\u5339\u914D\u6210\u529F\u5230\u8FDB\u623F"], ["WS\u8FDB\u623F", t.realtime_join || 0, "\u8FDB\u5165\u5B9E\u65F6\u623F\u95F4"], ["\u6536\u5230\u9996\u5305", t.client_realtime_first_state || 0, "\u7528\u6237\u7AEF\u9996\u4E2A\u623F\u95F4\u5305"], ["\u6B63\u5F0F\u5F00\u5C40", t.realtime_started || 0, "\u53CC\u65B9\u51C6\u5907\u5B8C\u6210"], ["\u64CD\u4F5C\u62E6\u622A", t.realtime_swap_error || 0, "\u53EA\u4FDD\u7559\u9650\u9891/\u623F\u95F4\u8FC7\u671F"], ["\u7528\u6237\u5F31\u7F51", t.client_realtime_slow || 0, "\u623F\u95F4\u5305\u95F4\u9694\u8FC7\u9AD8"], ["Tick\u6162", t.realtime_tick_slow || 0, "\u670D\u52A1\u7AEF\u5FAA\u73AF\u8017\u65F6\u9AD8"], ["\u5E7F\u64AD\u6162", t.realtime_broadcast_slow || 0, "\u623F\u95F4\u72B6\u6001\u4E0B\u53D1\u6162"], ["\u7ED3\u7B97\u5B8C\u6210", t.settlement_done || 0, "\u5B9E\u65F6\u7ED3\u7B97\u95ED\u73AF"]], s = Number(t.settlement_retry || 0) + Number(t.client_match_poll_failed || 0) + Number(t.match_watch_failed || 0) + Number(t.client_realtime_connect_slow || 0) + Number(t.client_realtime_retry_failed || 0) + Number(t.realtime_tick_slow || 0) + Number(t.realtime_tick_skipped || 0) + Number(t.realtime_broadcast_slow || 0);
   return `
     <section class="panel overview-block battle-observer-panel">
       <div class="section-head">
@@ -477,7 +508,7 @@ function nt(e) {
           <p class="tag">Realtime Trace</p>
           <h2>\u5BF9\u5C40\u94FE\u8DEF\u89C2\u6D4B</h2>
         </div>
-        <span class="pill ${s ? "warning" : ""}">${s ? `${s} \u4E2A\u5F02\u5E38` : "\u94FE\u8DEF\u6B63\u5E38"}</span>
+        <span class="pill ${s ? "warning" : "ok"}">${s ? `${s} \u4E2A\u9700\u5904\u7406` : "\u94FE\u8DEF\u6B63\u5E38"}</span>
       </div>
       <div class="observer-stats">
         ${n.map(([r, o, m]) => f(String(r), o, String(m))).join("")}
@@ -486,7 +517,7 @@ function nt(e) {
         ${a.length ? a.slice(0, 8).map((r) => {
     const o = r.roomNo ? r.roomNo.replace(/^room_/, "").slice(-8).toUpperCase() : "", m = at(r);
     return `
-                  <article class="observer-event ${r.stage.includes("error") || r.stage.includes("retry") || r.stage.includes("failed") || r.stage.includes("slow") || r.stage.includes("rejected") ? "warning" : ""}">
+                  <article class="observer-event ${isObserverActionable(r) ? "warning" : ""}">
                     <b>${i(et(r.stage))}</b>
                     <span>${i(tt(r.at))}${o ? ` \xB7 \u623F\u95F4 ${i(o)}` : ""}</span>
                     <small>${i(m || r.source || "-")}</small>
@@ -882,14 +913,21 @@ function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, roo
       </section>
     `;
   if (_ === "funds") {
-    const k = N("funds-payments", o), c = N("funds-ledgers", R);
+    const filteredPayments = filterPaymentOrders(o), k = N("funds-payments", filteredPayments), c = N("funds-ledgers", R), activePaymentFilter = PAYMENT_STATUS_FILTERS.find((v) => v.key === paymentStatusFilter) || PAYMENT_STATUS_FILTERS[0];
     return `
       <section class="panel">
-        <h2>\u8D44\u91D1\u8BA2\u5355</h2>
+        <div class="section-head">
+          <div>
+            <h2>\u8D44\u91D1\u8BA2\u5355</h2>
+            <p class="meta">\u6309\u72B6\u6001\u5206\u7C7B\u67E5\u770B\uFF0C\u4F18\u5148\u5904\u7406\u672A\u95ED\u73AF\u8BA2\u5355\u3002</p>
+          </div>
+          <span class="pill">${i(activePaymentFilter.label)} ${filteredPayments.length} \u7B14</span>
+        </div>
+        ${renderPaymentStatusFilters(o)}
         <div class="room-list">
           ${k.items.length ? k.items.map(gt).join("") : '<p class="meta">\u5F53\u524D\u6682\u65E0\u652F\u4ED8\u8BA2\u5355</p>'}
         </div>
-        ${P("funds-payments", o.length)}
+        ${P("funds-payments", filteredPayments.length)}
       </section>
       <section class="panel">
         <h2>\u8D44\u4EA7\u6D41\u6C34</h2>

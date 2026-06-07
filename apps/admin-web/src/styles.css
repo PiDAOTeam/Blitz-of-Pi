@@ -346,6 +346,32 @@ body {
 .observer-event.empty {
   grid-column: 1 / -1;
 }
+.payment-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0;
+}
+.payment-filter-bar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--text);
+  font-weight: 900;
+  cursor: pointer;
+}
+.payment-filter-bar button.active {
+  border-color: #c94724;
+  background: #c94724;
+  color: #fff;
+}
+.payment-filter-bar b {
+  font-size: 12px;
+}
 .cards {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

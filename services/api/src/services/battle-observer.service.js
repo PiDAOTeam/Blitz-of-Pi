@@ -5,6 +5,18 @@ const DAILY_COUNTER_PREFIX = "blitz:battle-observer:daily:";
 const RECENT_EVENT_LIMIT = 120;
 const RECENT_EVENT_TTL_SECONDS = 86400;
 const DAILY_COUNTER_TTL_SECONDS = 172800;
+const IGNORED_CLIENT_STAGES = new Set([
+  "client_swap_send",
+  "client_swap_rejected",
+  "client_burst_show",
+  "client_burst_suppressed"
+]);
+const NON_ACTIONABLE_SWAP_MESSAGES = [
+  "没有形成三消",
+  "对局已结束",
+  "请先确认准备",
+  "准备倒计时中"
+];
 
 function getDayKey(date = new Date()) {
   return date.toISOString().slice(0, 10).replaceAll("-", "");
@@ -38,7 +50,31 @@ function buildEvent(stage, detail = {}) {
   };
 }
 
+function shouldIgnoreEvent(stage, detail = {}) {
+  if (IGNORED_CLIENT_STAGES.has(stage)) return true;
+
+  if (stage === "client_error" && String(detail.kind || "") === "swap_rejected") {
+    return true;
+  }
+
+  if (stage === "client_error") {
+    const message = String(detail.message || "");
+    return NON_ACTIONABLE_SWAP_MESSAGES.some((item) => message.includes(item));
+  }
+
+  if (stage === "realtime_swap_error") {
+    const message = String(detail.message || "");
+    return NON_ACTIONABLE_SWAP_MESSAGES.some((item) => message.includes(item));
+  }
+
+  return false;
+}
+
 async function observeBattleStage(stage, detail = {}) {
+  if (shouldIgnoreEvent(stage, detail)) {
+    return null;
+  }
+
   const event = buildEvent(stage, detail);
   await redisPushJsonList(RECENT_EVENTS_KEY, event, {
     maxLength: RECENT_EVENT_LIMIT,
