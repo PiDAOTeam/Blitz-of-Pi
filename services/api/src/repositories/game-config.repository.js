@@ -1,0 +1,1001 @@
+const { query } = require("../db/mysql");
+const { redisSet } = require("../db/redis");
+
+const REALTIME_CONFIG_REDIS_KEY = "blitz:realtime:config";
+const SUPPORTED_BATTLE_MODES = [
+  "quick_battle",
+  "points_battle",
+  "poc_battle",
+  "pi_battle",
+  "ticket_battle",
+  "rich_battle"
+];
+const DEFAULT_RANKED_MODES = ["points_battle", "poc_battle", "pi_battle"];
+
+const DEFAULT_GAME_CONFIG = {
+  quickBattle: {
+    key: "quick_battle",
+    name: "快速开战",
+    assetType: "FREE",
+    enabled: true,
+    entryFee: 0,
+    platformFeeRate: 0,
+    rewardRate: 0,
+    botMatchEnabled: true,
+    botRewardsEnabled: false
+  },
+  ticketBattle: {
+    key: "ticket_battle",
+    name: "小富豪场（旧Pi）",
+    assetType: "PI",
+    enabled: true,
+    entryFee: 0.3,
+    platformFeeRate: 0.3,
+    rewardRate: 0.7,
+    botMatchEnabled: false,
+    botRewardsEnabled: false
+  },
+  richBattle: {
+    key: "rich_battle",
+    name: "大富豪场（旧Pi）",
+    assetType: "PI",
+    enabled: true,
+    entryFee: 1,
+    platformFeeRate: 0.3,
+    rewardRate: 0.7,
+    botMatchEnabled: false,
+    botRewardsEnabled: false
+  },
+  pointsBattle: {
+    key: "points_battle",
+    name: "小富豪",
+    assetType: "POINTS",
+    enabled: false,
+    entryFee: 100,
+    platformFeeRate: 0.3,
+    rewardRate: 0.7,
+    botMatchEnabled: false,
+    botRewardsEnabled: false
+  },
+  pocBattle: {
+    key: "poc_battle",
+    name: "大富豪",
+    assetType: "POC",
+    enabled: false,
+    entryFee: 1,
+    platformFeeRate: 0.3,
+    rewardRate: 0.7,
+    botMatchEnabled: false,
+    botRewardsEnabled: false
+  },
+  piBattle: {
+    key: "pi_battle",
+    name: "超级富豪",
+    assetType: "PI",
+    enabled: true,
+    entryFee: 1,
+    platformFeeRate: 0.3,
+    rewardRate: 0.7,
+    botMatchEnabled: false,
+    botRewardsEnabled: false
+  },
+  assetGateway: {
+    enabled: false,
+    summaryEnabled: true,
+    pointsEnabled: false,
+    pocEnabled: false,
+    grayUserPiUids: [],
+    grayUserPiUsernames: [],
+    opsNote: "灰度开启后，小富豪使用积分，大富豪使用POC；积分门票只能填写整数。"
+  },
+  timing: {
+    quickBotFallbackSeconds: 30,
+    matchCancelWaitSeconds: 20,
+    matchCancelCooldownSeconds: 10,
+    waitingReadyTimeoutSeconds: 30,
+    vsIntroSeconds: 5,
+    readyCountdownSeconds: 6,
+    quickRoundSeconds: 75,
+    paidRoundSeconds: 90,
+    botMoveIntervalSeconds: 2.6
+  },
+  capacity: {
+    maxActiveRooms: 500,
+    maxQueueLengthPerMode: 2000,
+    realtimeMaxConnectionsPerInstance: 1200,
+    realtimeMaxConnectionsPerUser: 2,
+    realtimeHeartbeatSeconds: 25,
+    realtimeIdleTimeoutSeconds: 90,
+    realtimeMaxPayloadBytes: 2048
+  },
+  withdrawRisk: {
+    minAmount: 0.1,
+    dailyLimitAmount: 10,
+    feeRate: 0,
+    manualReviewAmount: 5,
+    autoPayoutEnabled: false,
+    autoApproveEnabled: false,
+    autoPayoutMaxAmount: 1,
+    autoPayoutDailyLimitAmount: 20,
+    maxRetryCount: 3,
+    walletValidationRequired: true,
+    payoutChannel: "stellar_direct"
+  },
+  rechargeBonus: {
+    enabled: false,
+    bonusRate: 0,
+    maxBonusAmount: 0,
+    presets: [
+      { amount: 1, bonusAmount: 0, label: "1 Pi", enabled: true },
+      { amount: 3, bonusAmount: 0, label: "3 Pi", enabled: true },
+      { amount: 10, bonusAmount: 0, label: "10 Pi", enabled: true }
+    ]
+  },
+  transfer: {
+    enabled: true,
+    minAmount: 0.01,
+    maxAmount: 20,
+    dailyLimitAmount: 50,
+    feeRate: 0,
+    feeMinAmount: 0,
+    cooldownSeconds: 10
+  },
+  inviteRewards: {
+    enabled: true,
+    bindEnabled: true,
+    qualificationEnabled: true,
+    qualificationRequiredBattles: 2,
+    qualificationRewardAmount: 0.02,
+    battleCommissionEnabled: true,
+    commissionBase: "entry_fee",
+    maxCommissionRate: 0.2,
+    levels: [
+      {
+        key: "starter",
+        name: "闪电伙伴",
+        commissionRate: 0.03,
+        minBalance: 0,
+        minDirectInvites: 0,
+        enabled: true
+      },
+      {
+        key: "silver",
+        name: "银牌队长",
+        commissionRate: 0.05,
+        minBalance: 5,
+        minDirectInvites: 5,
+        enabled: true
+      },
+      {
+        key: "gold",
+        name: "金牌队长",
+        commissionRate: 0.08,
+        minBalance: 20,
+        minDirectInvites: 20,
+        enabled: true
+      }
+    ]
+  },
+  visualEffects: {
+    defaultMode: "balanced",
+    piBrowserDefaultMode: "balanced",
+    allowUserChoice: true,
+    allowHighMode: true,
+    autoDowngradeEnabled: true,
+    dragTrailEnabled: true,
+    hapticEnabled: true
+  },
+  operation: {
+    maintenanceEnabled: false,
+    maintenanceNotice: "",
+    localizedContent: {
+      "zh-CN": {
+        maintenanceNotice: "",
+        rechargeNotice: "请输入充值 Pi 数量，支付完成后会写入平台钱包流水。",
+        withdrawNotice: "提交后余额会先冻结，等待平台后台审核与打款。",
+        ruleSummary: "快速开战主要用于练习，付费真人场更适合冲段。"
+      },
+      en: {
+        maintenanceNotice: "",
+        rechargeNotice: "Enter the Pi amount. The platform wallet ledger updates after payment.",
+        withdrawNotice: "After submission, the balance is locked until admin review and payout.",
+        ruleSummary: "Quick Battle is for practice. Paid real-player rooms are better for ranking."
+      },
+      vi: {
+        maintenanceNotice: "",
+        rechargeNotice: "Nhập số Pi cần nạp. Ví sẽ cập nhật sau khi thanh toán.",
+        withdrawNotice: "Sau khi gửi, số dư sẽ bị khóa để chờ xét duyệt và thanh toán.",
+        ruleSummary: "Đấu nhanh dùng để luyện tập. Phòng trả phí phù hợp hơn để leo hạng."
+      },
+      ko: {
+        maintenanceNotice: "",
+        rechargeNotice: "충전할 Pi 수량을 입력하세요. 결제 후 지갑 내역이 업데이트됩니다.",
+        withdrawNotice: "제출 후 잔액은 관리자 검토와 지급 전까지 잠깁니다.",
+        ruleSummary: "빠른 대전은 연습용입니다. 유료 실시간 방이 랭크 상승에 더 적합합니다."
+      },
+      ja: {
+        maintenanceNotice: "",
+        rechargeNotice: "チャージする Pi 数量を入力してください。支払い後にウォレット履歴へ反映されます。",
+        withdrawNotice: "申請後、残高は審査と支払い完了までロックされます。",
+        ruleSummary: "クイック対戦は練習用です。ランク上げには有料の対人ルームが適しています。"
+      }
+    },
+    nicknameMinLength: 2,
+    nicknameMaxLength: 12,
+    nicknamePattern: "中文、英文、数字均可，禁止特殊符号和敏感词",
+    bannedWords: [],
+    banReasons: ["异常刷分", "恶意退款", "多账号套利", "昵称违规", "疑似作弊"],
+    avatars: [
+      { key: "avatar_1", name: "闪电红", enabled: true },
+      { key: "avatar_2", name: "金币橙", enabled: true },
+      { key: "avatar_3", name: "翡翠绿", enabled: true },
+      { key: "avatar_4", name: "海浪蓝", enabled: true },
+      { key: "avatar_5", name: "星夜灰", enabled: true },
+      { key: "avatar_6", name: "冠军金", enabled: true }
+    ],
+    tileTheme: {
+      enabled: false,
+      normalTiles: [
+        { key: "ruby", name: "红宝石", label: "", color: "#d3231b", textColor: "#fff6bd", imageUrl: "" },
+        { key: "amber", name: "金币", label: "", color: "#f08a12", textColor: "#fff6bd", imageUrl: "" },
+        { key: "jade", name: "翡翠", label: "", color: "#169950", textColor: "#fff6bd", imageUrl: "" },
+        { key: "aqua", name: "海浪", label: "", color: "#177ed0", textColor: "#fff6bd", imageUrl: "" },
+        { key: "slate", name: "紫晶", label: "", color: "#8a35ff", textColor: "#fff6bd", imageUrl: "" },
+        { key: "gold", name: "冠军金", label: "", color: "#c8a21f", textColor: "#fff6bd", imageUrl: "" }
+      ],
+      specialTiles: {
+        horizontal: { name: "横向闪电", label: "横", color: "#ffe56d", textColor: "#ffe56d", imageUrl: "" },
+        vertical: { name: "纵向闪电", label: "纵", color: "#ffe56d", textColor: "#ffe56d", imageUrl: "" },
+        bomb: { name: "爆炸方块", label: "爆", color: "#ffe56d", textColor: "#ffe56d", imageUrl: "" }
+      }
+    },
+    ranks: [
+      { key: "bronze", name: "青铜", icon: "◆", color: "#b87a45", enabled: true },
+      { key: "silver", name: "白银", icon: "◇", color: "#c7d2e2", enabled: true },
+      { key: "gold", name: "黄金", icon: "✦", color: "#f2c84b", enabled: true },
+      { key: "platinum", name: "铂金", icon: "✧", color: "#7fe6ff", enabled: true },
+      { key: "diamond", name: "钻石", icon: "✹", color: "#b58cff", enabled: true },
+      { key: "starlight", name: "星耀", icon: "✷", color: "#e7a6ff", enabled: true },
+      { key: "king", name: "王者", icon: "♛", color: "#ffdc73", enabled: true }
+    ],
+    rankRules: {
+      starsPerRank: 8,
+      winStars: 1,
+      loseStars: 1,
+      winStreakBonusEnabled: true,
+      winStreakRequired: 5,
+      winStreakBonusStars: 1,
+      bronzeProtection: true,
+      rankedModes: DEFAULT_RANKED_MODES,
+      weeklyLeaderboardModes: DEFAULT_RANKED_MODES,
+      quickBattleMaxRankKey: "silver",
+      ticketBattleMaxRankKey: "platinum",
+      richBattleMinRankKey: "platinum",
+      dailyChestRequiredBattles: 3,
+      weeklyAutoSettleEnabled: true,
+      chestRewards: {
+        bronze: 0.001,
+        silver: 0.002,
+        gold: 0.003,
+        platinum: 0.005,
+        diamond: 0.008,
+        starlight: 0.012,
+        king: 0.016
+      },
+      weeklyRewards: {
+        top1: 0.05,
+        top2: 0.03,
+        top3: 0.02,
+        top10: 0.005
+      },
+      weeklyRewardTiers: [
+        { fromRank: 1, toRank: 1, amount: 0.05 },
+        { fromRank: 2, toRank: 2, amount: 0.03 },
+        { fromRank: 3, toRank: 3, amount: 0.02 },
+        { fromRank: 4, toRank: 10, amount: 0.005 }
+      ],
+      ruleSummary: "小富豪场和大富豪场计入正式段位；快速开战主要用于练习。"
+    }
+  }
+};
+
+function splitLines(value, fallback = []) {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item || "").trim()).filter(Boolean).slice(0, 50);
+  }
+
+  return String(value || "")
+    .split(/\r?\n|,/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, 50)
+    .concat([])
+    .slice(0, 50) || fallback;
+}
+
+function normalizeRate(value, fallback, max = 1) {
+  const next = Number(value);
+  return Number.isFinite(next) && next >= 0 && next <= max ? next : fallback;
+}
+
+function normalizeNumberInRange(value, fallback, min, max, precision = 0) {
+  const next = Number(value);
+  if (!Number.isFinite(next) || next < min || next > max) return fallback;
+  return precision > 0 ? Number(next.toFixed(precision)) : Math.round(next);
+}
+
+function normalizeAssetType(value, fallback = "PI") {
+  const next = String(value || fallback).trim().toUpperCase();
+  return ["FREE", "PI", "POINTS", "POC"].includes(next) ? next : fallback;
+}
+
+function normalizeEntryFeeByAsset(assetType, value, fallback) {
+  const next = Number(value);
+  const fallbackValue = assetType === "POINTS" ? Math.max(0, Math.round(Number(fallback || 0))) : Number(fallback || 0);
+
+  if (!Number.isFinite(next) || next < 0) {
+    return fallbackValue;
+  }
+  if (assetType === "POINTS") {
+    if (!Number.isInteger(next)) {
+      throw new Error("积分场门票必须是整数，不能填写小数");
+    }
+    return next;
+  }
+  if (assetType === "POC") {
+    return Number(next.toFixed(6));
+  }
+  return Number(next.toFixed(8));
+}
+
+function normalizeBattleModeConfig(modeKey, incoming = {}, defaults = {}) {
+  const assetType = normalizeAssetType(incoming.assetType || defaults.assetType, defaults.assetType || "PI");
+  const platformFeeRate = normalizeRate(Number(incoming.platformFeeRate), defaults.platformFeeRate || 0, 0.8);
+  const rewardRate = Math.min(
+    normalizeRate(Number(incoming.rewardRate), defaults.rewardRate ?? Math.max(0, 1 - platformFeeRate), 1),
+    1 - platformFeeRate
+  );
+
+  return {
+    ...defaults,
+    ...incoming,
+    key: modeKey,
+    name: String(incoming.name || defaults.name || modeKey).trim().slice(0, 20),
+    assetType,
+    enabled: incoming.enabled !== false,
+    entryFee: normalizeEntryFeeByAsset(assetType, incoming.entryFee, defaults.entryFee),
+    platformFeeRate,
+    rewardRate,
+    botMatchEnabled: modeKey === "quick_battle" ? incoming.botMatchEnabled !== false : incoming.botMatchEnabled === true,
+    botRewardsEnabled: Boolean(incoming.botRewardsEnabled)
+  };
+}
+
+function normalizeAssetGatewayConfig(assetGateway = {}) {
+  return {
+    enabled: Boolean(assetGateway.enabled),
+    summaryEnabled: assetGateway.summaryEnabled !== false,
+    pointsEnabled: Boolean(assetGateway.pointsEnabled),
+    pocEnabled: Boolean(assetGateway.pocEnabled),
+    grayUserPiUids: splitLines(assetGateway.grayUserPiUids || assetGateway.gray_user_pi_uids || []),
+    grayUserPiUsernames: splitLines(assetGateway.grayUserPiUsernames || assetGateway.gray_user_pi_usernames || []),
+    opsNote: String(assetGateway.opsNote || DEFAULT_GAME_CONFIG.assetGateway.opsNote).trim().slice(0, 240)
+  };
+}
+
+function normalizeTimingConfig(timing = {}) {
+  const defaults = DEFAULT_GAME_CONFIG.timing;
+
+  return {
+    quickBotFallbackSeconds: normalizeNumberInRange(timing.quickBotFallbackSeconds, defaults.quickBotFallbackSeconds, 5, 120),
+    matchCancelWaitSeconds: normalizeNumberInRange(timing.matchCancelWaitSeconds, defaults.matchCancelWaitSeconds, 0, 60),
+    matchCancelCooldownSeconds: normalizeNumberInRange(
+      timing.matchCancelCooldownSeconds,
+      defaults.matchCancelCooldownSeconds,
+      0,
+      60
+    ),
+    waitingReadyTimeoutSeconds: normalizeNumberInRange(
+      timing.waitingReadyTimeoutSeconds,
+      defaults.waitingReadyTimeoutSeconds,
+      10,
+      120
+    ),
+    vsIntroSeconds: normalizeNumberInRange(timing.vsIntroSeconds, defaults.vsIntroSeconds, 0, 10),
+    readyCountdownSeconds: normalizeNumberInRange(timing.readyCountdownSeconds, defaults.readyCountdownSeconds, 0, 15),
+    quickRoundSeconds: normalizeNumberInRange(timing.quickRoundSeconds, defaults.quickRoundSeconds, 30, 180),
+    paidRoundSeconds: normalizeNumberInRange(timing.paidRoundSeconds, defaults.paidRoundSeconds, 30, 300),
+    botMoveIntervalSeconds: normalizeNumberInRange(timing.botMoveIntervalSeconds, defaults.botMoveIntervalSeconds, 1, 10, 1)
+  };
+}
+
+function normalizeCapacityConfig(capacity = {}) {
+  const defaults = DEFAULT_GAME_CONFIG.capacity;
+
+  return {
+    maxActiveRooms: normalizeNumberInRange(capacity.maxActiveRooms, defaults.maxActiveRooms, 0, 5000),
+    maxQueueLengthPerMode: normalizeNumberInRange(
+      capacity.maxQueueLengthPerMode,
+      defaults.maxQueueLengthPerMode,
+      100,
+      20000
+    ),
+    realtimeMaxConnectionsPerInstance: normalizeNumberInRange(
+      capacity.realtimeMaxConnectionsPerInstance,
+      defaults.realtimeMaxConnectionsPerInstance,
+      100,
+      20000
+    ),
+    realtimeMaxConnectionsPerUser: normalizeNumberInRange(
+      capacity.realtimeMaxConnectionsPerUser,
+      defaults.realtimeMaxConnectionsPerUser,
+      1,
+      10
+    ),
+    realtimeHeartbeatSeconds: normalizeNumberInRange(
+      capacity.realtimeHeartbeatSeconds,
+      defaults.realtimeHeartbeatSeconds,
+      10,
+      60
+    ),
+    realtimeIdleTimeoutSeconds: normalizeNumberInRange(
+      capacity.realtimeIdleTimeoutSeconds,
+      defaults.realtimeIdleTimeoutSeconds,
+      30,
+      300
+    ),
+    realtimeMaxPayloadBytes: normalizeNumberInRange(
+      capacity.realtimeMaxPayloadBytes,
+      defaults.realtimeMaxPayloadBytes,
+      512,
+      16384
+    )
+  };
+}
+
+async function syncRealtimeConfigToRedis(config) {
+  const capacity = normalizeCapacityConfig(config?.capacity || {});
+  await redisSet(
+    REALTIME_CONFIG_REDIS_KEY,
+    JSON.stringify({
+      maxConnectionsPerInstance: capacity.realtimeMaxConnectionsPerInstance,
+      maxConnectionsPerUser: capacity.realtimeMaxConnectionsPerUser,
+      heartbeatSeconds: capacity.realtimeHeartbeatSeconds,
+      idleTimeoutSeconds: capacity.realtimeIdleTimeoutSeconds,
+      maxPayloadBytes: capacity.realtimeMaxPayloadBytes
+    }),
+    86400
+  );
+}
+
+function normalizeWithdrawRiskConfig(withdrawRisk = {}) {
+  const defaults = DEFAULT_GAME_CONFIG.withdrawRisk;
+  const minAmount = Number(withdrawRisk.minAmount);
+  const dailyLimitAmount = Number(withdrawRisk.dailyLimitAmount);
+  const feeRate = Number(withdrawRisk.feeRate);
+  const manualReviewAmount = Number(withdrawRisk.manualReviewAmount);
+  const autoPayoutMaxAmount = Number(withdrawRisk.autoPayoutMaxAmount);
+  const autoPayoutDailyLimitAmount = Number(withdrawRisk.autoPayoutDailyLimitAmount);
+  const maxRetryCount = Number(withdrawRisk.maxRetryCount);
+  const payoutChannel = String(withdrawRisk.payoutChannel || defaults.payoutChannel).trim();
+
+  return {
+    minAmount:
+      Number.isFinite(minAmount) && minAmount >= 0
+        ? Number(minAmount.toFixed(8))
+        : defaults.minAmount,
+    dailyLimitAmount:
+      Number.isFinite(dailyLimitAmount) && dailyLimitAmount >= 0
+        ? Number(dailyLimitAmount.toFixed(8))
+        : defaults.dailyLimitAmount,
+    feeRate:
+      Number.isFinite(feeRate) && feeRate >= 0 && feeRate <= 0.2
+        ? Number(feeRate.toFixed(4))
+        : defaults.feeRate,
+    manualReviewAmount:
+      Number.isFinite(manualReviewAmount) && manualReviewAmount >= 0
+        ? Number(manualReviewAmount.toFixed(8))
+        : defaults.manualReviewAmount,
+    autoPayoutEnabled: Boolean(withdrawRisk.autoPayoutEnabled),
+    autoApproveEnabled: Boolean(withdrawRisk.autoApproveEnabled),
+    autoPayoutMaxAmount:
+      Number.isFinite(autoPayoutMaxAmount) && autoPayoutMaxAmount >= 0
+        ? Number(autoPayoutMaxAmount.toFixed(8))
+        : defaults.autoPayoutMaxAmount,
+    autoPayoutDailyLimitAmount:
+      Number.isFinite(autoPayoutDailyLimitAmount) && autoPayoutDailyLimitAmount >= 0
+        ? Number(autoPayoutDailyLimitAmount.toFixed(8))
+        : defaults.autoPayoutDailyLimitAmount,
+    maxRetryCount:
+      Number.isFinite(maxRetryCount) && maxRetryCount >= 0 && maxRetryCount <= 10
+        ? Math.round(maxRetryCount)
+        : defaults.maxRetryCount,
+    walletValidationRequired: withdrawRisk.walletValidationRequired !== false,
+    payoutChannel: ["stellar_direct", "pi_a2u"].includes(payoutChannel) ? payoutChannel : defaults.payoutChannel
+  };
+}
+
+function normalizeRechargeBonusPreset(preset = {}, index = 0) {
+  const amount = Number(preset.amount);
+  const bonusAmount = Number(preset.bonusAmount);
+
+  return {
+    amount: Number.isFinite(amount) && amount > 0 ? Number(amount.toFixed(8)) : index + 1,
+    bonusAmount:
+      Number.isFinite(bonusAmount) && bonusAmount >= 0 && bonusAmount <= 100
+        ? Number(bonusAmount.toFixed(8))
+        : 0,
+    label: String(preset.label || "").trim().slice(0, 20),
+    enabled: preset.enabled !== false
+  };
+}
+
+function normalizeRechargeBonusConfig(rechargeBonus = {}) {
+  const defaults = DEFAULT_GAME_CONFIG.rechargeBonus;
+  const bonusRate = Number(rechargeBonus.bonusRate);
+  const maxBonusAmount = Number(rechargeBonus.maxBonusAmount);
+  const sourcePresets = Array.isArray(rechargeBonus.presets) ? rechargeBonus.presets : defaults.presets;
+
+  return {
+    enabled: Boolean(rechargeBonus.enabled),
+    bonusRate:
+      Number.isFinite(bonusRate) && bonusRate >= 0 && bonusRate <= 0.2
+        ? Number(bonusRate.toFixed(4))
+        : defaults.bonusRate,
+    maxBonusAmount:
+      Number.isFinite(maxBonusAmount) && maxBonusAmount >= 0
+        ? Number(maxBonusAmount.toFixed(8))
+        : defaults.maxBonusAmount,
+    presets: sourcePresets
+      .slice(0, 8)
+      .map(normalizeRechargeBonusPreset)
+      .filter((preset) => preset.amount > 0)
+  };
+}
+
+function normalizeTransferConfig(transfer = {}) {
+  const defaults = DEFAULT_GAME_CONFIG.transfer;
+  const minAmount = Number(transfer.minAmount);
+  const maxAmount = Number(transfer.maxAmount);
+  const dailyLimitAmount = Number(transfer.dailyLimitAmount);
+  const feeRate = Number(transfer.feeRate);
+  const feeMinAmount = Number(transfer.feeMinAmount);
+  const cooldownSeconds = Number(transfer.cooldownSeconds);
+
+  return {
+    enabled: transfer.enabled !== false,
+    minAmount: Number.isFinite(minAmount) && minAmount >= 0 ? Number(minAmount.toFixed(8)) : defaults.minAmount,
+    maxAmount: Number.isFinite(maxAmount) && maxAmount >= 0 ? Number(maxAmount.toFixed(8)) : defaults.maxAmount,
+    dailyLimitAmount:
+      Number.isFinite(dailyLimitAmount) && dailyLimitAmount >= 0
+        ? Number(dailyLimitAmount.toFixed(8))
+        : defaults.dailyLimitAmount,
+    feeRate:
+      Number.isFinite(feeRate) && feeRate >= 0 && feeRate <= 0.2
+        ? Number(feeRate.toFixed(4))
+        : defaults.feeRate,
+    feeMinAmount:
+      Number.isFinite(feeMinAmount) && feeMinAmount >= 0
+        ? Number(feeMinAmount.toFixed(8))
+        : defaults.feeMinAmount,
+    cooldownSeconds:
+      Number.isFinite(cooldownSeconds) && cooldownSeconds >= 0 && cooldownSeconds <= 3600
+        ? Math.round(cooldownSeconds)
+        : defaults.cooldownSeconds
+  };
+}
+
+function normalizeInviteLevel(level = {}, index = 0) {
+  const defaults = DEFAULT_GAME_CONFIG.inviteRewards.levels[index] || DEFAULT_GAME_CONFIG.inviteRewards.levels[0];
+  const commissionRate = Number(level.commissionRate);
+  const minBalance = Number(level.minBalance);
+  const minDirectInvites = Number(level.minDirectInvites);
+
+  return {
+    key: String(level.key || defaults.key || `level_${index + 1}`).trim().replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 32),
+    name: String(level.name || defaults.name || `邀请等级${index + 1}`).trim().slice(0, 20),
+    commissionRate:
+      Number.isFinite(commissionRate) && commissionRate >= 0 && commissionRate <= 0.5
+        ? Number(commissionRate.toFixed(6))
+        : defaults.commissionRate,
+    minBalance:
+      Number.isFinite(minBalance) && minBalance >= 0 ? Number(minBalance.toFixed(8)) : defaults.minBalance,
+    minDirectInvites:
+      Number.isFinite(minDirectInvites) && minDirectInvites >= 0
+        ? Math.round(minDirectInvites)
+        : defaults.minDirectInvites,
+    enabled: level.enabled !== false
+  };
+}
+
+function normalizeInviteRewardsConfig(inviteRewards = {}) {
+  const defaults = DEFAULT_GAME_CONFIG.inviteRewards;
+  const qualificationRequiredBattles = Number(inviteRewards.qualificationRequiredBattles);
+  const qualificationRewardAmount = Number(inviteRewards.qualificationRewardAmount);
+  const maxCommissionRate = Number(inviteRewards.maxCommissionRate);
+  const sourceLevels = Array.isArray(inviteRewards.levels) && inviteRewards.levels.length
+    ? inviteRewards.levels
+    : defaults.levels;
+
+  return {
+    enabled: inviteRewards.enabled !== false,
+    bindEnabled: inviteRewards.bindEnabled !== false,
+    qualificationEnabled: inviteRewards.qualificationEnabled !== false,
+    qualificationRequiredBattles:
+      Number.isFinite(qualificationRequiredBattles) && qualificationRequiredBattles >= 1 && qualificationRequiredBattles <= 100
+        ? Math.round(qualificationRequiredBattles)
+        : defaults.qualificationRequiredBattles,
+    qualificationRewardAmount:
+      Number.isFinite(qualificationRewardAmount) && qualificationRewardAmount >= 0 && qualificationRewardAmount <= 100
+        ? Number(qualificationRewardAmount.toFixed(8))
+        : defaults.qualificationRewardAmount,
+    battleCommissionEnabled: inviteRewards.battleCommissionEnabled !== false,
+    commissionBase: ["entry_fee", "platform_fee"].includes(inviteRewards.commissionBase)
+      ? inviteRewards.commissionBase
+      : defaults.commissionBase,
+    maxCommissionRate:
+      Number.isFinite(maxCommissionRate) && maxCommissionRate >= 0 && maxCommissionRate <= 0.5
+        ? Number(maxCommissionRate.toFixed(6))
+        : defaults.maxCommissionRate,
+    levels: sourceLevels
+      .slice(0, 6)
+      .map(normalizeInviteLevel)
+      .filter((level) => level.key && level.enabled !== false)
+  };
+}
+
+function normalizeVisualEffectsConfig(visualEffects = {}) {
+  const defaults = DEFAULT_GAME_CONFIG.visualEffects;
+  const modes = ["balanced", "high"];
+  const normalizeMode = (mode, fallback) => {
+    const next = String(mode || fallback);
+    return modes.includes(next) ? next : "balanced";
+  };
+  const defaultMode = String(visualEffects.defaultMode || defaults.defaultMode);
+  const piBrowserDefaultMode = String(visualEffects.piBrowserDefaultMode || defaults.piBrowserDefaultMode);
+
+  return {
+    defaultMode: normalizeMode(defaultMode, defaults.defaultMode),
+    piBrowserDefaultMode: normalizeMode(piBrowserDefaultMode, defaults.piBrowserDefaultMode),
+    allowUserChoice: visualEffects.allowUserChoice !== false,
+    allowHighMode: true,
+    autoDowngradeEnabled: visualEffects.autoDowngradeEnabled !== false,
+    dragTrailEnabled: visualEffects.dragTrailEnabled !== false,
+    hapticEnabled: visualEffects.hapticEnabled !== false
+  };
+}
+
+function normalizeAvatars(avatars) {
+  const source = Array.isArray(avatars) ? avatars : DEFAULT_GAME_CONFIG.operation.avatars;
+
+  return DEFAULT_GAME_CONFIG.operation.avatars.map((defaultAvatar, index) => {
+    const incoming = source.find((avatar) => avatar?.key === defaultAvatar.key) || source[index] || {};
+    return {
+      key: defaultAvatar.key,
+      name: String(incoming.name || defaultAvatar.name).trim().slice(0, 12) || defaultAvatar.name,
+      enabled: incoming.enabled !== false
+    };
+  });
+}
+
+function normalizeColor(value, fallback) {
+  const next = String(value || "").trim();
+  return /^#[0-9a-fA-F]{6}$/.test(next) ? next : fallback;
+}
+
+function normalizeImageUrl(value) {
+  const next = String(value || "").trim();
+  if (!next) return "";
+  if (next.length > 240) return "";
+  if (/^https?:\/\/[^\s"'<>]+$/i.test(next)) return next;
+  if (/^\/[a-zA-Z0-9/_\-%.]+\.(png|jpg|jpeg|webp|gif)$/i.test(next)) return next;
+  return "";
+}
+
+function normalizeTileThemeTile(tile = {}, fallback = {}) {
+  return {
+    key: fallback.key,
+    name: String(tile.name || fallback.name || "").trim().slice(0, 12),
+    label: String(tile.label ?? fallback.label ?? "").trim().slice(0, 2),
+    color: normalizeColor(tile.color, fallback.color || "#8a35ff"),
+    textColor: normalizeColor(tile.textColor, fallback.textColor || "#fff6bd"),
+    imageUrl: normalizeImageUrl(tile.imageUrl)
+  };
+}
+
+function normalizeTileThemeConfig(tileTheme = {}) {
+  const defaults = DEFAULT_GAME_CONFIG.operation.tileTheme;
+  const sourceNormalTiles = Array.isArray(tileTheme.normalTiles) ? tileTheme.normalTiles : defaults.normalTiles;
+  const sourceSpecialTiles = tileTheme.specialTiles || {};
+
+  return {
+    enabled: Boolean(tileTheme.enabled),
+    normalTiles: defaults.normalTiles.map((defaultTile, index) => {
+      const incoming = sourceNormalTiles.find((tile) => tile?.key === defaultTile.key) || sourceNormalTiles[index] || {};
+      return normalizeTileThemeTile(incoming, defaultTile);
+    }),
+    specialTiles: {
+      horizontal: normalizeTileThemeTile(sourceSpecialTiles.horizontal, defaults.specialTiles.horizontal),
+      vertical: normalizeTileThemeTile(sourceSpecialTiles.vertical, defaults.specialTiles.vertical),
+      bomb: normalizeTileThemeTile(sourceSpecialTiles.bomb, defaults.specialTiles.bomb)
+    }
+  };
+}
+
+function normalizeRanks(ranks) {
+  const source = Array.isArray(ranks) ? ranks : DEFAULT_GAME_CONFIG.operation.ranks;
+
+  return DEFAULT_GAME_CONFIG.operation.ranks.map((defaultRank) => {
+    const incoming = source.find((rank) => rank?.key === defaultRank.key) || {};
+    return {
+      key: defaultRank.key,
+      name: String(incoming.name || defaultRank.name).trim().slice(0, 12) || defaultRank.name,
+      icon: String(incoming.icon || defaultRank.icon).trim().slice(0, 2) || defaultRank.icon,
+      color: normalizeColor(incoming.color, defaultRank.color),
+      enabled: incoming.enabled !== false
+    };
+  });
+}
+
+const SUPPORTED_LOCALES = ["zh-CN", "en", "vi", "ko", "ja"];
+
+function normalizeLocalizedContent(value = {}) {
+  const defaults = DEFAULT_GAME_CONFIG.operation.localizedContent;
+  return SUPPORTED_LOCALES.reduce((acc, locale) => {
+    const incoming = value?.[locale] || {};
+    const fallback = defaults[locale] || defaults["zh-CN"];
+    acc[locale] = {
+      maintenanceNotice: String(incoming.maintenanceNotice ?? fallback.maintenanceNotice ?? "").trim().slice(0, 240),
+      rechargeNotice: String(incoming.rechargeNotice || fallback.rechargeNotice || "").trim().slice(0, 200),
+      withdrawNotice: String(incoming.withdrawNotice || fallback.withdrawNotice || "").trim().slice(0, 200),
+      ruleSummary: String(incoming.ruleSummary || fallback.ruleSummary || "").trim().slice(0, 200)
+    };
+    return acc;
+  }, {});
+}
+
+function normalizeRankRules(rankRules = {}) {
+  const defaults = DEFAULT_GAME_CONFIG.operation.rankRules;
+  const safeModes = Array.isArray(rankRules.rankedModes)
+    ? rankRules.rankedModes.filter((mode) => SUPPORTED_BATTLE_MODES.includes(mode))
+    : defaults.rankedModes;
+  const weeklyLeaderboardModes = Array.isArray(rankRules.weeklyLeaderboardModes)
+    ? rankRules.weeklyLeaderboardModes.filter((mode) => SUPPORTED_BATTLE_MODES.includes(mode))
+    : defaults.weeklyLeaderboardModes;
+  const enabledRankKeys = DEFAULT_GAME_CONFIG.operation.ranks.map((rank) => rank.key);
+  const richBattleMinRankKey = enabledRankKeys.includes(rankRules.richBattleMinRankKey)
+    ? rankRules.richBattleMinRankKey
+    : defaults.richBattleMinRankKey;
+  const quickBattleMaxRankKey = enabledRankKeys.includes(rankRules.quickBattleMaxRankKey)
+    ? rankRules.quickBattleMaxRankKey
+    : defaults.quickBattleMaxRankKey;
+  const ticketBattleMaxRankKey = enabledRankKeys.includes(rankRules.ticketBattleMaxRankKey)
+    ? rankRules.ticketBattleMaxRankKey
+    : defaults.ticketBattleMaxRankKey;
+
+  function safeInt(value, fallback, min, max) {
+    const next = Number.parseInt(String(value), 10);
+    return Number.isFinite(next) && next >= min && next <= max ? next : fallback;
+  }
+  function safeAmount(value, fallback, max = 100) {
+    const next = Number(value);
+    return Number.isFinite(next) && next >= 0 && next <= max ? Number(next.toFixed(8)) : fallback;
+  }
+  function normalizeWeeklyRewardTiers(value) {
+    const source = Array.isArray(value) && value.length
+      ? value
+      : [
+          { fromRank: 1, toRank: 1, amount: rankRules.weeklyRewards?.top1 ?? defaults.weeklyRewards.top1 },
+          { fromRank: 2, toRank: 2, amount: rankRules.weeklyRewards?.top2 ?? defaults.weeklyRewards.top2 },
+          { fromRank: 3, toRank: 3, amount: rankRules.weeklyRewards?.top3 ?? defaults.weeklyRewards.top3 },
+          { fromRank: 4, toRank: 10, amount: rankRules.weeklyRewards?.top10 ?? defaults.weeklyRewards.top10 }
+        ];
+
+    return source
+      .map((tier) => {
+        const fromRank = safeInt(tier?.fromRank, 1, 1, 500);
+        const toRank = safeInt(tier?.toRank, fromRank, 1, 500);
+        return {
+          fromRank: Math.min(fromRank, toRank),
+          toRank: Math.max(fromRank, toRank),
+          amount: safeAmount(tier?.amount, 0, 100)
+        };
+      })
+      .filter((tier) => tier.amount > 0)
+      .sort((a, b) => a.fromRank - b.fromRank || a.toRank - b.toRank)
+      .slice(0, 30);
+  }
+  const chestRewards = DEFAULT_GAME_CONFIG.operation.ranks.reduce((acc, rank) => {
+    acc[rank.key] = safeAmount(rankRules.chestRewards?.[rank.key], defaults.chestRewards[rank.key] || 0, 100);
+    return acc;
+  }, {});
+  const weeklyRewards = {
+    top1: safeAmount(rankRules.weeklyRewards?.top1, defaults.weeklyRewards.top1, 100),
+    top2: safeAmount(rankRules.weeklyRewards?.top2, defaults.weeklyRewards.top2, 100),
+    top3: safeAmount(rankRules.weeklyRewards?.top3, defaults.weeklyRewards.top3, 100),
+    top10: safeAmount(rankRules.weeklyRewards?.top10, defaults.weeklyRewards.top10, 100)
+  };
+  const weeklyRewardTiers = normalizeWeeklyRewardTiers(rankRules.weeklyRewardTiers);
+
+  return {
+    starsPerRank: safeInt(rankRules.starsPerRank, defaults.starsPerRank, 1, 10),
+    winStars: safeInt(rankRules.winStars, defaults.winStars, 1, 5),
+    loseStars: safeInt(rankRules.loseStars, defaults.loseStars, 0, 5),
+    winStreakBonusEnabled: rankRules.winStreakBonusEnabled !== false,
+    winStreakRequired: safeInt(rankRules.winStreakRequired, defaults.winStreakRequired, 2, 10),
+    winStreakBonusStars: safeInt(rankRules.winStreakBonusStars, defaults.winStreakBonusStars, 0, 5),
+    bronzeProtection: rankRules.bronzeProtection !== false,
+    rankedModes: safeModes.length ? safeModes : defaults.rankedModes,
+    weeklyLeaderboardModes: weeklyLeaderboardModes.length ? weeklyLeaderboardModes : defaults.weeklyLeaderboardModes,
+    quickBattleMaxRankKey,
+    ticketBattleMaxRankKey,
+    richBattleMinRankKey,
+    dailyChestRequiredBattles: safeInt(
+      rankRules.dailyChestRequiredBattles,
+      defaults.dailyChestRequiredBattles,
+      1,
+      20
+    ),
+    weeklyAutoSettleEnabled: rankRules.weeklyAutoSettleEnabled !== false,
+    chestRewards,
+    weeklyRewards,
+    weeklyRewardTiers,
+    ruleSummary: String(rankRules.ruleSummary || defaults.ruleSummary).trim().slice(0, 160)
+  };
+}
+
+async function readGameConfig() {
+  try {
+    const rows = await query(
+      "SELECT config_value FROM system_configs WHERE config_group = ? AND config_key = ? AND status = 1 LIMIT 1",
+      ["game", "operation_config"]
+    );
+
+    if (rows[0]?.config_value) {
+      const value =
+        typeof rows[0].config_value === "string"
+          ? JSON.parse(rows[0].config_value)
+          : rows[0].config_value;
+
+      return {
+        ...DEFAULT_GAME_CONFIG,
+        ...value,
+        quickBattle: {
+          ...normalizeBattleModeConfig("quick_battle", value.quickBattle || {}, DEFAULT_GAME_CONFIG.quickBattle)
+        },
+        ticketBattle: {
+          ...normalizeBattleModeConfig("ticket_battle", value.ticketBattle || {}, DEFAULT_GAME_CONFIG.ticketBattle)
+        },
+        richBattle: {
+          ...normalizeBattleModeConfig("rich_battle", value.richBattle || {}, DEFAULT_GAME_CONFIG.richBattle)
+        },
+        pointsBattle: normalizeBattleModeConfig(
+          "points_battle",
+          value.pointsBattle || {},
+          DEFAULT_GAME_CONFIG.pointsBattle
+        ),
+        pocBattle: normalizeBattleModeConfig("poc_battle", value.pocBattle || {}, DEFAULT_GAME_CONFIG.pocBattle),
+        piBattle: normalizeBattleModeConfig("pi_battle", value.piBattle || {}, DEFAULT_GAME_CONFIG.piBattle),
+        assetGateway: normalizeAssetGatewayConfig(value.assetGateway),
+        withdrawRisk: normalizeWithdrawRiskConfig(value.withdrawRisk),
+        rechargeBonus: normalizeRechargeBonusConfig(value.rechargeBonus),
+        transfer: normalizeTransferConfig(value.transfer),
+        inviteRewards: normalizeInviteRewardsConfig(value.inviteRewards),
+        visualEffects: normalizeVisualEffectsConfig(value.visualEffects),
+        timing: normalizeTimingConfig(value.timing),
+        capacity: normalizeCapacityConfig(value.capacity),
+        operation: normalizeConfig({ operation: value.operation }).operation
+      };
+    }
+  } catch (error) {
+    console.error("[game-config] MySQL read failed:", error.message);
+  }
+
+  return DEFAULT_GAME_CONFIG;
+}
+
+function normalizeConfig(payload) {
+  const quickBattle = normalizeBattleModeConfig("quick_battle", payload.quickBattle || {}, DEFAULT_GAME_CONFIG.quickBattle);
+  const ticketBattle = normalizeBattleModeConfig("ticket_battle", payload.ticketBattle || {}, DEFAULT_GAME_CONFIG.ticketBattle);
+  const richBattle = normalizeBattleModeConfig("rich_battle", payload.richBattle || {}, DEFAULT_GAME_CONFIG.richBattle);
+  const pointsBattle = normalizeBattleModeConfig(
+    "points_battle",
+    payload.pointsBattle || {},
+    DEFAULT_GAME_CONFIG.pointsBattle
+  );
+  const pocBattle = normalizeBattleModeConfig("poc_battle", payload.pocBattle || {}, DEFAULT_GAME_CONFIG.pocBattle);
+  const piBattle = normalizeBattleModeConfig("pi_battle", payload.piBattle || {}, DEFAULT_GAME_CONFIG.piBattle);
+  const withdrawRisk = normalizeWithdrawRiskConfig(payload.withdrawRisk);
+  const rechargeBonus = normalizeRechargeBonusConfig(payload.rechargeBonus);
+  const transfer = normalizeTransferConfig(payload.transfer);
+  const inviteRewards = normalizeInviteRewardsConfig(payload.inviteRewards);
+  const visualEffects = normalizeVisualEffectsConfig(payload.visualEffects);
+  const assetGateway = normalizeAssetGatewayConfig(payload.assetGateway);
+  const operation = {
+    ...DEFAULT_GAME_CONFIG.operation,
+    ...(payload.operation || {})
+  };
+  const nicknameMinLength = Number(operation.nicknameMinLength);
+  const nicknameMaxLength = Number(operation.nicknameMaxLength);
+
+  return {
+    quickBattle,
+    ticketBattle,
+    richBattle,
+    pointsBattle,
+    pocBattle,
+    piBattle,
+    assetGateway,
+    timing: normalizeTimingConfig(payload.timing),
+    capacity: normalizeCapacityConfig(payload.capacity),
+    withdrawRisk,
+    rechargeBonus,
+    transfer,
+    inviteRewards,
+    visualEffects,
+    operation: {
+      maintenanceEnabled: Boolean(operation.maintenanceEnabled),
+      maintenanceNotice: String(operation.maintenanceNotice || "").trim().slice(0, 200),
+      nicknameMinLength:
+        Number.isFinite(nicknameMinLength) && nicknameMinLength >= 1 && nicknameMinLength <= 12
+          ? nicknameMinLength
+          : DEFAULT_GAME_CONFIG.operation.nicknameMinLength,
+      nicknameMaxLength:
+        Number.isFinite(nicknameMaxLength) && nicknameMaxLength >= 2 && nicknameMaxLength <= 20
+          ? nicknameMaxLength
+          : DEFAULT_GAME_CONFIG.operation.nicknameMaxLength,
+      nicknamePattern: String(operation.nicknamePattern || DEFAULT_GAME_CONFIG.operation.nicknamePattern)
+        .trim()
+        .slice(0, 120),
+      localizedContent: normalizeLocalizedContent(operation.localizedContent),
+      bannedWords: splitLines(operation.bannedWords, DEFAULT_GAME_CONFIG.operation.bannedWords),
+      banReasons: splitLines(operation.banReasons, DEFAULT_GAME_CONFIG.operation.banReasons),
+      avatars: normalizeAvatars(operation.avatars),
+      tileTheme: normalizeTileThemeConfig(operation.tileTheme),
+      ranks: normalizeRanks(operation.ranks),
+      rankRules: normalizeRankRules(operation.rankRules)
+    }
+  };
+}
+
+async function writeGameConfig(payload) {
+  const next = normalizeConfig(payload || {});
+
+  await query(
+    `INSERT INTO system_configs (
+      config_group,
+      config_key,
+      config_name,
+      config_value,
+      value_type,
+      description,
+      is_public,
+      status
+    ) VALUES (?, ?, ?, CAST(? AS JSON), ?, ?, ?, ?)
+    ON DUPLICATE KEY UPDATE
+      config_value = VALUES(config_value),
+      updated_at = CURRENT_TIMESTAMP`,
+    [
+      "game",
+      "operation_config",
+      "游戏运营配置",
+      JSON.stringify(next),
+      "json",
+      "控制报名费、平台抽成、机器人局奖励等正式运营参数",
+      0,
+      1
+    ]
+  );
+
+  await syncRealtimeConfigToRedis(next);
+
+  return next;
+}
+
+module.exports = {
+  DEFAULT_GAME_CONFIG,
+  DEFAULT_RANKED_MODES,
+  SUPPORTED_BATTLE_MODES,
+  readGameConfig,
+  writeGameConfig
+};

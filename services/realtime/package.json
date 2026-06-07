@@ -1,0 +1,13 @@
+{
+  "name": "realtime",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "node --watch src/main.js",
+    "build": "node -e \"console.log('realtime build placeholder')\""
+  },
+  "dependencies": {
+    "ioredis": "^5.4.1",
+    "ws": "^8.18.0"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "name": "blitz-of-pi",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Pi闪电战（Blitz of Pi）monorepo",
+  "workspaces": [
+    "apps/*",
+    "services/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:game": "npm --prefix apps/game-web run dev",
+    "dev:admin": "npm --prefix apps/admin-web run dev",
+    "dev:api": "npm run start:dev --workspace services/api",
+    "dev:realtime": "npm run dev --workspace services/realtime",
+    "build:game": "npm --prefix apps/game-web run build",
+    "build:admin": "npm --prefix apps/admin-web run build",
+    "build:api": "npm run build --workspace services/api",
+    "build:realtime": "npm run build --workspace services/realtime",
+    "build": "npm run build:game && npm run build:admin && npm run build:api && npm run build:realtime",
+    "release:prepare": "npm run build:game && npm run build:admin"
+  },
+  "dependencies": {
+    "@stellar/stellar-sdk": "^15.1.0",
+    "ioredis": "^5.4.1",
+    "mysql2": "^3.11.5",
+    "ws": "^8.18.0"
+  },
+  "overrides": {
+    "axios": "^1.17.0"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  }
+}

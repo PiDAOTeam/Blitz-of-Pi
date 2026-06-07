@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Pi闪电战 | Blitz of Pi</title>
+    <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+    <script>
+      function detectBlitzPiSandbox() {
+        var params = new URLSearchParams(window.location.search);
+        var ancestorOrigins = "";
+        try { ancestorOrigins = Array.from(window.location.ancestorOrigins || []).join(","); } catch (error) { ancestorOrigins = ""; }
+        return window.location.hostname === "sandbox.minepi.com" || document.referrer.indexOf("sandbox.minepi.com") >= 0 || ancestorOrigins.indexOf("sandbox.minepi.com") >= 0 || params.get("sandbox") === "true" || params.get("pi_sandbox") === "true";
+      }
+      window.__BLITZ_PI_SANDBOX__ = detectBlitzPiSandbox();
+      if (window.Pi) {
+        window.Pi.init({ version: "2.0", sandbox: window.__BLITZ_PI_SANDBOX__ });
+        window.__BLITZ_PI_INITIALIZED__ = true;
+        window.__BLITZ_PI_INITIALIZED_SANDBOX__ = window.__BLITZ_PI_SANDBOX__;
+      }
+    </script>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <script type="module" src="/src/main.js"></script>
+  </head>
+  <body><div id="app"></div></body>
+</html>
