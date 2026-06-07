@@ -27,6 +27,7 @@ Pi闪电战生产环境已经使用 MySQL，不再是早期的本地 JSON 文件
 10. `mysql/010_add_starlight_rank.sql`
 11. `mysql/011_auto_withdraw_payout.sql`
 12. `mysql/012_payment_txid_null_fix.sql`
+13. `mysql/013_engagement_daily_rewards.sql`
 
 已有生产库不要重复执行 `init.sql` 覆盖数据，只执行缺少的迁移脚本。
 
@@ -40,6 +41,7 @@ Pi闪电战生产环境已经使用 MySQL，不再是早期的本地 JSON 文件
 - 对战房间、结算记录、异常局和对账数据
 - 后台运营配置、公告、门票、抽成、奖励比例
 - 段位、周榜、奖励发放和邀请奖励
+- 每日签到、每日任务领取记录
 
 HashPi POINTS / POC 的真实余额在 HashPi 项目中保存。本项目只通过资产网关查询、冻结、结算和释放。
 

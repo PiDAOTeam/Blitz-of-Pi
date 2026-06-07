@@ -456,6 +456,96 @@ button.secondary {
   font-weight: 1000;
   line-height: 1;
 }
+.daily-reward-cta {
+  position: relative;
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) auto 18px;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  min-height: 74px;
+  margin-top: 12px;
+  padding: 12px 13px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 236, 139, .82);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, .58), transparent 30%),
+    radial-gradient(circle at 88% 100%, rgba(255, 117, 24, .42), transparent 42%),
+    linear-gradient(135deg, #fff0a4, #ffc32a 34%, #a64c00 100%);
+  color: #3d1800;
+  text-align: left;
+  box-shadow: 0 16px 34px rgba(82, 27, 0, .32), 0 0 26px rgba(255, 207, 70, .2), inset 0 1px rgba(255, 255, 255, .55);
+}
+.daily-reward-cta:before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 0 34%, rgba(255, 255, 255, .36) 45%, transparent 58% 100%);
+  transform: translateX(-85%);
+  animation: dailyRewardShine 3.8s ease-in-out infinite;
+}
+.daily-reward-cta > * {
+  position: relative;
+  z-index: 1;
+}
+.daily-reward-badge {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 17px;
+  background: radial-gradient(circle at 30% 20%, #fffbd2, transparent 35%), linear-gradient(145deg, #ffec80, #ff8a00);
+  color: #7a2500;
+  font-size: 24px;
+  font-weight: 1000;
+  box-shadow: inset 0 -7px 13px rgba(137, 52, 0, .28), 0 8px 18px rgba(118, 52, 0, .24);
+}
+.daily-reward-copy,
+.daily-reward-prize {
+  min-width: 0;
+}
+.daily-reward-copy strong,
+.daily-reward-copy small,
+.daily-reward-prize b,
+.daily-reward-prize small {
+  display: block;
+}
+.daily-reward-copy strong {
+  font-size: 19px;
+  line-height: 1.08;
+}
+.daily-reward-copy small {
+  margin-top: 5px;
+  color: rgba(75, 29, 0, .72);
+  font-size: 12px;
+  font-weight: 1000;
+  line-height: 1.25;
+}
+.daily-reward-prize {
+  min-width: 82px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, .4);
+  border-radius: 15px;
+  background: rgba(76, 26, 0, .16);
+  text-align: right;
+}
+.daily-reward-prize b {
+  color: #5a1d00;
+  font-size: 18px;
+  line-height: 1;
+}
+.daily-reward-prize small {
+  margin-top: 4px;
+  color: rgba(73, 28, 0, .75);
+  font-size: 11px;
+  font-weight: 1000;
+  line-height: 1.2;
+}
+@keyframes dailyRewardShine {
+  0%, 52% { transform: translateX(-88%); }
+  72%, 100% { transform: translateX(88%); }
+}
 .eyebrow {
   margin: 0 0 8px;
   color: var(--gold);
@@ -2099,6 +2189,106 @@ button:disabled {
 }
 .mode-sheet > .secondary {
   margin-top: 18px;
+}
+.daily-reward-sheet {
+  border-color: rgba(255, 215, 85, .48);
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 223, 112, .16), transparent 32%),
+    linear-gradient(180deg, rgba(56, 0, 103, .98), rgba(28, 0, 64, .98));
+}
+.daily-sign-card,
+.daily-task-card {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 13px;
+  border: 1px solid rgba(255, 232, 138, .18);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, .07);
+}
+.daily-sign-card {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(255, 233, 123, .25), transparent 34%),
+    rgba(255, 255, 255, .08);
+}
+.daily-sign-card span,
+.daily-task-card span,
+.daily-sign-card small {
+  display: block;
+  color: rgba(255, 246, 211, .72);
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.25;
+}
+.daily-sign-card strong,
+.daily-task-card strong {
+  display: block;
+  margin: 3px 0;
+  color: #fff5b9;
+  font-size: 18px;
+  line-height: 1.1;
+}
+.daily-sign-card button,
+.daily-task-card button {
+  min-width: 94px;
+  border-color: rgba(255, 229, 120, .54);
+  background: linear-gradient(135deg, #ffe785, #ff9d1b);
+  color: #4e1c00;
+}
+.daily-sign-card button:disabled,
+.daily-task-card button:disabled {
+  border-color: rgba(255, 255, 255, .12);
+  background: rgba(255, 255, 255, .12);
+  color: rgba(255, 255, 255, .56);
+}
+.daily-task-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+.daily-task-card {
+  grid-template-columns: minmax(0, 1fr) 92px;
+  align-items: center;
+}
+.daily-task-progress {
+  grid-column: 1 / -1;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .1);
+}
+.daily-task-progress i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #fff6a5, #ffb31e);
+}
+.daily-task-card.claimed {
+  opacity: .74;
+}
+.daily-task-empty {
+  padding: 14px;
+  border: 1px dashed rgba(255, 255, 255, .18);
+  border-radius: 16px;
+  color: rgba(255, 255, 255, .68);
+  text-align: center;
+}
+.daily-reward-footer {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+}
+.daily-reward-footer span {
+  color: rgba(255, 246, 211, .76);
+  font-size: 12px;
+  font-weight: 900;
+}
+.daily-reward-footer button {
+  min-width: 92px;
 }
 .leaderboard-sheet > #close-leaderboard-sheet {
   position: sticky;
@@ -6713,6 +6903,40 @@ button:disabled {
   }
   .home-invite-income small {
     font-size: 10px;
+  }
+  .daily-reward-cta {
+    grid-template-columns: 40px minmax(0, 1fr) auto 14px;
+    min-height: 68px;
+    padding: 10px;
+    gap: 8px;
+  }
+  .daily-reward-badge {
+    width: 40px;
+    height: 40px;
+    border-radius: 15px;
+    font-size: 21px;
+  }
+  .daily-reward-copy strong {
+    font-size: 16px;
+  }
+  .daily-reward-copy small {
+    font-size: 11px;
+  }
+  .daily-reward-prize {
+    min-width: 76px;
+    padding: 7px 8px;
+  }
+  .daily-reward-prize b {
+    font-size: 16px;
+  }
+  .daily-reward-prize small {
+    font-size: 10px;
+  }
+  .daily-task-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .daily-task-card button {
+    width: 100%;
   }
   .invite-hero-card,
   .invite-example-grid {

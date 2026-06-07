@@ -42,7 +42,7 @@ function oe(e = "") {
   return { quick_battle: "\u5FEB\u901F\u5F00\u6218", points_battle: "\u5C0F\u5BCC\u8C6A\uFF08\u79EF\u5206\uFF09", poc_battle: "\u5927\u5BCC\u8C6A\uFF08POC\uFF09", pi_battle: "\u8D85\u7EA7\u5BCC\u8C6A\uFF08Pi\uFF09", ticket_battle: "\u5C0F\u5BCC\u8C6A\u573A\uFF08\u65E7\uFF09", rich_battle: "\u5927\u5BCC\u8C6A\u573A\uFF08\u65E7\uFF09" }[e] || e || "-";
 }
 function qe(e = "") {
-  return { recharge: "\u5145\u503C", payment: "\u5145\u503C", reward: "\u5956\u52B1", battle_entry: "\u5165\u573A\u8D39", battle_reward: "\u5BF9\u6218\u5956\u52B1", battle_refund: "\u5E73\u5C40\u9000\u8D39", withdraw_lock: "\u63D0\u73B0\u51BB\u7ED3", withdraw_reject: "\u63D0\u73B0\u9000\u56DE", withdraw_paid: "\u63D0\u73B0\u6253\u6B3E", transfer_out: "\u8F6C\u8D26\u652F\u51FA", transfer_in: "\u8F6C\u8D26\u6536\u5165", transfer_fee: "\u8F6C\u8D26\u624B\u7EED\u8D39", invite_reward: "\u9080\u8BF7\u5956\u52B1", invite_commission: "\u9080\u8BF7\u63D0\u6210" }[e] || e || "-";
+  return { recharge: "\u5145\u503C", payment: "\u5145\u503C", reward: "\u5956\u52B1", battle_entry: "\u5165\u573A\u8D39", battle_reward: "\u5BF9\u6218\u5956\u52B1", battle_refund: "\u5E73\u5C40\u9000\u8D39", withdraw_lock: "\u63D0\u73B0\u51BB\u7ED3", withdraw_reject: "\u63D0\u73B0\u9000\u56DE", withdraw_paid: "\u63D0\u73B0\u6253\u6B3E", transfer_out: "\u8F6C\u8D26\u652F\u51FA", transfer_in: "\u8F6C\u8D26\u6536\u5165", transfer_fee: "\u8F6C\u8D26\u624B\u7EED\u8D39", invite_reward: "\u9080\u8BF7\u5956\u52B1", invite_commission: "\u9080\u8BF7\u63D0\u6210", daily_signin_reward: "\u7B7E\u5230\u5956\u52B1", daily_task_reward: "\u4EFB\u52A1\u5956\u52B1" }[e] || e || "-";
 }
 function Le(e = "") {
   return { in: "\u6536\u5165", out: "\u652F\u51FA", lock: "\u51BB\u7ED3", unlock: "\u89E3\u51BB" }[e] || e || "-";
@@ -117,6 +117,11 @@ const LOG_LIST_FILTERS = [
   { key: "battle", label: "对局", match: (e) => e.targetType === "battle_room" },
   { key: "config", label: "配置", match: (e) => e.targetType === "config" },
   { key: "auto_payout", label: "自动出款", match: (e) => String(e.action || "").startsWith("auto_payout_") }
+];
+const ENGAGEMENT_TASK_DEFAULTS = [
+  { key: "play_1", title: "完成1局", condition: "battle_count", requiredCount: 1, rewardAmount: 0.01, enabled: true },
+  { key: "play_3", title: "完成3局", condition: "battle_count", requiredCount: 3, rewardAmount: 0.02, enabled: true },
+  { key: "win_1", title: "赢1局", condition: "win_count", requiredCount: 1, rewardAmount: 0.02, enabled: true }
 ];
 function filterPaymentOrders(e = []) {
   const t = PAYMENT_STATUS_FILTERS.find((a) => a.key === paymentStatusFilter) || PAYMENT_STATUS_FILTERS[0];
@@ -1416,8 +1421,39 @@ function ht(e) {
     </article>
   `;
 }
+function renderEngagementClaim(e) {
+  return `
+    <article class="row-card growth-row">
+      <strong>${i(e.claimType === "sign_in" ? "\u6BCF\u65E5\u7B7E\u5230" : "\u6BCF\u65E5\u4EFB\u52A1")}</strong>
+      <span>${i(e.nickname || e.piUsername || h(e.uid))} \xB7 ${i(e.title || "-")}</span>
+      <span>${$(e.rewardAmount)} Pi</span>
+      <span>${i(O(e.createdAt))}</span>
+    </article>
+  `;
+}
+function engagementConditionLabel(e = "") {
+  return { battle_count: "\u5B8C\u6210\u5BF9\u5C40\u6570", win_count: "\u80DC\u5229\u5BF9\u5C40\u6570", paid_battle_count: "\u4ED8\u8D39\u5BF9\u5C40\u6570" }[e] || "\u5B8C\u6210\u5BF9\u5C40\u6570";
+}
+function engagementTaskRows(e = []) {
+  const t = Array.from({ length: 6 }, (a, n) => e[n] || ENGAGEMENT_TASK_DEFAULTS[n] || { key: `task_${n + 1}`, title: "", condition: "battle_count", requiredCount: 1, rewardAmount: 0, enabled: false });
+  return t.map((a, n) => `
+    <div class="rank-row">
+      <label><span>\u4EFB\u52A1\u5F00\u5173</span><select name="engagementTaskEnabled${n}">
+        <option value="true" ${a.enabled !== false ? "selected" : ""}>\u5F00\u542F</option>
+        <option value="false" ${a.enabled === false ? "selected" : ""}>\u5173\u95ED</option>
+      </select></label>
+      <label><span>\u4EFB\u52A1\u7F16\u53F7</span><input name="engagementTaskKey${n}" value="${i(a.key || `task_${n + 1}`)}" /></label>
+      <label><span>\u524D\u53F0\u6807\u9898</span><input name="engagementTaskTitle${n}" value="${i(a.title || "")}" /></label>
+      <label><span>\u5B8C\u6210\u6761\u4EF6</span><select name="engagementTaskCondition${n}">
+        ${["battle_count", "win_count", "paid_battle_count"].map((s) => `<option value="${s}" ${a.condition === s ? "selected" : ""}>${engagementConditionLabel(s)}</option>`).join("")}
+      </select></label>
+      <label><span>\u9700\u8981\u6570\u91CF</span><input name="engagementTaskRequired${n}" type="number" inputmode="decimal" min="1" max="50" step="1" value="${a.requiredCount ?? 1}" /></label>
+      <label><span>\u5956\u52B1 Pi</span><input name="engagementTaskReward${n}" type="number" inputmode="decimal" min="0" max="10" step="0.001" value="${a.rewardAmount ?? 0}" /></label>
+    </div>
+  `).join("");
+}
 function ft(e, t) {
-  const a = e.transfer || { enabled: true, minAmount: 0.01, maxAmount: 20, dailyLimitAmount: 50, feeRate: 0, feeMinAmount: 0, cooldownSeconds: 10 }, n = e.inviteRewards || { enabled: true, bindEnabled: true, qualificationEnabled: true, qualificationRequiredBattles: 2, qualificationRewardAmount: 0.02, battleCommissionEnabled: true, commissionBase: "entry_fee", maxCommissionRate: 0.2, levels: [] }, s = n.levels?.length ? n.levels : [{ key: "starter", name: "\u95EA\u7535\u4F19\u4F34", commissionRate: 0.03, minBalance: 0, minDirectInvites: 0, enabled: true }, { key: "silver", name: "\u94F6\u724C\u961F\u957F", commissionRate: 0.05, minBalance: 5, minDirectInvites: 5, enabled: true }, { key: "gold", name: "\u91D1\u724C\u961F\u957F", commissionRate: 0.08, minBalance: 20, minDirectInvites: 20, enabled: true }], r = t?.transfers || [], o = t?.relations || [], m = t?.rewards || [], filteredRewards = filterList(m, GROWTH_REWARD_FILTERS, growthRewardFilter), R = N("growth-transfers", r), y = N("growth-relations", o), x = N("growth-rewards", filteredRewards), j = m.reduce((B, w) => B + Number(w.amount || 0), 0), A = r.reduce((B, w) => B + Number(w.feeAmount || 0), 0), activeRewardFilter = GROWTH_REWARD_FILTERS.find((B) => B.key === growthRewardFilter) || GROWTH_REWARD_FILTERS[0];
+  const a = e.transfer || { enabled: true, minAmount: 0.01, maxAmount: 20, dailyLimitAmount: 50, feeRate: 0, feeMinAmount: 0, cooldownSeconds: 10 }, n = e.inviteRewards || { enabled: true, bindEnabled: true, qualificationEnabled: true, qualificationRequiredBattles: 2, qualificationRewardAmount: 0.02, battleCommissionEnabled: true, commissionBase: "entry_fee", maxCommissionRate: 0.2, levels: [] }, engagement = e.engagement || { enabled: true, dailySignIn: { enabled: true, title: "\u6BCF\u65E5\u7B7E\u5230", rewardAmount: 0.01 }, tasks: ENGAGEMENT_TASK_DEFAULTS }, s = n.levels?.length ? n.levels : [{ key: "starter", name: "\u95EA\u7535\u4F19\u4F34", commissionRate: 0.03, minBalance: 0, minDirectInvites: 0, enabled: true }, { key: "silver", name: "\u94F6\u724C\u961F\u957F", commissionRate: 0.05, minBalance: 5, minDirectInvites: 5, enabled: true }, { key: "gold", name: "\u91D1\u724C\u961F\u957F", commissionRate: 0.08, minBalance: 20, minDirectInvites: 20, enabled: true }], r = t?.transfers || [], o = t?.relations || [], m = t?.rewards || [], engagementClaims = t?.engagementClaims || [], filteredRewards = filterList(m, GROWTH_REWARD_FILTERS, growthRewardFilter), R = N("growth-transfers", r), y = N("growth-relations", o), x = N("growth-rewards", filteredRewards), engagementClaimPager = N("growth-engagement-claims", engagementClaims), j = m.reduce((B, w) => B + Number(w.amount || 0), 0), A = r.reduce((B, w) => B + Number(w.feeAmount || 0), 0), activeRewardFilter = GROWTH_REWARD_FILTERS.find((B) => B.key === growthRewardFilter) || GROWTH_REWARD_FILTERS[0];
   return `
     <section class="panel">
       <div class="section-head">
@@ -1484,6 +1520,25 @@ function ft(e, t) {
           <p class="meta">\u4F59\u989D\u8FBE\u6807\u6216\u9080\u8BF7\u4EBA\u6570\u8FBE\u6807\uFF0C\u6EE1\u8DB3\u4EFB\u4E00\u6761\u4EF6\u5373\u53EF\u5347\u7EA7\uFF1B\u5B9E\u9645\u5355\u5C40\u603B\u63D0\u6210\u4E0D\u4F1A\u8D85\u8FC7\u672C\u5C40\u5E73\u53F0\u62BD\u6210\u3002</p>
           ${s.slice(0, 6).map(Ze).join("")}
         </div>
+
+        <h2>\u6BCF\u65E5\u7B7E\u5230\u548C\u4EFB\u52A1</h2>
+        <div class="growth-config-grid">
+          <label><span>\u6D3B\u8DC3\u5956\u52B1\u603B\u5F00\u5173</span><select name="engagementEnabled">
+            <option value="true" ${engagement.enabled !== false ? "selected" : ""}>\u5F00\u542F</option>
+            <option value="false" ${engagement.enabled === false ? "selected" : ""}>\u5173\u95ED</option>
+          </select></label>
+          <label><span>\u6BCF\u65E5\u7B7E\u5230</span><select name="dailySignInEnabled">
+            <option value="true" ${engagement.dailySignIn?.enabled !== false ? "selected" : ""}>\u5F00\u542F</option>
+            <option value="false" ${engagement.dailySignIn?.enabled === false ? "selected" : ""}>\u5173\u95ED</option>
+          </select></label>
+          <label><span>\u7B7E\u5230\u6807\u9898</span><input name="dailySignInTitle" value="${i(engagement.dailySignIn?.title || "\u6BCF\u65E5\u7B7E\u5230")}" /></label>
+          <label><span>\u7B7E\u5230\u5956\u52B1 Pi</span><input name="dailySignInReward" type="number" inputmode="decimal" min="0" max="10" step="0.001" value="${engagement.dailySignIn?.rewardAmount ?? 0}" /></label>
+        </div>
+        <div class="avatar-config rank-config">
+          <strong>\u6BCF\u65E5\u4EFB\u52A1</strong>
+          <p class="meta">\u524D\u53F0\u4F1A\u81EA\u52A8\u663E\u793A\u53EF\u9886\u53D6\u72B6\u6001\uFF1B\u5956\u52B1\u8FDB\u5165\u9879\u76EE\u5185 Pi \u94B1\u5305\u6D41\u6C34\u3002</p>
+          ${engagementTaskRows(engagement.tasks || [])}
+        </div>
         <button type="submit">\u4FDD\u5B58\u589E\u957F\u914D\u7F6E</button>
         <p id="growth-config-status" class="status"></p>
       </form>
@@ -1510,6 +1565,17 @@ function ft(e, t) {
       ${renderListFilters(m, GROWTH_REWARD_FILTERS, growthRewardFilter, "growth-rewards")}
       <div class="table-list">${x.items.map(ht).join("") || '<p class="meta">\u6682\u65E0\u5956\u52B1\u8BB0\u5F55</p>'}</div>
       ${P("growth-rewards", filteredRewards.length)}
+    </section>
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h2>\u7B7E\u5230/\u4EFB\u52A1\u9886\u53D6\u8BB0\u5F55</h2>
+          <p class="meta">\u67E5\u770B\u7528\u6237\u6BCF\u65E5\u7B7E\u5230\u548C\u4EFB\u52A1\u9886\u53D6\u60C5\u51B5\uFF0C\u4FBF\u4E8E\u505A\u6D3B\u8DC3\u6D3B\u52A8\u5BF9\u8D26\u3002</p>
+        </div>
+        <span class="pill">${engagementClaims.length} \u6761</span>
+      </div>
+      <div class="table-list">${engagementClaimPager.items.map(renderEngagementClaim).join("") || '<p class="meta">\u6682\u65E0\u9886\u53D6\u8BB0\u5F55</p>'}</div>
+      ${P("growth-engagement-claims", engagementClaims.length)}
     </section>
   `;
 }
@@ -1850,10 +1916,13 @@ function Ut(e, t, a) {
     }
   });
   function U(c) {
-    return { quickBattle: c.quickBattle || a.quickBattle, ticketBattle: c.ticketBattle || a.ticketBattle, richBattle: c.richBattle || a.richBattle, pointsBattle: c.pointsBattle || a.pointsBattle, pocBattle: c.pocBattle || a.pocBattle, piBattle: c.piBattle || a.piBattle, assetGateway: c.assetGateway || a.assetGateway, timing: c.timing || a.timing, capacity: c.capacity || a.capacity, withdrawRisk: c.withdrawRisk || a.withdrawRisk, rechargeBonus: c.rechargeBonus || a.rechargeBonus, transfer: c.transfer || a.transfer, inviteRewards: c.inviteRewards || a.inviteRewards, visualEffects: c.visualEffects || a.visualEffects, operation: c.operation || a.operation };
+    return { quickBattle: c.quickBattle || a.quickBattle, ticketBattle: c.ticketBattle || a.ticketBattle, richBattle: c.richBattle || a.richBattle, pointsBattle: c.pointsBattle || a.pointsBattle, pocBattle: c.pocBattle || a.pocBattle, piBattle: c.piBattle || a.piBattle, assetGateway: c.assetGateway || a.assetGateway, timing: c.timing || a.timing, capacity: c.capacity || a.capacity, withdrawRisk: c.withdrawRisk || a.withdrawRisk, rechargeBonus: c.rechargeBonus || a.rechargeBonus, transfer: c.transfer || a.transfer, inviteRewards: c.inviteRewards || a.inviteRewards, engagement: c.engagement || a.engagement, visualEffects: c.visualEffects || a.visualEffects, operation: c.operation || a.operation };
   }
   function J(c) {
     return [0, 1, 2, 3, 4, 5].map((l) => ({ key: String(c.get(`inviteLevelKey${l}`) || "").trim(), name: String(c.get(`inviteLevelName${l}`) || "").trim(), commissionRate: Number(c.get(`inviteLevelRate${l}`) || 0), minBalance: Number(c.get(`inviteLevelMinBalance${l}`) || 0), minDirectInvites: Number(c.get(`inviteLevelMinInvites${l}`) || 0), enabled: String(c.get(`inviteLevelEnabled${l}`)) === "true" })).filter((l) => l.key && l.name);
+  }
+  function buildEngagementTasks(c) {
+    return [0, 1, 2, 3, 4, 5].map((l) => ({ key: String(c.get(`engagementTaskKey${l}`) || "").trim(), title: String(c.get(`engagementTaskTitle${l}`) || "").trim(), condition: String(c.get(`engagementTaskCondition${l}`) || "battle_count"), requiredCount: Number(c.get(`engagementTaskRequired${l}`) || 1), rewardAmount: Number(c.get(`engagementTaskReward${l}`) || 0), enabled: String(c.get(`engagementTaskEnabled${l}`)) === "true" })).filter((l) => l.key && l.title);
   }
   function k(c) {
     const l = (u, b) => ({ key: u.key || D.normalTiles[b]?.key || `tile_${b + 1}`, name: String(c.get(`tileName${b}`) || u.name), label: String(c.get(`tileLabel${b}`) || ""), color: String(c.get(`tileColor${b}`) || u.color), textColor: String(c.get(`tileTextColor${b}`) || u.textColor), imageUrl: String(c.get(`tileImageUrl${b}`) || "").trim() }), p = (u, b) => ({ name: String(c.get(`specialTileName_${u}`) || b.name), label: String(c.get(`specialTileLabel_${u}`) || b.label), color: String(c.get(`specialTileColor_${u}`) || b.color), textColor: String(c.get(`specialTileTextColor_${u}`) || b.textColor), imageUrl: String(c.get(`specialTileImageUrl_${u}`) || "").trim() });
@@ -1878,7 +1947,7 @@ function Ut(e, t, a) {
     const l = new FormData(j);
     A && (A.textContent = "\u4FDD\u5B58\u4E2D...");
     try {
-      await d("/admin-api/game-config", { method: "POST", body: JSON.stringify(U({ transfer: { enabled: String(l.get("transferEnabled")) === "true", minAmount: Number(l.get("transferMinAmount") || 0), maxAmount: Number(l.get("transferMaxAmount") || 0), dailyLimitAmount: Number(l.get("transferDailyLimitAmount") || 0), feeRate: Number(l.get("transferFeeRate") || 0), feeMinAmount: Number(l.get("transferFeeMinAmount") || 0), cooldownSeconds: Number(l.get("transferCooldownSeconds") || 0) }, inviteRewards: { enabled: String(l.get("inviteEnabled")) === "true", bindEnabled: String(l.get("inviteBindEnabled")) === "true", qualificationEnabled: String(l.get("qualificationEnabled")) === "true", qualificationRequiredBattles: Number(l.get("qualificationRequiredBattles") || 2), qualificationRewardAmount: Number(l.get("qualificationRewardAmount") || 0), battleCommissionEnabled: String(l.get("battleCommissionEnabled")) === "true", commissionBase: String(l.get("commissionBase") || "entry_fee") === "platform_fee" ? "platform_fee" : "entry_fee", maxCommissionRate: Number(l.get("maxCommissionRate") || 0), levels: J(l) } })) }), A && (A.textContent = "\u4FDD\u5B58\u6210\u529F\uFF0C\u6B63\u5728\u5237\u65B0..."), await q();
+      await d("/admin-api/game-config", { method: "POST", body: JSON.stringify(U({ transfer: { enabled: String(l.get("transferEnabled")) === "true", minAmount: Number(l.get("transferMinAmount") || 0), maxAmount: Number(l.get("transferMaxAmount") || 0), dailyLimitAmount: Number(l.get("transferDailyLimitAmount") || 0), feeRate: Number(l.get("transferFeeRate") || 0), feeMinAmount: Number(l.get("transferFeeMinAmount") || 0), cooldownSeconds: Number(l.get("transferCooldownSeconds") || 0) }, inviteRewards: { enabled: String(l.get("inviteEnabled")) === "true", bindEnabled: String(l.get("inviteBindEnabled")) === "true", qualificationEnabled: String(l.get("qualificationEnabled")) === "true", qualificationRequiredBattles: Number(l.get("qualificationRequiredBattles") || 2), qualificationRewardAmount: Number(l.get("qualificationRewardAmount") || 0), battleCommissionEnabled: String(l.get("battleCommissionEnabled")) === "true", commissionBase: String(l.get("commissionBase") || "entry_fee") === "platform_fee" ? "platform_fee" : "entry_fee", maxCommissionRate: Number(l.get("maxCommissionRate") || 0), levels: J(l) }, engagement: { enabled: String(l.get("engagementEnabled")) === "true", dailySignIn: { enabled: String(l.get("dailySignInEnabled")) === "true", title: String(l.get("dailySignInTitle") || "\u6BCF\u65E5\u7B7E\u5230"), rewardAmount: Number(l.get("dailySignInReward") || 0) }, tasks: buildEngagementTasks(l) } })) }), A && (A.textContent = "\u4FDD\u5B58\u6210\u529F\uFF0C\u6B63\u5728\u5237\u65B0..."), await q();
     } catch (p) {
       A && (A.textContent = g(p));
     }
@@ -2035,8 +2104,8 @@ async function q() {
       return;
     }
     st();
-    const [e, t, a, n, s, r, o, m, R, y, x, j, A, B, w, L, T, C, M, U, J] = await Promise.all([d("/admin-api/auth/me"), d("/admin-api/home-config"), d("/admin-api/pi-config"), d("/admin-api/game-config"), d("/admin-api/dashboard/overview"), d("/admin-api/matches/rooms"), d("/admin-api/payments/orders"), d("/admin-api/users"), d("/admin-api/wallets"), d("/admin-api/wallet-ledgers"), d("/admin-api/battle-rooms"), d("/admin-api/withdraw/orders"), d("/admin-api/reconciliation/report"), d("/admin-api/risk-audit/report"), d("/admin-api/audit-logs"), d("/admin-api/ranks/star-records"), d("/admin-api/ranks/daily-chests"), d("/admin-api/ranks/leaderboard"), d("/admin-api/ranks/weekly-settlements"), d("/admin-api/withdraw/ops").catch(() => null), d("/admin-api/growth/ops").catch(() => null)]);
-    te = U, Ne(e, t, a, n, s, r, o, m, R, y, x, j, A, B, w, L, T, C, M, J);
+    const [e, t, a, n, s, r, o, m, R, y, x, j, A, B, w, L, T, C, M, U, J, k] = await Promise.all([d("/admin-api/auth/me"), d("/admin-api/home-config"), d("/admin-api/pi-config"), d("/admin-api/game-config"), d("/admin-api/dashboard/overview"), d("/admin-api/matches/rooms"), d("/admin-api/payments/orders"), d("/admin-api/users"), d("/admin-api/wallets"), d("/admin-api/wallet-ledgers"), d("/admin-api/battle-rooms"), d("/admin-api/withdraw/orders"), d("/admin-api/reconciliation/report"), d("/admin-api/risk-audit/report"), d("/admin-api/audit-logs"), d("/admin-api/ranks/star-records"), d("/admin-api/ranks/daily-chests"), d("/admin-api/ranks/leaderboard"), d("/admin-api/ranks/weekly-settlements"), d("/admin-api/withdraw/ops").catch(() => null), d("/admin-api/growth/ops").catch(() => null), d("/admin-api/engagement/claims").catch(() => [])]);
+    te = U, Ne(e, t, a, n, s, r, o, m, R, y, x, j, A, B, w, L, T, C, M, { ...(J || {}), engagementClaims: k || [] });
   } catch (e) {
     localStorage.removeItem("blitz_admin_token"), ae(`\u540E\u53F0\u52A0\u8F7D\u5931\u8D25\uFF1A${g(e)}`);
   }

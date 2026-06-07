@@ -59,6 +59,12 @@ const {
   getAdminGrowthOps
 } = require("../controllers/growth.controller");
 const {
+  claimMyDailySignIn,
+  claimMyDailyTask,
+  getAdminEngagementClaims,
+  getMyEngagementStatus
+} = require("../controllers/engagement.controller");
+const {
   createRechargeOrder,
   approveRechargePayment,
   completeRechargePayment,
@@ -218,6 +224,22 @@ async function handleRoutes(req, res) {
 
   if (url === "/api/invite/claim" && method === "POST") {
     ok(res, await claimMyInviteRewards(req), "领取成功");
+    return;
+  }
+
+  if (url === "/api/engagement/me" && method === "GET") {
+    ok(res, await getMyEngagementStatus(req));
+    return;
+  }
+
+  if (url === "/api/engagement/sign-in/claim" && method === "POST") {
+    ok(res, await claimMyDailySignIn(req), "签到成功");
+    return;
+  }
+
+  if (url === "/api/engagement/task/claim" && method === "POST") {
+    const payload = await readJsonBody(req);
+    ok(res, await claimMyDailyTask(req, payload), "领取成功");
     return;
   }
 
@@ -507,6 +529,11 @@ async function handleRoutes(req, res) {
 
   if (url === "/admin-api/growth/ops" && method === "GET") {
     ok(res, await getAdminGrowthOps());
+    return;
+  }
+
+  if (url === "/admin-api/engagement/claims" && method === "GET") {
+    ok(res, await getAdminEngagementClaims());
     return;
   }
 

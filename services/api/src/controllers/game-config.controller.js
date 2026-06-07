@@ -84,6 +84,23 @@ async function getPublicGameConfig() {
         minDirectInvites: Number(level.minDirectInvites || 0)
       }))
     },
+    engagement: {
+      enabled: config.engagement?.enabled !== false,
+      dailySignIn: {
+        enabled: config.engagement?.dailySignIn?.enabled !== false,
+        title: config.engagement?.dailySignIn?.title || "每日签到",
+        rewardAmount: Number(config.engagement?.dailySignIn?.rewardAmount || 0)
+      },
+      tasks: (config.engagement?.tasks || [])
+        .filter((task) => task.enabled !== false)
+        .map((task) => ({
+          key: task.key,
+          title: task.title,
+          condition: task.condition,
+          requiredCount: Number(task.requiredCount || 1),
+          rewardAmount: Number(task.rewardAmount || 0)
+        }))
+    },
     visualEffects: {
       defaultMode: config.visualEffects?.defaultMode || "balanced",
       piBrowserDefaultMode: config.visualEffects?.piBrowserDefaultMode || "balanced",

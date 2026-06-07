@@ -176,6 +176,40 @@ const DEFAULT_GAME_CONFIG = {
       }
     ]
   },
+  engagement: {
+    enabled: true,
+    dailySignIn: {
+      enabled: true,
+      title: "每日签到",
+      rewardAmount: 0.01
+    },
+    tasks: [
+      {
+        key: "play_1",
+        title: "完成1局",
+        condition: "battle_count",
+        requiredCount: 1,
+        rewardAmount: 0.01,
+        enabled: true
+      },
+      {
+        key: "play_3",
+        title: "完成3局",
+        condition: "battle_count",
+        requiredCount: 3,
+        rewardAmount: 0.02,
+        enabled: true
+      },
+      {
+        key: "win_1",
+        title: "赢1局",
+        condition: "win_count",
+        requiredCount: 1,
+        rewardAmount: 0.02,
+        enabled: true
+      }
+    ]
+  },
   visualEffects: {
     defaultMode: "balanced",
     piBrowserDefaultMode: "balanced",
@@ -644,6 +678,54 @@ function normalizeInviteRewardsConfig(inviteRewards = {}) {
   };
 }
 
+function normalizeEngagementTask(task = {}, index = 0) {
+  const defaults = DEFAULT_GAME_CONFIG.engagement.tasks[index] || DEFAULT_GAME_CONFIG.engagement.tasks[0];
+  const requiredCount = Number(task.requiredCount);
+  const rewardAmount = Number(task.rewardAmount);
+  const condition = String(task.condition || defaults.condition || "battle_count");
+  const safeConditions = ["battle_count", "win_count", "paid_battle_count"];
+
+  return {
+    key: String(task.key || defaults.key || `task_${index + 1}`)
+      .trim()
+      .replace(/[^a-zA-Z0-9_-]/g, "")
+      .slice(0, 32),
+    title: String(task.title || defaults.title || `每日任务${index + 1}`).trim().slice(0, 16),
+    condition: safeConditions.includes(condition) ? condition : defaults.condition,
+    requiredCount:
+      Number.isFinite(requiredCount) && requiredCount >= 1 && requiredCount <= 50
+        ? Math.round(requiredCount)
+        : defaults.requiredCount,
+    rewardAmount:
+      Number.isFinite(rewardAmount) && rewardAmount >= 0 && rewardAmount <= 10
+        ? Number(rewardAmount.toFixed(8))
+        : defaults.rewardAmount,
+    enabled: task.enabled !== false
+  };
+}
+
+function normalizeEngagementConfig(engagement = {}) {
+  const defaults = DEFAULT_GAME_CONFIG.engagement;
+  const dailyReward = Number(engagement.dailySignIn?.rewardAmount);
+  const sourceTasks = Array.isArray(engagement.tasks) && engagement.tasks.length ? engagement.tasks : defaults.tasks;
+
+  return {
+    enabled: engagement.enabled !== false,
+    dailySignIn: {
+      enabled: engagement.dailySignIn?.enabled !== false,
+      title: String(engagement.dailySignIn?.title || defaults.dailySignIn.title).trim().slice(0, 16),
+      rewardAmount:
+        Number.isFinite(dailyReward) && dailyReward >= 0 && dailyReward <= 10
+          ? Number(dailyReward.toFixed(8))
+          : defaults.dailySignIn.rewardAmount
+    },
+    tasks: sourceTasks
+      .slice(0, 6)
+      .map(normalizeEngagementTask)
+      .filter((task) => task.key && task.title)
+  };
+}
+
 function normalizeVisualEffectsConfig(visualEffects = {}) {
   const defaults = DEFAULT_GAME_CONFIG.visualEffects;
   const modes = ["balanced", "high"];
@@ -881,6 +963,7 @@ async function readGameConfig() {
         rechargeBonus: normalizeRechargeBonusConfig(value.rechargeBonus),
         transfer: normalizeTransferConfig(value.transfer),
         inviteRewards: normalizeInviteRewardsConfig(value.inviteRewards),
+        engagement: normalizeEngagementConfig(value.engagement),
         visualEffects: normalizeVisualEffectsConfig(value.visualEffects),
         timing: normalizeTimingConfig(value.timing),
         capacity: normalizeCapacityConfig(value.capacity),
@@ -909,6 +992,7 @@ function normalizeConfig(payload) {
   const rechargeBonus = normalizeRechargeBonusConfig(payload.rechargeBonus);
   const transfer = normalizeTransferConfig(payload.transfer);
   const inviteRewards = normalizeInviteRewardsConfig(payload.inviteRewards);
+  const engagement = normalizeEngagementConfig(payload.engagement);
   const visualEffects = normalizeVisualEffectsConfig(payload.visualEffects);
   const assetGateway = normalizeAssetGatewayConfig(payload.assetGateway);
   const operation = {
@@ -932,6 +1016,7 @@ function normalizeConfig(payload) {
     rechargeBonus,
     transfer,
     inviteRewards,
+    engagement,
     visualEffects,
     operation: {
       maintenanceEnabled: Boolean(operation.maintenanceEnabled),
