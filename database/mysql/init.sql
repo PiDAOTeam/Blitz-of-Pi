@@ -1,8 +1,8 @@
-CREATE DATABASE IF NOT EXISTS blitz_of_pi
+CREATE DATABASE IF NOT EXISTS blitzhashpi
   DEFAULT CHARACTER SET utf8mb4
   DEFAULT COLLATE utf8mb4_unicode_ci;
 
-USE blitz_of_pi;
+USE blitzhashpi;
 
 CREATE TABLE IF NOT EXISTS system_configs (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -37,13 +37,15 @@ INSERT INTO system_configs (
     'englishName', 'Blitz of Pi',
     'heroButtons', JSON_ARRAY(
       JSON_OBJECT('code', 'quick_battle', 'label', '快速开战'),
-      JSON_OBJECT('code', 'arena', 'label', '比赛场')
+      JSON_OBJECT('code', 'points_battle', 'label', '小富豪'),
+      JSON_OBJECT('code', 'poc_battle', 'label', '大富豪'),
+      JSON_OBJECT('code', 'pi_battle', 'label', '超级富豪')
     ),
     'announcements', JSON_ARRAY(
       JSON_OBJECT(
         'id', 1,
-        'title', '项目骨架已创建',
-        'summary', '首页、后台、API、实时服务已进入正式工程结构。'
+        'title', '欢迎来到 Pi闪电战',
+        'summary', '快速开战免费练手，小富豪使用积分，大富豪使用 POC，超级富豪使用 Pi。'
       )
     ),
     'banners', JSON_ARRAY(

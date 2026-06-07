@@ -44,7 +44,7 @@ module.exports = {
         MYSQL_HOST: "127.0.0.1",
         MYSQL_PORT: 3306,
         MYSQL_USER: "blitzhashpi",
-        MYSQL_PASSWORD: process.env.MYSQL_PASSWORD || "change_me",
+        MYSQL_PASSWORD: process.env.MYSQL_PASSWORD || productionEnv.MYSQL_PASSWORD || "change_me",
         MYSQL_DATABASE: "blitzhashpi",
         REDIS_HOST: "127.0.0.1",
         REDIS_PORT: 6379,

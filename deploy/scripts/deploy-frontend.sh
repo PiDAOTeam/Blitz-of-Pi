@@ -3,22 +3,32 @@
 set -e
 
 PROJECT_ROOT="/www/wwwroot/blitzapi.hashpi.app"
-FRONTEND_ROOT="/www/wwwroot/blitz.hashpi.app"
+GAME_FRONTEND_ROOT="/www/wwwroot/blitz.hashpi.app"
+ADMIN_FRONTEND_ROOT="/www/wwwroot/blitzadmin.hashpi.app"
 
 cd "$PROJECT_ROOT"
 
-echo "[1/5] 安装依赖..."
+echo "[1/7] 安装依赖..."
 npm install
 
-echo "[2/5] 构建前端..."
+echo "[2/7] 构建用户端..."
 export VITE_API_BASE_URL="${VITE_API_BASE_URL:-https://blitzapi.hashpi.app}"
 export VITE_REALTIME_BASE_URL="${VITE_REALTIME_BASE_URL:-wss://blitzapi.hashpi.app/ws/}"
 npm run build:game
 
-echo "[3/5] 清理旧前端文件..."
-rm -rf "$FRONTEND_ROOT"/*
+echo "[3/7] 构建后台管理..."
+npm run build:admin
 
-echo "[4/5] 发布新前端文件..."
-cp -r apps/game-web/dist/* "$FRONTEND_ROOT"/
+echo "[4/7] 准备发布目录..."
+mkdir -p "$GAME_FRONTEND_ROOT"
+mkdir -p "$ADMIN_FRONTEND_ROOT"
 
-echo "[5/5] 前端部署完成"
+echo "[5/7] 发布用户端，保留 validation-key.txt..."
+find "$GAME_FRONTEND_ROOT" -mindepth 1 -maxdepth 1 ! -name "validation-key.txt" -exec rm -rf {} +
+cp -r apps/game-web/dist/* "$GAME_FRONTEND_ROOT"/
+
+echo "[6/7] 发布后台管理..."
+find "$ADMIN_FRONTEND_ROOT" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+cp -r apps/admin-web/dist/* "$ADMIN_FRONTEND_ROOT"/
+
+echo "[7/7] 前台和后台部署完成"

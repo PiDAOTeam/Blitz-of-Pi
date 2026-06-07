@@ -2,7 +2,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 function loadProductionEnv() {
-  const envPath = path.resolve(__dirname, "../..", ".env.production");
+  const envPath = path.resolve(__dirname, ".env.production");
 
   if (!fs.existsSync(envPath)) {
     return {};
@@ -32,7 +32,7 @@ module.exports = {
     {
       name: "blitz-api",
       script: "./services/api/src/main.js",
-      cwd: __dirname + "/../..",
+      cwd: __dirname,
       instances: 1,
       exec_mode: "fork",
       out_file: "./logs/api.out.log",
@@ -44,7 +44,7 @@ module.exports = {
         MYSQL_HOST: "127.0.0.1",
         MYSQL_PORT: 3306,
         MYSQL_USER: "blitzhashpi",
-        MYSQL_PASSWORD: process.env.MYSQL_PASSWORD || "change_me",
+        MYSQL_PASSWORD: process.env.MYSQL_PASSWORD || productionEnv.MYSQL_PASSWORD || "change_me",
         MYSQL_DATABASE: "blitzhashpi",
         REDIS_HOST: "127.0.0.1",
         REDIS_PORT: 6379,
@@ -55,7 +55,7 @@ module.exports = {
     {
       name: "blitz-realtime",
       script: "./services/realtime/src/main.js",
-      cwd: __dirname + "/../..",
+      cwd: __dirname,
       instances: 1,
       exec_mode: "fork",
       out_file: "./logs/realtime.out.log",
@@ -75,7 +75,7 @@ module.exports = {
     {
       name: "blitz-realtime-3002",
       script: "./services/realtime/src/main.js",
-      cwd: __dirname + "/../..",
+      cwd: __dirname,
       instances: 1,
       exec_mode: "fork",
       out_file: "./logs/realtime-3002.out.log",
@@ -95,7 +95,7 @@ module.exports = {
     {
       name: "blitz-realtime-3003",
       script: "./services/realtime/src/main.js",
-      cwd: __dirname + "/../..",
+      cwd: __dirname,
       instances: 1,
       exec_mode: "fork",
       out_file: "./logs/realtime-3003.out.log",
@@ -115,7 +115,7 @@ module.exports = {
     {
       name: "blitz-realtime-3004",
       script: "./services/realtime/src/main.js",
-      cwd: __dirname + "/../..",
+      cwd: __dirname,
       instances: 1,
       exec_mode: "fork",
       out_file: "./logs/realtime-3004.out.log",
