@@ -965,6 +965,10 @@ function renderDailyRewardEntry() {
     </button>
   `;
 }
+function dailyTaskModeText(e = []) {
+  const t = ["quick_battle", "points_battle", "poc_battle", "pi_battle"], r = (Array.isArray(e) ? e : []).filter((o) => t.includes(o));
+  return r.length ? `仅限：${r.map(I).join(" / ")}` : "仅限：小富豪 / 大富豪 / 超级富豪";
+}
 function renderDailyTaskItem(e) {
   const t = Math.min(100, Math.round(Number(e.progress || 0) / Math.max(1, Number(e.requiredCount || 1)) * 100)), r = e.claimed ? "\u5DF2\u9886\u53D6" : e.claimable ? `\u9886 ${b(e.rewardAmount)} Pi` : `${e.progress || 0}/${e.requiredCount || 1}`;
   return `
@@ -972,6 +976,7 @@ function renderDailyTaskItem(e) {
       <div>
         <strong>${i(e.title || "\u6BCF\u65E5\u4EFB\u52A1")}</strong>
         <span>${i(e.condition === "win_count" ? "\u80DC\u5229\u5BF9\u5C40" : e.condition === "paid_battle_count" ? "\u4ED8\u8D39\u5BF9\u5C40" : "\u5B8C\u6210\u5BF9\u5C40")} ${i(`${e.progress || 0}/${e.requiredCount || 1}`)}</span>
+        <small class="daily-task-modes">${i(dailyTaskModeText(e.modes))}</small>
       </div>
       <div class="daily-task-progress"><i style="width:${t}%"></i></div>
       <button type="button" data-claim-task="${i(e.key || "")}" ${e.claimable ? "" : "disabled"}>${i(r)}</button>
@@ -982,7 +987,7 @@ function openDailyRewards() {
   const e = a.engagement;
   if (!e?.enabled) return;
   document.querySelectorAll("#daily-reward-sheet-mask").forEach((u) => u.remove());
-  const t = e.dailySignIn || {}, r = t.claimed ? "\u4ECA\u65E5\u5DF2\u7B7E\u5230" : t.claimable ? `\u7B7E\u5230\u9886 ${b(t.rewardAmount)} Pi` : "\u6682\u4E0D\u53EF\u9886", o = (e.tasks || []).filter((u) => u.claimable).length;
+  const t = e.dailySignIn || {}, r = t.claimed ? "\u4ECA\u65E5\u5DF2\u7B7E\u5230" : t.claimable ? `\u7B7E\u5230\u9886 ${b(t.rewardAmount)}` : "\u6682\u4E0D\u53EF\u9886", o = (e.tasks || []).filter((u) => u.claimable).length;
   R.insertAdjacentHTML("beforeend", `
     <div class="mode-sheet-mask" id="daily-reward-sheet-mask">
       <section class="mode-sheet daily-reward-sheet">

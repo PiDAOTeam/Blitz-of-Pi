@@ -531,16 +531,18 @@ button.secondary {
   text-align: right;
 }
 .daily-reward-prize b {
-  color: #5a1d00;
+  color: #fff;
   font-size: 18px;
   line-height: 1;
+  text-shadow: 0 1px 2px rgba(80, 28, 0, .48);
 }
 .daily-reward-prize small {
   margin-top: 4px;
-  color: rgba(73, 28, 0, .75);
+  color: rgba(255, 255, 255, .92);
   font-size: 11px;
   font-weight: 1000;
   line-height: 1.2;
+  text-shadow: 0 1px 2px rgba(80, 28, 0, .42);
 }
 @keyframes dailyRewardShine {
   0%, 52% { transform: translateX(-88%); }
@@ -2229,6 +2231,20 @@ button:disabled {
   color: #fff5b9;
   font-size: 18px;
   line-height: 1.1;
+}
+.daily-task-modes {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 8px;
+  padding: 5px 9px;
+  border: 1px solid rgba(255, 226, 106, .34);
+  border-radius: 999px;
+  background: rgba(255, 214, 73, .13);
+  color: #ffe681;
+  font-size: 11px;
+  font-weight: 1000;
+  line-height: 1.25;
 }
 .daily-sign-card button,
 .daily-task-card button {
