@@ -118,10 +118,19 @@ const LOG_LIST_FILTERS = [
   { key: "config", label: "配置", match: (e) => e.targetType === "config" },
   { key: "auto_payout", label: "自动出款", match: (e) => String(e.action || "").startsWith("auto_payout_") }
 ];
+const ENGAGEMENT_PAID_MODES = ["points_battle", "poc_battle", "pi_battle"];
+const ENGAGEMENT_BATTLE_MODES = [
+  { key: "quick_battle", label: "快速开战" },
+  { key: "points_battle", label: "小富豪" },
+  { key: "poc_battle", label: "大富豪" },
+  { key: "pi_battle", label: "超级富豪" },
+  { key: "ticket_battle", label: "旧小富豪" },
+  { key: "rich_battle", label: "旧大富豪" }
+];
 const ENGAGEMENT_TASK_DEFAULTS = [
-  { key: "play_1", title: "完成1局", condition: "battle_count", requiredCount: 1, rewardAmount: 0.01, enabled: true },
-  { key: "play_3", title: "完成3局", condition: "battle_count", requiredCount: 3, rewardAmount: 0.02, enabled: true },
-  { key: "win_1", title: "赢1局", condition: "win_count", requiredCount: 1, rewardAmount: 0.02, enabled: true }
+  { key: "play_1", title: "完成1局", condition: "battle_count", requiredCount: 1, rewardAmount: 0.01, enabled: true, modes: ENGAGEMENT_PAID_MODES },
+  { key: "play_3", title: "完成3局", condition: "battle_count", requiredCount: 3, rewardAmount: 0.02, enabled: true, modes: ENGAGEMENT_PAID_MODES },
+  { key: "win_1", title: "赢1局", condition: "win_count", requiredCount: 1, rewardAmount: 0.02, enabled: true, modes: ENGAGEMENT_PAID_MODES }
 ];
 function filterPaymentOrders(e = []) {
   const t = PAYMENT_STATUS_FILTERS.find((a) => a.key === paymentStatusFilter) || PAYMENT_STATUS_FILTERS[0];
@@ -538,11 +547,28 @@ function Re(e) {
     } catch (r) {
       s && (s.textContent = g(r)), n.disabled = false;
     }
+  }), document.querySelector("#add-engagement-task")?.addEventListener("click", () => {
+    const a = document.querySelectorAll("[data-engagement-task-row]").length + 1;
+    document.querySelector("#engagement-task-list")?.insertAdjacentHTML("beforeend", engagementTaskRows([{
+      key: `task_${a}`,
+      title: `每日任务${a}`,
+      condition: "battle_count",
+      requiredCount: 1,
+      rewardAmount: 0,
+      enabled: true,
+      modes: ENGAGEMENT_PAID_MODES
+    }]));
+    he();
   }), document.querySelector("#add-weekly-tier")?.addEventListener("click", () => {
     document.querySelector("#weekly-tier-list")?.insertAdjacentHTML("beforeend", _e({ fromRank: 1, toRank: 1, amount: 0 })), he();
   }), he();
 }
 function he() {
+  document.querySelectorAll("[data-remove-engagement-task]").forEach((e) => {
+    e.dataset.bound !== "true" && (e.dataset.bound = "true", e.addEventListener("click", () => {
+      e.closest("[data-engagement-task-row]")?.remove();
+    }));
+  });
   document.querySelectorAll("[data-remove-weekly-tier]").forEach((e) => {
     e.dataset.bound !== "true" && (e.dataset.bound = "true", e.addEventListener("click", () => {
       e.closest("[data-weekly-tier-row]")?.remove();
@@ -1434,21 +1460,44 @@ function renderEngagementClaim(e) {
 function engagementConditionLabel(e = "") {
   return { battle_count: "\u5B8C\u6210\u5BF9\u5C40\u6570", win_count: "\u80DC\u5229\u5BF9\u5C40\u6570", paid_battle_count: "\u4ED8\u8D39\u5BF9\u5C40\u6570" }[e] || "\u5B8C\u6210\u5BF9\u5C40\u6570";
 }
+function engagementTaskModeChecks(e = [], t) {
+  const a = Array.isArray(e) && e.length ? e : ENGAGEMENT_PAID_MODES;
+  return `
+    <div class="engagement-mode-checks">
+      ${ENGAGEMENT_BATTLE_MODES.map((n) => `
+        <label>
+          <input type="checkbox" name="engagementTaskMode${t}" value="${n.key}" ${a.includes(n.key) ? "checked" : ""} />
+          <span>${i(n.label)}</span>
+        </label>
+      `).join("")}
+    </div>
+  `;
+}
 function engagementTaskRows(e = []) {
-  const t = Array.from({ length: 6 }, (a, n) => e[n] || ENGAGEMENT_TASK_DEFAULTS[n] || { key: `task_${n + 1}`, title: "", condition: "battle_count", requiredCount: 1, rewardAmount: 0, enabled: false });
+  const t = (e.length ? e : ENGAGEMENT_TASK_DEFAULTS).map((a, n) => ({ ...ENGAGEMENT_TASK_DEFAULTS[n], ...a }));
   return t.map((a, n) => `
-    <div class="rank-row">
-      <label><span>\u4EFB\u52A1\u5F00\u5173</span><select name="engagementTaskEnabled${n}">
-        <option value="true" ${a.enabled !== false ? "selected" : ""}>\u5F00\u542F</option>
-        <option value="false" ${a.enabled === false ? "selected" : ""}>\u5173\u95ED</option>
-      </select></label>
-      <label><span>\u4EFB\u52A1\u7F16\u53F7</span><input name="engagementTaskKey${n}" value="${i(a.key || `task_${n + 1}`)}" /></label>
-      <label><span>\u524D\u53F0\u6807\u9898</span><input name="engagementTaskTitle${n}" value="${i(a.title || "")}" /></label>
-      <label><span>\u5B8C\u6210\u6761\u4EF6</span><select name="engagementTaskCondition${n}">
-        ${["battle_count", "win_count", "paid_battle_count"].map((s) => `<option value="${s}" ${a.condition === s ? "selected" : ""}>${engagementConditionLabel(s)}</option>`).join("")}
-      </select></label>
-      <label><span>\u9700\u8981\u6570\u91CF</span><input name="engagementTaskRequired${n}" type="number" inputmode="decimal" min="1" max="50" step="1" value="${a.requiredCount ?? 1}" /></label>
-      <label><span>\u5956\u52B1 Pi</span><input name="engagementTaskReward${n}" type="number" inputmode="decimal" min="0" max="10" step="0.001" value="${a.rewardAmount ?? 0}" /></label>
+    <div class="engagement-task-card" data-engagement-task-row>
+      <div class="engagement-task-head">
+        <strong>${i(a.title || `每日任务${n + 1}`)}</strong>
+        <button type="button" data-remove-engagement-task>\u5220\u9664</button>
+      </div>
+      <div class="growth-config-grid">
+        <label><span>\u4EFB\u52A1\u5F00\u5173</span><select data-engagement-task-enabled>
+          <option value="true" ${a.enabled !== false ? "selected" : ""}>\u5F00\u542F</option>
+          <option value="false" ${a.enabled === false ? "selected" : ""}>\u5173\u95ED</option>
+        </select></label>
+        <label><span>\u4EFB\u52A1\u7F16\u53F7</span><input data-engagement-task-key value="${i(a.key || `task_${n + 1}`)}" /></label>
+        <label><span>\u524D\u53F0\u6807\u9898</span><input data-engagement-task-title value="${i(a.title || "")}" /></label>
+        <label><span>\u5B8C\u6210\u6761\u4EF6</span><select data-engagement-task-condition>
+          ${["battle_count", "win_count", "paid_battle_count"].map((s) => `<option value="${s}" ${a.condition === s ? "selected" : ""}>${engagementConditionLabel(s)}</option>`).join("")}
+        </select></label>
+        <label><span>\u9700\u8981\u6570\u91CF</span><input data-engagement-task-required type="number" inputmode="decimal" min="1" max="50" step="1" value="${a.requiredCount ?? 1}" /></label>
+        <label><span>\u5956\u52B1 Pi</span><input data-engagement-task-reward type="number" inputmode="decimal" min="0" max="10" step="0.001" value="${a.rewardAmount ?? 0}" /></label>
+      </div>
+      <label class="engagement-task-modes">
+        <span>\u7EDF\u8BA1\u54EA\u4E9B\u573A\u6B21</span>
+        ${engagementTaskModeChecks(a.modes, n)}
+      </label>
     </div>
   `).join("");
 }
@@ -1535,9 +1584,16 @@ function ft(e, t) {
           <label><span>\u7B7E\u5230\u5956\u52B1 Pi</span><input name="dailySignInReward" type="number" inputmode="decimal" min="0" max="10" step="0.001" value="${engagement.dailySignIn?.rewardAmount ?? 0}" /></label>
         </div>
         <div class="avatar-config rank-config">
-          <strong>\u6BCF\u65E5\u4EFB\u52A1</strong>
-          <p class="meta">\u524D\u53F0\u4F1A\u81EA\u52A8\u663E\u793A\u53EF\u9886\u53D6\u72B6\u6001\uFF1B\u5956\u52B1\u8FDB\u5165\u9879\u76EE\u5185 Pi \u94B1\u5305\u6D41\u6C34\u3002</p>
-          ${engagementTaskRows(engagement.tasks || [])}
+          <div class="engagement-task-title-row">
+            <div>
+              <strong>\u6BCF\u65E5\u4EFB\u52A1</strong>
+              <p class="meta">\u9ED8\u8BA4\u4E0D\u7EDF\u8BA1\u5FEB\u901F\u5F00\u6218\uFF1B\u53EF\u6307\u5B9A\u53EA\u8BA9\u5C0F\u5BCC\u8C6A\u3001\u5927\u5BCC\u8C6A\u3001\u8D85\u7EA7\u5BCC\u8C6A\u751F\u6548\uFF0C\u5F15\u5BFC\u7528\u6237\u6D88\u8017\u79EF\u5206/POC/Pi\u3002</p>
+            </div>
+            <button type="button" id="add-engagement-task">\u65B0\u589E\u4EFB\u52A1</button>
+          </div>
+          <div id="engagement-task-list">
+            ${engagementTaskRows(engagement.tasks || [])}
+          </div>
         </div>
         <button type="submit">\u4FDD\u5B58\u589E\u957F\u914D\u7F6E</button>
         <p id="growth-config-status" class="status"></p>
@@ -1921,8 +1977,16 @@ function Ut(e, t, a) {
   function J(c) {
     return [0, 1, 2, 3, 4, 5].map((l) => ({ key: String(c.get(`inviteLevelKey${l}`) || "").trim(), name: String(c.get(`inviteLevelName${l}`) || "").trim(), commissionRate: Number(c.get(`inviteLevelRate${l}`) || 0), minBalance: Number(c.get(`inviteLevelMinBalance${l}`) || 0), minDirectInvites: Number(c.get(`inviteLevelMinInvites${l}`) || 0), enabled: String(c.get(`inviteLevelEnabled${l}`)) === "true" })).filter((l) => l.key && l.name);
   }
-  function buildEngagementTasks(c) {
-    return [0, 1, 2, 3, 4, 5].map((l) => ({ key: String(c.get(`engagementTaskKey${l}`) || "").trim(), title: String(c.get(`engagementTaskTitle${l}`) || "").trim(), condition: String(c.get(`engagementTaskCondition${l}`) || "battle_count"), requiredCount: Number(c.get(`engagementTaskRequired${l}`) || 1), rewardAmount: Number(c.get(`engagementTaskReward${l}`) || 0), enabled: String(c.get(`engagementTaskEnabled${l}`)) === "true" })).filter((l) => l.key && l.title);
+  function buildEngagementTasks() {
+    return Array.from(j?.querySelectorAll("[data-engagement-task-row]") || []).map((c) => ({
+      key: String(c.querySelector("[data-engagement-task-key]")?.value || "").trim(),
+      title: String(c.querySelector("[data-engagement-task-title]")?.value || "").trim(),
+      condition: String(c.querySelector("[data-engagement-task-condition]")?.value || "battle_count"),
+      requiredCount: Number(c.querySelector("[data-engagement-task-required]")?.value || 1),
+      rewardAmount: Number(c.querySelector("[data-engagement-task-reward]")?.value || 0),
+      enabled: String(c.querySelector("[data-engagement-task-enabled]")?.value) === "true",
+      modes: Array.from(c.querySelectorAll("input[type=checkbox]:checked")).map((l) => l.value).filter(Boolean)
+    })).filter((c) => c.key && c.title);
   }
   function k(c) {
     const l = (u, b) => ({ key: u.key || D.normalTiles[b]?.key || `tile_${b + 1}`, name: String(c.get(`tileName${b}`) || u.name), label: String(c.get(`tileLabel${b}`) || ""), color: String(c.get(`tileColor${b}`) || u.color), textColor: String(c.get(`tileTextColor${b}`) || u.textColor), imageUrl: String(c.get(`tileImageUrl${b}`) || "").trim() }), p = (u, b) => ({ name: String(c.get(`specialTileName_${u}`) || b.name), label: String(c.get(`specialTileLabel_${u}`) || b.label), color: String(c.get(`specialTileColor_${u}`) || b.color), textColor: String(c.get(`specialTileTextColor_${u}`) || b.textColor), imageUrl: String(c.get(`specialTileImageUrl_${u}`) || "").trim() });
@@ -1947,7 +2011,7 @@ function Ut(e, t, a) {
     const l = new FormData(j);
     A && (A.textContent = "\u4FDD\u5B58\u4E2D...");
     try {
-      await d("/admin-api/game-config", { method: "POST", body: JSON.stringify(U({ transfer: { enabled: String(l.get("transferEnabled")) === "true", minAmount: Number(l.get("transferMinAmount") || 0), maxAmount: Number(l.get("transferMaxAmount") || 0), dailyLimitAmount: Number(l.get("transferDailyLimitAmount") || 0), feeRate: Number(l.get("transferFeeRate") || 0), feeMinAmount: Number(l.get("transferFeeMinAmount") || 0), cooldownSeconds: Number(l.get("transferCooldownSeconds") || 0) }, inviteRewards: { enabled: String(l.get("inviteEnabled")) === "true", bindEnabled: String(l.get("inviteBindEnabled")) === "true", qualificationEnabled: String(l.get("qualificationEnabled")) === "true", qualificationRequiredBattles: Number(l.get("qualificationRequiredBattles") || 2), qualificationRewardAmount: Number(l.get("qualificationRewardAmount") || 0), battleCommissionEnabled: String(l.get("battleCommissionEnabled")) === "true", commissionBase: String(l.get("commissionBase") || "entry_fee") === "platform_fee" ? "platform_fee" : "entry_fee", maxCommissionRate: Number(l.get("maxCommissionRate") || 0), levels: J(l) }, engagement: { enabled: String(l.get("engagementEnabled")) === "true", dailySignIn: { enabled: String(l.get("dailySignInEnabled")) === "true", title: String(l.get("dailySignInTitle") || "\u6BCF\u65E5\u7B7E\u5230"), rewardAmount: Number(l.get("dailySignInReward") || 0) }, tasks: buildEngagementTasks(l) } })) }), A && (A.textContent = "\u4FDD\u5B58\u6210\u529F\uFF0C\u6B63\u5728\u5237\u65B0..."), await q();
+      await d("/admin-api/game-config", { method: "POST", body: JSON.stringify(U({ transfer: { enabled: String(l.get("transferEnabled")) === "true", minAmount: Number(l.get("transferMinAmount") || 0), maxAmount: Number(l.get("transferMaxAmount") || 0), dailyLimitAmount: Number(l.get("transferDailyLimitAmount") || 0), feeRate: Number(l.get("transferFeeRate") || 0), feeMinAmount: Number(l.get("transferFeeMinAmount") || 0), cooldownSeconds: Number(l.get("transferCooldownSeconds") || 0) }, inviteRewards: { enabled: String(l.get("inviteEnabled")) === "true", bindEnabled: String(l.get("inviteBindEnabled")) === "true", qualificationEnabled: String(l.get("qualificationEnabled")) === "true", qualificationRequiredBattles: Number(l.get("qualificationRequiredBattles") || 2), qualificationRewardAmount: Number(l.get("qualificationRewardAmount") || 0), battleCommissionEnabled: String(l.get("battleCommissionEnabled")) === "true", commissionBase: String(l.get("commissionBase") || "entry_fee") === "platform_fee" ? "platform_fee" : "entry_fee", maxCommissionRate: Number(l.get("maxCommissionRate") || 0), levels: J(l) }, engagement: { enabled: String(l.get("engagementEnabled")) === "true", dailySignIn: { enabled: String(l.get("dailySignInEnabled")) === "true", title: String(l.get("dailySignInTitle") || "\u6BCF\u65E5\u7B7E\u5230"), rewardAmount: Number(l.get("dailySignInReward") || 0) }, tasks: buildEngagementTasks() } })) }), A && (A.textContent = "\u4FDD\u5B58\u6210\u529F\uFF0C\u6B63\u5728\u5237\u65B0..."), await q();
     } catch (p) {
       A && (A.textContent = g(p));
     }

@@ -2,6 +2,16 @@ const { query, transaction } = require("../db/mysql");
 const { readGameConfig } = require("./game-config.repository");
 const { increaseBalance } = require("./wallet.repository");
 
+const SUPPORTED_BATTLE_MODES = [
+  "quick_battle",
+  "points_battle",
+  "poc_battle",
+  "pi_battle",
+  "ticket_battle",
+  "rich_battle"
+];
+const DEFAULT_TASK_MODES = ["points_battle", "poc_battle", "pi_battle"];
+
 function executor(connection) {
   return connection || {
     execute: (sql, params) => query(sql, params).then((rows) => [rows])
@@ -44,11 +54,34 @@ async function listTodayClaims(uid, connection = null) {
   return rows;
 }
 
-async function getTodayBattleStats(uid, config) {
-  const modes = ["quick_battle", "points_battle", "poc_battle", "pi_battle", "ticket_battle", "rich_battle"];
+function normalizeTaskModes(task = {}) {
+  const source = Array.isArray(task.modes) && task.modes.length ? task.modes : DEFAULT_TASK_MODES;
+  const modes = source
+    .map((mode) => String(mode || "").trim())
+    .filter((mode, index, list) => SUPPORTED_BATTLE_MODES.includes(mode) && list.indexOf(mode) === index);
+  return modes.length ? modes : DEFAULT_TASK_MODES;
+}
+
+function sumStatsByModes(rows = [], modes = DEFAULT_TASK_MODES) {
+  const modeSet = new Set(modes);
+  return rows.reduce(
+    (stats, row) => {
+      if (!modeSet.has(row.mode)) return stats;
+      stats.battle_count += Number(row.battle_count || 0);
+      stats.win_count += Number(row.win_count || 0);
+      stats.paid_battle_count += Number(row.paid_battle_count || 0);
+      return stats;
+    },
+    { battle_count: 0, win_count: 0, paid_battle_count: 0 }
+  );
+}
+
+async function getTodayBattleStats(uid) {
+  const modes = SUPPORTED_BATTLE_MODES;
   const placeholders = modes.map(() => "?").join(",");
   const rows = await query(
     `SELECT
+       mode,
        COUNT(*) AS battle_count,
        SUM(CASE WHEN winner_uid = ? THEN 1 ELSE 0 END) AS win_count,
        SUM(CASE WHEN entry_fee > 0 THEN 1 ELSE 0 END) AS paid_battle_count
@@ -57,19 +90,20 @@ async function getTodayBattleStats(uid, config) {
        AND is_bot_room = 0
        AND DATE(finished_at) = CURDATE()
        AND (player_a_uid = ? OR player_b_uid = ?)
-       AND mode IN (${placeholders})`,
+       AND mode IN (${placeholders})
+     GROUP BY mode`,
     [uid, uid, uid, ...modes]
   );
 
   return {
-    battle_count: Number(rows[0]?.battle_count || 0),
-    win_count: Number(rows[0]?.win_count || 0),
-    paid_battle_count: Number(rows[0]?.paid_battle_count || 0)
+    byMode: rows,
+    total: sumStatsByModes(rows, modes)
   };
 }
 
 function getTaskProgress(task, stats) {
-  return Number(stats[task.condition] || 0);
+  const taskStats = sumStatsByModes(stats.byMode || [], normalizeTaskModes(task));
+  return Number(taskStats[task.condition] || 0);
 }
 
 function toClaimKey(claim) {
@@ -101,6 +135,7 @@ function buildStatus(config, claims, stats) {
         key: task.key,
         title: task.title,
         condition: task.condition,
+        modes: normalizeTaskModes(task),
         requiredCount,
         progress,
         rewardAmount: Number(task.rewardAmount || 0),

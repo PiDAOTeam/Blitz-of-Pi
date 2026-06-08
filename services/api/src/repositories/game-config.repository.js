@@ -11,6 +11,7 @@ const SUPPORTED_BATTLE_MODES = [
   "rich_battle"
 ];
 const DEFAULT_RANKED_MODES = ["points_battle", "poc_battle", "pi_battle"];
+const DEFAULT_ENGAGEMENT_TASK_MODES = ["points_battle", "poc_battle", "pi_battle"];
 
 const DEFAULT_GAME_CONFIG = {
   quickBattle: {
@@ -190,7 +191,8 @@ const DEFAULT_GAME_CONFIG = {
         condition: "battle_count",
         requiredCount: 1,
         rewardAmount: 0.01,
-        enabled: true
+        enabled: true,
+        modes: DEFAULT_ENGAGEMENT_TASK_MODES
       },
       {
         key: "play_3",
@@ -198,7 +200,8 @@ const DEFAULT_GAME_CONFIG = {
         condition: "battle_count",
         requiredCount: 3,
         rewardAmount: 0.02,
-        enabled: true
+        enabled: true,
+        modes: DEFAULT_ENGAGEMENT_TASK_MODES
       },
       {
         key: "win_1",
@@ -206,7 +209,8 @@ const DEFAULT_GAME_CONFIG = {
         condition: "win_count",
         requiredCount: 1,
         rewardAmount: 0.02,
-        enabled: true
+        enabled: true,
+        modes: DEFAULT_ENGAGEMENT_TASK_MODES
       }
     ]
   },
@@ -684,6 +688,10 @@ function normalizeEngagementTask(task = {}, index = 0) {
   const rewardAmount = Number(task.rewardAmount);
   const condition = String(task.condition || defaults.condition || "battle_count");
   const safeConditions = ["battle_count", "win_count", "paid_battle_count"];
+  const sourceModes = Array.isArray(task.modes) ? task.modes : defaults.modes;
+  const modes = sourceModes
+    .map((mode) => String(mode || "").trim())
+    .filter((mode, modeIndex, list) => SUPPORTED_BATTLE_MODES.includes(mode) && list.indexOf(mode) === modeIndex);
 
   return {
     key: String(task.key || defaults.key || `task_${index + 1}`)
@@ -700,7 +708,8 @@ function normalizeEngagementTask(task = {}, index = 0) {
       Number.isFinite(rewardAmount) && rewardAmount >= 0 && rewardAmount <= 10
         ? Number(rewardAmount.toFixed(8))
         : defaults.rewardAmount,
-    enabled: task.enabled !== false
+    enabled: task.enabled !== false,
+    modes: modes.length ? modes : DEFAULT_ENGAGEMENT_TASK_MODES
   };
 }
 
@@ -720,7 +729,7 @@ function normalizeEngagementConfig(engagement = {}) {
           : defaults.dailySignIn.rewardAmount
     },
     tasks: sourceTasks
-      .slice(0, 6)
+      .slice(0, 20)
       .map(normalizeEngagementTask)
       .filter((task) => task.key && task.title)
   };

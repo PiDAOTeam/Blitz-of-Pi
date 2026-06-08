@@ -97,6 +97,7 @@ async function getPublicGameConfig() {
           key: task.key,
           title: task.title,
           condition: task.condition,
+          modes: Array.isArray(task.modes) ? task.modes : [],
           requiredCount: Number(task.requiredCount || 1),
           rewardAmount: Number(task.rewardAmount || 0)
         }))

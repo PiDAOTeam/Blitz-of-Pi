@@ -23,12 +23,12 @@ echo "[4/7] 准备发布目录..."
 mkdir -p "$GAME_FRONTEND_ROOT"
 mkdir -p "$ADMIN_FRONTEND_ROOT"
 
-echo "[5/7] 发布用户端，保留 validation-key.txt..."
-find "$GAME_FRONTEND_ROOT" -mindepth 1 -maxdepth 1 ! -name "validation-key.txt" -exec rm -rf {} +
+echo "[5/7] 发布用户端，保留 validation-key.txt 和 .user.ini..."
+find "$GAME_FRONTEND_ROOT" -mindepth 1 -maxdepth 1 ! -name "validation-key.txt" ! -name ".user.ini" -exec rm -rf {} +
 cp -r apps/game-web/dist/* "$GAME_FRONTEND_ROOT"/
 
-echo "[6/7] 发布后台管理..."
-find "$ADMIN_FRONTEND_ROOT" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+echo "[6/7] 发布后台管理，保留 .user.ini..."
+find "$ADMIN_FRONTEND_ROOT" -mindepth 1 -maxdepth 1 ! -name ".user.ini" -exec rm -rf {} +
 cp -r apps/admin-web/dist/* "$ADMIN_FRONTEND_ROOT"/
 
 echo "[7/7] 前台和后台部署完成"
