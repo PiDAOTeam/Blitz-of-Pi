@@ -360,6 +360,13 @@ function formatModeAmount(e, t) {
   const r = modeAssetType(e), o = Number(t || 0);
   return r === "POINTS" ? `${Math.floor(o)} \u79EF\u5206` : r === "POC" ? `${Number(o || 0).toFixed(2).replace(/\.?0+$/, "")} POC` : r === "FREE" ? n("modeEconomyFree") : b(o);
 }
+function formatHistoryTotal(e = []) {
+  const t = e.reduce((r, o) => {
+    const s = modeAssetType(o.mode);
+    return s === "FREE" ? r : (r[o.mode] = (r[o.mode] || 0) + Number(o.rewardAmount || 0), r);
+  }, {});
+  return Object.entries(t).filter(([, r]) => r > 0).map(([r, o]) => formatModeAmount(r, o)).join(" / ") || "0";
+}
 function assetUnitLabel(e) {
   const t = String(e || "").toUpperCase();
   return t === "POINTS" ? "\u79EF\u5206" : t || "-";
@@ -576,22 +583,22 @@ function mr(e, t = false) {
 function pr() {
   return a.effectiveVisualEffectMode === "low" || document.documentElement.classList.contains("low-performance") ? false : !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 }
-function fr(e, t) {
-  const r = Number(t || 0);
-  if (r <= 0 || !pr()) {
-    e.textContent = b(r);
+function fr(e, t, r = "pi_battle") {
+  const o = Number(t || 0), s = r || "pi_battle";
+  if (o <= 0 || !pr()) {
+    e.textContent = formatModeAmount(s, o);
     return;
   }
   V && (window.cancelAnimationFrame(V), V = null);
-  const o = performance.now(), s = a.effectiveVisualEffectMode === "high" ? 900 : 720, l = (c) => {
-    const d = Math.min(1, (c - o) / s), u = Ka(d);
-    if (e.textContent = b(r * u), d < 1) {
-      V = window.requestAnimationFrame(l);
+  const l = performance.now(), c = a.effectiveVisualEffectMode === "high" ? 900 : 720, d = (u) => {
+    const h = Math.min(1, (u - l) / c), p = Ka(h);
+    if (e.textContent = formatModeAmount(s, o * p), h < 1) {
+      V = window.requestAnimationFrame(d);
       return;
     }
-    e.textContent = b(r), V = null;
+    e.textContent = formatModeAmount(s, o), V = null;
   };
-  e.textContent = b(0), V = window.requestAnimationFrame(l);
+  e.textContent = formatModeAmount(s, 0), V = window.requestAnimationFrame(d);
 }
 function hr(e, t) {
   if (e.status !== "finished" || e.winnerUid !== t.uid) return;
@@ -601,7 +608,7 @@ function hr(e, t) {
   if (o === Nt) return;
   Nt = o;
   const s = document.querySelector("#settlement-reward-amount");
-  s && fr(s, r);
+  s && fr(s, r, e.mode);
 }
 function gr(e) {
   return typeof e != "string" ? e.mode === "quick_battle" ? Number(e.timing?.quickRoundSeconds || 75) : Number(e.timing?.paidRoundSeconds || 90) : e === "quick_battle" ? 75 : 90;
@@ -645,7 +652,7 @@ function wr(e) {
       ${l}
       <div class="battle-history">
         ${e.map((c) => {
-    const d = Qn(c.result), u = c.opponent?.nickname || c.opponent?.piUsername || n("unknownPlayer"), h = c.result === "win" ? n("rewardPlus", { amount: b(c.rewardAmount) }) : c.result === "draw" && c.entryFee > 0 ? n("drawRefund", { amount: b(c.entryFee) }) : c.entryFee > 0 ? n("ticketFee", { amount: b(c.entryFee) }) : n("freeMatch"), p = c.myScore > c.opponentScore ? "lead" : c.myScore < c.opponentScore ? "behind" : "draw";
+    const d = Qn(c.result), u = c.opponent?.nickname || c.opponent?.piUsername || n("unknownPlayer"), h = c.result === "win" ? n("rewardPlus", { amount: formatModeAmount(c.mode, c.rewardAmount) }) : c.result === "draw" && c.entryFee > 0 ? n("drawRefund", { amount: formatModeAmount(c.mode, c.entryFee) }) : c.entryFee > 0 ? n("ticketFee", { amount: formatModeAmount(c.mode, c.entryFee) }) : n("freeMatch"), p = c.myScore > c.opponentScore ? "lead" : c.myScore < c.opponentScore ? "behind" : "draw";
     return `
               <article class="history-card ${d}">
                 <div class="history-main">
@@ -676,7 +683,7 @@ function wr(e) {
   `;
 }
 function yr(e) {
-  const t = e.filter((l) => l.result === "win" || l.result === "lose" || l.result === "draw"), r = e.filter((l) => l.result === "win").length, o = t.length ? Math.round(r / t.length * 100) : 0, s = e.reduce((l, c) => l + Number(c.rewardAmount || 0), 0);
+  const t = e.filter((l) => l.result === "win" || l.result === "lose" || l.result === "draw"), r = e.filter((l) => l.result === "win").length, o = t.length ? Math.round(r / t.length * 100) : 0, s = formatHistoryTotal(e);
   return `
     <section class="mine-stats">
       <article>
@@ -693,7 +700,7 @@ function yr(e) {
       </article>
       <article>
         <span>${i(n("pageReward"))}</span>
-        <strong>${s.toFixed(4)} Pi</strong>
+        <strong>${i(s)}</strong>
       </article>
     </section>
   `;
@@ -2536,7 +2543,7 @@ function Ai(e, t, r, o) {
       <p>${i(n("startAfterCountdown"))}</p>
     </section>`;
   if (s) {
-    const p = Fi(e, t, o), f = e.winnerUid ? e.winnerUid === t.uid ? n("win") : n("lose") : n("draw"), m = e.winnerUid === t.uid, g = Math.abs(r.score - o.score), P = X(e.mode), C = ie(e.mode), T = C > 0 && !!e.winnerUid, U = T ? "" : modeAssetType(e.mode) === "PI" ? n("settlementNoReward") : a.language === "zh-CN" ? "本局无资产奖励" : "No asset reward", Te = formatModeAmount(e.mode, C), qe = P > 0 ? (a.language === "zh-CN" ? `入场费 ${formatModeAmount(e.mode, P)}` : `Entry ${formatModeAmount(e.mode, P)}`) : n("freeMatch"), gt = m ? n("winUpsell") : g > 0 && g <= 250 ? n("closeLossHint", { gap: g }) : n("loseRetryHint"), fa = e.mode === "quick_battle" && m && !o.isBot;
+    const p = Fi(e, t, o), f = e.winnerUid ? e.winnerUid === t.uid ? n("win") : n("lose") : n("draw"), m = e.winnerUid === t.uid, g = Math.abs(r.score - o.score), P = X(e.mode), C = ie(e.mode), T = C > 0 && !!e.winnerUid && m, U = T ? "" : modeAssetType(e.mode) === "PI" ? n("settlementNoReward") : a.language === "zh-CN" ? "本局无奖励" : "No reward", Te = formatModeAmount(e.mode, C), qe = P > 0 ? (a.language === "zh-CN" ? `入场费 ${formatModeAmount(e.mode, P)}` : `Entry ${formatModeAmount(e.mode, P)}`) : n("freeMatch"), gt = m ? n("winUpsell") : g > 0 && g <= 250 ? n("closeLossHint", { gap: g }) : n("loseRetryHint"), fa = e.mode === "quick_battle" && m && !o.isBot;
     return `<section class="finish-mask">
       <div class="finish-card">
         <p class="eyebrow">${i(n("battleSettlement"))}</p>
