@@ -6,6 +6,54 @@ function toNumber(value) {
   return Number(value || 0);
 }
 
+function getBattleAssetUnit(assetType = "") {
+  const normalized = String(assetType || "PI").toUpperCase();
+  if (normalized === "POINTS") return "积分";
+  if (normalized === "POC") return "POC";
+  return "Pi";
+}
+
+function buildBattleAssetSummary(rows = []) {
+  const orderedAssetTypes = ["PI", "POINTS", "POC"];
+  const byAssetType = new Map(
+    orderedAssetTypes.map((assetType) => [
+      assetType,
+      {
+        assetType,
+        assetUnit: getBattleAssetUnit(assetType),
+        totalRooms: 0,
+        playingRooms: 0,
+        finishedRooms: 0,
+        platformRevenue: 0
+      }
+    ])
+  );
+
+  for (const row of rows) {
+    const assetType = String(row.asset_type || "PI").toUpperCase();
+    const current = byAssetType.get(assetType) || {
+      assetType,
+      assetUnit: getBattleAssetUnit(assetType),
+      totalRooms: 0,
+      playingRooms: 0,
+      finishedRooms: 0,
+      platformRevenue: 0
+    };
+
+    byAssetType.set(assetType, {
+      ...current,
+      totalRooms: toNumber(row.total_rooms),
+      playingRooms: toNumber(row.playing_rooms),
+      finishedRooms: toNumber(row.finished_rooms),
+      platformRevenue: toNumber(row.platform_revenue)
+    });
+  }
+
+  return [
+    ...orderedAssetTypes.map((assetType) => byAssetType.get(assetType))
+  ];
+}
+
 const REQUIRED_LOCALES = ["zh-CN", "en", "vi", "ko", "ja"];
 
 const HOME_I18N_FIELDS = [
@@ -104,6 +152,7 @@ async function readReconciliationReport() {
     withdrawSummaryRows,
     withdrawRiskRows,
     battleSummaryRows,
+    battleAssetSummaryRows,
     battleRiskRows,
     missingRewardLedgerRows,
     missingEntryLedgerRows
@@ -188,30 +237,48 @@ async function readReconciliationReport() {
        FROM battle_rooms`
     ),
     query(
+      `SELECT
+         COALESCE(NULLIF(asset_type, ''), 'PI') AS asset_type,
+         COUNT(*) AS total_rooms,
+         SUM(CASE WHEN status = 'playing' THEN 1 ELSE 0 END) AS playing_rooms,
+         SUM(CASE WHEN status = 'finished' THEN 1 ELSE 0 END) AS finished_rooms,
+         COALESCE(SUM(CASE WHEN status = 'finished' THEN entry_fee * 2 - reward_amount ELSE 0 END), 0) AS platform_revenue
+       FROM battle_rooms
+       GROUP BY COALESCE(NULLIF(asset_type, ''), 'PI')`
+    ),
+    query(
       `SELECT room_no, mode, status, player_a_uid, player_b_uid, winner_uid,
-              entry_fee, reward_amount, is_bot_room, created_at, finished_at
+              entry_fee, reward_amount, asset_type, asset_settlement_status, asset_error,
+              is_bot_room, created_at, finished_at
        FROM battle_rooms
        WHERE (status = 'playing' AND created_at < DATE_SUB(NOW(), INTERVAL 5 MINUTE))
           OR (mode IN ('ticket_battle', 'rich_battle', 'points_battle', 'poc_battle', 'pi_battle') AND is_bot_room = 1)
           OR (status = 'finished' AND winner_uid = '' AND is_bot_room = 0 AND entry_fee > 0 AND reward_amount > 0
+              AND COALESCE(asset_type, 'PI') = 'PI'
               AND NOT EXISTS (
                 SELECT 1
                 FROM wallet_ledgers dl
                 WHERE dl.related_type = 'battle_draw_unlock'
                   AND dl.related_id IN (CONCAT(battle_rooms.room_no, ':', battle_rooms.player_a_uid), CONCAT(battle_rooms.room_no, ':', battle_rooms.player_b_uid))
               ))
+          OR (COALESCE(asset_type, 'PI') IN ('POINTS', 'POC')
+              AND status = 'finished'
+              AND entry_fee > 0
+              AND is_bot_room = 0
+              AND COALESCE(asset_settlement_status, '') NOT IN ('settled', 'released'))
        ORDER BY id DESC
        LIMIT 30`
     ),
     query(
       `SELECT b.room_no, b.winner_uid, uw.pi_username AS winner_pi_username, uw.nickname AS winner_nickname,
-              b.reward_amount, b.finished_at
+              b.reward_amount, b.asset_type, b.finished_at
        FROM battle_rooms b
        LEFT JOIN wallet_ledgers l
          ON l.related_type = 'battle_reward'
         AND l.related_id = b.room_no
        LEFT JOIN users uw ON uw.uid = b.winner_uid
        WHERE b.status = 'finished'
+         AND COALESCE(b.asset_type, 'PI') = 'PI'
          AND b.reward_amount > 0
          AND b.is_bot_room = 0
          AND b.winner_uid IS NOT NULL
@@ -221,14 +288,15 @@ async function readReconciliationReport() {
        LIMIT 30`
     ),
     query(
-      `SELECT b.room_no, b.player_a_uid, b.player_b_uid, b.entry_fee, COUNT(l.id) AS entry_ledger_count
+      `SELECT b.room_no, b.player_a_uid, b.player_b_uid, b.entry_fee, b.asset_type, COUNT(l.id) AS entry_ledger_count
        FROM battle_rooms b
        LEFT JOIN wallet_ledgers l
          ON l.related_type IN ('battle_room_entry', 'battle_room_entry_lock')
         AND l.related_id IN (CONCAT(b.room_no, ':', b.player_a_uid), CONCAT(b.room_no, ':', b.player_b_uid))
        WHERE b.entry_fee > 0
          AND b.is_bot_room = 0
-       GROUP BY b.room_no, b.player_a_uid, b.player_b_uid, b.entry_fee
+         AND COALESCE(b.asset_type, 'PI') = 'PI'
+       GROUP BY b.room_no, b.player_a_uid, b.player_b_uid, b.entry_fee, b.asset_type
        HAVING entry_ledger_count <> 2
        ORDER BY b.room_no DESC
        LIMIT 30`
@@ -238,6 +306,8 @@ async function readReconciliationReport() {
   const paymentSummary = paymentSummaryRows[0] || {};
   const withdrawSummary = withdrawSummaryRows[0] || {};
   const battleSummary = battleSummaryRows[0] || {};
+  const battleAssetSummary = buildBattleAssetSummary(battleAssetSummaryRows);
+  const piBattleSummary = battleAssetSummary.find((item) => item.assetType === "PI") || {};
 
   const i18nItems = await readI18nIssues();
 
@@ -314,7 +384,9 @@ async function readReconciliationReport() {
           targetId: row.room_no,
           user: `${row.player_a_uid} vs ${row.player_b_uid}`,
           amount: toNumber(row.reward_amount),
-          status: row.status,
+          assetType: row.asset_type || "PI",
+          assetUnit: getBattleAssetUnit(row.asset_type),
+          status: row.asset_error || row.asset_settlement_status || row.status,
           severity: ["ticket_battle", "rich_battle", "points_battle", "poc_battle", "pi_battle"].includes(row.mode)
             ? "danger"
             : "warning",
@@ -326,6 +398,8 @@ async function readReconciliationReport() {
           targetId: row.room_no,
           user: row.winner_nickname || row.winner_pi_username || row.winner_uid,
           amount: toNumber(row.reward_amount),
+          assetType: row.asset_type || "PI",
+          assetUnit: getBattleAssetUnit(row.asset_type),
           status: "finished",
           severity: "danger",
           hint: "需要核对奖励是否已发放。"
@@ -336,6 +410,8 @@ async function readReconciliationReport() {
           targetId: row.room_no,
           user: `${row.player_a_uid} vs ${row.player_b_uid}`,
           amount: toNumber(row.entry_fee),
+          assetType: row.asset_type || "PI",
+          assetUnit: getBattleAssetUnit(row.asset_type),
           status: `扣款流水 ${row.entry_ledger_count}/2`,
           severity: "danger",
           hint: "付费对战必须双方都有入场扣款流水。"
@@ -395,7 +471,8 @@ async function readReconciliationReport() {
         totalRooms: toNumber(battleSummary.total_rooms),
         playingRooms: toNumber(battleSummary.playing_rooms),
         finishedRooms: toNumber(battleSummary.finished_rooms),
-        platformRevenue: toNumber(battleSummary.platform_revenue)
+        platformRevenue: toNumber(piBattleSummary.platformRevenue),
+        assets: battleAssetSummary
       }
     },
     groups

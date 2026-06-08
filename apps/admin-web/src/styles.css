@@ -35,6 +35,28 @@ body {
   background: var(--panel);
   box-shadow: 0 20px 50px #3626161f;
 }
+.login-brand-mark,
+.brand-mark {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 2px solid rgba(255, 226, 156, .62);
+  background: #26004f;
+  box-shadow: 0 12px 28px rgba(74, 32, 10, .22);
+}
+.login-brand-mark {
+  width: 72px;
+  height: 72px;
+  margin-bottom: 14px;
+  border-radius: 22px;
+  transform: rotate(-5deg);
+}
+.brand-logo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 .login-card h1 {
   margin: 0;
   font-size: 34px;
@@ -49,13 +71,25 @@ body {
   background: #1d1a17;
   color: #fff;
 }
+.sidebar-brand {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 22px;
+}
+.sidebar .brand-mark {
+  flex: 0 0 auto;
+  width: 46px;
+  height: 46px;
+  border-radius: 15px;
+  transform: rotate(-5deg);
+}
 .sidebar h1 {
-  margin: 0 0 6px;
+  margin: 0 0 4px;
   font-size: 22px;
 }
 .build-version {
   display: block;
-  margin-bottom: 22px;
   color: #ffffff6b;
   font-size: 11px;
 }
@@ -270,6 +304,37 @@ body {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+}
+.asset-revenue-box {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.asset-revenue-box > div {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fffdf8;
+}
+.asset-revenue-box > div > span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+.asset-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: baseline;
+}
+.asset-line b {
+  font-size: 17px;
+}
+.asset-line small {
+  color: var(--muted);
+  font-size: 12px;
 }
 .match-ops-panel {
   gap: 14px;
@@ -562,6 +627,23 @@ body {
   color: #fff;
   font-weight: 800;
 }
+.rank-rule-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+.rank-rule-summary span {
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fffaf0;
+  color: #5f3b00;
+  font-size: 12px;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
 .rank-weekly-rewards {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -718,6 +800,23 @@ body {
 }
 .recon-card strong {
   font-size: 28px;
+}
+.recon-asset-revenue {
+  display: grid;
+  gap: 5px;
+}
+.recon-asset-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: baseline;
+}
+.recon-asset-line b {
+  color: var(--text);
+  font-size: 18px;
+}
+.recon-asset-line small {
+  font-size: 12px;
 }
 .recon-card.danger {
   border-color: #b4232f52;
@@ -1539,6 +1638,7 @@ body {
   .row-card,
   .rank-filter-bar,
   .rank-auto-panel,
+  .rank-rule-summary,
   .rank-weekly-rewards,
   .rank-row,
   .rank-record,

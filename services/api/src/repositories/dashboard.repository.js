@@ -3,6 +3,46 @@ const { redisGet, redisScan } = require("../db/redis");
 const { getActiveSessionStats } = require("./session.repository");
 const { readBattleObserverSnapshot } = require("../services/battle-observer.service");
 
+function toNumber(value) {
+  return Number(value || 0);
+}
+
+function getBattleAssetUnit(assetType = "") {
+  const normalized = String(assetType || "PI").toUpperCase();
+  if (normalized === "POINTS") return "积分";
+  if (normalized === "POC") return "POC";
+  return "Pi";
+}
+
+function buildBattleRevenueSummary(rows = []) {
+  const orderedAssetTypes = ["PI", "POINTS", "POC"];
+  const byAssetType = new Map(
+    orderedAssetTypes.map((assetType) => [
+      assetType,
+      {
+        assetType,
+        assetUnit: getBattleAssetUnit(assetType),
+        platformRevenue: 0,
+        finishedRooms: 0
+      }
+    ])
+  );
+
+  for (const row of rows) {
+    const assetType = String(row.asset_type || "PI").toUpperCase();
+    if (!byAssetType.has(assetType)) continue;
+
+    byAssetType.set(assetType, {
+      assetType,
+      assetUnit: getBattleAssetUnit(assetType),
+      platformRevenue: toNumber(row.platform_revenue),
+      finishedRooms: toNumber(row.finished_rooms)
+    });
+  }
+
+  return orderedAssetTypes.map((assetType) => byAssetType.get(assetType));
+}
+
 async function readRealtimeStats() {
   const keys = await redisScan("blitz:realtime:stats:*", 50);
   const rows = [];
@@ -97,7 +137,8 @@ async function readDashboard() {
     withdrawRows,
     pendingWithdrawRows,
     playingRows,
-    feeRows
+    todayFeeRows,
+    totalFeeRows
   ] = await Promise.all([
     query("SELECT COUNT(*) AS count FROM users"),
     query("SELECT COUNT(*) AS count FROM users WHERE DATE(created_at) = CURDATE()"),
@@ -133,10 +174,25 @@ async function readDashboard() {
     query("SELECT COUNT(*) AS count FROM withdraw_orders WHERE status IN ('pending', 'approved')"),
     query("SELECT COUNT(*) AS count FROM battle_rooms WHERE status = 'playing'"),
     query(
-      `SELECT COALESCE(SUM(entry_fee * 2 - reward_amount), 0) AS total
+      `SELECT
+         COALESCE(NULLIF(asset_type, ''), 'PI') AS asset_type,
+         COUNT(*) AS finished_rooms,
+         COALESCE(SUM(entry_fee * 2 - reward_amount), 0) AS platform_revenue
        FROM battle_rooms
        WHERE status = 'finished'
-         AND DATE(finished_at) = CURDATE()`
+         AND entry_fee > 0
+         AND DATE(finished_at) = CURDATE()
+       GROUP BY COALESCE(NULLIF(asset_type, ''), 'PI')`
+    ),
+    query(
+      `SELECT
+         COALESCE(NULLIF(asset_type, ''), 'PI') AS asset_type,
+         COUNT(*) AS finished_rooms,
+         COALESCE(SUM(entry_fee * 2 - reward_amount), 0) AS platform_revenue
+       FROM battle_rooms
+       WHERE status = 'finished'
+         AND entry_fee > 0
+       GROUP BY COALESCE(NULLIF(asset_type, ''), 'PI')`
     )
   ]);
 
@@ -150,6 +206,9 @@ async function readDashboard() {
   const todayActiveUsers = Number(todayActiveUsersRows[0]?.count || 0);
   const todayBattleCount = Number(battleRows[0]?.count || 0);
   const todayPaidBattleCount = Number(paidBattleRows[0]?.count || 0);
+  const todayBattleRevenueAssets = buildBattleRevenueSummary(todayFeeRows);
+  const totalBattleRevenueAssets = buildBattleRevenueSummary(totalFeeRows);
+  const todayPiBattleRevenue = todayBattleRevenueAssets.find((item) => item.assetType === "PI")?.platformRevenue || 0;
 
   return {
     totalUsers,
@@ -167,7 +226,9 @@ async function readDashboard() {
     realtimeBroadcastSlowCount: realtimeStats.broadcastSlowCount,
     matchingUsers,
     roomsInBattle: Number(playingRows[0]?.count || 0),
-    todayRevenuePi: Number(feeRows[0]?.total || 0),
+    todayRevenuePi: Number(todayPiBattleRevenue || 0),
+    todayBattleRevenueAssets,
+    totalBattleRevenueAssets,
     todayBattleCount,
     todayPaidBattleCount,
     todayFinishedBattleCount: Number(finishedBattleRows[0]?.count || 0),

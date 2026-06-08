@@ -231,7 +231,7 @@ const DEFAULT_GAME_CONFIG = {
         maintenanceNotice: "",
         rechargeNotice: "请输入充值 Pi 数量，支付完成后会写入平台钱包流水。",
         withdrawNotice: "提交后余额会先冻结，等待平台后台审核与打款。",
-        ruleSummary: "快速开战主要用于练习，付费真人场更适合冲段。"
+        ruleSummary: "小富豪、大富豪、超级富豪计入段位和周榜。"
       },
       en: {
         maintenanceNotice: "",
@@ -332,7 +332,7 @@ const DEFAULT_GAME_CONFIG = {
         { fromRank: 3, toRank: 3, amount: 0.02 },
         { fromRank: 4, toRank: 10, amount: 0.005 }
       ],
-      ruleSummary: "小富豪场和大富豪场计入正式段位；快速开战主要用于练习。"
+      ruleSummary: "小富豪、大富豪、超级富豪计入段位和周榜。"
     }
   }
 };

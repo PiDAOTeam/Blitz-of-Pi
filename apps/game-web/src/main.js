@@ -1,5 +1,6 @@
 const qa = ["localhost", "127.0.0.1"].includes(window.location.hostname), fn = qa ? "http://localhost:3000" : "https://blitzapi.hashpi.app", Gt = fn, Ia = qa ? Gt.replace(/^http/, "ws").replace(/\/$/, "") + "/ws/" : "wss://blitzapi.hashpi.app/ws/", hn = window.location.hostname === "sandbox.minepi.com", R = document.querySelector("#app");
 if (!R) throw new Error("\u672A\u627E\u5230\u5E94\u7528\u6302\u8F7D\u8282\u70B9");
+const BRAND_MARK_HTML = '<img class="brand-logo" src="/assets/brand/blitz-logo-128.jpg" alt="" loading="eager" decoding="async" />';
 const Da = "blitz_language", Wa = "blitz_visual_effect_mode", Jt = ["zh-CN", "en", "vi", "ko", "ja"], ot = ["balanced", "high"];
 function gn() {
   const e = localStorage.getItem(Da);
@@ -1193,9 +1194,10 @@ function ua(e = n("loadingDefault")) {
   R.innerHTML = `
     <main class="shell">
       <section class="hero">
-        <div class="brand-mark" aria-hidden="true">\u03C0</div>
+        <div class="brand-mark" aria-hidden="true">${BRAND_MARK_HTML}</div>
         <p class="eyebrow">Blitz of Pi</p>
-        <h1>${i(n("home") === "\u9996\u9875" ? "Pi\u95EA\u7535\u6218" : "Blitz of Pi")}</h1>
+        <h1>${i(n("home") === "\u9996\u9875" ? "\u95EA\u7535\u6218" : "Blitz of Pi")}</h1>
+        <p class="brand-subtitle">Blitz of Pi</p>
         <p class="summary">${e}</p>
       </section>
     </main>
@@ -1205,8 +1207,10 @@ function Fe(e = n("errorDefault")) {
   R.innerHTML = `
     <main class="shell">
       <section class="hero">
+        <div class="brand-mark" aria-hidden="true">${BRAND_MARK_HTML}</div>
         <p class="eyebrow">Blitz of Pi</p>
-        <h1>${i(n("home") === "\u9996\u9875" ? "Pi\u95EA\u7535\u6218" : "Blitz of Pi")}</h1>
+        <h1>${i(n("home") === "\u9996\u9875" ? "\u95EA\u7535\u6218" : "Blitz of Pi")}</h1>
+        <p class="brand-subtitle">Blitz of Pi</p>
         <p class="summary">${e}</p>
         <div class="actions">
           <button type="button" id="reload-page">${i(n("reloadPage"))}</button>
@@ -1278,10 +1282,11 @@ function _() {
   R.innerHTML = `
     <main class="shell">
       <section class="hero home-hero">
-        <div class="brand-mark" aria-hidden="true">\u03C0</div>
+        <div class="brand-mark" aria-hidden="true">${BRAND_MARK_HTML}</div>
         ${Ir()}
         <p class="eyebrow">${i(h.englishName)}</p>
         <h1>${i(h.projectName)}</h1>
+        <p class="brand-subtitle">Blitz of Pi</p>
         <p class="summary">${i(h.bannerDescription)}</p>
         <div class="mode-strip">
           <span>${i(n("realtimePvp"))}</span>
@@ -1524,7 +1529,7 @@ function L() {
   R.innerHTML = `
     <main class="shell">
       <section class="hero">
-        <div class="brand-mark" aria-hidden="true">\u03C0</div>
+        <div class="brand-mark" aria-hidden="true">${BRAND_MARK_HTML}</div>
         <button type="button" class="mine-effect-entry" id="open-visual-effect-sheet" aria-label="${i(n("visualEffectTitle"))}">
           <span aria-hidden="true">\u2726</span>
           ${i(n("visualEffectOpen"))}
@@ -1666,7 +1671,7 @@ function Qa(e = "edit") {
   R.innerHTML = `
     <main class="shell">
       <section class="hero profile-editor">
-        <div class="brand-mark" aria-hidden="true">\u03C0</div>
+        <div class="brand-mark" aria-hidden="true">${BRAND_MARK_HTML}</div>
         <p class="eyebrow">${i(n(e === "setup" ? "loginLoading" : "playerProfile"))}</p>
         <h1>${i(n(e === "setup" ? "profileSetupTitle" : "profileEditTitle"))}</h1>
         <p class="summary">${i(n(e === "setup" ? "profileSetupSummary" : "profileEditSummary"))}</p>
@@ -1717,7 +1722,7 @@ function jr() {
   R.innerHTML = `
     <main class="shell">
       <section class="hero">
-        <div class="brand-mark" aria-hidden="true">\u03C0</div>
+        <div class="brand-mark" aria-hidden="true">${BRAND_MARK_HTML}</div>
         <p class="eyebrow">${i(n("wallet"))}</p>
         <h1>${i(n("rechargeWallet"))}</h1>
         <p class="summary">${i(mt("rechargeNotice") || n("rechargeSummary", { mode: e }))}</p>
@@ -1762,7 +1767,7 @@ function Vr() {
   R.innerHTML = `
     <main class="shell">
       <section class="hero">
-        <div class="brand-mark" aria-hidden="true">\u03C0</div>
+        <div class="brand-mark" aria-hidden="true">${BRAND_MARK_HTML}</div>
         <p class="eyebrow">Withdraw</p>
         <h1>${i(n("withdrawTitle"))}</h1>
         <p class="summary">${i(mt("withdrawNotice") || n("withdrawSummary", { balance: b(o), payout: b(r.payout) }))}</p>
@@ -1825,7 +1830,7 @@ function Kr() {
   R.innerHTML = `
     <main class="shell">
       <section class="hero">
-        <div class="brand-mark" aria-hidden="true">\u03C0</div>
+        <div class="brand-mark" aria-hidden="true">${BRAND_MARK_HTML}</div>
         <p class="eyebrow">${i(n("wallet"))}</p>
         <h1>${i(n("transferTitle"))}</h1>
         <p class="summary">${i(n("transferSummary"))}</p>
@@ -1910,7 +1915,7 @@ function at() {
     R.innerHTML = `
       <main class="shell">
         <section class="hero">
-          <div class="brand-mark" aria-hidden="true">\u03C0</div>
+          <div class="brand-mark" aria-hidden="true">${BRAND_MARK_HTML}</div>
           <p class="eyebrow">Invite</p>
           <h1>${i(n("inviteTitle"))}</h1>
           <p class="summary">${i(n("maintenanceFallback"))}</p>
@@ -1924,7 +1929,7 @@ function at() {
   R.innerHTML = `
     <main class="shell">
       <section class="hero">
-        <div class="brand-mark" aria-hidden="true">\u03C0</div>
+        <div class="brand-mark" aria-hidden="true">${BRAND_MARK_HTML}</div>
         <p class="eyebrow">Invite</p>
         <h1>${i(n("inviteTitle"))}</h1>
         <p class="summary">${i(n("inviteIncomeSummary"))}</p>
@@ -2061,7 +2066,7 @@ function nt(e = n("matchingDefault")) {
   R.innerHTML = `
     <main class="shell">
       <section class="hero matching-card">
-        <div class="brand-mark" aria-hidden="true">\u03C0</div>
+        <div class="brand-mark" aria-hidden="true">${BRAND_MARK_HTML}</div>
         <p class="eyebrow">${i(n("lightningMatching"))}</p>
         <h1>${i(n("matching"))}</h1>
         <div class="spinner" aria-hidden="true"></div>
@@ -2531,7 +2536,7 @@ function Ai(e, t, r, o) {
       <p>${i(n("startAfterCountdown"))}</p>
     </section>`;
   if (s) {
-    const p = Fi(e, t, o), f = e.winnerUid ? e.winnerUid === t.uid ? n("win") : n("lose") : n("draw"), m = e.winnerUid === t.uid, g = Math.abs(r.score - o.score), P = X(e.mode), C = ie(e.mode), T = C > 0 && !!e.winnerUid, U = T ? "" : n("settlementNoReward"), Te = formatModeAmount(e.mode, C), qe = P > 0 ? n("settlementEntryFee", { amount: formatModeAmount(e.mode, P) }) : n("freeMatch"), gt = m ? n("winUpsell") : g > 0 && g <= 250 ? n("closeLossHint", { gap: g }) : n("loseRetryHint"), fa = e.mode === "quick_battle" && m && !o.isBot;
+    const p = Fi(e, t, o), f = e.winnerUid ? e.winnerUid === t.uid ? n("win") : n("lose") : n("draw"), m = e.winnerUid === t.uid, g = Math.abs(r.score - o.score), P = X(e.mode), C = ie(e.mode), T = C > 0 && !!e.winnerUid, U = T ? "" : modeAssetType(e.mode) === "PI" ? n("settlementNoReward") : a.language === "zh-CN" ? "本局无资产奖励" : "No asset reward", Te = formatModeAmount(e.mode, C), qe = P > 0 ? (a.language === "zh-CN" ? `入场费 ${formatModeAmount(e.mode, P)}` : `Entry ${formatModeAmount(e.mode, P)}`) : n("freeMatch"), gt = m ? n("winUpsell") : g > 0 && g <= 250 ? n("closeLossHint", { gap: g }) : n("loseRetryHint"), fa = e.mode === "quick_battle" && m && !o.isBot;
     return `<section class="finish-mask">
       <div class="finish-card">
         <p class="eyebrow">${i(n("battleSettlement"))}</p>
@@ -3045,3 +3050,4 @@ async function ao() {
   }
 }
 ao();
+

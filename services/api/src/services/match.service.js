@@ -20,6 +20,7 @@ const {
 const { settleRankMatch } = require("../repositories/rank.repository");
 const { settleBattleInviteCommission } = require("./growth.service");
 const { observeBattleStage } = require("./battle-observer.service");
+const { findUserByUid } = require("../repositories/user.repository");
 
 const matchState = {
   rooms: new Map(),
@@ -709,10 +710,42 @@ function requeueHumanPlayers(queue, players, mode) {
   }
 }
 
+async function hydrateSettlementPlayers(room) {
+  const players = Array.isArray(room?.players) ? room.players : [];
+  if (!players.length) return room;
+
+  const hydratedPlayers = await Promise.all(
+    players.map(async (player) => {
+      if (!player?.uid || isBotUid(player.uid) || player.piUserId || player.pi_user_id) {
+        return player;
+      }
+
+      const user = await findUserByUid(player.uid);
+      if (!user) return player;
+
+      return {
+        ...player,
+        piUserId: user.pi_user_id || player.piUserId || "",
+        pi_user_id: user.pi_user_id || player.pi_user_id || "",
+        piUsername: user.pi_username || player.piUsername || "",
+        pi_username: user.pi_username || player.pi_username || "",
+        nickname: player.nickname || user.nickname || ""
+      };
+    })
+  );
+
+  return {
+    ...room,
+    players: hydratedPlayers
+  };
+}
+
 async function settleFinishedRoom(room) {
   if (!room || room.status !== "finished") {
     return null;
   }
+
+  room = await hydrateSettlementPlayers(room);
 
   const winner = room.players.find((player) => player.uid === room.winnerUid);
   const loser = room.players.find((player) => player.uid !== room.winnerUid);

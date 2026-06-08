@@ -1,6 +1,7 @@
 const Ae = ["localhost", "127.0.0.1"].includes(window.location.hostname), Ee = Ae ? "http://localhost:3000" : "https://blitzapi.hashpi.app", Be = Ee, le = document.querySelector("#app");
+const BRAND_LOGO_HTML = '<img class="brand-logo" src="/assets/brand/blitz-logo-128.jpg" alt="" loading="eager" decoding="async" />';
 if (!le) throw new Error("\u672A\u627E\u5230\u540E\u53F0\u6302\u8F7D\u8282\u70B9");
-let _ = "overview", W = null, re = "", I = "all", G = "all", te = null, paymentStatusFilter = "all", userListFilter = "all", ledgerListFilter = "all", withdrawListFilter = "all", growthRewardFilter = "all", logListFilter = "all";
+let _ = "overview", W = null, re = "", I = "all", G = "all", te = null, battleModeFilter = "all", paymentStatusFilter = "all", userListFilter = "all", ledgerListFilter = "all", withdrawListFilter = "all", growthRewardFilter = "all", logListFilter = "all";
 const V = 60, Z = {}, Te = "20260601-match-ops-v1";
 function fe() {
   return localStorage.getItem("blitz_admin_token") || "";
@@ -69,8 +70,19 @@ function Ie(e) {
 }
 function De(e) {
   const t = re.trim().toLowerCase();
-  return e.filter((a) => I === "all" || I === "stale" && Ie(a) || a.status === I ? t ? [a.roomNo, a.status, H(a.status), a.mode, oe(a.mode), a.playerAUid, a.playerAPiUsername, a.playerANickname, a.playerBUid, a.playerBPiUsername, a.playerBNickname, a.winnerUid, a.winnerPiUsername, a.winnerNickname].join(" ").toLowerCase().includes(t) : true : false);
+  return e.filter((a) => {
+    const n = battleModeFilter === "all" || BATTLE_MODE_FILTERS.find((s) => s.key === battleModeFilter)?.modes.includes(a.mode);
+    const s = I === "all" || I === "stale" && Ie(a) || a.status === I;
+    return n && s ? t ? [a.roomNo, a.status, H(a.status), a.mode, oe(a.mode), a.playerAUid, a.playerAPiUsername, a.playerANickname, a.playerBUid, a.playerBPiUsername, a.playerBNickname, a.winnerUid, a.winnerPiUsername, a.winnerNickname].join(" ").toLowerCase().includes(t) : true : false;
+  });
 }
+const BATTLE_MODE_FILTERS = [
+  { key: "all", label: "全部模式", modes: [] },
+  { key: "quick_battle", label: "快速开战", modes: ["quick_battle"] },
+  { key: "points_battle", label: "小富豪（积分）", modes: ["points_battle"] },
+  { key: "poc_battle", label: "大富豪（POC）", modes: ["poc_battle"] },
+  { key: "pi_battle", label: "超级富豪（Pi）", modes: ["pi_battle", "ticket_battle", "rich_battle"] }
+];
 const PAYMENT_STATUS_FILTERS = [
   { key: "all", label: "全部", statuses: [] },
   { key: "open", label: "未闭环", statuses: ["created", "pending", "approved"] },
@@ -411,7 +423,7 @@ function Xe(e) {
         <strong>\u5468\u699C\u5956\u52B1\u6863\u4F4D</strong>
         <button type="button" id="add-weekly-tier">\u65B0\u589E\u6863\u4F4D</button>
       </div>
-      <p class="meta">\u6309\u5468\u8D5B\u540D\u6B21\u533A\u95F4\u914D\u7F6E\u5956\u52B1\uFF1B\u5468\u8D5B\u540D\u6B21\u6309\u4E0A\u4E00\u5468\u51C0\u5347\u661F\u3001\u80DC\u573A\u3001\u5F53\u524D\u6BB5\u4F4D\u548C\u5F53\u524D\u661F\u6570\u6392\u5E8F\u3002</p>
+      <p class="meta">\u6309\u540D\u6B21\u914D\u5956\u52B1\uFF0C\u5468\u4E00\u81EA\u52A8\u53D1\u653E\u3002</p>
       <div id="weekly-tier-list">
         ${s.map(_e).join("")}
       </div>
@@ -436,7 +448,7 @@ function Xe(e) {
             </label>
           `).join("")}
     </div>
-    <label><span>\u6BB5\u4F4D\u89C4\u5219\u8BF4\u660E</span><textarea name="rankRuleSummary" rows="3">${i(t.ruleSummary || "\u5C0F\u5BCC\u8C6A\u573A\u548C\u5927\u5BCC\u8C6A\u573A\u8BA1\u5165\u6B63\u5F0F\u6BB5\u4F4D\uFF1B\u5FEB\u901F\u5F00\u6218\u4E3B\u8981\u7528\u4E8E\u7EC3\u4E60\u3002")}</textarea></label>
+    <label><span>\u6BB5\u4F4D\u89C4\u5219\u8BF4\u660E</span><textarea name="rankRuleSummary" rows="2">${i(t.ruleSummary || "\u5C0F\u5BCC\u8C6A\u3001\u5927\u5BCC\u8C6A\u3001\u8D85\u7EA7\u5BCC\u8C6A\u8BA1\u5165\u6BB5\u4F4D\u548C\u5468\u699C\u3002")}</textarea></label>
   `;
 }
 function Se(e = {}) {
@@ -472,8 +484,13 @@ function Re(e) {
   _ = ge(window.location.hash || _), le.innerHTML = `
     <div class="layout">
       <aside class="sidebar">
-        <h1>Pi\u95EA\u7535\u6218\u540E\u53F0</h1>
-        <small class="build-version">${Te}</small>
+        <div class="sidebar-brand">
+          <span class="brand-mark" aria-hidden="true">${BRAND_LOGO_HTML}</span>
+          <div>
+            <h1>Pi\u95EA\u7535\u6218\u540E\u53F0</h1>
+            <small class="build-version">${Te}</small>
+          </div>
+        </div>
         <nav>
           ${t.map((a) => `<a href="#${a}" data-admin-tab-link="${a}" class="${_ === a ? "active" : ""}">${Me(a)}</a>`).join("")}
           <a href="#" id="logout">\u9000\u51FA\u767B\u5F55</a>
@@ -591,6 +608,14 @@ function f(e, t, a) {
     </article>
   `;
 }
+function renderAssetLines(e = []) {
+  return (Array.isArray(e) ? e : []).map((t) => `
+    <span class="asset-line">
+      <b>${$(t.platformRevenue)} ${i(t.assetUnit || t.assetType)}</b>
+      <small>${Number(t.finishedRooms || 0)} \u5C40</small>
+    </span>
+  `).join("");
+}
 const Ye = { match_queue_join: "\u8FDB\u5165\u961F\u5217", match_reuse_room: "\u590D\u7528\u623F\u95F4", match_room_created: "\u521B\u5EFA\u623F\u95F4", match_status_room_created: "\u8F6E\u8BE2\u6210\u623F", match_bot_room_created: "\u673A\u5668\u4EBA\u8865\u4F4D", match_cancel: "\u53D6\u6D88\u5339\u914D", match_watch_join: "\u5339\u914D\u63A8\u9001\u63A5\u5165", match_watch_failed: "\u5339\u914D\u63A8\u9001\u964D\u7EA7", realtime_join: "WS\u8FDB\u623F", realtime_ready: "\u51C6\u5907\u786E\u8BA4", realtime_started: "\u6B63\u5F0F\u5F00\u5C40", realtime_swap_event: "\u7279\u6B8A/\u653B\u51FB\u4E8B\u4EF6", realtime_swap_ok: "\u4EA4\u6362\u6210\u529F", realtime_swap_error: "\u4EA4\u6362\u5F02\u5E38", realtime_disconnected: "\u8FDE\u63A5\u65AD\u5F00", realtime_finished: "\u5BF9\u5C40\u7ED3\u675F", realtime_tick_slow: "Tick\u6162", realtime_tick_skipped: "Tick\u8DF3\u8FC7", realtime_broadcast_slow: "\u5E7F\u64AD\u6162", settlement_queued: "\u7ED3\u7B97\u5165\u961F", settlement_done: "\u7ED3\u7B97\u5B8C\u6210", settlement_retry: "\u7ED3\u7B97\u91CD\u8BD5", client_match_start: "\u7528\u6237\u70B9\u5339\u914D", client_match_queueing: "\u7528\u6237\u6392\u961F\u4E2D", client_match_ws_open: "\u5339\u914D\u63A8\u9001\u6253\u5F00", client_match_ws_ready: "\u5339\u914D\u63A8\u9001\u53EF\u7528", client_match_ws_error: "\u5339\u914D\u63A8\u9001\u5F02\u5E38", client_match_ws_closed: "\u5339\u914D\u63A8\u9001\u65AD\u5F00", client_match_poll_failed: "\u5339\u914D\u8F6E\u8BE2\u5931\u8D25", client_match_enter_room: "\u7528\u6237\u8FDB\u623F", client_match_start_failed: "\u53D1\u8D77\u5339\u914D\u5931\u8D25", client_match_cancel: "\u7528\u6237\u53D6\u6D88\u5339\u914D", client_match_cancel_failed: "\u53D6\u6D88\u5339\u914D\u5931\u8D25", client_realtime_connect_start: "\u7528\u6237\u8FDE\u5BF9\u5C40", client_realtime_open: "\u5BF9\u5C40WS\u6253\u5F00", client_realtime_first_state: "\u6536\u5230\u9996\u5305", client_realtime_connect_slow: "\u8FDB\u623F\u6162", client_realtime_slow: "\u5BF9\u5C40\u5F31\u7F51", client_realtime_retry: "\u7528\u6237\u7AEF\u91CD\u8FDE", client_realtime_retry_failed: "\u91CD\u8FDE\u5931\u8D25", client_realtime_error: "\u5BF9\u5C40WS\u5F02\u5E38", client_realtime_closed: "\u5BF9\u5C40WS\u65AD\u5F00", client_swap_send: "\u7528\u6237\u6ED1\u52A8", client_swap_rejected: "\u4EA4\u6362\u88AB\u62D2", client_burst_show: "\u63D0\u793A\u663E\u793A", client_burst_suppressed: "\u63D0\u793A\u5DF2\u53BB\u91CD", client_error: "\u7528\u6237\u7AEF\u62A5\u9519" };
 function et(e = "") {
   return Ye[e] || e || "\u672A\u77E5\u8282\u70B9";
@@ -652,6 +677,7 @@ function ae(e = "") {
   le.innerHTML = `
     <main class="login-page">
       <section class="login-card">
+        <div class="login-brand-mark" aria-hidden="true">${BRAND_LOGO_HTML}</div>
         <p class="tag">Blitz of Pi Admin</p>
         <h1>Pi\u95EA\u7535\u6218\u540E\u53F0</h1>
         <form id="login-form" class="form">
@@ -715,13 +741,23 @@ function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, roo
               <p class="tag">Revenue</p>
               <h2>\u8D44\u91D1\u4E0E\u6536\u5165</h2>
             </div>
-            <span class="pill">\u4ECA\u65E5\u6536\u5165 ${$(s.todayRevenuePi)} Pi</span>
+            <span class="pill">\u5206\u8D44\u4EA7\u7EDF\u8BA1</span>
+          </div>
+          <div class="asset-revenue-box">
+            <div>
+              <span>\u4ECA\u65E5\u5BF9\u6218\u6536\u76CA</span>
+              ${renderAssetLines(s.todayBattleRevenueAssets)}
+            </div>
+            <div>
+              <span>\u7D2F\u8BA1\u5BF9\u6218\u6536\u76CA</span>
+              ${renderAssetLines(s.totalBattleRevenueAssets)}
+            </div>
           </div>
           <div class="mini-grid">
-            ${f("\u7D2F\u8BA1\u5145\u503C", `${$(s.totalRechargePi)} Pi`, `${s.completedPaymentCount} \u7B14\u6210\u529F\u652F\u4ED8`)}
-            ${f("\u7D2F\u8BA1\u63D0\u73B0", `${$(s.totalWithdrawPi)} Pi`, `${s.todayWithdrawCount} \u7B14\u4ECA\u65E5\u7533\u8BF7`)}
-            ${f("\u94B1\u5305\u53EF\u7528\u6C60", `${$(s.walletAvailablePi)} Pi`, `\u51BB\u7ED3 ${$(s.walletLockedPi)} Pi`)}
-            ${f("\u7D2F\u8BA1\u5956\u52B1", `${$(s.totalRewardPi)} Pi`, "\u5DF2\u53D1\u653E\u7ED9\u73A9\u5BB6")}
+            ${f("Pi\u7D2F\u8BA1\u5145\u503C", `${$(s.totalRechargePi)} Pi`, `${s.completedPaymentCount} \u7B14\u6210\u529F\u652F\u4ED8`)}
+            ${f("Pi\u7D2F\u8BA1\u63D0\u73B0", `${$(s.totalWithdrawPi)} Pi`, `${s.todayWithdrawCount} \u7B14\u4ECA\u65E5\u7533\u8BF7`)}
+            ${f("Pi\u94B1\u5305\u6C60", `${$(s.walletAvailablePi)} Pi`, `\u51BB\u7ED3 ${$(s.walletLockedPi)} Pi`)}
+            ${f("Pi\u7D2F\u8BA1\u5956\u52B1", `${$(s.totalRewardPi)} Pi`, "\u4EC5\u7EDF\u8BA1\u9879\u76EE\u5185Pi\u94B1\u5305")}
           </div>
         </section>
         <section class="panel overview-block">
@@ -1078,20 +1114,29 @@ function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, roo
   }
   if (_ === "ranks") {
     const k = n.operation?.ranks?.length ? n.operation.ranks : [], c = G === "all" ? m : m.filter((v) => v.rankKey === G || v.rankName === G), l = N("ranks-users", c), p = N("ranks-stars", w), u = N("ranks-chests", L), b = N("ranks-weekly", C), se = L.reduce((v, ie) => v + Number(ie.rewardAmount || 0), 0), z = C.reduce((v, ie) => v + Number(ie.rewardAmount || 0), 0), de = n.operation?.rankRules, xe = Se(de);
+    const rankModeText = (Array.isArray(de?.rankedModes) ? de.rankedModes.map(oe) : []).join("\u3001") || "\u672A\u5F00\u542F";
+    const weeklyModeText = (Array.isArray(de?.weeklyLeaderboardModes) ? de.weeklyLeaderboardModes.map(oe) : []).join("\u3001") || "\u672A\u5F00\u542F";
+    const weeklyRewardText = xe.length ? `\u7B2C${xe[0].fromRank}-${xe[xe.length - 1].toRank}\u540D` : "\u672A\u914D\u7F6E";
     return `
       <section class="panel">
         <div class="section-head">
           <div>
             <p class="tag">Rank Ops</p>
             <h2>\u6BB5\u4F4D\u8FD0\u8425</h2>
-            <p class="meta">\u67E5\u770B\u5F53\u524D\u603B\u699C\u3001\u7528\u6237\u6BB5\u4F4D\u5206\u5E03\u3001\u5468\u8D5B\u81EA\u52A8\u53D1\u5956\u8BB0\u5F55\u3001\u5347\u964D\u661F\u6D41\u6C34\u548C\u6BCF\u65E5\u5B9D\u7BB1\u9886\u53D6\u8BB0\u5F55\u3002</p>
+            <p class="meta">\u67E5\u770B\u6BB5\u4F4D\u3001\u5468\u699C\u3001\u5B9D\u7BB1\u548C\u5956\u52B1\u8BB0\u5F55\u3002</p>
           </div>
           <span class="pill">\u5468\u699C\u5DF2\u53D1 ${$(z)} Pi</span>
+        </div>
+        <div class="rank-rule-summary">
+          <span>\u6BB5\u4F4D\uFF1A${i(rankModeText)}</span>
+          <span>\u5468\u699C\uFF1A${i(weeklyModeText)}</span>
+          <span>\u5B9D\u7BB1\uFF1A${Number(de?.dailyChestRequiredBattles || 3)}\u573A</span>
+          <span>\u5468\u5956\uFF1A${i(weeklyRewardText)}</span>
         </div>
         <div class="rank-auto-panel">
           <div>
             <strong>\u5468\u699C\u81EA\u52A8\u53D1\u5956\uFF1A${de?.weeklyAutoSettleEnabled !== false ? "\u5DF2\u5F00\u542F" : "\u5DF2\u5173\u95ED"}</strong>
-            <span>\u7CFB\u7EDF\u6BCF\u5468\u4E00\u6309\u4E0A\u4E00\u5468\u6709\u6548\u6BB5\u4F4D\u5C40\u7684\u51C0\u5347\u661F\u548C\u80DC\u573A\u81EA\u52A8\u7ED3\u7B97\uFF0C\u5956\u52B1\u76F4\u63A5\u8FDB\u5165\u7528\u6237\u94B1\u5305\uFF1B\u6309\u94AE\u53EA\u7528\u4E8E\u5F02\u5E38\u65F6\u5E94\u6025\u8865\u53D1\u3002</span>
+            <span>\u6BCF\u5468\u4E00\u81EA\u52A8\u53D1\u653E\uFF0C\u6309\u94AE\u4EC5\u7528\u4E8E\u5E94\u6025\u8865\u53D1\u3002</span>
           </div>
           <button type="button" id="rank-weekly-settle">\u5E94\u6025\u8865\u53D1\u4E0A\u4E00\u5468</button>
         </div>
@@ -1100,7 +1145,7 @@ function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, roo
           ${xe.map((v) => f(`\u7B2C${v.fromRank}-${v.toRank}\u540D`, `${$(v.amount)} Pi/\u4EBA`, "\u81EA\u52A8\u53D1\u653E")).join("")}
         </div>
         <h2 class="sub-panel-title">\u5F53\u524D\u6BB5\u4F4D\u603B\u699C</h2>
-        <p class="meta">\u603B\u699C\u5C55\u793A\u5F53\u524D\u5B9E\u529B\u548C\u6BB5\u4F4D\u6C89\u6DC0\uFF1B\u5468\u5956\u52B1\u4E0D\u6309\u603B\u699C\u53D1\u653E\uFF0C\u800C\u662F\u6309\u4E0A\u4E00\u5468\u51B2\u699C\u8868\u73B0\u53D1\u653E\u3002</p>
+        <p class="meta">\u5468\u5956\u6309\u672C\u5468\u699C\u53D1\u653E\uFF0C\u4E0D\u6309\u603B\u699C\u53D1\u653E\u3002</p>
         <div class="table-list leaderboard-admin-list">
           ${T.slice(0, 10).map((v) => rt(v, n)).join("") || '<p class="meta">\u6682\u65E0\u6392\u884C\u699C\u6570\u636E</p>'}
         </div>
@@ -1175,6 +1220,9 @@ function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, roo
             <option value="manual_review" ${I === "manual_review" ? "selected" : ""}>\u4EBA\u5DE5\u590D\u6838</option>
             <option value="expired" ${I === "expired" ? "selected" : ""}>\u8D85\u65F6\u7ED3\u675F</option>
             <option value="finished" ${I === "finished" ? "selected" : ""}>\u5DF2\u7ED3\u675F</option>
+          </select>
+          <select id="match-mode-filter">
+            ${BATTLE_MODE_FILTERS.map((z) => `<option value="${z.key}" ${battleModeFilter === z.key ? "selected" : ""}>${i(z.label)}</option>`).join("")}
           </select>
         </div>
         <p id="battle-action-status" class="status"></p>
@@ -1669,6 +1717,20 @@ function wt(e) {
 function kt(e) {
   return e === "danger" ? "danger" : e === "warning" ? "warning" : "info";
 }
+function renderBattleAssetRevenue(e = {}) {
+  const t = Array.isArray(e.assets) ? e.assets : [];
+  const a = t.length ? t : [
+    { assetType: "PI", assetUnit: "Pi", platformRevenue: e.platformRevenue || 0, finishedRooms: e.finishedRooms || 0 },
+    { assetType: "POINTS", assetUnit: "积分", platformRevenue: 0, finishedRooms: 0 },
+    { assetType: "POC", assetUnit: "POC", platformRevenue: 0, finishedRooms: 0 }
+  ];
+  return a.map((n) => `
+    <span class="recon-asset-line">
+      <b>${$(n.platformRevenue)} ${i(n.assetUnit || n.assetType)}</b>
+      <small>${Number(n.finishedRooms || 0)} \u5C40</small>
+    </span>
+  `).join("");
+}
 function St(e) {
   const t = e.dangerCount || 0, a = e.warningCount || 0, n = e.infoCount || 0;
   return `
@@ -1706,7 +1768,7 @@ function St(e) {
       </article>
       <article class="recon-card">
         <span>\u5BF9\u5C40\u6536\u76CA</span>
-        <strong>${$(e.summary.battles.platformRevenue)} Pi</strong>
+        <div class="recon-asset-revenue">${renderBattleAssetRevenue(e.summary.battles)}</div>
         <small>${e.summary.battles.finishedRooms} \u5C40\u5DF2\u7ED3\u7B97 \xB7 ${e.summary.battles.playingRooms} \u5C40\u8FDB\u884C\u4E2D</small>
       </article>
       <article class="recon-card ${t ? "danger" : a ? "warning" : "ok"}">
@@ -1739,6 +1801,7 @@ function _t(e) {
   `;
 }
 function Rt(e) {
+  const t = e.assetUnit || "Pi";
   return `
     <article class="recon-issue ${kt(e.severity)}">
       <div>
@@ -1746,7 +1809,7 @@ function Rt(e) {
         <span>${i(e.targetId)} \xB7 ${i(e.user)}</span>
       </div>
       <div>
-        <b>${e.amount ? `${$(e.amount)} Pi` : "-"}</b>
+        <b>${e.amount ? `${$(e.amount)} ${i(t)}` : "-"}</b>
         <span>${i(H(e.status))}</span>
       </div>
       <p>${i(e.hint)}</p>
@@ -2082,24 +2145,26 @@ function It() {
   });
 }
 function Dt() {
-  const e = document.querySelector("#battle-action-status"), t = document.querySelector("#match-search"), a = document.querySelector("#match-status-filter");
+  const e = document.querySelector("#battle-action-status"), t = document.querySelector("#match-search"), a = document.querySelector("#match-status-filter"), n = document.querySelector("#match-mode-filter");
   t?.addEventListener("input", () => {
     re = t.value, Z["matches-battle"] = 1, F();
   }), a?.addEventListener("change", () => {
     I = a.value, Z["matches-battle"] = 1, F();
-  }), document.querySelectorAll("[data-battle-action]").forEach((n) => {
-    n.addEventListener("click", async () => {
-      const s = n.dataset.roomNo || "", r = n.dataset.battleAction || "";
-      if (!s || !r) return;
-      const o = r === "expire_free_bot" ? "\u4F5C\u5E9F\u514D\u8D39\u5F02\u5E38\u5C40" : "\u8F6C\u4EBA\u5DE5\u590D\u6838", m = window.prompt(`\u8BF7\u8F93\u5165${o}\u539F\u56E0\uFF1A`, r === "expire_free_bot" ? "\u514D\u8D39\u673A\u5668\u4EBA\u5C40\u8D85\u65F6\u672A\u7ED3\u675F" : "\u5BF9\u5C40\u5F02\u5E38\uFF0C\u9700\u4EBA\u5DE5\u590D\u6838");
-      if (!(m === null || !window.confirm(`\u786E\u8BA4${o}\uFF1F
-\u623F\u95F4\uFF1A${s}
-\u539F\u56E0\uFF1A${m || "-"}`))) {
-        e && (e.textContent = "\u5904\u7406\u4E2D..."), n.disabled = true;
+  }), n?.addEventListener("change", () => {
+    battleModeFilter = n.value, Z["matches-battle"] = 1, F();
+  }), document.querySelectorAll("[data-battle-action]").forEach((s) => {
+    s.addEventListener("click", async () => {
+      const r = s.dataset.roomNo || "", o = s.dataset.battleAction || "";
+      if (!r || !o) return;
+      const m = o === "expire_free_bot" ? "\u4F5C\u5E9F\u514D\u8D39\u5F02\u5E38\u5C40" : "\u8F6C\u4EBA\u5DE5\u590D\u6838", R = window.prompt(`\u8BF7\u8F93\u5165${m}\u539F\u56E0\uFF1A`, o === "expire_free_bot" ? "\u514D\u8D39\u673A\u5668\u4EBA\u5C40\u8D85\u65F6\u672A\u7ED3\u675F" : "\u5BF9\u5C40\u5F02\u5E38\uFF0C\u9700\u4EBA\u5DE5\u590D\u6838");
+      if (!(R === null || !window.confirm(`\u786E\u8BA4${m}\uFF1F
+\u623F\u95F4\uFF1A${r}
+\u539F\u56E0\uFF1A${R || "-"}`))) {
+        e && (e.textContent = "\u5904\u7406\u4E2D..."), s.disabled = true;
         try {
-          await d(`/admin-api/battle-rooms/handle/${encodeURIComponent(s)}`, { method: "POST", body: JSON.stringify({ action: r, remark: m }) }), e && (e.textContent = "\u5904\u7406\u6210\u529F\uFF0C\u6B63\u5728\u5237\u65B0..."), await q();
+          await d(`/admin-api/battle-rooms/handle/${encodeURIComponent(r)}`, { method: "POST", body: JSON.stringify({ action: o, remark: R }) }), e && (e.textContent = "\u5904\u7406\u6210\u529F\uFF0C\u6B63\u5728\u5237\u65B0..."), await q();
         } catch (y) {
-          e && (e.textContent = g(y)), n.disabled = false;
+          e && (e.textContent = g(y)), s.disabled = false;
         }
       }
     });
