@@ -123,9 +123,7 @@ const ENGAGEMENT_BATTLE_MODES = [
   { key: "quick_battle", label: "快速开战" },
   { key: "points_battle", label: "小富豪" },
   { key: "poc_battle", label: "大富豪" },
-  { key: "pi_battle", label: "超级富豪" },
-  { key: "ticket_battle", label: "旧小富豪" },
-  { key: "rich_battle", label: "旧大富豪" }
+  { key: "pi_battle", label: "超级富豪" }
 ];
 const ENGAGEMENT_TASK_DEFAULTS = [
   { key: "play_1", title: "完成1局", condition: "battle_count", requiredCount: 1, rewardAmount: 0.01, enabled: true, modes: ENGAGEMENT_PAID_MODES },
