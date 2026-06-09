@@ -1542,6 +1542,30 @@ function zr() {
     e.target === e.currentTarget && document.querySelector("#rank-rules-mask")?.remove();
   });
 }
+async function copyTextToClipboard(e) {
+  const t = String(e || "").trim();
+  if (!t) return false;
+  if (navigator.clipboard?.writeText && window.isSecureContext) {
+    await navigator.clipboard.writeText(t);
+    return true;
+  }
+  const r = document.createElement("textarea");
+  r.value = t, r.setAttribute("readonly", ""), r.style.position = "fixed", r.style.left = "-9999px", document.body.appendChild(r), r.select();
+  const o = document.execCommand("copy");
+  return r.remove(), o;
+}
+async function copyPiUsername() {
+  const e = a.user?.piUsername || "";
+  if (!e) {
+    S("暂无Pi用户名", "error");
+    return;
+  }
+  try {
+    await copyTextToClipboard(e), S("Pi用户名已复制", "success");
+  } catch {
+    S("复制失败，请长按用户名复制", "error");
+  }
+}
 function L() {
   Q(), O(), ce();
   const e = a.user, t = a.wallet;
@@ -1564,7 +1588,7 @@ function L() {
           <div class="profile-main">
             <span class="profile-kicker">${i(n("playerProfile"))}</span>
             <strong>${i(e.nickname)}</strong>
-            <small>${i(n("piUsername"))}\uFF1A${i(e.piUsername || "-")}</small>
+            <small class="pi-username-row"><span>${i(n("piUsername"))}\uFF1A${i(e.piUsername || "-")}</span>${e.piUsername ? `<button type="button" class="copy-pi-username" id="copy-pi-username" aria-label="复制Pi用户名">复制</button>` : ""}</small>
           </div>
           <button type="button" class="ghost-button" id="edit-profile">${i(n("edit"))}</button>
           ${Sr()}
@@ -1593,7 +1617,7 @@ function L() {
       </section>
       ${ca("mine")}
     </main>
-  `, document.querySelector("#edit-profile")?.addEventListener("click", () => Qa()), document.querySelector("#open-rank-rules")?.addEventListener("click", () => zr()), document.querySelector("#toggle-wallet-ledger")?.addEventListener("click", () => {
+  `, document.querySelector("#edit-profile")?.addEventListener("click", () => Qa()), document.querySelector("#copy-pi-username")?.addEventListener("click", () => copyPiUsername()), document.querySelector("#open-rank-rules")?.addEventListener("click", () => zr()), document.querySelector("#toggle-wallet-ledger")?.addEventListener("click", () => {
     a.walletLedgerExpanded = !a.walletLedgerExpanded, a.walletLedgerPage = 1, L();
   }), document.querySelectorAll("[data-wallet-ledger-filter]").forEach((r) => {
     r.addEventListener("click", () => {
