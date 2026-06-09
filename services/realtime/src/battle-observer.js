@@ -6,6 +6,12 @@ const DAILY_COUNTER_PREFIX = "blitz:battle-observer:daily:";
 const RECENT_EVENT_LIMIT = 120;
 const RECENT_EVENT_TTL_SECONDS = 86400;
 const DAILY_COUNTER_TTL_SECONDS = 172800;
+const NON_ACTIONABLE_SWAP_MESSAGES = [
+  "没有形成三消",
+  "对局已结束",
+  "请先确认准备",
+  "准备倒计时中"
+];
 
 function getDayKey(date = new Date()) {
   return date.toISOString().slice(0, 10).replaceAll("-", "");
@@ -15,7 +21,20 @@ function cleanValue(value, maxLength = 80) {
   return String(value || "").slice(0, maxLength);
 }
 
+function shouldIgnoreEvent(stage, detail = {}) {
+  if (stage === "realtime_swap_error") {
+    const message = String(detail.message || "");
+    return NON_ACTIONABLE_SWAP_MESSAGES.some((item) => message.includes(item));
+  }
+
+  return false;
+}
+
 async function observeBattleStage(stage, detail = {}) {
+  if (shouldIgnoreEvent(stage, detail)) {
+    return null;
+  }
+
   const event = {
     stage: cleanValue(stage, 40),
     at: Date.now(),

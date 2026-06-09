@@ -641,10 +641,16 @@ function at(e) {
 }
 function isObserverActionable(e = {}) {
   const t = e.stage || "";
-  return t === "settlement_retry" || t === "match_watch_failed" || t === "client_match_poll_failed" || t === "client_realtime_connect_slow" || t === "client_realtime_retry_failed" || t === "realtime_tick_slow" || t === "realtime_tick_skipped" || t === "realtime_broadcast_slow";
+  return t === "settlement_retry" || t === "match_watch_failed" || t === "client_realtime_retry_failed" || t === "realtime_tick_slow" || t === "realtime_tick_skipped" || t === "realtime_broadcast_slow";
+}
+function getObserverActionCount(e = {}) {
+  return Number(e.settlement_retry || 0) + Number(e.match_watch_failed || 0) + Number(e.client_realtime_retry_failed || 0) + Number(e.realtime_tick_slow || 0) + Number(e.realtime_tick_skipped || 0) + Number(e.realtime_broadcast_slow || 0);
+}
+function getObserverWatchCount(e = {}) {
+  return Number(e.client_match_poll_failed || 0) + Number(e.client_realtime_connect_slow || 0);
 }
 function nt(e) {
-  const t = e?.counters || {}, a = e?.recentEvents || [], n = [["\u8FDB\u5165\u961F\u5217", t.match_queue_join || 0, "\u4ECA\u65E5\u5339\u914D\u8BF7\u6C42"], ["\u7528\u6237\u70B9\u5339\u914D", t.client_match_start || 0, "\u524D\u7AEF\u53D1\u8D77\u6B21\u6570"], ["\u521B\u5EFA\u623F\u95F4", (t.match_room_created || 0) + (t.match_status_room_created || 0), "\u771F\u4EBA/\u8F6E\u8BE2\u6210\u623F"], ["\u63A8\u9001\u63A5\u5165", t.match_watch_join || 0, "\u670D\u52A1\u7AEF\u5339\u914DWS"], ["\u7528\u6237\u8FDB\u623F", t.client_match_enter_room || 0, "\u5339\u914D\u6210\u529F\u5230\u8FDB\u623F"], ["WS\u8FDB\u623F", t.realtime_join || 0, "\u8FDB\u5165\u5B9E\u65F6\u623F\u95F4"], ["\u6536\u5230\u9996\u5305", t.client_realtime_first_state || 0, "\u7528\u6237\u7AEF\u9996\u4E2A\u623F\u95F4\u5305"], ["\u6B63\u5F0F\u5F00\u5C40", t.realtime_started || 0, "\u53CC\u65B9\u51C6\u5907\u5B8C\u6210"], ["\u64CD\u4F5C\u62E6\u622A", t.realtime_swap_error || 0, "\u53EA\u4FDD\u7559\u9650\u9891/\u623F\u95F4\u8FC7\u671F"], ["\u7528\u6237\u5F31\u7F51", t.client_realtime_slow || 0, "\u623F\u95F4\u5305\u95F4\u9694\u8FC7\u9AD8"], ["Tick\u6162", t.realtime_tick_slow || 0, "\u670D\u52A1\u7AEF\u5FAA\u73AF\u8017\u65F6\u9AD8"], ["\u5E7F\u64AD\u6162", t.realtime_broadcast_slow || 0, "\u623F\u95F4\u72B6\u6001\u4E0B\u53D1\u6162"], ["\u7ED3\u7B97\u5B8C\u6210", t.settlement_done || 0, "\u5B9E\u65F6\u7ED3\u7B97\u95ED\u73AF"]], s = Number(t.settlement_retry || 0) + Number(t.client_match_poll_failed || 0) + Number(t.match_watch_failed || 0) + Number(t.client_realtime_connect_slow || 0) + Number(t.client_realtime_retry_failed || 0) + Number(t.realtime_tick_slow || 0) + Number(t.realtime_tick_skipped || 0) + Number(t.realtime_broadcast_slow || 0);
+  const t = e?.counters || {}, a = e?.recentEvents || [], n = [["\u8FDB\u5165\u961F\u5217", t.match_queue_join || 0, "\u4ECA\u65E5\u5339\u914D\u8BF7\u6C42"], ["\u7528\u6237\u70B9\u5339\u914D", t.client_match_start || 0, "\u524D\u7AEF\u53D1\u8D77\u6B21\u6570"], ["\u521B\u5EFA\u623F\u95F4", (t.match_room_created || 0) + (t.match_status_room_created || 0), "\u771F\u4EBA/\u8F6E\u8BE2\u6210\u623F"], ["\u63A8\u9001\u63A5\u5165", t.match_watch_join || 0, "\u670D\u52A1\u7AEF\u5339\u914DWS"], ["\u7528\u6237\u8FDB\u623F", t.client_match_enter_room || 0, "\u5339\u914D\u6210\u529F\u5230\u8FDB\u623F"], ["WS\u8FDB\u623F", t.realtime_join || 0, "\u8FDB\u5165\u5B9E\u65F6\u623F\u95F4"], ["\u6536\u5230\u9996\u5305", t.client_realtime_first_state || 0, "\u7528\u6237\u7AEF\u9996\u4E2A\u623F\u95F4\u5305"], ["\u6B63\u5F0F\u5F00\u5C40", t.realtime_started || 0, "\u53CC\u65B9\u51C6\u5907\u5B8C\u6210"], ["\u64CD\u4F5C\u62E6\u622A", t.realtime_swap_error || 0, "\u9650\u9891/\u623F\u95F4\u8FC7\u671F"], ["\u7528\u6237\u5F31\u7F51", t.client_realtime_slow || 0, "\u5BA2\u6237\u7AEF\u7F51\u7EDC\u89C2\u5BDF"], ["Tick\u6162", t.realtime_tick_slow || 0, "\u670D\u52A1\u7AEF\u5FAA\u73AF\u8017\u65F6\u9AD8"], ["\u5E7F\u64AD\u6162", t.realtime_broadcast_slow || 0, "\u623F\u95F4\u72B6\u6001\u4E0B\u53D1\u6162"], ["\u7ED3\u7B97\u5B8C\u6210", t.settlement_done || 0, "\u5B9E\u65F6\u7ED3\u7B97\u95ED\u73AF"]], s = getObserverActionCount(t), r = getObserverWatchCount(t);
   return `
     <section class="panel overview-block battle-observer-panel">
       <div class="section-head">
@@ -652,7 +658,7 @@ function nt(e) {
           <p class="tag">Realtime Trace</p>
           <h2>\u5BF9\u5C40\u94FE\u8DEF\u89C2\u6D4B</h2>
         </div>
-        <span class="pill ${s ? "warning" : "ok"}">${s ? `${s} \u4E2A\u9700\u5904\u7406` : "\u94FE\u8DEF\u6B63\u5E38"}</span>
+        <span class="pill ${s ? "warning" : "ok"}">${s ? `${s} \u4E2A\u9700\u5904\u7406` : r ? `${r} \u6761\u89C2\u5BDF` : "\u94FE\u8DEF\u6B63\u5E38"}</span>
       </div>
       <div class="observer-stats">
         ${n.map(([r, o, m]) => f(String(r), o, String(m))).join("")}

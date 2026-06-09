@@ -259,7 +259,7 @@ function lt(e) {
 let Nt = "", j = null, V = null, Be = null, ee = null, y = null, x = null, k = null, Ne = null, Yt = 0, Et = 0, Lt = "", xt = 0, Ee = "", te = 0, pe = -1, Xe = "", le = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0;
 const Sa = /* @__PURE__ */ new Map();
 let z = null, W = null, At = 0, q = null;
-const $n = 5e3, Pn = 3, Cn = 9e3, Ha = 1200, Tn = 1800, Ie = 8, Rn = 5e3, Mn = 6, Xt = 8e3, fe = 3, Bn = 16, Nn = 8, $a = 30, $e = 8, Pe = 6, Pa = 0.18, En = 1200;
+const $n = 8e3, Pn = 3, Cn = 9e3, Ha = 1200, Tn = 1800, Ie = 8, Rn = 5e3, Mn = 6, Xt = 8e3, fe = 3, Bn = 16, Nn = 8, $a = 30, $e = 8, Pe = 6, Pa = 0.18, En = 1200;
 function we() {
   Be && (window.clearInterval(Be), Be = null), Ee = "", te = 0, pe = -1;
 }
@@ -3476,14 +3476,20 @@ async function it() {
   const e = a.matchSessionId;
   let t;
   try {
-    t = await w("/api/match/status"), a.matchPollFailedCount = 0, a.matchCancelMessage = "";
+    try {
+      t = await w("/api/match/status");
+    } catch (o) {
+      await new Promise((s) => window.setTimeout(s, 350));
+      t = await w("/api/match/status");
+    }
+    a.matchPollFailedCount = 0, a.matchCancelMessage = "";
   } catch (o) {
     if (a.screen !== "matching" || e !== a.matchSessionId || a.matchCancelling) return;
-    if (a.matchPollFailedCount += 1, a.matchCanCancel = true, a.matchCancelMessage = a.matchPollFailedCount >= Ie ? N(o) : n("matchNetworkRetrying"), v("client_match_poll_failed", { mode: a.selectedMode, message: N(o), result: String(a.matchPollFailedCount), waitingSeconds: a.matchWaitingSeconds }, a.matchPollFailedCount >= Ie ? 0 : 3e3), J(a.matchPollFailedCount >= Ie ? n("matchFailed") : n("waitedSeconds", { seconds: a.matchWaitingSeconds })), a.matchPollFailedCount >= Ie) {
+    if (a.matchPollFailedCount += 1, a.matchCanCancel = true, a.matchCancelMessage = a.matchPollFailedCount >= Ie ? N(o) : a.matchPollFailedCount >= 2 ? n("matchNetworkRetrying") : "", a.matchPollFailedCount >= 2 && v("client_match_poll_failed", { mode: a.selectedMode, message: N(o), result: String(a.matchPollFailedCount), waitingSeconds: a.matchWaitingSeconds }, a.matchPollFailedCount >= Ie ? 0 : 5e3), J(a.matchPollFailedCount >= Ie ? n("matchFailed") : n("waitedSeconds", { seconds: a.matchWaitingSeconds })), a.matchPollFailedCount >= Ie) {
       O(), await to(e, N(o));
       return;
     }
-    a.matchPollTimer = window.setTimeout(it, Tn);
+    a.matchPollTimer = window.setTimeout(it, Math.min(Tn + a.matchPollFailedCount * 400, 3200));
     return;
   }
   if (a.screen !== "matching" || e !== a.matchSessionId || a.matchCancelling) return;

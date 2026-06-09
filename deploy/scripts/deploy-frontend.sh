@@ -12,11 +12,13 @@ echo "[1/7] 安装依赖..."
 npm install
 
 echo "[2/7] 构建用户端..."
+rm -rf apps/game-web/dist
 export VITE_API_BASE_URL="${VITE_API_BASE_URL:-https://blitzapi.hashpi.app}"
 export VITE_REALTIME_BASE_URL="${VITE_REALTIME_BASE_URL:-wss://blitzapi.hashpi.app/ws/}"
 npm run build:game
 
 echo "[3/7] 构建后台管理..."
+rm -rf apps/admin-web/dist
 npm run build:admin
 
 echo "[4/7] 准备发布目录..."
