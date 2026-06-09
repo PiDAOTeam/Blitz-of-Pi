@@ -1,5 +1,6 @@
 const { getActiveUserFromToken } = require("../services/auth.service");
 const { getWallet, listLedgers } = require("../repositories/wallet.repository");
+const { listUserAssetBattleLedgerRows } = require("../repositories/battle.repository");
 const { readGameConfig } = require("../repositories/game-config.repository");
 const assetGateway = require("../services/asset-gateway.service");
 
@@ -8,10 +9,110 @@ async function getUserFromRequest(req) {
   return getActiveUserFromToken(token);
 }
 
+function getAssetModeName(mode = "", assetType = "") {
+  if (mode === "points_battle" || assetType === "POINTS") return "小富豪";
+  if (mode === "poc_battle" || assetType === "POC") return "大富豪";
+  return "对战";
+}
+
+function toPiLedgerDto(ledger) {
+  return {
+    ...ledger,
+    asset_type: "PI",
+    synthetic: false
+  };
+}
+
+function buildAssetBattleLedgers(rows, uid) {
+  const ledgers = [];
+
+  for (const row of rows) {
+    const assetType = String(row.asset_type || "").toUpperCase();
+    const modeName = getAssetModeName(row.mode, assetType);
+    const entryFee = Number(row.entry_fee || 0);
+    const rewardAmount = Number(row.reward_amount || 0);
+    const isWinner = row.winner_uid === uid;
+    const isDraw = !row.winner_uid;
+    const settled = row.asset_settlement_status === "settled";
+    const released = row.asset_settlement_status === "released";
+    const createdAt = row.created_at;
+    const finishedAt = row.finished_at || row.created_at;
+
+    if (entryFee > 0) {
+      ledgers.push({
+        id: `asset:${row.room_no}:${uid}:entry`,
+        uid,
+        type: "battle_entry",
+        direction: "out",
+        amount: entryFee,
+        balance_after: null,
+        related_type: "asset_battle_entry",
+        related_id: `${row.room_no}:${uid}`,
+        remark: `${modeName}入场费`,
+        created_at: createdAt,
+        asset_type: assetType,
+        mode: row.mode,
+        settlement_status: row.asset_settlement_status || "",
+        synthetic: true
+      });
+    }
+
+    if (isWinner && rewardAmount > 0 && settled) {
+      ledgers.push({
+        id: `asset:${row.room_no}:${uid}:reward`,
+        uid,
+        type: "reward",
+        direction: "in",
+        amount: rewardAmount,
+        balance_after: null,
+        related_type: "asset_battle_reward",
+        related_id: row.room_no,
+        remark: `${modeName}获胜奖励`,
+        created_at: finishedAt,
+        asset_type: assetType,
+        mode: row.mode,
+        settlement_status: row.asset_settlement_status || "",
+        synthetic: true
+      });
+    }
+
+    if (isDraw && entryFee > 0 && released) {
+      ledgers.push({
+        id: `asset:${row.room_no}:${uid}:refund`,
+        uid,
+        type: "battle_refund",
+        direction: "in",
+        amount: entryFee,
+        balance_after: null,
+        related_type: "asset_battle_refund",
+        related_id: `${row.room_no}:${uid}`,
+        remark: `${modeName}平局退回`,
+        created_at: finishedAt,
+        asset_type: assetType,
+        mode: row.mode,
+        settlement_status: row.asset_settlement_status || "",
+        synthetic: true
+      });
+    }
+  }
+
+  return ledgers;
+}
+
+function sortLedgersByTime(ledgers) {
+  return [...ledgers].sort((a, b) => {
+    const left = new Date(a.created_at || 0).getTime();
+    const right = new Date(b.created_at || 0).getTime();
+    return right - left;
+  });
+}
+
 async function getMyWallet(req) {
   const user = await getUserFromRequest(req);
   const wallet = await getWallet(user.uid);
-  const ledgers = await listLedgers(user.uid);
+  const ledgers = (await listLedgers(user.uid)).map(toPiLedgerDto);
+  const assetLedgers = buildAssetBattleLedgers(await listUserAssetBattleLedgerRows(user.uid), user.uid);
+  const allLedgers = sortLedgersByTime([...ledgers, ...assetLedgers]).slice(0, 120);
   const config = await readGameConfig();
   let remoteAssets = null;
   let remoteAssetsError = "";
@@ -33,7 +134,9 @@ async function getMyWallet(req) {
     totalReward: Number(wallet.total_reward),
     remoteAssets,
     remoteAssetsError,
-    ledgers
+    ledgers,
+    assetLedgers,
+    allLedgers
   };
 }
 

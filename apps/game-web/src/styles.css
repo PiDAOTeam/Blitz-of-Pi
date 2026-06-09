@@ -1142,6 +1142,28 @@ button:disabled {
   display: grid;
   gap: 7px;
 }
+.wallet-ledger-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin: 0 0 9px;
+}
+.wallet-ledger-tabs button {
+  min-height: 32px;
+  padding: 6px 4px;
+  border: 1px solid rgba(255, 210, 126, .2);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .07);
+  color: #f7e9ff;
+  font-size: 12px;
+  font-weight: 900;
+}
+.wallet-ledger-tabs button.active {
+  border-color: #ffd66f;
+  background: linear-gradient(135deg, #ffe27a, #f7b733);
+  color: #351055;
+  box-shadow: 0 8px 18px rgba(247, 183, 51, .2);
+}
 .wallet-ledger-item {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

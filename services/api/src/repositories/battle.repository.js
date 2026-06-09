@@ -200,6 +200,24 @@ async function listUserBattleRooms(uid, { page = 1, pageSize = 15, mode = "" } =
   );
 }
 
+async function listUserAssetBattleLedgerRows(uid, limit = 60) {
+  const safeLimit = Math.min(100, Math.max(1, Number.parseInt(String(limit), 10) || 60));
+  await ensureBattleAssetColumns();
+
+  return query(
+    `SELECT room_no, mode, status, player_a_uid, player_b_uid, winner_uid, loser_uid,
+            entry_fee, reward_amount, asset_type, asset_settlement_status,
+            created_at, finished_at
+     FROM battle_rooms
+     WHERE (player_a_uid = ? OR player_b_uid = ?)
+       AND COALESCE(asset_type, '') IN ('POINTS', 'POC')
+       AND status IN ('finished', 'manual_review')
+     ORDER BY id DESC
+     LIMIT ${safeLimit}`,
+    [uid, uid]
+  );
+}
+
 async function expireStaleFreeBotRooms(minutes = 5) {
   const safeMinutes = Math.min(60, Math.max(2, Number.parseInt(String(minutes), 10) || 5));
 
@@ -244,6 +262,7 @@ module.exports = {
   countActiveBattleRooms,
   countUserBattleRooms,
   listUserBattleRooms,
+  listUserAssetBattleLedgerRows,
   expireStaleFreeBotRooms,
   updateBattleRoomStatus,
   updateBattleAssetStatus
