@@ -2631,7 +2631,7 @@ function hi(e, t) {
       p?.classList.remove("pressure-hit");
     }, 760);
   }
-  s && (nn(r), Si(r)), r.attack > 0 && Ni({ id: `${o}:impact`, type: s ? "attack-line" : "self-hit", at: Date.now(), attack: Number(r.attack || 0), from: s ? "self" : "opponent" });
+  s && Si(r);
 }
 function gi(e, t) {
   const r = ui(e, t);
@@ -2729,11 +2729,10 @@ function nn(e) {
 }
 function Bi(e, t) {
   const r = Date.now();
-  a.localSwapFx = { from: e, to: t, at: r };
   const o = oe();
-  o && (o.classList.remove("board-local-swap"), o.offsetWidth, o.classList.add("board-local-swap"), window.setTimeout(() => o.classList.remove("board-local-swap"), 260)), ae("success", [e, t]), nn({ uid: a.user?.uid || "local", type: "local_swap", seq: 0, cleared: 3, chain: 1, scoreGain: 0, attack: 0, at: r, localPending: true }), window.setTimeout(() => {
+  o && (o.classList.remove("board-local-swap"), o.offsetWidth, o.classList.add("board-local-swap"), window.setTimeout(() => o.classList.remove("board-local-swap"), 220)), ae("success", [e, t]), window.setTimeout(() => {
     a.localSwapFx?.at === r && (a.localSwapFx = null, $());
-  }, 380);
+  }, 240);
 }
 function Ni(e) {
   if (a.battleImpacts.some((r) => r.id === e.id)) return;
