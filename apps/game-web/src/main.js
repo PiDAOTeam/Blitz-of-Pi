@@ -1,7 +1,7 @@
 const qa = ["localhost", "127.0.0.1"].includes(window.location.hostname), fn = qa ? "http://localhost:3000" : "https://blitzapi.hashpi.app", Gt = fn, Ia = qa ? Gt.replace(/^http/, "ws").replace(/\/$/, "") + "/ws/" : "wss://blitzapi.hashpi.app/ws/", hn = window.location.hostname === "sandbox.minepi.com", R = document.querySelector("#app");
 if (!R) throw new Error("\u672A\u627E\u5230\u5E94\u7528\u6302\u8F7D\u8282\u70B9");
 const BRAND_MARK_HTML = '<img class="brand-logo" src="/assets/brand/blitz-logo-128.jpg" alt="" loading="eager" decoding="async" />';
-const Da = "blitz_language", Wa = "blitz_visual_effect_mode", Jt = ["zh-CN", "en", "vi", "ko", "ja"], ot = ["balanced", "high"];
+const Da = "blitz_language", Wa = "blitz_visual_effect_mode", INVITE_CODE_STORAGE_KEY = "blitz_pending_invite_code", Jt = ["zh-CN", "en", "vi", "ko", "ja"], ot = ["balanced", "high"];
 function gn() {
   const e = localStorage.getItem(Da);
   return Jt.includes(e) ? e : "zh-CN";
@@ -40,6 +40,24 @@ Y.ko = { ...Y.en, languageTitle: "\uC5B8\uC5B4 \uC120\uD0DD", home: "\uD648", ba
 Y.ja = { ...Y.en, languageTitle: "\u8A00\u8A9E\u3092\u9078\u629E", home: "\u30DB\u30FC\u30E0", battle: "\u5BFE\u6226", mine: "\u30DE\u30A4", quickBattle: "\u30AF\u30A4\u30C3\u30AF\u5BFE\u6226", ticketBattle: "\u5C0F\u5BCC\u8C6A\u5834", richBattle: "\u5927\u5BCC\u8C6A\u5834", gameTips: "\u904A\u3073\u65B9", rankBoard: "\u30E9\u30F3\u30AF\u699C", wallet: "\u30A6\u30A9\u30EC\u30C3\u30C8", rechargeWallet: "\u30C1\u30E3\u30FC\u30B8", applyWithdraw: "\u51FA\u91D1", matching: "\u30DE\u30C3\u30C1\u4E2D", win: "\u52DD\u5229", lose: "\u6557\u5317", draw: "\u5F15\u304D\u5206\u3051", backLobby: "\u30ED\u30D3\u30FC\u3078", backHome: "\u30DB\u30FC\u30E0\u3078", gotIt: "\u4E86\u89E3", cancelMatch: "\u30AD\u30E3\u30F3\u30BB\u30EB", playAgain: "\u3082\u3046\u4E00\u6226", playerProfile: "\u30D7\u30ED\u30D5\u30A3\u30FC\u30EB", battleHistory: "\u5BFE\u6226\u5C65\u6B74", rankRules: "\u30E9\u30F3\u30AF\u898F\u5247", score: "\u30B9\u30B3\u30A2", readyStart: "\u6E96\u5099", waitingBothReady: "\u4E21\u8005\u306E\u6E96\u5099\u5F85\u3061", readyConfirmTitle: "\u6E96\u5099\u78BA\u8A8D", readyConfirmSubtitle: "\u4E21\u8005\u304C\u78BA\u8A8D\u3059\u308B\u3068\u30AB\u30A6\u30F3\u30C8\u30C0\u30A6\u30F3\u304C\u59CB\u307E\u308A\u307E\u3059\u3002", readySelf: "\u81EA\u5206\u306F\u6E96\u5099\u5B8C\u4E86", readyOpponent: "\u76F8\u624B\u306F\u6E96\u5099\u5B8C\u4E86", readySelfPending: "\u81EA\u5206\u306F\u672A\u6E96\u5099", readyOpponentPending: "\u76F8\u624B\u5F85\u3061", readyButton: "\u6E96\u5099\u5B8C\u4E86", readyWaitingOpponent: "\u6E96\u5099\u5B8C\u4E86\u3001\u76F8\u624B\u3092\u5F85\u3063\u3066\u3044\u307E\u3059...", waitBothReady: "\u5148\u306B\u6E96\u5099\u3092\u78BA\u8A8D\u3057\u3066\u304F\u3060\u3055\u3044\u3002", startAfterCountdown: "\u30AB\u30A6\u30F3\u30C8\u30C0\u30A6\u30F3\u5F8C\u306B\u958B\u59CB", notRankedBattle: "\u3053\u306E\u5BFE\u6226\u306F\u30E9\u30F3\u30AF\u306B\u53CD\u6620\u3055\u308C\u307E\u305B\u3093", botPracticeNotRanked: "Bot\u7DF4\u7FD2\u6226\u306F\u30E9\u30F3\u30AF\u5BFE\u8C61\u5916\u3002\u771F\u4EBA\u30AF\u30A4\u30C3\u30AF\u6226\u306F{rank}\u307E\u3067\u6607\u683C\u3067\u304D\u307E\u3059\u3002", validModesText: "{modes}\u304C\u30E9\u30F3\u30AF\u5BFE\u8C61\u3067\u3059\u3002\u6BCE\u65E5{count}\u56DE\u306E\u6709\u52B9\u5BFE\u6226\u3067\u5B9D\u7BB1\u3092\u53D7\u3051\u53D6\u308C\u307E\u3059\u3002", quickCapText: "\u30AF\u30A4\u30C3\u30AF\u6226\u306E\u30E9\u30F3\u30AF\u53CD\u6620\u304C\u6709\u52B9\u306A\u5834\u5408\u3001{rank}\u307E\u3067\u6607\u683C\u3067\u304D\u307E\u3059\u3002\u305D\u306E\u5F8C\u306F\u6709\u6599\u5834\u304C\u5FC5\u8981\u3067\u3059\u3002", ticketCapText: "\u5C0F\u5BCC\u8C6A\u5834\u306F{rank}\u307E\u3067\u6607\u683C\u3067\u304D\u307E\u3059\u3002\u3055\u3089\u306B\u4E0A\u306F\u5927\u5BCC\u8C6A\u5834\u304C\u5FC5\u8981\u3067\u3059\u3002", weeklyBonusText: "\u6BCE\u9031\u6708\u66DC\u306B\u3001{modes}\u306E\u7D14\u661F\u6570\u3001\u52DD\u5229\u6570\u3001\u30E9\u30F3\u30AF\u3067\u5831\u916C\u3092\u914D\u5E03\u3057\u307E\u3059\u3002", richEntryText: "\u5FC5\u8981\u6700\u4F4E\u30E9\u30F3\u30AF\uFF1A{rank}\u3002", ruleSummaryFallback: "\u771F\u4EBA\u30AF\u30A4\u30C3\u30AF\u6226\u306F\u767D\u9280\u307E\u3067\u6607\u683C\u53EF\u80FD\u3002\u6709\u6599\u5834\u3067\u3055\u3089\u306B\u4E0A\u3092\u76EE\u6307\u3057\u307E\u3059\u3002", expandAll: "\u3059\u3079\u3066\u8868\u793A", collapse: "\u9589\u3058\u308B", recentRecords: "\u6700\u8FD1{count}\u4EF6", walletLedgerPager: "{page}/{totalPages}", playerRank: "\u30D7\u30EC\u30A4\u30E4\u30FC\u30E9\u30F3\u30AF", paymentOrderConflict: "\u30C1\u30E3\u30FC\u30B8\u6CE8\u6587\u3092\u66F4\u65B0\u3057\u307E\u3057\u305F\u3002\u3082\u3046\u4E00\u5EA6\u4F5C\u6210\u3057\u3066\u304F\u3060\u3055\u3044\u3002" };
 Jt.forEach((e) => {
   Object.assign($t[e], Y[e]);
+});
+Object.assign($t["zh-CN"], {
+  myInviteLink: "我的邀请链接",
+  inviteLinkHint: "好友用 Pi 浏览器打开，会自动绑定你",
+  copyInviteLink: "复制链接",
+  inviteLinkCopied: "邀请链接已复制",
+  inviteLinkUnavailable: "登录后生成邀请链接",
+  inviteAutoBindSuccess: "已绑定邀请人",
+  inviteAutoBindFailed: "邀请链接无效，请手动绑定"
+});
+Object.assign($t.en, {
+  myInviteLink: "My Invite Link",
+  inviteLinkHint: "Open in Pi Browser to bind automatically",
+  copyInviteLink: "Copy Link",
+  inviteLinkCopied: "Invite link copied",
+  inviteLinkUnavailable: "Login to create link",
+  inviteAutoBindSuccess: "Inviter bound",
+  inviteAutoBindFailed: "Invite link invalid. Bind manually."
 });
 let M = null, A = null, be = null, ze = null, he = 0, Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0;
 const vn = 1100, va = 2600, Sn = 80, me = /* @__PURE__ */ new Set();
@@ -1566,6 +1584,81 @@ async function copyPiUsername() {
     S("复制失败，请长按用户名复制", "error");
   }
 }
+function sanitizeInviteCode(e) {
+  const t = String(e || "").trim().replace(/^@+/, "");
+  return /^[A-Za-z0-9_.-]{3,40}$/.test(t) ? t : "";
+}
+function getStoredInviteCode() {
+  return sanitizeInviteCode(localStorage.getItem(INVITE_CODE_STORAGE_KEY));
+}
+function clearStoredInviteCode() {
+  localStorage.removeItem(INVITE_CODE_STORAGE_KEY);
+}
+function captureInviteCodeFromLocation() {
+  const e = new URLSearchParams(window.location.search), t = sanitizeInviteCode(e.get("invite") || e.get("ref") || e.get("code"));
+  if (t) {
+    localStorage.setItem(INVITE_CODE_STORAGE_KEY, t);
+    return t;
+  }
+  const r = window.location.pathname.split("/").filter(Boolean).map((o) => {
+    try {
+      return decodeURIComponent(o);
+    } catch {
+      return "";
+    }
+  });
+  let o = "";
+  if (r[0] === "i" || r[0] === "invite") {
+    o = sanitizeInviteCode(r[1] || "");
+  } else if (r.length === 1) {
+    const s = r[0] || "", l = new Set(["api", "admin-api", "assets", "health", "favicon.ico", "robots.txt", "sitemap.xml", "validation-key.txt"]);
+    !l.has(s.toLowerCase()) && !s.includes(".") && (o = sanitizeInviteCode(s));
+  }
+  return o ? (localStorage.setItem(INVITE_CODE_STORAGE_KEY, o), o) : "";
+}
+function getMyInviteCode() {
+  return sanitizeInviteCode(a.user?.piUsername || a.user?.uid || "");
+}
+function getMyInviteLink() {
+  const e = getMyInviteCode();
+  return e ? `${window.location.origin}/i/${encodeURIComponent(e)}` : "";
+}
+async function copyInviteLink() {
+  const e = getMyInviteLink();
+  if (!e) {
+    S(n("inviteLinkUnavailable"), "error");
+    return;
+  }
+  try {
+    await copyTextToClipboard(e), S(n("inviteLinkCopied"), "success");
+  } catch {
+    S(e, "error");
+  }
+}
+async function tryAutoBindInvite() {
+  const e = getStoredInviteCode();
+  if (!e || !a.user || !a.inviteInfo?.config?.enabled) return;
+  if (a.inviteInfo?.inviter) {
+    clearStoredInviteCode();
+    return;
+  }
+  const t = String(e).toLowerCase(), r = [a.user.piUsername, a.user.uid].filter(Boolean).map((l) => String(l).toLowerCase());
+  if (r.includes(t)) {
+    clearStoredInviteCode();
+    return;
+  }
+  try {
+    await w("/api/invite/bind", { method: "POST", body: JSON.stringify({ inviterPiUsername: e }) }), clearStoredInviteCode(), await D(), S(n("inviteAutoBindSuccess"), "success");
+  } catch (o) {
+    const s = N(o);
+    if (/已经绑定|不能绑定自己|不存在|限制|请填写/.test(s)) {
+      clearStoredInviteCode(), S(n("inviteAutoBindFailed"), "error");
+    } else {
+      console.warn("邀请链接自动绑定失败", o);
+    }
+  }
+}
+captureInviteCodeFromLocation();
 function L() {
   Q(), O(), ce();
   const e = a.user, t = a.wallet;
@@ -1976,7 +2069,7 @@ function at() {
     `, document.querySelector("#back-home")?.addEventListener("click", L);
     return;
   }
-  const t = e?.stats.levelKey ? e?.config.levels.find((f) => f.key === e.stats.levelKey) : null, r = (e?.claimableRewards || []).reduce((f, m) => f + Number(m.amount || 0), 0), o = Math.round(Number(t?.commissionRate || 0) * 1e3) / 10, s = Number(e.stats.totalCommission || 0) + Number(e.stats.totalQualificationReward || 0);
+  const t = e?.stats.levelKey ? e?.config.levels.find((f) => f.key === e.stats.levelKey) : null, r = (e?.claimableRewards || []).reduce((f, m) => f + Number(m.amount || 0), 0), o = Math.round(Number(t?.commissionRate || 0) * 1e3) / 10, s = Number(e.stats.totalCommission || 0) + Number(e.stats.totalQualificationReward || 0), inviteLink = getMyInviteLink();
   R.innerHTML = `
     <main class="shell">
       <section class="hero">
@@ -1995,6 +2088,14 @@ function at() {
             <strong>${i(b(s))}</strong>
             <small>${i(n("inviteCount", { count: e.stats.directInviteCount || 0 }))}</small>
           </div>
+        </section>
+        <section class="invite-link-card">
+          <div>
+            <span>${i(n("myInviteLink"))}</span>
+            <strong>${i(inviteLink || n("inviteLinkUnavailable"))}</strong>
+            <small>${i(n("inviteLinkHint"))}</small>
+          </div>
+          <button type="button" class="secondary" id="copy-invite-link" ${inviteLink ? "" : "disabled"}>${i(n("copyInviteLink"))}</button>
         </section>
         ${Fr(e)}
         ${e?.inviter ? "" : `<form id="invite-bind-form" class="recharge-form compact-form invite-bind-top">
@@ -2015,7 +2116,7 @@ function at() {
         <p id="invite-status" class="summary" role="status" aria-live="polite"></p>
       </section>
     </main>
-  `, document.querySelector("#back-home")?.addEventListener("click", L);
+  `, document.querySelector("#back-home")?.addEventListener("click", L), document.querySelector("#copy-invite-link")?.addEventListener("click", () => copyInviteLink());
   const l = document.querySelector("#invite-status"), c = document.querySelector("#invite-bind-status"), d = document.querySelector("#invite-bind-form"), u = d?.querySelector('input[name="inviterPiUsername"]'), h = document.querySelector("#invite-user-preview");
   let p = null;
   u?.addEventListener("input", () => {
@@ -3095,7 +3196,7 @@ async function to(e, t) {
 }
 async function ao() {
   try {
-    Qe(), ua(n("loginLoading")), await Yi(), Qe(), await D(), a.screen = "home", Xi();
+    Qe(), ua(n("loginLoading")), await Yi(), Qe(), await D(), await tryAutoBindInvite(), a.screen = "home", Xi();
   } catch (e) {
     console.error("\u521D\u59CB\u5316\u5931\u8D25", e), Fe(n("initFailed", { message: N(e) }));
   }

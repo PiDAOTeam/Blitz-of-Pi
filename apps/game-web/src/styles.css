@@ -7016,8 +7016,12 @@ button:disabled {
     width: 100%;
   }
   .invite-hero-card,
+  .invite-link-card,
   .invite-example-grid {
     grid-template-columns: 1fr;
+  }
+  .invite-link-card button {
+    width: 100%;
   }
   .invite-level-list article {
     align-items: flex-start;
@@ -7326,6 +7330,7 @@ button:disabled {
   grid-template-columns: minmax(0, 1fr) auto;
 }
 .invite-hero-card,
+.invite-link-card,
 .invite-income-card,
 .invite-relation-panel,
 .invite-level-board,
@@ -7358,7 +7363,57 @@ button:disabled {
       135deg,
       #ffbc182e,
       #7f18ff70 54%,
-      #2c006894);
+    #2c006894);
+}
+.invite-link-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  border-color: rgba(255, 218, 105, .48);
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(255, 230, 96, .22),
+      transparent 38%),
+    linear-gradient(
+      135deg,
+      #ffc21a24,
+      #4f00a872);
+}
+.invite-link-card > div {
+  min-width: 0;
+}
+.invite-link-card span,
+.invite-link-card strong,
+.invite-link-card small {
+  display: block;
+}
+.invite-link-card span {
+  color: #e9d2ffc7;
+  font-size: 12px;
+  font-weight: 900;
+}
+.invite-link-card strong {
+  margin-top: 4px;
+  color: #fff3b2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  line-height: 1.25;
+}
+.invite-link-card small {
+  margin-top: 4px;
+  color: #f6e4ffc7;
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1.35;
+}
+.invite-link-card button {
+  min-height: 42px;
+  padding: 10px 14px;
+  white-space: nowrap;
 }
 .invite-hero-card > div {
   min-width: 0;
