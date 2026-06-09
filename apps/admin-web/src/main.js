@@ -969,13 +969,25 @@ function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, roo
               <label><span>\u672C\u5730\u5927\u63D0\u793A</span><input name="effectLocalBurstSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.localBurstSeconds ?? 0.56}" /></label>
               <label><span>\u70AB\u5F69\u672C\u5730\u63D0\u793A</span><input name="effectLocalBurstHighSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.localBurstHighSeconds ?? 0.72}" /></label>
               <label><span>\u670D\u52A1\u7AEF\u63D0\u793A</span><input name="effectServerBurstSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.serverBurstSeconds ?? 1.52}" /></label>
+              <label><span>\u70AB\u5F69\u670D\u52A1\u7AEF\u63D0\u793A</span><input name="effectServerBurstHighSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.serverBurstHighSeconds ?? 1.42}" /></label>
+            </div>
+            <div class="rank-row">
               <label><span>\u4F4E\u6027\u80FD\u63D0\u793A</span><input name="effectLowPerformanceBurstSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.lowPerformanceBurstSeconds ?? 1.65}" /></label>
+              <label><span>\u670D\u52A1\u7AEF\u6821\u5BF9</span><input name="effectServerSettleSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.serverSettleSeconds ?? 0.24}" /></label>
+              <label><span>\u5F97\u5206\u95EA\u52A8</span><input name="effectImpactSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.impactSeconds ?? 0.72}" /></label>
+              <label><span>\u70AB\u5F69\u5F97\u5206\u95EA\u52A8</span><input name="effectImpactHighSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.impactHighSeconds ?? 0.92}" /></label>
             </div>
             <div class="rank-row">
               <label><span>\u68CB\u76D8\u53CD\u9988</span><input name="effectBoardEffectSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.boardEffectSeconds ?? 0.32}" /></label>
               <label><span>\u70AB\u5F69\u68CB\u76D8</span><input name="effectBoardEffectHighSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.boardEffectHighSeconds ?? 0.42}" /></label>
               <label><span>\u65B9\u5757\u7206\u5F00</span><input name="effectTileBurstSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.tileBurstSeconds ?? 0.34}" /></label>
+              <label><span>\u70AB\u5F69\u65B9\u5757\u7206\u5F00</span><input name="effectTileBurstHighSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.tileBurstHighSeconds ?? 0.46}" /></label>
+            </div>
+            <div class="rank-row">
               <label><span>\u65B9\u5757\u4E0B\u843D</span><input name="effectTileFallSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.tileFallSeconds ?? 0.3}" /></label>
+              <label><span>\u70AB\u5F69\u65B9\u5757\u4E0B\u843D</span><input name="effectTileFallHighSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.tileFallHighSeconds ?? 0.38}" /></label>
+              <label><span>\u538B\u529B\u95EA\u52A8</span><input name="effectPressureHitSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.pressureHitSeconds ?? 0.72}" /></label>
+              <label><span>\u53D7\u51FB\u68CB\u76D8</span><input name="effectBoardUnderAttackSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.boardUnderAttackSeconds ?? 0.58}" /></label>
             </div>
             <div class="rank-row">
               <label><span>\u6ED1\u52A8\u53CD\u9988</span><input name="effectLocalSwapSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.localSwapSeconds ?? 0.18}" /></label>
