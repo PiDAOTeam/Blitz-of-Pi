@@ -2641,7 +2641,7 @@ function hi(e, t) {
     const p = s ? l.opponentPressureMeter : l.selfPressureMeter;
     flashClass(p, "pressure-hit", 460);
   }
-  s && Si(r);
+  s && (nn(r), Si(r));
 }
 function gi(e, t) {
   const r = ui(e, t);
