@@ -12,6 +12,61 @@ function bn() {
 }
 const Z = ["ruby", "amber", "jade", "aqua", "slate", "gold"], wa = 10, ya = 20, ka = 30, a = { user: null, home: null, wallet: null, rankStatus: null, rankLeaderboard: null, piConfig: null, gameConfig: null, inviteInfo: null, engagement: null, battleHistory: [], battleHistoryPage: 1, battleHistoryTotal: 0, battleHistoryTotalPages: 1, battleHistoryFilter: "all", walletLedgerExpanded: false, walletLedgerPage: 1, walletLedgerFilter: "all", screen: "loading", activePanel: "home", selectedMode: "quick_battle", roomNo: "", roomJoinToken: "", room: null, realtimeRoom: null, result: null, selectedTile: null, tileEffect: null, battleMessage: "", networkStatus: "connecting", networkLatencyMs: 0, vsIntroUntil: 0, lastRoomStateAt: 0, lastSwapSentAt: 0, lastSwapSeq: 0, pendingSwapSeq: 0, pendingSwapPositions: [], lastSwapPositions: [], battleConnectingAt: 0, battleEnteredAt: 0, feedbackEventId: "", feedback: null, battleBursts: [], battleImpacts: [], localBattleEvents: [], localSwapFx: null, matchPollTimer: null, matchUiTimer: null, matchStartedAt: 0, matchWaitingSeconds: 0, matchCanCancel: false, matchCancelMessage: "", matchCancelling: false, matchSessionId: 0, matchPollFailedCount: 0, language: gn(), visualEffectMode: bn(), effectiveVisualEffectMode: "balanced", profileOptions: null, withdrawWallets: [] }, St = [{ code: "zh-CN", flag: "\u{1F1E8}\u{1F1F3}", nativeName: "\u4E2D\u6587", displayName: "\u7B80\u4F53\u4E2D\u6587" }, { code: "en", flag: "\u{1F1FA}\u{1F1F8}", nativeName: "English", displayName: "English" }, { code: "vi", flag: "\u{1F1FB}\u{1F1F3}", nativeName: "Ti\u1EBFng Vi\u1EC7t", displayName: "\u8D8A\u5357\u8BED" }, { code: "ko", flag: "\u{1F1F0}\u{1F1F7}", nativeName: "\uD55C\uAD6D\uC5B4", displayName: "\u97E9\u8BED" }, { code: "ja", flag: "\u{1F1EF}\u{1F1F5}", nativeName: "\u65E5\u672C\u8A9E", displayName: "\u65E5\u8BED" }], $t = { "zh-CN": { languageTitle: "\u9009\u62E9\u8BED\u8A00", languageSummary: "\u5207\u6362\u540E\u4F1A\u7ACB\u5373\u751F\u6548\uFF0C\u5E76\u81EA\u52A8\u8BB0\u4F4F\u4F60\u7684\u9009\u62E9\u3002", languageCancel: "\u53D6\u6D88", homeProjectNameFallback: "Pi\u95EA\u7535\u6218", homeEnglishNameFallback: "BLITZ OF PI", realtimePvp: "\u5B9E\u65F6PVP", match3: "6x8\u4E09\u6D88", piReward: "Pi\u5956\u52B1", gameTips: "\u73A9\u6CD5\u6280\u5DE7", rankBoard: "\u6BB5\u4F4D\u699C", totalPlayers: "\u603B\u73A9\u5BB6", totalBattles: "\u7D2F\u8BA1\u5BF9\u5C40", todayBattles: "\u4ECA\u65E5\u5BF9\u5C40", totalRewards: "\u5DF2\u53D1\u5956\u52B1", practiceMode: "\u7EC3\u624B\u6A21\u5F0F", quickBattle: "\u5FEB\u901F\u5F00\u6218", quickBattleDesc: "\u514D\u8D39\u7EC3\u624B\uFF0C\u4E45\u7B49\u8865\u673A\u5668\u4EBA\u3002", lowEntryReward: "\u4F4E\u95E8\u69DB\u5956\u52B1", ticketBattle: "\u5C0F\u5BCC\u8C6A\u573A", ticketBattleDesc: "\u4F4E\u95E8\u69DB\u771F\u4EBA\u573A\uFF0C\u8BA1\u5165\u5468\u699C\u3002", highPrizePool: "\u9AD8\u5956\u6C60\u523A\u6FC0", richBattle: "\u5927\u5BCC\u8C6A\u573A", richBattleDesc: "\u9AD8\u5956\u6C60\u771F\u4EBA\u573A\uFF0C{rank}\u89E3\u9501\u3002", rankRoute: "\u51B2\u6BB5\u8DEF\u7EBF", quickShort: "\u5FEB\u901F", ticketShort: "\u5C0F\u5BCC\u8C6A", richShort: "\u5927\u5BCC\u8C6A", maintenanceTitle: "\u7EF4\u62A4\u516C\u544A", maintenanceFallback: "\u5E73\u53F0\u7EF4\u62A4\u4E2D\uFF0C\u90E8\u5206\u529F\u80FD\u53EF\u80FD\u6682\u4E0D\u53EF\u7528\u3002", activityFallback: "\u6D3B\u52A8\u516C\u544A", activityDescriptionFallback: "\u5B8C\u6210\u5BF9\u5C40\u3001\u63D0\u5347\u6BB5\u4F4D\uFF0C\u8D62\u53D6 Pi \u5956\u52B1\u3002", ruleSwap: "\u73A9\u6CD5\uFF1A\u4EA4\u6362\u76F8\u90BB\u65B9\u5757\uFF0C\u4E09\u8FDE\u5373\u53EF\u6D88\u9664", ruleCombo: "\u6280\u5DE7\uFF1A\u8FDE\u51FB\u8D8A\u9AD8\uFF0C\u5BF9\u624B\u538B\u529B\u8D8A\u5927", ruleGoal: "\u76EE\u6807\uFF1A90\u79D2\u5185\u6253\u51FA\u66F4\u9AD8\u5206\u6570", chooseBattleMode: "\u9009\u62E9\u5BF9\u6218\u6A21\u5F0F", home: "\u9996\u9875", battle: "\u5F00\u6218", mine: "\u6211\u7684", battleMode: "\u5BF9\u6218\u6A21\u5F0F", chooseModeTitle: "\u9009\u62E9\u5BF9\u6218\u6A21\u5F0F", quickModeDetail: "\u514D\u8D39\u7EC3\u624B\uFF0C\u4E45\u7B49\u8865\u673A\u5668\u4EBA\u3002", ticketModeDetail: "\u4F4E\u95E8\u69DB\u771F\u4EBA\u573A\uFF0C{weekly}", richModeDetail: "\u9AD8\u5956\u6C60\u771F\u4EBA\u573A\uFF0C{rank}\u89E3\u9501\u3002", weeklyOn: "\u8BA1\u5165\u5468\u699C\u5956\u52B1\u3002", weeklyOff: "\u4E0D\u8BA1\u5468\u699C\u3002", richUnlock: " \xB7 {rank}\u89E3\u9501", balanceAndStars: "\u4F59\u989D {balance} Pi \xB7 \u80DC+{win}/\u8D1F-{lose} \xB7 \u9752\u94DC{protection}", protected: "\u6709\u4FDD\u62A4", unprotected: "\u65E0\u4FDD\u62A4" }, en: { languageTitle: "Choose Language", languageSummary: "Changes apply instantly and will be remembered on this device.", languageCancel: "Cancel", homeProjectNameFallback: "Blitz of Pi", homeEnglishNameFallback: "BLITZ OF PI", realtimePvp: "Real-time PVP", match3: "6x8 Match-3", piReward: "Pi Rewards", gameTips: "How to Play", rankBoard: "Rank Board", totalPlayers: "Players", totalBattles: "Battles", todayBattles: "Today", totalRewards: "Rewards Paid", practiceMode: "Practice", quickBattle: "Quick Battle", quickBattleDesc: "Free practice. Bots fill long waits.", lowEntryReward: "Low Entry", ticketBattle: "Small Rich Room", ticketBattleDesc: "Low-entry real-player room.", highPrizePool: "High Prize", richBattle: "Big Rich Room", richBattleDesc: "High-prize room. Unlocks at {rank}.", rankRoute: "Rank Path", quickShort: "Quick", ticketShort: "Small", richShort: "Big", maintenanceTitle: "Maintenance", maintenanceFallback: "The platform is under maintenance. Some features may be unavailable.", activityFallback: "Event", activityDescriptionFallback: "Play battles, climb ranks, and win Pi rewards.", ruleSwap: "Swap adjacent tiles and match 3 to clear.", ruleCombo: "Higher combos create more pressure.", ruleGoal: "Score higher within 90 seconds.", chooseBattleMode: "Choose Battle Mode", home: "Home", battle: "Battle", mine: "Mine", battleMode: "Battle Mode", chooseModeTitle: "Choose Battle Mode", quickModeDetail: "Free practice. Bots fill long waits.", ticketModeDetail: "Low-entry real-player room. {weekly}", richModeDetail: "High-prize room. Unlocks at {rank}.", weeklyOn: "Counts for weekly rewards.", weeklyOff: "Not counted weekly.", richUnlock: " \xB7 {rank} unlock", balanceAndStars: "Bal {balance} Pi \xB7 W+{win}/L-{lose} \xB7 Bronze {protection}", protected: "protected", unprotected: "not protected" }, vi: { languageTitle: "Ch\u1ECDn ng\xF4n ng\u1EEF", languageSummary: "Thay \u0111\u1ED5i c\xF3 hi\u1EC7u l\u1EF1c ngay v\xE0 s\u1EBD \u0111\u01B0\u1EE3c ghi nh\u1EDB.", languageCancel: "H\u1EE7y", homeProjectNameFallback: "Blitz of Pi", homeEnglishNameFallback: "BLITZ OF PI", realtimePvp: "PVP th\u1EDDi gian th\u1EF1c", match3: "6x8 gh\xE9p 3", piReward: "Th\u01B0\u1EDFng Pi", gameTips: "M\u1EB9o ch\u01A1i", rankBoard: "B\u1EA3ng h\u1EA1ng", totalPlayers: "Ng\u01B0\u1EDDi ch\u01A1i", totalBattles: "Tr\u1EADn \u0111\xE3 ch\u01A1i", todayBattles: "H\xF4m nay", totalRewards: "Pi \u0111\xE3 th\u01B0\u1EDFng", practiceMode: "Luy\u1EC7n t\u1EADp", quickBattle: "\u0110\u1EA5u nhanh", quickBattleDesc: "Mi\u1EC5n ph\xED. Tr\u1EADn ng\u01B0\u1EDDi th\u1EADt {cap}; tr\u1EADn bot kh\xF4ng t\xEDnh h\u1EA1ng ho\u1EB7c th\u01B0\u1EDFng tu\u1EA7n.", lowEntryReward: "Ph\xED th\u1EA5p", ticketBattle: "Ph\xF2ng Ti\u1EC3u ph\xFA", ticketBattleDesc: "M\u1ED7i b\xEAn tr\u1EA3 {fee} Pi, ng\u01B0\u1EDDi th\u1EAFng d\u1EF1 ki\u1EBFn nh\u1EADn {reward} Pi, {cap}.", highPrizePool: "Gi\u1EA3i l\u1EDBn", richBattle: "Ph\xF2ng \u0110\u1EA1i ph\xFA", richBattleDesc: "M\u1ED7i b\xEAn tr\u1EA3 {fee} Pi, th\u1EAFng d\u1EF1 ki\u1EBFn nh\u1EADn {reward} Pi, {rank} m\u1EDF kh\xF3a Tinh di\u1EC7u/Vua.", rankRoute: "L\u1ED9 tr\xECnh h\u1EA1ng", quickShort: "Nhanh", ticketShort: "Ti\u1EC3u ph\xFA", richShort: "\u0110\u1EA1i ph\xFA", maintenanceTitle: "B\u1EA3o tr\xEC", maintenanceFallback: "N\u1EC1n t\u1EA3ng \u0111ang b\u1EA3o tr\xEC, m\u1ED9t s\u1ED1 t\xEDnh n\u0103ng c\xF3 th\u1EC3 t\u1EA1m d\u1EEBng.", activityFallback: "S\u1EF1 ki\u1EC7n", activityDescriptionFallback: "Thi \u0111\u1EA5u, leo h\u1EA1ng v\xE0 nh\u1EADn th\u01B0\u1EDFng Pi.", ruleSwap: "\u0110\u1ED5i \xF4 li\u1EC1n k\u1EC1, gh\xE9p 3 \u0111\u1EC3 x\xF3a.", ruleCombo: "Combo c\xE0ng cao, \xE1p l\u1EF1c c\xE0ng l\u1EDBn.", ruleGoal: "Ghi \u0111i\u1EC3m cao h\u01A1n trong 90 gi\xE2y.", chooseBattleMode: "Ch\u1ECDn ch\u1EBF \u0111\u1ED9", home: "Trang ch\u1EE7", battle: "\u0110\u1EA5u", mine: "C\u1EE7a t\xF4i", battleMode: "Ch\u1EBF \u0111\u1ED9 \u0111\u1EA5u", chooseModeTitle: "Ch\u1ECDn ch\u1EBF \u0111\u1ED9", quickModeDetail: "Luy\u1EC7n mi\u1EC5n ph\xED. Tr\u1EADn ng\u01B0\u1EDDi th\u1EADt {cap}; ch\u1EDD l\xE2u c\xF3 th\u1EC3 g\u1EB7p bot v\xE0 kh\xF4ng t\xEDnh h\u1EA1ng/tu\u1EA7n.", ticketModeDetail: "M\u1ED7i b\xEAn tr\u1EA3 {fee} Pi, th\u1EAFng nh\u1EADn {reward} Pi, {cap}, {weekly}", richModeDetail: "M\u1ED7i b\xEAn tr\u1EA3 {fee} Pi, th\u1EAFng nh\u1EADn {reward} Pi, {rank} m\u1EDF kh\xF3a Tinh di\u1EC7u/Vua, {weekly}", weeklyOn: "T\xEDnh th\u01B0\u1EDFng tu\u1EA7n.", weeklyOff: "Kh\xF4ng t\xEDnh tu\u1EA7n.", richUnlock: " \xB7 m\u1EDF \u1EDF {rank}", balanceAndStars: "S\u1ED1 d\u01B0 {balance} Pi; th\u1EAFng +{win} sao, thua -{lose} sao, \u0110\u1ED3ng {protection}.", protected: "\u0111\u01B0\u1EE3c b\u1EA3o v\u1EC7", unprotected: "kh\xF4ng b\u1EA3o v\u1EC7" }, ko: { languageTitle: "\uC5B8\uC5B4 \uC120\uD0DD", languageSummary: "\uBCC0\uACBD \uC989\uC2DC \uC801\uC6A9\uB418\uBA70 \uC774 \uAE30\uAE30\uC5D0 \uC800\uC7A5\uB429\uB2C8\uB2E4.", languageCancel: "\uCDE8\uC18C", homeProjectNameFallback: "Blitz of Pi", homeEnglishNameFallback: "BLITZ OF PI", realtimePvp: "\uC2E4\uC2DC\uAC04 PVP", match3: "6x8 \uB9E4\uCE583", piReward: "Pi \uBCF4\uC0C1", gameTips: "\uD50C\uB808\uC774 \uD301", rankBoard: "\uB7AD\uD0B9", totalPlayers: "\uCD1D \uC720\uC800", totalBattles: "\uB204\uC801 \uB300\uC804", todayBattles: "\uC624\uB298 \uB300\uC804", totalRewards: "\uC9C0\uAE09 \uBCF4\uC0C1", practiceMode: "\uC5F0\uC2B5 \uBAA8\uB4DC", quickBattle: "\uBE60\uB978 \uB300\uC804", quickBattleDesc: "\uBB34\uB8CC \uC785\uC7A5. \uC2E4\uC81C \uC720\uC800 \uB300\uC804\uC740 {cap}; \uBD07 \uB300\uC804\uC740 \uB7AD\uD06C/\uC8FC\uAC04 \uBCF4\uC0C1 \uC81C\uC678.", lowEntryReward: "\uB0AE\uC740 \uCC38\uAC00\uBE44", ticketBattle: "\uC2A4\uBAB0 \uB9AC\uCE58", ticketBattleDesc: "\uC591\uCABD {fee} Pi \uC9C0\uBD88, \uC2B9\uC790 \uC608\uC0C1 {reward} Pi \uD68D\uB4DD, {cap}.", highPrizePool: "\uD070 \uC0C1\uAE08", richBattle: "\uBE45 \uB9AC\uCE58", richBattleDesc: "\uC591\uCABD {fee} Pi \uC9C0\uBD88, \uC2B9\uC790 \uC608\uC0C1 {reward} Pi \uD68D\uB4DD, {rank}\uBD80\uD130 \uC2A4\uD0C0\uB77C\uC774\uD2B8/\uD0B9 \uB3C4\uC804.", rankRoute: "\uB7AD\uD06C \uACBD\uB85C", quickShort: "\uBE60\uB978", ticketShort: "\uC2A4\uBAB0", richShort: "\uBE45", maintenanceTitle: "\uC810\uAC80 \uC548\uB0B4", maintenanceFallback: "\uD50C\uB7AB\uD3FC \uC810\uAC80 \uC911\uC785\uB2C8\uB2E4. \uC77C\uBD80 \uAE30\uB2A5\uC744 \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.", activityFallback: "\uC774\uBCA4\uD2B8", activityDescriptionFallback: "\uB300\uC804\uD558\uACE0 \uB7AD\uD06C\uB97C \uC62C\uB824 Pi \uBCF4\uC0C1\uC744 \uBC1B\uC73C\uC138\uC694.", ruleSwap: "\uC778\uC811 \uBE14\uB85D\uC744 \uBC14\uAFD4 3\uAC1C\uB97C \uB9DE\uCD94\uC138\uC694.", ruleCombo: "\uCF64\uBCF4\uAC00 \uB192\uC744\uC218\uB85D \uC0C1\uB300 \uC555\uBC15\uC774 \uCEE4\uC9D1\uB2C8\uB2E4.", ruleGoal: "90\uCD08 \uC548\uC5D0 \uB354 \uB192\uC740 \uC810\uC218\uB97C \uB0B4\uC138\uC694.", chooseBattleMode: "\uB300\uC804 \uBAA8\uB4DC \uC120\uD0DD", home: "\uD648", battle: "\uB300\uC804", mine: "\uB0B4 \uC815\uBCF4", battleMode: "\uB300\uC804 \uBAA8\uB4DC", chooseModeTitle: "\uB300\uC804 \uBAA8\uB4DC \uC120\uD0DD", quickModeDetail: "\uBB34\uB8CC \uC5F0\uC2B5. \uC2E4\uC81C \uC720\uC800 \uB300\uC804\uC740 {cap}; \uB300\uAE30 \uD6C4 \uBD07 \uB9E4\uCE6D \uAC00\uB2A5\uD558\uBA70 \uB7AD\uD06C/\uC8FC\uAC04 \uC81C\uC678.", ticketModeDetail: "\uC591\uCABD {fee} Pi \uC9C0\uBD88, \uC2B9\uC790 {reward} Pi \uD68D\uB4DD, {cap}, {weekly}", richModeDetail: "\uC591\uCABD {fee} Pi \uC9C0\uBD88, \uC2B9\uC790 {reward} Pi \uD68D\uB4DD, {rank}\uBD80\uD130 \uC2A4\uD0C0\uB77C\uC774\uD2B8/\uD0B9 \uB3C4\uC804, {weekly}", weeklyOn: "\uC8FC\uAC04 \uBCF4\uC0C1 \uBC18\uC601.", weeklyOff: "\uC8FC\uAC04 \uC81C\uC678.", richUnlock: " \xB7 {rank} \uD574\uC81C", balanceAndStars: "\uC794\uC561 {balance} Pi; \uC2B9\uB9AC +{win}\uC131, \uD328\uBC30 -{lose}\uC131, \uBE0C\uB860\uC988 {protection}.", protected: "\uBCF4\uD638", unprotected: "\uBCF4\uD638 \uC5C6\uC74C" }, ja: { languageTitle: "\u8A00\u8A9E\u3092\u9078\u629E", languageSummary: "\u5909\u66F4\u306F\u3059\u3050\u53CD\u6620\u3055\u308C\u3001\u3053\u306E\u7AEF\u672B\u306B\u4FDD\u5B58\u3055\u308C\u307E\u3059\u3002", languageCancel: "\u30AD\u30E3\u30F3\u30BB\u30EB", homeProjectNameFallback: "Blitz of Pi", homeEnglishNameFallback: "BLITZ OF PI", realtimePvp: "\u30EA\u30A2\u30EB\u30BF\u30A4\u30E0PVP", match3: "6x8\u30DE\u30C3\u30C13", piReward: "Pi\u5831\u916C", gameTips: "\u904A\u3073\u65B9", rankBoard: "\u30E9\u30F3\u30AF\u699C", totalPlayers: "\u7DCF\u30D7\u30EC\u30A4\u30E4\u30FC", totalBattles: "\u7D2F\u8A08\u5BFE\u6226", todayBattles: "\u672C\u65E5\u5BFE\u6226", totalRewards: "\u914D\u5E03\u5831\u916C", practiceMode: "\u7DF4\u7FD2\u30E2\u30FC\u30C9", quickBattle: "\u30AF\u30A4\u30C3\u30AF\u5BFE\u6226", quickBattleDesc: "\u7121\u6599\u53C2\u52A0\u3002\u771F\u4EBA\u6226\u306F{cap}\uFF1BBot\u6226\u306F\u30E9\u30F3\u30AF/\u9031\u9593\u5831\u916C\u5BFE\u8C61\u5916\u3002", lowEntryReward: "\u4F4E\u53C2\u52A0\u8CBB", ticketBattle: "\u5C0F\u5BCC\u8C6A\u5834", ticketBattleDesc: "\u53CC\u65B9 {fee} Pi\u3001\u52DD\u8005\u306F\u7D04 {reward} Pi\u3001{cap}\u3002", highPrizePool: "\u9AD8\u8CDE\u91D1", richBattle: "\u5927\u5BCC\u8C6A\u5834", richBattleDesc: "\u53CC\u65B9 {fee} Pi\u3001\u52DD\u8005\u306F\u7D04 {reward} Pi\u3001{rank}\u304B\u3089\u661F\u8000/\u738B\u8005\u3078\u6311\u6226\u3002", rankRoute: "\u30E9\u30F3\u30AF\u9053", quickShort: "\u5FEB\u901F", ticketShort: "\u5C0F\u5BCC\u8C6A", richShort: "\u5927\u5BCC\u8C6A", maintenanceTitle: "\u30E1\u30F3\u30C6\u30CA\u30F3\u30B9", maintenanceFallback: "\u30E1\u30F3\u30C6\u30CA\u30F3\u30B9\u4E2D\u3067\u3059\u3002\u4E00\u90E8\u6A5F\u80FD\u304C\u5229\u7528\u3067\u304D\u306A\u3044\u5834\u5408\u304C\u3042\u308A\u307E\u3059\u3002", activityFallback: "\u30A4\u30D9\u30F3\u30C8", activityDescriptionFallback: "\u5BFE\u6226\u3057\u3066\u30E9\u30F3\u30AF\u3092\u4E0A\u3052\u3001Pi\u5831\u916C\u3092\u7372\u5F97\u3057\u307E\u3057\u3087\u3046\u3002", ruleSwap: "\u96A3\u306E\u30D6\u30ED\u30C3\u30AF\u3092\u5165\u308C\u66FF\u3048\u30013\u3064\u63C3\u3048\u3066\u6D88\u3057\u307E\u3059\u3002", ruleCombo: "\u30B3\u30F3\u30DC\u304C\u9AD8\u3044\u307B\u3069\u76F8\u624B\u3078\u306E\u5727\u529B\u304C\u5897\u3048\u307E\u3059\u3002", ruleGoal: "90\u79D2\u4EE5\u5185\u306B\u3088\u308A\u9AD8\u3044\u30B9\u30B3\u30A2\u3092\u72D9\u3044\u307E\u3059\u3002", chooseBattleMode: "\u5BFE\u6226\u30E2\u30FC\u30C9\u9078\u629E", home: "\u30DB\u30FC\u30E0", battle: "\u5BFE\u6226", mine: "\u30DE\u30A4", battleMode: "\u5BFE\u6226\u30E2\u30FC\u30C9", chooseModeTitle: "\u5BFE\u6226\u30E2\u30FC\u30C9\u9078\u629E", quickModeDetail: "\u7121\u6599\u7DF4\u7FD2\u3002\u771F\u4EBA\u6226\u306F{cap}\uFF1B\u5F85\u6A5F\u5F8C\u306EBot\u6226\u306F\u30E9\u30F3\u30AF/\u9031\u9593\u5BFE\u8C61\u5916\u3002", ticketModeDetail: "\u53CC\u65B9 {fee} Pi\u3001\u52DD\u8005 {reward} Pi\u3001{cap}\u3001{weekly}", richModeDetail: "\u53CC\u65B9 {fee} Pi\u3001\u52DD\u8005 {reward} Pi\u3001{rank}\u304B\u3089\u661F\u8000/\u738B\u8005\u3078\u6311\u6226\u3001{weekly}", weeklyOn: "\u9031\u9593\u5831\u916C\u306B\u53CD\u6620\u3002", weeklyOff: "\u9031\u9593\u5BFE\u8C61\u5916\u3002", richUnlock: " \xB7 {rank}\u3067\u89E3\u653E", balanceAndStars: "\u6B8B\u9AD8 {balance} Pi\uFF1B\u52DD\u5229 +{win} \u661F\u3001\u6557\u5317 -{lose} \u661F\u3001\u30D6\u30ED\u30F3\u30BA\u306F{protection}\u3002", protected: "\u4FDD\u8B77\u3042\u308A", unprotected: "\u4FDD\u8B77\u306A\u3057" } };
 document.documentElement.lang = a.language;
+const DEFAULT_ANIMATION_DURATIONS = {
+  localBurstSeconds: 0.56,
+  localBurstHighSeconds: 0.72,
+  serverBurstSeconds: 1.52,
+  serverBurstHighSeconds: 1.42,
+  lowPerformanceBurstSeconds: 1.65,
+  boardEffectSeconds: 0.32,
+  boardEffectHighSeconds: 0.42,
+  tileBurstSeconds: 0.34,
+  tileBurstHighSeconds: 0.46,
+  tileFallSeconds: 0.3,
+  tileFallHighSeconds: 0.38,
+  localSwapSeconds: 0.18,
+  invalidSwapSeconds: 0.26,
+  serverSettleSeconds: 0.24,
+  impactSeconds: 0.72,
+  impactHighSeconds: 0.92,
+  pressureHitSeconds: 0.72,
+  boardUnderAttackSeconds: 0.58,
+  attackLineSeconds: 0.78,
+  hitWarningSeconds: 0.62
+};
+function normalizeAnimationDurations(e = {}) {
+  const t = (r, o = DEFAULT_ANIMATION_DURATIONS[r]) => {
+    const s = Number(e?.[r]);
+    return Number.isFinite(s) && s >= 0.05 && s <= 3 ? s : o;
+  };
+  return Object.fromEntries(Object.keys(DEFAULT_ANIMATION_DURATIONS).map((r) => [r, t(r)]));
+}
+function animationSeconds(e) {
+  return ve().animationDurations?.[e] ?? DEFAULT_ANIMATION_DURATIONS[e] ?? 0.3;
+}
+function animationMs(e, t = 0) {
+  return Math.round(animationSeconds(e) * 1e3) + t;
+}
+function applyAnimationDurationVars() {
+  const e = ve().animationDurations, t = document.documentElement.style, r = a.effectiveVisualEffectMode === "high";
+  const o = r ? e.serverBurstHighSeconds : e.serverBurstSeconds, s = r ? e.localBurstHighSeconds : e.localBurstSeconds;
+  t.setProperty("--battle-burst-duration", `${o}s`);
+  t.setProperty("--battle-burst-ring-duration", `${Math.min(o, 0.72)}s`);
+  t.setProperty("--battle-burst-score-duration", `${Math.max(0.12, o - 0.14)}s`);
+  t.setProperty("--battle-burst-particle-duration", `${Math.min(o, 0.68)}s`);
+  t.setProperty("--battle-burst-local-ring-duration", `${Math.min(s, 0.52)}s`);
+  t.setProperty("--tile-burst-duration", `${r ? e.tileBurstHighSeconds : e.tileBurstSeconds}s`);
+  t.setProperty("--tile-fall-duration", `${r ? e.tileFallHighSeconds : e.tileFallSeconds}s`);
+  t.setProperty("--board-local-swap-duration", `${e.localSwapSeconds}s`);
+  t.setProperty("--board-server-settle-duration", `${e.serverSettleSeconds}s`);
+  t.setProperty("--board-invalid-swap-duration", `${e.invalidSwapSeconds}s`);
+  t.setProperty("--board-clear-duration", `${r ? e.boardEffectHighSeconds : e.boardEffectSeconds}s`);
+  t.setProperty("--board-clear-high-duration", `${e.boardEffectHighSeconds}s`);
+  t.setProperty("--pressure-hit-duration", `${e.pressureHitSeconds}s`);
+  t.setProperty("--board-under-attack-duration", `${e.boardUnderAttackSeconds}s`);
+  t.setProperty("--attack-line-duration", `${e.attackLineSeconds}s`);
+  t.setProperty("--hit-warning-duration", `${e.hitWarningSeconds}s`);
+}
 function wn() {
   return St.find((e) => e.code === a.language) || St[0];
 }
@@ -24,7 +79,7 @@ function yn(e) {
 }
 function ve() {
   const e = (t) => t === "high" ? "high" : "balanced";
-  return { defaultMode: e(a.gameConfig?.visualEffects?.defaultMode), piBrowserDefaultMode: e(a.gameConfig?.visualEffects?.piBrowserDefaultMode), allowUserChoice: a.gameConfig?.visualEffects?.allowUserChoice !== false, allowHighMode: true, autoDowngradeEnabled: a.gameConfig?.visualEffects?.autoDowngradeEnabled !== false, dragTrailEnabled: a.gameConfig?.visualEffects?.dragTrailEnabled !== false, hapticEnabled: a.gameConfig?.visualEffects?.hapticEnabled !== false };
+  return { defaultMode: e(a.gameConfig?.visualEffects?.defaultMode), piBrowserDefaultMode: e(a.gameConfig?.visualEffects?.piBrowserDefaultMode), allowUserChoice: a.gameConfig?.visualEffects?.allowUserChoice !== false, allowHighMode: true, autoDowngradeEnabled: a.gameConfig?.visualEffects?.autoDowngradeEnabled !== false, dragTrailEnabled: a.gameConfig?.visualEffects?.dragTrailEnabled !== false, hapticEnabled: a.gameConfig?.visualEffects?.hapticEnabled !== false, animationDurations: normalizeAnimationDurations(a.gameConfig?.visualEffects?.animationDurations) };
 }
 function Oa(e) {
   const t = ve(), r = Zt() ? t.piBrowserDefaultMode : t.defaultMode;
@@ -262,7 +317,7 @@ function Zt() {
 }
 function Qe() {
   const e = Oa(a.visualEffectMode);
-  a.effectiveVisualEffectMode = e, document.documentElement.classList.toggle("pi-browser", Zt()), document.documentElement.classList.remove("effect-low", "effect-balanced", "effect-high"), document.documentElement.classList.add(`effect-${e}`), document.documentElement.classList.toggle("effect-no-trail", !ve().dragTrailEnabled), document.documentElement.classList.toggle("effect-no-haptic", !ve().hapticEnabled), e === "low" ? document.documentElement.classList.add("low-performance") : a.screen !== "battle" && document.documentElement.classList.remove("low-performance");
+  a.effectiveVisualEffectMode = e, applyAnimationDurationVars(), document.documentElement.classList.toggle("pi-browser", Zt()), document.documentElement.classList.remove("effect-low", "effect-balanced", "effect-high"), document.documentElement.classList.add(`effect-${e}`), document.documentElement.classList.toggle("effect-no-trail", !ve().dragTrailEnabled), document.documentElement.classList.toggle("effect-no-haptic", !ve().hapticEnabled), e === "low" ? document.documentElement.classList.add("low-performance") : a.screen !== "battle" && document.documentElement.classList.remove("low-performance");
 }
 function xn() {
   const e = new URLSearchParams(window.location.search);
@@ -2621,7 +2676,7 @@ function ii(e, t, r, o = 1) {
     e.classList.add("tile-fall-in"), s >= 3 && e.classList.add("tile-fall-heavy");
   }), window.setTimeout(() => {
     e.classList.remove("tile-fall-in", "tile-fall-heavy"), e.style.removeProperty("--fall-from"), e.style.removeProperty("--fall-delay");
-  }, a.effectiveVisualEffectMode === "high" ? 380 : 300);
+  }, a.effectiveVisualEffectMode === "high" ? animationMs("tileFallHighSeconds", 80) : animationMs("tileFallSeconds", 80));
 }
 function oi(e, t, r = false) {
   const o = t.board || [], s = o.reduce((d, u) => d + u.length, 0);
@@ -2744,9 +2799,9 @@ function hi(e, t) {
   if (!lt(`${o}:impact-root`) || o === Ct) return;
   Ct = o;
   const s = r.uid === t.uid, l = st(), c = l.selfCard, d = l.opponentCard, u = r.attack > 0 ? s ? d : c : s ? c : d, h = r.attack > 0 ? "impact-attacked" : r.chain > 1 ? "impact-combo" : "impact-score";
-  if (flashOneOf(u, ["impact-score", "impact-combo", "impact-attacked"], h, 460), r.attack > 0) {
+  if (flashOneOf(u, ["impact-score", "impact-combo", "impact-attacked"], h, a.effectiveVisualEffectMode === "high" ? animationMs("impactHighSeconds") : animationMs("impactSeconds")), r.attack > 0) {
     const p = s ? l.opponentPressureMeter : l.selfPressureMeter;
-    flashClass(p, "pressure-hit", 460);
+    flashClass(p, "pressure-hit", animationMs("pressureHitSeconds"));
   }
   s && (clientShouldSkipServerBurst(r) || nn(r), Si(r));
 }
@@ -2790,7 +2845,7 @@ function Si(e) {
   const o = ki(e);
   r.classList.remove("board-clear-normal", "board-clear-good", "board-clear-big", "board-clear-combo", "board-clear-chain", "board-clear-attack"), r.offsetWidth, r.classList.add(o), window.setTimeout(() => {
     r.classList.remove(o);
-  }, a.effectiveVisualEffectMode === "high" ? 720 : 560), Ci(e);
+  }, a.effectiveVisualEffectMode === "high" ? animationMs("boardEffectHighSeconds", 120) : animationMs("boardEffectSeconds", 120)), Ci(e);
 }
 function $i() {
   return a.effectiveVisualEffectMode === "low" || document.documentElement.classList.contains("low-performance") ? false : !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
@@ -2818,24 +2873,24 @@ function Ci(e) {
       s.classList.add("tile-burst"), a.effectiveVisualEffectMode === "high" && (Number(e.cleared || 0) >= 4 || Number(e.chain || 1) > 1 || e.specialTriggered || e.specialCreated) && s.classList.add("tile-burst-strong");
     }), window.setTimeout(() => {
       s.classList.remove("tile-burst", "tile-burst-strong"), s.style.removeProperty("--burst-delay");
-    }, a.effectiveVisualEffectMode === "high" ? 460 : 340));
+    }, a.effectiveVisualEffectMode === "high" ? animationMs("tileBurstHighSeconds", 80) : animationMs("tileBurstSeconds", 80)));
   });
 }
 function Ti() {
   const e = oe();
-  flashClass(e, "board-server-settle", 240);
+  flashClass(e, "board-server-settle", animationMs("serverSettleSeconds"));
 }
 function Ri() {
   if (!a.lastSwapPositions.length) return;
   ae("fail", a.lastSwapPositions);
   const e = oe();
-  flashClass(e, "board-invalid-swap", 260), de([10, 18, 10]);
+  flashClass(e, "board-invalid-swap", animationMs("invalidSwapSeconds")), de([10, 18, 10]);
 }
 function Mi(e) {
   if (!e.length) return;
   a.lastSwapPositions = e, ae("fail", e);
   const t = oe();
-  flashClass(t, "board-invalid-swap", 260), de([10, 18, 10]);
+  flashClass(t, "board-invalid-swap", animationMs("invalidSwapSeconds")), de([10, 18, 10]);
 }
 function nn(e) {
   const t = `${ne(e)}:burst`;
@@ -2849,22 +2904,22 @@ function nn(e) {
   const m = { id: t, text: l, tone: s, at: Date.now(), x: e.attack > 0 ? 63 : r ? 48 + Math.random() * 12 : 50, y: e.localPending ? 48 : e.attack > 0 ? 38 : r ? 46 + Math.random() * 10 : 50, cleared: Number(e.cleared || 3), chain: Number(e.chain || 1), attack: Number(e.attack || 0), particles: bi(e) };
   a.battleBursts = l ? [m] : [...a.battleBursts, m].slice(-2), K = "", window.setTimeout(() => {
     a.battleBursts = a.battleBursts.filter((g) => g.id !== t), K = "", $();
-  }, e.localPending ? r ? 720 : 560 : o ? 1650 : r ? 1420 : 1520);
+  }, e.localPending ? r ? animationMs("localBurstHighSeconds") : animationMs("localBurstSeconds") : o ? animationMs("lowPerformanceBurstSeconds") : r ? animationMs("serverBurstHighSeconds") : animationMs("serverBurstSeconds"));
 }
 function Bi(e, t) {
   const r = Date.now();
   const o = oe();
-  flashClass(o, "board-local-swap", 180), ae("success", [e, t]), window.setTimeout(() => {
+  flashClass(o, "board-local-swap", animationMs("localSwapSeconds")), ae("success", [e, t]), window.setTimeout(() => {
     a.localSwapFx?.at === r && (a.localSwapFx = null, $());
-  }, 200);
+  }, animationMs("localSwapSeconds", 20));
 }
 function Ni(e) {
   if (a.battleImpacts.some((r) => r.id === e.id)) return;
   a.battleImpacts = [...a.battleImpacts, e].slice(-4), K = "";
   const t = oe();
-  e.type === "self-hit" && t && (t.classList.remove("board-under-attack"), t.offsetWidth, t.classList.add("board-under-attack"), window.setTimeout(() => t.classList.remove("board-under-attack"), 620)), window.setTimeout(() => {
+  e.type === "self-hit" && t && (t.classList.remove("board-under-attack"), t.offsetWidth, t.classList.add("board-under-attack"), window.setTimeout(() => t.classList.remove("board-under-attack"), animationMs("boardUnderAttackSeconds", 40))), window.setTimeout(() => {
     a.battleImpacts = a.battleImpacts.filter((r) => r.id !== e.id), K = "", $();
-  }, a.effectiveVisualEffectMode === "high" ? 920 : 720);
+  }, a.effectiveVisualEffectMode === "high" ? animationMs("impactHighSeconds") : animationMs("impactSeconds"));
 }
 function rn(e) {
   if (e.status !== "playing") return 0;

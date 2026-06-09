@@ -2989,7 +2989,7 @@ button:disabled {
   transition: width .18s ease;
 }
 .pressure-meter.pressure-hit {
-  animation: pressure-hit-flash .72s ease-out both;
+  animation: pressure-hit-flash var(--pressure-hit-duration, .72s) ease-out both;
 }
 .pressure-meter.pressure-hit i {
   filter: brightness(1.36) saturate(1.18);
@@ -3345,27 +3345,27 @@ button:disabled {
   animation: board-wobble .26s ease-out both;
 }
 .game-board.board-local-swap {
-  animation: board-local-swap .18s ease-out both;
+  animation: board-local-swap var(--board-local-swap-duration, .18s) ease-out both;
 }
 .game-board.board-server-settle {
-  animation: board-server-settle .18s ease-out both;
+  animation: board-server-settle var(--board-server-settle-duration, .18s) ease-out both;
 }
 .game-board.board-invalid-swap {
-  animation: board-invalid-swap .24s ease-out both;
+  animation: board-invalid-swap var(--board-invalid-swap-duration, .24s) ease-out both;
 }
 .game-board.board-clear-normal {
-  animation: board-clear-pulse .24s ease-out both;
+  animation: board-clear-pulse var(--board-clear-duration, .24s) ease-out both;
 }
 .game-board.board-clear-good,
 .game-board.board-clear-big {
-  animation: board-clear-pop .32s ease-out both;
+  animation: board-clear-pop var(--board-clear-duration, .32s) ease-out both;
 }
 .game-board.board-clear-combo,
 .game-board.board-clear-chain {
-  animation: board-clear-chain .38s ease-out both;
+  animation: board-clear-chain var(--board-clear-high-duration, .38s) ease-out both;
 }
 .game-board.board-clear-attack {
-  animation: board-clear-attack .42s ease-out both;
+  animation: board-clear-attack var(--board-clear-high-duration, .42s) ease-out both;
 }
 .tile {
   position: relative;
@@ -3573,7 +3573,7 @@ button:disabled {
 .tile.tile-burst {
   z-index: 4;
   will-change: transform;
-  animation: tile-burst .32s var(--burst-delay, 0ms) ease-out both;
+  animation: tile-burst var(--tile-burst-duration, .32s) var(--burst-delay, 0ms) ease-out both;
 }
 .tile.tile-burst:before {
   opacity: .78;
@@ -3598,7 +3598,7 @@ button:disabled {
 .tile.tile-fall-in {
   z-index: 3;
   will-change: transform;
-  animation: tile-fall-in .26s var(--fall-delay, 0ms) cubic-bezier(.16, .92, .22, 1) both;
+  animation: tile-fall-in var(--tile-fall-duration, .26s) var(--fall-delay, 0ms) cubic-bezier(.16, .92, .22, 1) both;
 }
 .tile.tile-fall-heavy {
   filter: brightness(1.24) saturate(1.12);
@@ -4000,7 +4000,7 @@ button:disabled {
   width: 1px;
   height: 1px;
   transform: translate(-50%, -50%);
-  animation: burst-anchor 1.42s ease-out both;
+  animation: burst-anchor var(--battle-burst-duration, 1.42s) ease-out both;
 }
 .battle-burst:before {
   content: "";
@@ -4025,7 +4025,7 @@ button:disabled {
       transparent);
   filter: blur(.3px);
   transform: translate(-50%, -50%);
-  animation: burst-ring .72s ease-out both;
+  animation: burst-ring var(--battle-burst-ring-duration, .72s) ease-out both;
 }
 .battle-burst span {
   position: absolute;
@@ -4052,7 +4052,7 @@ button:disabled {
     0 0 26px #ffd65b61,
     inset 0 1px #fff3;
   transform: translate(-50%, -50%);
-  animation: burst-score 1.38s ease-out both;
+  animation: burst-score var(--battle-burst-score-duration, 1.38s) ease-out both;
 }
 .battle-burst div {
   position: absolute;
@@ -4067,7 +4067,7 @@ button:disabled {
   border-radius: 50%;
   background: #ffe36d;
   box-shadow: 0 0 16px #ffe06db8;
-  animation: burst-particle .68s var(--delay, 0ms) ease-out both;
+  animation: burst-particle var(--battle-burst-particle-duration, .68s) var(--delay, 0ms) ease-out both;
 }
 .battle-burst.combo:before,
 .battle-burst.attack:before {
@@ -4105,7 +4105,7 @@ button:disabled {
       transparent,
       rgba(154, 94, 255, .72),
       transparent);
-  animation-duration: .52s;
+  animation-duration: var(--battle-burst-local-ring-duration, .52s);
 }
 .battle-burst.local i {
   width: 9px;
@@ -4135,7 +4135,7 @@ button:disabled {
   width: 52%;
   height: 42px;
   transform-origin: left center;
-  animation: attack-line-flight .78s ease-out both;
+  animation: attack-line-flight var(--attack-line-duration, .78s) ease-out both;
 }
 .battle-attack-line.opponent {
   left: 76%;
@@ -4219,7 +4219,7 @@ button:disabled {
       rgba(255, 67, 96, .2),
       transparent 18% 82%,
       rgba(255, 67, 96, .2));
-  animation: hit-warning-flash .62s ease-out both;
+  animation: hit-warning-flash var(--hit-warning-duration, .62s) ease-out both;
 }
 .battle-hit-warning i {
   width: 92px;
@@ -4235,7 +4235,7 @@ button:disabled {
   box-shadow: 0 0 26px #ff5c767a, 0 0 46px #9d5bff47;
 }
 .game-board.board-under-attack {
-  animation: board-under-attack .58s ease-out both;
+  animation: board-under-attack var(--board-under-attack-duration, .58s) ease-out both;
 }
 .battle-shell.battle-final-countdown .game-board {
   box-shadow:

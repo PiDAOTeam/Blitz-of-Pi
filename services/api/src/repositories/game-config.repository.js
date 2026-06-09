@@ -221,7 +221,29 @@ const DEFAULT_GAME_CONFIG = {
     allowHighMode: true,
     autoDowngradeEnabled: true,
     dragTrailEnabled: true,
-    hapticEnabled: true
+    hapticEnabled: true,
+    animationDurations: {
+      localBurstSeconds: 0.56,
+      localBurstHighSeconds: 0.72,
+      serverBurstSeconds: 1.52,
+      serverBurstHighSeconds: 1.42,
+      lowPerformanceBurstSeconds: 1.65,
+      boardEffectSeconds: 0.32,
+      boardEffectHighSeconds: 0.42,
+      tileBurstSeconds: 0.34,
+      tileBurstHighSeconds: 0.46,
+      tileFallSeconds: 0.3,
+      tileFallHighSeconds: 0.38,
+      localSwapSeconds: 0.18,
+      invalidSwapSeconds: 0.26,
+      serverSettleSeconds: 0.24,
+      impactSeconds: 0.72,
+      impactHighSeconds: 0.92,
+      pressureHitSeconds: 0.72,
+      boardUnderAttackSeconds: 0.58,
+      attackLineSeconds: 0.78,
+      hitWarningSeconds: 0.62
+    }
   },
   operation: {
     maintenanceEnabled: false,
@@ -735,6 +757,35 @@ function normalizeEngagementConfig(engagement = {}) {
   };
 }
 
+function normalizeAnimationDurations(value = {}) {
+  const defaults = DEFAULT_GAME_CONFIG.visualEffects.animationDurations;
+  const normalizeSeconds = (key, precision = 2) =>
+    normalizeNumberInRange(value[key], defaults[key], 0.05, 3, precision);
+
+  return {
+    localBurstSeconds: normalizeSeconds("localBurstSeconds"),
+    localBurstHighSeconds: normalizeSeconds("localBurstHighSeconds"),
+    serverBurstSeconds: normalizeSeconds("serverBurstSeconds"),
+    serverBurstHighSeconds: normalizeSeconds("serverBurstHighSeconds"),
+    lowPerformanceBurstSeconds: normalizeSeconds("lowPerformanceBurstSeconds"),
+    boardEffectSeconds: normalizeSeconds("boardEffectSeconds"),
+    boardEffectHighSeconds: normalizeSeconds("boardEffectHighSeconds"),
+    tileBurstSeconds: normalizeSeconds("tileBurstSeconds"),
+    tileBurstHighSeconds: normalizeSeconds("tileBurstHighSeconds"),
+    tileFallSeconds: normalizeSeconds("tileFallSeconds"),
+    tileFallHighSeconds: normalizeSeconds("tileFallHighSeconds"),
+    localSwapSeconds: normalizeSeconds("localSwapSeconds"),
+    invalidSwapSeconds: normalizeSeconds("invalidSwapSeconds"),
+    serverSettleSeconds: normalizeSeconds("serverSettleSeconds"),
+    impactSeconds: normalizeSeconds("impactSeconds"),
+    impactHighSeconds: normalizeSeconds("impactHighSeconds"),
+    pressureHitSeconds: normalizeSeconds("pressureHitSeconds"),
+    boardUnderAttackSeconds: normalizeSeconds("boardUnderAttackSeconds"),
+    attackLineSeconds: normalizeSeconds("attackLineSeconds"),
+    hitWarningSeconds: normalizeSeconds("hitWarningSeconds")
+  };
+}
+
 function normalizeVisualEffectsConfig(visualEffects = {}) {
   const defaults = DEFAULT_GAME_CONFIG.visualEffects;
   const modes = ["balanced", "high"];
@@ -752,7 +803,8 @@ function normalizeVisualEffectsConfig(visualEffects = {}) {
     allowHighMode: true,
     autoDowngradeEnabled: visualEffects.autoDowngradeEnabled !== false,
     dragTrailEnabled: visualEffects.dragTrailEnabled !== false,
-    hapticEnabled: visualEffects.hapticEnabled !== false
+    hapticEnabled: visualEffects.hapticEnabled !== false,
+    animationDurations: normalizeAnimationDurations(visualEffects.animationDurations)
   };
 }
 

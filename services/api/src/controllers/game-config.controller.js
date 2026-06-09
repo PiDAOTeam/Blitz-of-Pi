@@ -109,7 +109,8 @@ async function getPublicGameConfig() {
       allowHighMode: true,
       autoDowngradeEnabled: config.visualEffects?.autoDowngradeEnabled !== false,
       dragTrailEnabled: config.visualEffects?.dragTrailEnabled !== false,
-      hapticEnabled: config.visualEffects?.hapticEnabled !== false
+      hapticEnabled: config.visualEffects?.hapticEnabled !== false,
+      animationDurations: config.visualEffects?.animationDurations || {}
     },
     operation: {
       maintenanceEnabled: Boolean(config.operation?.maintenanceEnabled),
