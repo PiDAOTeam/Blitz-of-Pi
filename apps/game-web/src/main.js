@@ -2751,7 +2751,9 @@ function hi(e, t) {
   s && (clientShouldSkipServerBurst(r) || nn(r), Si(r));
 }
 function clientShouldSkipServerBurst(e) {
-  return Number(e.seq || 0) > 0 && Number(e.seq || 0) === clientPreviewBurstSeq && (e.uid || "") === clientPreviewBurstUid && Date.now() - clientPreviewBurstAt < 3e3;
+  const t = Number(e.seq || 0);
+  if (t <= 0 || (e.uid || "") !== (a.user?.uid || "")) return false;
+  return t === clientPreviewBurstSeq && Date.now() - clientPreviewBurstAt < 3e3 || t === a.pendingSwapSeq || t === a.lastSwapSeq && Date.now() - a.lastSwapSentAt < 4e3;
 }
 function gi(e, t) {
   const r = ui(e, t);
