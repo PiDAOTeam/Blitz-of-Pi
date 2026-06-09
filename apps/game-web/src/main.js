@@ -50,6 +50,9 @@ Object.assign($t["zh-CN"], {
   inviteAutoBindSuccess: "已绑定邀请人",
   inviteAutoBindFailed: "邀请链接无效，请手动绑定",
   pointsAsset: "积分",
+  publicRewardPi: "Pi奖励",
+  publicRewardPoints: "积分奖励",
+  publicRewardPoc: "POC奖励",
   dailySignInTitle: "每日签到",
   dailyRewardAvailable: "有 {count} 个奖励可领",
   dailyRewardFallback: "做任务，领每日奖励",
@@ -115,6 +118,9 @@ Object.assign($t.en, {
   inviteAutoBindSuccess: "Inviter bound",
   inviteAutoBindFailed: "Invite link invalid. Bind manually.",
   pointsAsset: "Points",
+  publicRewardPi: "Pi Paid",
+  publicRewardPoints: "Points Paid",
+  publicRewardPoc: "POC Paid",
   dailySignInTitle: "Daily Check-in",
   dailyRewardAvailable: "{count} reward ready",
   dailyRewardFallback: "Do tasks, earn daily rewards",
@@ -489,6 +495,12 @@ function modeAssetType(e) {
 function formatModeAmount(e, t) {
   const r = modeAssetType(e), o = Number(t || 0);
   return r === "POINTS" ? `${Math.floor(o)} ${n("pointsAsset")}` : r === "POC" ? `${Number(o || 0).toFixed(2).replace(/\.?0+$/, "")} POC` : r === "FREE" ? n("modeEconomyFree") : b(o);
+}
+function formatPublicReward(e, t) {
+  const r = Number(t || 0);
+  if (e === "POINTS") return `${Math.floor(r)} ${n("pointsAsset")}`;
+  if (e === "POC") return `${r.toFixed(2).replace(/\.?0+$/, "")} POC`;
+  return `${r.toFixed(2)} Pi`;
 }
 function formatHistoryTotal(e = []) {
   const t = e.reduce((r, o) => {
@@ -1483,7 +1495,9 @@ function _() {
         </div>
         ${d ? `<section class="trust-strip" aria-label="\u5E73\u53F0\u771F\u5B9E\u6570\u636E">
                 <article><span>${i(n("totalBattles"))}</span><strong>${Zn(d.totalBattles)}</strong></article>
-                <article><span>${i(n("totalRewards"))}</span><strong>${Number(d.totalRewardPi || 0).toFixed(2)} Pi</strong></article>
+                <article><span>${i(n("publicRewardPi"))}</span><strong>${i(formatPublicReward("PI", d.totalRewardPi))}</strong></article>
+                <article><span>${i(n("publicRewardPoints"))}</span><strong>${i(formatPublicReward("POINTS", d.totalRewardPoints))}</strong></article>
+                <article><span>${i(n("publicRewardPoc"))}</span><strong>${i(formatPublicReward("POC", d.totalRewardPoc))}</strong></article>
               </section>` : ""}
         ${renderDailyRewardEntry()}
         ${Er()}

@@ -616,6 +616,17 @@ function renderAssetLines(e = []) {
     </span>
   `).join("");
 }
+function renderRewardAssetLines(e = []) {
+  return (Array.isArray(e) ? e : []).map((t) => {
+    const a = t.assetType === "POINTS" ? Math.floor(Number(t.totalReward || 0)) : $(t.totalReward);
+    return `
+      <span class="asset-line">
+        <b>${a} ${i(t.assetUnit || t.assetType)}</b>
+        <small>${Number(t.finishedRooms || 0)} \u5C40</small>
+      </span>
+    `;
+  }).join("");
+}
 const Ye = { match_queue_join: "\u8FDB\u5165\u961F\u5217", match_reuse_room: "\u590D\u7528\u623F\u95F4", match_room_created: "\u521B\u5EFA\u623F\u95F4", match_status_room_created: "\u8F6E\u8BE2\u6210\u623F", match_bot_room_created: "\u673A\u5668\u4EBA\u8865\u4F4D", match_cancel: "\u53D6\u6D88\u5339\u914D", match_watch_join: "\u5339\u914D\u63A8\u9001\u63A5\u5165", match_watch_failed: "\u5339\u914D\u63A8\u9001\u964D\u7EA7", realtime_join: "WS\u8FDB\u623F", realtime_ready: "\u51C6\u5907\u786E\u8BA4", realtime_started: "\u6B63\u5F0F\u5F00\u5C40", realtime_swap_event: "\u7279\u6B8A/\u653B\u51FB\u4E8B\u4EF6", realtime_swap_ok: "\u4EA4\u6362\u6210\u529F", realtime_swap_error: "\u4EA4\u6362\u5F02\u5E38", realtime_disconnected: "\u8FDE\u63A5\u65AD\u5F00", realtime_finished: "\u5BF9\u5C40\u7ED3\u675F", realtime_tick_slow: "Tick\u6162", realtime_tick_skipped: "Tick\u8DF3\u8FC7", realtime_broadcast_slow: "\u5E7F\u64AD\u6162", settlement_queued: "\u7ED3\u7B97\u5165\u961F", settlement_done: "\u7ED3\u7B97\u5B8C\u6210", settlement_retry: "\u7ED3\u7B97\u91CD\u8BD5", client_match_start: "\u7528\u6237\u70B9\u5339\u914D", client_match_queueing: "\u7528\u6237\u6392\u961F\u4E2D", client_match_ws_open: "\u5339\u914D\u63A8\u9001\u6253\u5F00", client_match_ws_ready: "\u5339\u914D\u63A8\u9001\u53EF\u7528", client_match_ws_error: "\u5339\u914D\u63A8\u9001\u5F02\u5E38", client_match_ws_closed: "\u5339\u914D\u63A8\u9001\u65AD\u5F00", client_match_poll_failed: "\u5339\u914D\u8F6E\u8BE2\u5931\u8D25", client_match_enter_room: "\u7528\u6237\u8FDB\u623F", client_match_start_failed: "\u53D1\u8D77\u5339\u914D\u5931\u8D25", client_match_cancel: "\u7528\u6237\u53D6\u6D88\u5339\u914D", client_match_cancel_failed: "\u53D6\u6D88\u5339\u914D\u5931\u8D25", client_realtime_connect_start: "\u7528\u6237\u8FDE\u5BF9\u5C40", client_realtime_open: "\u5BF9\u5C40WS\u6253\u5F00", client_realtime_first_state: "\u6536\u5230\u9996\u5305", client_realtime_connect_slow: "\u8FDB\u623F\u6162", client_realtime_slow: "\u5BF9\u5C40\u5F31\u7F51", client_realtime_retry: "\u7528\u6237\u7AEF\u91CD\u8FDE", client_realtime_retry_failed: "\u91CD\u8FDE\u5931\u8D25", client_realtime_error: "\u5BF9\u5C40WS\u5F02\u5E38", client_realtime_closed: "\u5BF9\u5C40WS\u65AD\u5F00", client_swap_send: "\u7528\u6237\u6ED1\u52A8", client_swap_rejected: "\u4EA4\u6362\u88AB\u62D2", client_burst_show: "\u63D0\u793A\u663E\u793A", client_burst_suppressed: "\u63D0\u793A\u5DF2\u53BB\u91CD", client_error: "\u7528\u6237\u7AEF\u62A5\u9519" };
 function et(e = "") {
   return Ye[e] || e || "\u672A\u77E5\u8282\u70B9";
@@ -752,12 +763,16 @@ function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, roo
               <span>\u7D2F\u8BA1\u5BF9\u6218\u6536\u76CA</span>
               ${renderAssetLines(s.totalBattleRevenueAssets)}
             </div>
+            <div>
+              <span>\u7D2F\u8BA1\u5BF9\u6218\u5956\u52B1</span>
+              ${renderRewardAssetLines(s.totalBattleRewardAssets)}
+            </div>
           </div>
           <div class="mini-grid">
             ${f("Pi\u7D2F\u8BA1\u5145\u503C", `${$(s.totalRechargePi)} Pi`, `${s.completedPaymentCount} \u7B14\u6210\u529F\u652F\u4ED8`)}
             ${f("Pi\u7D2F\u8BA1\u63D0\u73B0", `${$(s.totalWithdrawPi)} Pi`, `${s.todayWithdrawCount} \u7B14\u4ECA\u65E5\u7533\u8BF7`)}
             ${f("Pi\u94B1\u5305\u6C60", `${$(s.walletAvailablePi)} Pi`, `\u51BB\u7ED3 ${$(s.walletLockedPi)} Pi`)}
-            ${f("Pi\u7D2F\u8BA1\u5956\u52B1", `${$(s.totalRewardPi)} Pi`, "\u4EC5\u7EDF\u8BA1\u9879\u76EE\u5185Pi\u94B1\u5305")}
+            ${f("Pi\u94B1\u5305\u5956\u52B1", `${$(s.totalRewardPi)} Pi`, "\u4EC5\u9879\u76EE\u5185Pi\u94B1\u5305")}
           </div>
         </section>
         <section class="panel overview-block">
