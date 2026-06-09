@@ -1,6 +1,7 @@
 const { getActiveUserFromToken } = require("../services/auth.service");
 const { getWallet, listLedgers } = require("../repositories/wallet.repository");
 const { listUserAssetBattleLedgerRows } = require("../repositories/battle.repository");
+const { listUserEngagementAssetRewardRows } = require("../repositories/engagement.repository");
 const { readGameConfig } = require("../repositories/game-config.repository");
 const assetGateway = require("../services/asset-gateway.service");
 
@@ -99,6 +100,50 @@ function buildAssetBattleLedgers(rows, uid) {
   return ledgers;
 }
 
+function getEngagementRewardRemark(row, assetType) {
+  const assetName = assetType === "POINTS" ? "积分" : "POC";
+  if (row.claim_type === "task") {
+    return `每日任务奖励：${row.title || "任务"}（${assetName}）`;
+  }
+  return `每日签到奖励（${assetName}）`;
+}
+
+function buildEngagementAssetLedgers(rows, uid) {
+  const ledgers = [];
+
+  for (const row of rows) {
+    let rewards = [];
+    try {
+      rewards = JSON.parse(row.reward_json || "[]");
+    } catch (error) {
+      rewards = [];
+    }
+
+    for (const reward of rewards) {
+      const assetType = String(reward.assetType || reward.asset_type || "").toUpperCase();
+      const amount = Number(reward.amount || 0);
+      if (!["POINTS", "POC"].includes(assetType) || amount <= 0) continue;
+
+      ledgers.push({
+        id: `engagement:${row.id}:${assetType}`,
+        uid,
+        type: row.claim_type === "task" ? "daily_task_reward" : "daily_signin_reward",
+        direction: "in",
+        amount,
+        balance_after: null,
+        related_type: row.claim_type === "task" ? "engagement_task_asset" : "engagement_sign_in_asset",
+        related_id: `${row.id}:${assetType}`,
+        remark: getEngagementRewardRemark(row, assetType),
+        created_at: row.created_at,
+        asset_type: assetType,
+        synthetic: true
+      });
+    }
+  }
+
+  return ledgers;
+}
+
 function sortLedgersByTime(ledgers) {
   return [...ledgers].sort((a, b) => {
     const left = new Date(a.created_at || 0).getTime();
@@ -111,7 +156,12 @@ async function getMyWallet(req) {
   const user = await getUserFromRequest(req);
   const wallet = await getWallet(user.uid);
   const ledgers = (await listLedgers(user.uid)).map(toPiLedgerDto);
-  const assetLedgers = buildAssetBattleLedgers(await listUserAssetBattleLedgerRows(user.uid), user.uid);
+  const battleAssetLedgers = buildAssetBattleLedgers(await listUserAssetBattleLedgerRows(user.uid), user.uid);
+  const engagementAssetLedgers = buildEngagementAssetLedgers(
+    await listUserEngagementAssetRewardRows(user.uid),
+    user.uid
+  );
+  const assetLedgers = sortLedgersByTime([...battleAssetLedgers, ...engagementAssetLedgers]);
   const allLedgers = sortLedgersByTime([...ledgers, ...assetLedgers]).slice(0, 120);
   const config = await readGameConfig();
   let remoteAssets = null;

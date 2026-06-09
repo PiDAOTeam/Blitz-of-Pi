@@ -363,9 +363,26 @@ async function listAdminEngagementClaims(limit = 200) {
   );
 }
 
+async function listUserEngagementAssetRewardRows(uid, limit = 80) {
+  await ensureEngagementSchema();
+  const safeLimit = Math.min(120, Math.max(1, Number.parseInt(String(limit), 10) || 80));
+
+  return query(
+    `SELECT id, uid, claim_date, claim_type, task_key, title, asset_summary, reward_json, created_at
+     FROM engagement_daily_claims
+     WHERE uid = ?
+       AND reward_json IS NOT NULL
+       AND reward_json <> ''
+     ORDER BY id DESC
+     LIMIT ${safeLimit}`,
+    [uid]
+  );
+}
+
 module.exports = {
   claimDailySignIn,
   claimDailyTask,
   getEngagementStatus,
-  listAdminEngagementClaims
+  listAdminEngagementClaims,
+  listUserEngagementAssetRewardRows
 };
