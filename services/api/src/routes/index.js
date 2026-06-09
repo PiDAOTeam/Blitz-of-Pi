@@ -88,6 +88,23 @@ const { readJsonBody } = require("../utils/body");
 const { ok, fail, notFound } = require("../utils/response");
 const { checkRateLimit } = require("../utils/rate-limit");
 
+const EXPECTED_BUSINESS_ERROR_MESSAGES = new Set([
+  "匹配处理中，请稍后重试",
+  "已匹配成功，不能取消本局"
+]);
+
+const EXPECTED_BUSINESS_ERROR_PATTERNS = [
+  /^刚刚取消过匹配，请 \d+ 秒后再试$/,
+  /^匹配开始 \d+ 秒后才能取消，请再等 \d+ 秒$/
+];
+
+function isExpectedBusinessError(message) {
+  return (
+    EXPECTED_BUSINESS_ERROR_MESSAGES.has(message) ||
+    EXPECTED_BUSINESS_ERROR_PATTERNS.some((pattern) => pattern.test(message))
+  );
+}
+
 async function handleRoutes(req, res) {
   const { url, method } = req;
   const parsedUrl = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
@@ -588,8 +605,7 @@ async function handleRoutes(req, res) {
     notFound(res);
   } catch (error) {
     const message = error.message || "服务处理失败";
-    const silentMessages = new Set(["匹配处理中，请稍后重试"]);
-    if (!silentMessages.has(message)) {
+    if (!isExpectedBusinessError(message)) {
       console.error("[api] route failed:", error);
     }
     fail(res, message, 400);

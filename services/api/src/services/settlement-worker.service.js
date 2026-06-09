@@ -80,8 +80,11 @@ async function processSettlementTask(task) {
     await markSettlementTaskSucceeded(task.id);
   } catch (error) {
     const delaySeconds = getRetryDelaySeconds(task.attempts);
+    const nextAttempt = Number(task.attempts || 0) + 1;
     await markSettlementTaskFailed(task.id, error, delaySeconds);
-    console.error(`[settlement-worker] task failed ${task.room_no}: ${error.message}`);
+    console.log(
+      `[settlement-worker] task retry ${task.room_no}: ${error.message}; attempt=${nextAttempt}; next=${delaySeconds}s`
+    );
   }
 }
 
