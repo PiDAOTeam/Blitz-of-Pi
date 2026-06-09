@@ -201,7 +201,7 @@ function lt(e) {
 let Nt = "", j = null, V = null, Be = null, ee = null, y = null, x = null, k = null, Ne = null, Yt = 0, Et = 0, Lt = "", xt = 0, Ee = "", te = 0, pe = -1, Xe = "", le = null, Ge = 0, Me = 0;
 const Sa = /* @__PURE__ */ new Map();
 let z = null, W = null, At = 0, q = null;
-const $n = 5e3, Pn = 3, Cn = 9e3, Ha = 1200, Tn = 1800, Ie = 8, Rn = 5e3, Mn = 6, Xt = 8e3, fe = 3, Bn = 22, Nn = 12, $a = 38, $e = 8, Pe = 6, Pa = 0.18, En = 1200;
+const $n = 5e3, Pn = 3, Cn = 9e3, Ha = 1200, Tn = 1800, Ie = 8, Rn = 5e3, Mn = 6, Xt = 8e3, fe = 3, Bn = 16, Nn = 8, $a = 30, $e = 8, Pe = 6, Pa = 0.18, En = 1200;
 function we() {
   Be && (window.clearInterval(Be), Be = null), Ee = "", te = 0, pe = -1;
 }
@@ -215,6 +215,18 @@ function $() {
   be || (be = window.requestAnimationFrame(() => {
     be = null, Hi();
   }));
+}
+function flashClass(e, t, r) {
+  if (!e) return;
+  e.classList.remove(t), window.requestAnimationFrame(() => {
+    e.classList.add(t), window.setTimeout(() => e.classList.remove(t), r);
+  });
+}
+function flashOneOf(e, t, r, o) {
+  if (!e) return;
+  e.classList.remove(...t), window.requestAnimationFrame(() => {
+    e.classList.add(r), window.setTimeout(() => e.classList.remove(r), o);
+  });
 }
 function Ln() {
   if (le) return;
@@ -2497,10 +2509,12 @@ function ri() {
 }
 function ii(e, t, r, o = 1) {
   e.classList.remove("tile-fall-in", "tile-fall-heavy");
-  const s = Math.max(1, Math.min(8, Math.round(o || 1))), l = a.effectiveVisualEffectMode === "high" ? 34 : 26, c = Math.max(24, s * l), d = a.effectiveVisualEffectMode === "high" ? Math.min(170, s * 18 + t * 9 + r * 6) : Math.min(110, s * 14 + t * 7);
-  e.style.setProperty("--fall-from", `${-c}px`), e.style.setProperty("--fall-delay", `${d}ms`), e.offsetWidth, e.classList.add("tile-fall-in"), s >= 3 && e.classList.add("tile-fall-heavy"), window.setTimeout(() => {
+  const s = Math.max(1, Math.min(8, Math.round(o || 1))), l = a.effectiveVisualEffectMode === "high" ? 28 : 20, c = Math.max(18, s * l), d = a.effectiveVisualEffectMode === "high" ? Math.min(110, s * 12 + t * 6 + r * 4) : Math.min(70, s * 9 + t * 4);
+  e.style.setProperty("--fall-from", `${-c}px`), e.style.setProperty("--fall-delay", `${d}ms`), window.requestAnimationFrame(() => {
+    e.classList.add("tile-fall-in"), s >= 3 && e.classList.add("tile-fall-heavy");
+  }), window.setTimeout(() => {
     e.classList.remove("tile-fall-in", "tile-fall-heavy"), e.style.removeProperty("--fall-from"), e.style.removeProperty("--fall-delay");
-  }, a.effectiveVisualEffectMode === "high" ? 640 : 500);
+  }, a.effectiveVisualEffectMode === "high" ? 460 : 360);
 }
 function oi(e, t, r = false) {
   const o = t.board || [], s = o.reduce((d, u) => d + u.length, 0);
@@ -2623,13 +2637,9 @@ function hi(e, t) {
   if (!lt(`${o}:impact-root`) || o === Ct) return;
   Ct = o;
   const s = r.uid === t.uid, l = st(), c = l.selfCard, d = l.opponentCard, u = r.attack > 0 ? s ? d : c : s ? c : d, h = r.attack > 0 ? "impact-attacked" : r.chain > 1 ? "impact-combo" : "impact-score";
-  if (u?.classList.remove("impact-score", "impact-combo", "impact-attacked"), u?.offsetWidth, u?.classList.add(h), window.setTimeout(() => {
-    u?.classList.remove(h);
-  }, 640), r.attack > 0) {
+  if (flashOneOf(u, ["impact-score", "impact-combo", "impact-attacked"], h, 460), r.attack > 0) {
     const p = s ? l.opponentPressureMeter : l.selfPressureMeter;
-    p?.classList.remove("pressure-hit"), p?.offsetWidth, p?.classList.add("pressure-hit"), window.setTimeout(() => {
-      p?.classList.remove("pressure-hit");
-    }, 760);
+    flashClass(p, "pressure-hit", 460);
   }
   s && Si(r);
 }
@@ -2641,10 +2651,10 @@ function gi(e, t) {
   de(o ? vi(o) : 12);
 }
 function bi(e) {
-  if (e.localPending) return a.effectiveVisualEffectMode === "low" || document.documentElement.classList.contains("low-performance") ? 0 : a.effectiveVisualEffectMode === "high" ? 12 : 6;
+  if (e.localPending) return a.effectiveVisualEffectMode === "low" || document.documentElement.classList.contains("low-performance") ? 0 : a.effectiveVisualEffectMode === "high" ? 8 : 4;
   if (a.effectiveVisualEffectMode === "low" || document.documentElement.classList.contains("low-performance")) return 0;
-  const t = a.effectiveVisualEffectMode === "high" ? 8 : 4, r = Math.min(4, Math.max(0, Number(e.chain || 1) - 1) * 2), o = e.cleared >= 5 ? 4 : e.cleared >= 4 ? 2 : 0;
-  return Math.min(a.effectiveVisualEffectMode === "high" ? 16 : 8, t + r + o);
+  const t = a.effectiveVisualEffectMode === "high" ? 6 : 3, r = Math.min(3, Math.max(0, Number(e.chain || 1) - 1) * 1.5), o = e.cleared >= 5 ? 3 : e.cleared >= 4 ? 1 : 0;
+  return Math.min(a.effectiveVisualEffectMode === "high" ? 10 : 5, Math.round(t + r + o));
 }
 function wi(e) {
   return e.localPending ? "local" : e.specialTriggered ? "attack" : e.specialCreated ? "combo" : e.attack > 0 ? "attack" : e.chain > 1 ? "combo" : e.cleared >= 4 ? "clear" : "score";
@@ -2684,7 +2694,7 @@ function Pi(e) {
     const s = a.lastSwapPositions[0];
     s && (r({ row: s.row, col: s.col + 1 }), r({ row: s.row + 1, col: s.col }));
   }
-  const o = a.effectiveVisualEffectMode === "high" ? 8 : 4;
+  const o = a.effectiveVisualEffectMode === "high" ? 6 : 3;
   return t.slice(0, Math.min(o, Math.max(2, Number(e.cleared || 3))));
 }
 function Ci(e) {
@@ -2692,26 +2702,28 @@ function Ci(e) {
   const t = Pi(e);
   t.length && t.forEach((r, o) => {
     const s = document.querySelector(`.tile[data-row="${r.row}"][data-col="${r.col}"]`);
-    s && (s.classList.remove("tile-burst", "tile-burst-strong"), s.style.setProperty("--burst-delay", `${o * 28}ms`), s.offsetWidth, s.classList.add("tile-burst"), a.effectiveVisualEffectMode === "high" && (Number(e.cleared || 0) >= 4 || Number(e.chain || 1) > 1 || e.specialTriggered || e.specialCreated) && s.classList.add("tile-burst-strong"), window.setTimeout(() => {
+    s && (s.classList.remove("tile-burst", "tile-burst-strong"), s.style.setProperty("--burst-delay", `${o * 18}ms`), window.requestAnimationFrame(() => {
+      s.classList.add("tile-burst"), a.effectiveVisualEffectMode === "high" && (Number(e.cleared || 0) >= 4 || Number(e.chain || 1) > 1 || e.specialTriggered || e.specialCreated) && s.classList.add("tile-burst-strong");
+    }), window.setTimeout(() => {
       s.classList.remove("tile-burst", "tile-burst-strong"), s.style.removeProperty("--burst-delay");
-    }, a.effectiveVisualEffectMode === "high" ? 620 : 500));
+    }, a.effectiveVisualEffectMode === "high" ? 460 : 340));
   });
 }
 function Ti() {
   const e = oe();
-  e && (e.classList.remove("board-server-settle"), e.offsetWidth, e.classList.add("board-server-settle"), window.setTimeout(() => e.classList.remove("board-server-settle"), 520));
+  flashClass(e, "board-server-settle", 240);
 }
 function Ri() {
   if (!a.lastSwapPositions.length) return;
   ae("fail", a.lastSwapPositions);
   const e = oe();
-  e && (e.classList.remove("board-invalid-swap"), e.offsetWidth, e.classList.add("board-invalid-swap"), window.setTimeout(() => e.classList.remove("board-invalid-swap"), 360)), de([10, 18, 10]);
+  flashClass(e, "board-invalid-swap", 260), de([10, 18, 10]);
 }
 function Mi(e) {
   if (!e.length) return;
   a.lastSwapPositions = e, ae("fail", e);
   const t = oe();
-  t && (t.classList.remove("board-invalid-swap"), t.offsetWidth, t.classList.add("board-invalid-swap"), window.setTimeout(() => t.classList.remove("board-invalid-swap"), 360)), de([10, 18, 10]);
+  flashClass(t, "board-invalid-swap", 260), de([10, 18, 10]);
 }
 function nn(e) {
   const t = `${ne(e)}:burst`;
@@ -2730,9 +2742,9 @@ function nn(e) {
 function Bi(e, t) {
   const r = Date.now();
   const o = oe();
-  o && (o.classList.remove("board-local-swap"), o.offsetWidth, o.classList.add("board-local-swap"), window.setTimeout(() => o.classList.remove("board-local-swap"), 220)), ae("success", [e, t]), window.setTimeout(() => {
+  flashClass(o, "board-local-swap", 180), ae("success", [e, t]), window.setTimeout(() => {
     a.localSwapFx?.at === r && (a.localSwapFx = null, $());
-  }, 240);
+  }, 200);
 }
 function Ni(e) {
   if (a.battleImpacts.some((r) => r.id === e.id)) return;
