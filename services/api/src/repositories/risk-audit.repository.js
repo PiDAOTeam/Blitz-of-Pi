@@ -82,11 +82,22 @@ async function checkPaymentIntegrity(report) {
 async function checkBattleIntegrity(report) {
   const [summary] = await query(`
     SELECT
-      SUM(CASE WHEN status = 'playing' AND created_at < DATE_SUB(NOW(), INTERVAL 5 MINUTE) THEN 1 ELSE 0 END) AS stale_playing_rooms,
-      SUM(CASE WHEN entry_fee > 0 AND is_bot_room = 1 THEN 1 ELSE 0 END) AS paid_bot_rooms,
-      SUM(CASE WHEN status = 'manual_review' THEN 1 ELSE 0 END) AS manual_review_rooms,
-      SUM(CASE WHEN status = 'finished' AND winner_uid = '' AND entry_fee > 0 THEN 1 ELSE 0 END) AS paid_draw_rooms
-    FROM battle_rooms
+      SUM(CASE WHEN b.status = 'playing' AND b.created_at < DATE_SUB(NOW(), INTERVAL 5 MINUTE) THEN 1 ELSE 0 END) AS stale_playing_rooms,
+      SUM(CASE WHEN b.entry_fee > 0 AND b.is_bot_room = 1 THEN 1 ELSE 0 END) AS paid_bot_rooms,
+      SUM(CASE WHEN b.status = 'manual_review' THEN 1 ELSE 0 END) AS manual_review_rooms,
+      SUM(CASE
+        WHEN b.status = 'finished'
+         AND b.winner_uid = ''
+         AND b.entry_fee > 0
+         AND COALESCE(b.asset_settlement_status, '') <> 'released'
+         AND (
+           SELECT COUNT(*)
+           FROM wallet_ledgers l
+           WHERE l.related_type = 'battle_draw_unlock'
+             AND l.related_id IN (CONCAT(b.room_no, ':', b.player_a_uid), CONCAT(b.room_no, ':', b.player_b_uid))
+         ) < 2
+        THEN 1 ELSE 0 END) AS paid_draw_rooms
+    FROM battle_rooms b
   `);
 
   if (toNumber(summary.paid_bot_rooms) > 0) {
