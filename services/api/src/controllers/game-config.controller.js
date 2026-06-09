@@ -89,7 +89,12 @@ async function getPublicGameConfig() {
       dailySignIn: {
         enabled: config.engagement?.dailySignIn?.enabled !== false,
         title: config.engagement?.dailySignIn?.title || "每日签到",
-        rewardAmount: Number(config.engagement?.dailySignIn?.rewardAmount || 0)
+        piRewardEnabled: config.engagement?.dailySignIn?.piRewardEnabled !== false,
+        rewardAmount: Number(config.engagement?.dailySignIn?.rewardAmount || 0),
+        pointsRewardEnabled: Boolean(config.engagement?.dailySignIn?.pointsRewardEnabled),
+        pointsRewardAmount: Number(config.engagement?.dailySignIn?.pointsRewardAmount || 0),
+        pocRewardEnabled: Boolean(config.engagement?.dailySignIn?.pocRewardEnabled),
+        pocRewardAmount: Number(config.engagement?.dailySignIn?.pocRewardAmount || 0)
       },
       tasks: (config.engagement?.tasks || [])
         .filter((task) => task.enabled !== false)

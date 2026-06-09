@@ -7,6 +7,12 @@ const {
 } = require("../repositories/engagement.repository");
 
 function toClaimDto(row) {
+  let rewards = [];
+  try {
+    rewards = row.reward_json ? JSON.parse(row.reward_json) : [];
+  } catch (error) {
+    rewards = [];
+  }
   return {
     id: row.id,
     uid: row.uid,
@@ -18,6 +24,9 @@ function toClaimDto(row) {
     taskKey: row.task_key || "",
     title: row.title || "",
     rewardAmount: Number(row.reward_amount || 0),
+    assetSummary: row.asset_summary || "",
+    rewardSummary: row.asset_summary || "",
+    rewards: Array.isArray(rewards) ? rewards : [],
     status: row.status,
     createdAt: row.created_at
   };

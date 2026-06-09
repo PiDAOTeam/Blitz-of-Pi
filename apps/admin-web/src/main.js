@@ -1552,11 +1552,12 @@ function ht(e) {
   `;
 }
 function renderEngagementClaim(e) {
+  const t = e.assetSummary || e.rewardSummary || `${$(e.rewardAmount)} Pi`;
   return `
     <article class="row-card growth-row">
       <strong>${i(e.claimType === "sign_in" ? "\u6BCF\u65E5\u7B7E\u5230" : "\u6BCF\u65E5\u4EFB\u52A1")}</strong>
       <span>${i(e.nickname || e.piUsername || h(e.uid))} \xB7 ${i(e.title || "-")}</span>
-      <span>${$(e.rewardAmount)} Pi</span>
+      <span>${i(t)}</span>
       <span>${i(O(e.createdAt))}</span>
     </article>
   `;
@@ -1606,7 +1607,7 @@ function engagementTaskRows(e = []) {
   `).join("");
 }
 function ft(e, t) {
-  const a = e.transfer || { enabled: true, minAmount: 0.01, maxAmount: 20, dailyLimitAmount: 50, feeRate: 0, feeMinAmount: 0, cooldownSeconds: 10 }, n = e.inviteRewards || { enabled: true, bindEnabled: true, qualificationEnabled: true, qualificationRequiredBattles: 2, qualificationRewardAmount: 0.02, battleCommissionEnabled: true, commissionBase: "entry_fee", maxCommissionRate: 0.2, levels: [] }, engagement = e.engagement || { enabled: true, dailySignIn: { enabled: true, title: "\u6BCF\u65E5\u7B7E\u5230", rewardAmount: 0.01 }, tasks: ENGAGEMENT_TASK_DEFAULTS }, s = n.levels?.length ? n.levels : [{ key: "starter", name: "\u95EA\u7535\u4F19\u4F34", commissionRate: 0.03, minBalance: 0, minDirectInvites: 0, enabled: true }, { key: "silver", name: "\u94F6\u724C\u961F\u957F", commissionRate: 0.05, minBalance: 5, minDirectInvites: 5, enabled: true }, { key: "gold", name: "\u91D1\u724C\u961F\u957F", commissionRate: 0.08, minBalance: 20, minDirectInvites: 20, enabled: true }], r = t?.transfers || [], o = t?.relations || [], m = t?.rewards || [], engagementClaims = t?.engagementClaims || [], filteredRewards = filterList(m, GROWTH_REWARD_FILTERS, growthRewardFilter), R = N("growth-transfers", r), y = N("growth-relations", o), x = N("growth-rewards", filteredRewards), engagementClaimPager = N("growth-engagement-claims", engagementClaims), j = m.reduce((B, w) => B + Number(w.amount || 0), 0), A = r.reduce((B, w) => B + Number(w.feeAmount || 0), 0), activeRewardFilter = GROWTH_REWARD_FILTERS.find((B) => B.key === growthRewardFilter) || GROWTH_REWARD_FILTERS[0];
+  const a = e.transfer || { enabled: true, minAmount: 0.01, maxAmount: 20, dailyLimitAmount: 50, feeRate: 0, feeMinAmount: 0, cooldownSeconds: 10 }, n = e.inviteRewards || { enabled: true, bindEnabled: true, qualificationEnabled: true, qualificationRequiredBattles: 2, qualificationRewardAmount: 0.02, battleCommissionEnabled: true, commissionBase: "entry_fee", maxCommissionRate: 0.2, levels: [] }, engagement = e.engagement || { enabled: true, dailySignIn: { enabled: true, title: "\u6BCF\u65E5\u7B7E\u5230", piRewardEnabled: true, rewardAmount: 0.01, pointsRewardEnabled: false, pointsRewardAmount: 0, pocRewardEnabled: false, pocRewardAmount: 0 }, tasks: ENGAGEMENT_TASK_DEFAULTS }, s = n.levels?.length ? n.levels : [{ key: "starter", name: "\u95EA\u7535\u4F19\u4F34", commissionRate: 0.03, minBalance: 0, minDirectInvites: 0, enabled: true }, { key: "silver", name: "\u94F6\u724C\u961F\u957F", commissionRate: 0.05, minBalance: 5, minDirectInvites: 5, enabled: true }, { key: "gold", name: "\u91D1\u724C\u961F\u957F", commissionRate: 0.08, minBalance: 20, minDirectInvites: 20, enabled: true }], r = t?.transfers || [], o = t?.relations || [], m = t?.rewards || [], engagementClaims = t?.engagementClaims || [], filteredRewards = filterList(m, GROWTH_REWARD_FILTERS, growthRewardFilter), R = N("growth-transfers", r), y = N("growth-relations", o), x = N("growth-rewards", filteredRewards), engagementClaimPager = N("growth-engagement-claims", engagementClaims), j = m.reduce((B, w) => B + Number(w.amount || 0), 0), A = r.reduce((B, w) => B + Number(w.feeAmount || 0), 0), activeRewardFilter = GROWTH_REWARD_FILTERS.find((B) => B.key === growthRewardFilter) || GROWTH_REWARD_FILTERS[0];
   return `
     <section class="panel">
       <div class="section-head">
@@ -1685,7 +1686,21 @@ function ft(e, t) {
             <option value="false" ${engagement.dailySignIn?.enabled === false ? "selected" : ""}>\u5173\u95ED</option>
           </select></label>
           <label><span>\u7B7E\u5230\u6807\u9898</span><input name="dailySignInTitle" value="${i(engagement.dailySignIn?.title || "\u6BCF\u65E5\u7B7E\u5230")}" /></label>
-          <label><span>\u7B7E\u5230\u5956\u52B1 Pi</span><input name="dailySignInReward" type="number" inputmode="decimal" min="0" max="10" step="0.001" value="${engagement.dailySignIn?.rewardAmount ?? 0}" /></label>
+          <label><span>Pi\u5956\u52B1</span><select name="dailySignInPiRewardEnabled">
+            <option value="true" ${engagement.dailySignIn?.piRewardEnabled !== false ? "selected" : ""}>\u5F00\u542F</option>
+            <option value="false" ${engagement.dailySignIn?.piRewardEnabled === false ? "selected" : ""}>\u5173\u95ED</option>
+          </select></label>
+          <label><span>\u5956\u52B1 Pi</span><input name="dailySignInReward" type="number" inputmode="decimal" min="0" max="10" step="0.001" value="${engagement.dailySignIn?.rewardAmount ?? 0}" /></label>
+          <label><span>\u79EF\u5206\u5956\u52B1</span><select name="dailySignInPointsRewardEnabled">
+            <option value="false" ${engagement.dailySignIn?.pointsRewardEnabled ? "" : "selected"}>\u5173\u95ED</option>
+            <option value="true" ${engagement.dailySignIn?.pointsRewardEnabled ? "selected" : ""}>\u5F00\u542F</option>
+          </select></label>
+          <label><span>\u5956\u52B1\u79EF\u5206</span><input name="dailySignInPointsReward" type="number" inputmode="numeric" min="0" max="100000" step="1" value="${engagement.dailySignIn?.pointsRewardAmount ?? 0}" /></label>
+          <label><span>POC\u5956\u52B1</span><select name="dailySignInPocRewardEnabled">
+            <option value="false" ${engagement.dailySignIn?.pocRewardEnabled ? "" : "selected"}>\u5173\u95ED</option>
+            <option value="true" ${engagement.dailySignIn?.pocRewardEnabled ? "selected" : ""}>\u5F00\u542F</option>
+          </select></label>
+          <label><span>\u5956\u52B1 POC</span><input name="dailySignInPocReward" type="number" inputmode="decimal" min="0" max="100000" step="0.000001" value="${engagement.dailySignIn?.pocRewardAmount ?? 0}" /></label>
         </div>
         <div class="avatar-config rank-config">
           <div class="engagement-task-title-row">
@@ -2128,9 +2143,14 @@ function Ut(e, t, a) {
   }), j?.addEventListener("submit", async (c) => {
     c.preventDefault();
     const l = new FormData(j);
+    const pointsSignReward = Number(l.get("dailySignInPointsReward") || 0);
+    if (!Number.isInteger(pointsSignReward)) {
+      A && (A.textContent = "\u7B7E\u5230\u79EF\u5206\u5956\u52B1\u5FC5\u987B\u662F\u6574\u6570");
+      return;
+    }
     A && (A.textContent = "\u4FDD\u5B58\u4E2D...");
     try {
-      await d("/admin-api/game-config", { method: "POST", body: JSON.stringify(U({ transfer: { enabled: String(l.get("transferEnabled")) === "true", minAmount: Number(l.get("transferMinAmount") || 0), maxAmount: Number(l.get("transferMaxAmount") || 0), dailyLimitAmount: Number(l.get("transferDailyLimitAmount") || 0), feeRate: Number(l.get("transferFeeRate") || 0), feeMinAmount: Number(l.get("transferFeeMinAmount") || 0), cooldownSeconds: Number(l.get("transferCooldownSeconds") || 0) }, inviteRewards: { enabled: String(l.get("inviteEnabled")) === "true", bindEnabled: String(l.get("inviteBindEnabled")) === "true", qualificationEnabled: String(l.get("qualificationEnabled")) === "true", qualificationRequiredBattles: Number(l.get("qualificationRequiredBattles") || 2), qualificationRewardAmount: Number(l.get("qualificationRewardAmount") || 0), battleCommissionEnabled: String(l.get("battleCommissionEnabled")) === "true", commissionBase: String(l.get("commissionBase") || "entry_fee") === "platform_fee" ? "platform_fee" : "entry_fee", maxCommissionRate: Number(l.get("maxCommissionRate") || 0), levels: J(l) }, engagement: { enabled: String(l.get("engagementEnabled")) === "true", dailySignIn: { enabled: String(l.get("dailySignInEnabled")) === "true", title: String(l.get("dailySignInTitle") || "\u6BCF\u65E5\u7B7E\u5230"), rewardAmount: Number(l.get("dailySignInReward") || 0) }, tasks: buildEngagementTasks() } })) }), A && (A.textContent = "\u4FDD\u5B58\u6210\u529F\uFF0C\u6B63\u5728\u5237\u65B0..."), await q();
+      await d("/admin-api/game-config", { method: "POST", body: JSON.stringify(U({ transfer: { enabled: String(l.get("transferEnabled")) === "true", minAmount: Number(l.get("transferMinAmount") || 0), maxAmount: Number(l.get("transferMaxAmount") || 0), dailyLimitAmount: Number(l.get("transferDailyLimitAmount") || 0), feeRate: Number(l.get("transferFeeRate") || 0), feeMinAmount: Number(l.get("transferFeeMinAmount") || 0), cooldownSeconds: Number(l.get("transferCooldownSeconds") || 0) }, inviteRewards: { enabled: String(l.get("inviteEnabled")) === "true", bindEnabled: String(l.get("inviteBindEnabled")) === "true", qualificationEnabled: String(l.get("qualificationEnabled")) === "true", qualificationRequiredBattles: Number(l.get("qualificationRequiredBattles") || 2), qualificationRewardAmount: Number(l.get("qualificationRewardAmount") || 0), battleCommissionEnabled: String(l.get("battleCommissionEnabled")) === "true", commissionBase: String(l.get("commissionBase") || "entry_fee") === "platform_fee" ? "platform_fee" : "entry_fee", maxCommissionRate: Number(l.get("maxCommissionRate") || 0), levels: J(l) }, engagement: { enabled: String(l.get("engagementEnabled")) === "true", dailySignIn: { enabled: String(l.get("dailySignInEnabled")) === "true", title: String(l.get("dailySignInTitle") || "\u6BCF\u65E5\u7B7E\u5230"), piRewardEnabled: String(l.get("dailySignInPiRewardEnabled")) === "true", rewardAmount: Number(l.get("dailySignInReward") || 0), pointsRewardEnabled: String(l.get("dailySignInPointsRewardEnabled")) === "true", pointsRewardAmount: pointsSignReward, pocRewardEnabled: String(l.get("dailySignInPocRewardEnabled")) === "true", pocRewardAmount: Number(l.get("dailySignInPocReward") || 0) }, tasks: buildEngagementTasks() } })) }), A && (A.textContent = "\u4FDD\u5B58\u6210\u529F\uFF0C\u6B63\u5728\u5237\u65B0..."), await q();
     } catch (p) {
       A && (A.textContent = g(p));
     }

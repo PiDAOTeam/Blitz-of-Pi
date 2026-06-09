@@ -113,6 +113,7 @@ Object.assign($t["zh-CN"], {
   dailyRewardAvailable: "有 {count} 个奖励可领",
   dailyRewardFallback: "做任务，领每日奖励",
   dailyRewardGo: "去看看",
+  dailyRewardShort: "每日奖励",
   piRewardShort: "Pi 奖励",
   modePointsTag: "积分对战",
   modePocTag: "POC对战",
@@ -181,6 +182,7 @@ Object.assign($t.en, {
   dailyRewardAvailable: "{count} reward ready",
   dailyRewardFallback: "Do tasks, earn daily rewards",
   dailyRewardGo: "View",
+  dailyRewardShort: "Daily Reward",
   piRewardShort: "Pi Reward",
   modePointsTag: "Points Battle",
   modePocTag: "POC Battle",
@@ -676,6 +678,15 @@ function formatPublicReward(e, t) {
   if (e === "POINTS") return `${Math.floor(r)} ${n("pointsAsset")}`;
   if (e === "POC") return `${r.toFixed(2).replace(/\.?0+$/, "")} POC`;
   return `${r.toFixed(2)} Pi`;
+}
+function formatAssetReward(e, t) {
+  const r = String(e || "PI").toUpperCase(), o = Number(t || 0);
+  return r === "POINTS" ? `${Math.floor(o)} ${n("pointsAsset")}` : r === "POC" ? `${o.toFixed(2).replace(/\.?0+$/, "")} POC` : b(o);
+}
+function formatRewardList(e = [], t = 0) {
+  const r = (Array.isArray(e) ? e : []).filter((o) => Number(o.amount || 0) > 0).map((o) => formatAssetReward(o.assetType, o.amount));
+  if (!r.length && Number(t || 0) > 0) r.push(b(t));
+  return r.join(" / ");
 }
 function formatHistoryTotal(e = []) {
   const t = e.reduce((r, o) => {
@@ -1317,7 +1328,7 @@ function Er() {
 function renderDailyRewardEntry() {
   const e = a.engagement;
   if (!e?.enabled) return "";
-  const t = e.dailySignIn?.claimable ? 1 : 0, r = (e.tasks || []).filter((o) => o.claimable).length, o = t + r, s = Number(e.dailySignIn?.rewardAmount || 0) + (e.tasks || []).reduce((l, c) => l + (c.claimable ? Number(c.rewardAmount || 0) : 0), 0);
+  const t = e.dailySignIn?.claimable ? 1 : 0, r = (e.tasks || []).filter((u) => u.claimable).length, o = t + r, s = [...(t ? e.dailySignIn?.rewards || [] : []), ...(e.tasks || []).filter((u) => u.claimable && Number(u.rewardAmount || 0) > 0).map((u) => ({ assetType: "PI", amount: Number(u.rewardAmount || 0) }))], l = formatRewardList(s);
   return `
     <button type="button" class="daily-reward-cta" id="open-daily-rewards">
       <span class="daily-reward-badge" aria-hidden="true">\u2605</span>
@@ -1326,8 +1337,8 @@ function renderDailyRewardEntry() {
         <small>${i(o > 0 ? n("dailyRewardAvailable", { count: o }) : n("dailyRewardFallback"))}</small>
       </span>
       <span class="daily-reward-prize">
-        <b>${i(s > 0 ? `+${b(s)}` : n("dailyRewardGo"))}</b>
-        <small>${i(n("piRewardShort"))}</small>
+        <b>${i(l ? `+${l}` : n("dailyRewardGo"))}</b>
+        <small>${i(n("dailyRewardShort"))}</small>
       </span>
       <span class="home-invite-arrow" aria-hidden="true">\u203A</span>
     </button>
@@ -1355,7 +1366,7 @@ function openDailyRewards() {
   const e = a.engagement;
   if (!e?.enabled) return;
   document.querySelectorAll("#daily-reward-sheet-mask").forEach((u) => u.remove());
-  const t = e.dailySignIn || {}, r = t.claimed ? n("claimedToday") : t.claimable ? n("signInClaim", { amount: b(t.rewardAmount) }) : n("signInUnavailable"), o = (e.tasks || []).filter((u) => u.claimable).length;
+  const t = e.dailySignIn || {}, fallbackPiReward = t.piRewardEnabled !== false ? t.rewardAmount : 0, r = formatRewardList(t.rewards, fallbackPiReward), o = t.claimed ? n("claimedToday") : t.claimable ? n("signInClaim", { amount: r || b(0) }) : n("signInUnavailable"), taskReadyCount = (e.tasks || []).filter((u) => u.claimable).length;
   R.insertAdjacentHTML("beforeend", `
     <div class="mode-sheet-mask" id="daily-reward-sheet-mask">
       <section class="mode-sheet daily-reward-sheet">
@@ -1368,13 +1379,13 @@ function openDailyRewards() {
             <strong>${i(localizeTaskTitle(t.title || n("dailySignInTitle")))}</strong>
             <small>${i(t.claimed ? n("signInTomorrow") : n("signInReadyHint"))}</small>
           </div>
-          <button type="button" id="claim-daily-sign" ${t.claimable ? "" : "disabled"}>${i(r)}</button>
+          <button type="button" id="claim-daily-sign" ${t.claimable ? "" : "disabled"}>${i(o)}</button>
         </article>
         <div class="daily-task-list">
           ${(e.tasks || []).map(renderDailyTaskItem).join("") || `<article class="daily-task-empty">${i(n("noDailyTasks"))}</article>`}
         </div>
         <div class="daily-reward-footer">
-          <span>${i(o > 0 ? n("dailyTasksReady", { count: o }) : n("dailyTasksKeepGoing"))}</span>
+          <span>${i(taskReadyCount > 0 ? n("dailyTasksReady", { count: taskReadyCount }) : n("dailyTasksKeepGoing"))}</span>
           <button type="button" class="secondary" data-close-daily-rewards="1">${i(n("gotIt"))}</button>
         </div>
         <p id="daily-reward-status" class="summary" role="status" aria-live="polite"></p>

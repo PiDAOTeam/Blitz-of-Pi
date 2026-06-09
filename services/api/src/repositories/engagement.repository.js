@@ -1,5 +1,7 @@
 const { query, transaction } = require("../db/mysql");
+const assetGateway = require("../services/asset-gateway.service");
 const { readGameConfig } = require("./game-config.repository");
+const { findUserByUid } = require("./user.repository");
 const { increaseBalance } = require("./wallet.repository");
 
 const SUPPORTED_BATTLE_MODES = [
@@ -28,6 +30,8 @@ async function ensureEngagementSchema() {
       task_key VARCHAR(64) NOT NULL DEFAULT '',
       title VARCHAR(64) NOT NULL DEFAULT '',
       reward_amount DECIMAL(18,8) NOT NULL DEFAULT 0,
+      asset_summary VARCHAR(255) NOT NULL DEFAULT '',
+      reward_json TEXT NULL,
       status VARCHAR(32) NOT NULL DEFAULT 'claimed',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       UNIQUE KEY uk_engagement_claim_once (uid, claim_date, claim_type, task_key),
@@ -35,6 +39,18 @@ async function ensureEngagementSchema() {
       KEY idx_engagement_claim_uid_id (uid, id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci`
   );
+  for (const columnSql of [
+    "ADD COLUMN asset_summary VARCHAR(255) NOT NULL DEFAULT '' AFTER reward_amount",
+    "ADD COLUMN reward_json TEXT NULL AFTER asset_summary"
+  ]) {
+    try {
+      await query(`ALTER TABLE engagement_daily_claims ${columnSql}`);
+    } catch (error) {
+      if (!/Duplicate column|ER_DUP_FIELDNAME|1060/i.test(String(error.message || error.code || ""))) {
+        throw error;
+      }
+    }
+  }
 }
 
 async function getTodayString(connection = null) {
@@ -110,11 +126,48 @@ function toClaimKey(claim) {
   return `${claim.claim_type}:${claim.task_key || ""}`;
 }
 
+function formatAssetAmount(assetType, amount) {
+  const normalizedAssetType = String(assetType || "PI").toUpperCase();
+  const value = Number(amount || 0);
+  if (normalizedAssetType === "POINTS") {
+    return `${Math.floor(value)} 积分`;
+  }
+  if (normalizedAssetType === "POC") {
+    return `${value.toFixed(2).replace(/\.?0+$/, "")} POC`;
+  }
+  return `${value.toFixed(4).replace(/\.?0+$/, "")} Pi`;
+}
+
+function formatRewardSummary(rewards = []) {
+  return rewards
+    .filter((reward) => Number(reward.amount || 0) > 0)
+    .map((reward) => formatAssetAmount(reward.assetType, reward.amount))
+    .join(" / ");
+}
+
+function buildDailySignInRewards(dailySignIn = {}) {
+  const piAmount = Number(dailySignIn.rewardAmount || 0);
+  const pointsAmount = Math.floor(Number(dailySignIn.pointsRewardAmount || 0));
+  const pocAmount = Number(dailySignIn.pocRewardAmount || 0);
+  return [
+    dailySignIn.piRewardEnabled !== false && piAmount > 0
+      ? { assetType: "PI", amount: Number(piAmount.toFixed(8)) }
+      : null,
+    dailySignIn.pointsRewardEnabled === true && pointsAmount > 0
+      ? { assetType: "POINTS", amount: pointsAmount }
+      : null,
+    dailySignIn.pocRewardEnabled === true && pocAmount > 0
+      ? { assetType: "POC", amount: Number(pocAmount.toFixed(6)) }
+      : null
+  ].filter(Boolean);
+}
+
 function buildStatus(config, claims, stats) {
   const engagement = config.engagement || {};
   const claimSet = new Set(claims.map(toClaimKey));
   const dailySignIn = engagement.dailySignIn || {};
   const signInClaimed = claimSet.has("sign_in:");
+  const signInRewards = buildDailySignInRewards(dailySignIn);
 
   return {
     enabled: engagement.enabled !== false,
@@ -124,6 +177,13 @@ function buildStatus(config, claims, stats) {
       enabled: engagement.enabled !== false && dailySignIn.enabled !== false,
       title: dailySignIn.title || "每日签到",
       rewardAmount: Number(dailySignIn.rewardAmount || 0),
+      piRewardEnabled: dailySignIn.piRewardEnabled !== false,
+      pointsRewardEnabled: Boolean(dailySignIn.pointsRewardEnabled),
+      pointsRewardAmount: Math.floor(Number(dailySignIn.pointsRewardAmount || 0)),
+      pocRewardEnabled: Boolean(dailySignIn.pocRewardEnabled),
+      pocRewardAmount: Number(dailySignIn.pocRewardAmount || 0),
+      rewards: signInRewards,
+      rewardSummary: formatRewardSummary(signInRewards),
       claimed: signInClaimed,
       claimable: engagement.enabled !== false && dailySignIn.enabled !== false && !signInClaimed
     },
@@ -154,12 +214,14 @@ async function getEngagementStatus(uid) {
   return buildStatus(config, claims, stats);
 }
 
-async function insertClaim({ uid, claimType, taskKey = "", title, rewardAmount }, connection) {
+async function insertClaim({ uid, claimType, taskKey = "", title, rewardAmount, rewards = [] }, connection) {
+  const rewardSummary = formatRewardSummary(rewards);
+  const rewardJson = JSON.stringify(rewards);
   const [result] = await executor(connection).execute(
     `INSERT IGNORE INTO engagement_daily_claims
-       (uid, claim_date, claim_type, task_key, title, reward_amount, status)
-     VALUES (?, CURDATE(), ?, ?, ?, ?, 'claimed')`,
-    [uid, claimType, taskKey, title, rewardAmount]
+       (uid, claim_date, claim_type, task_key, title, reward_amount, asset_summary, reward_json, status)
+     VALUES (?, CURDATE(), ?, ?, ?, ?, ?, ?, 'claimed')`,
+    [uid, claimType, taskKey, title, rewardAmount, rewardSummary, rewardJson]
   );
   return Number(result?.affectedRows || 0) > 0;
 }
@@ -171,6 +233,7 @@ async function claimDailySignIn(uid) {
     const config = await readGameConfig();
     const status = buildStatus(config, await listTodayClaims(uid, connection), await getTodayBattleStats(uid, config));
     const signIn = status.dailySignIn;
+    const rewards = signIn.rewards || [];
 
     if (!status.enabled || !signIn.enabled) {
       throw new Error("每日签到暂未开启");
@@ -184,7 +247,8 @@ async function claimDailySignIn(uid) {
         uid,
         claimType: "sign_in",
         title: signIn.title,
-        rewardAmount: signIn.rewardAmount
+        rewardAmount: rewards.find((reward) => reward.assetType === "PI")?.amount || 0,
+        rewards
       },
       connection
     );
@@ -192,11 +256,12 @@ async function claimDailySignIn(uid) {
       throw new Error("今日已签到");
     }
 
-    if (signIn.rewardAmount > 0) {
-      const today = await getTodayString(connection);
+    const today = await getTodayString(connection);
+    const piReward = rewards.find((reward) => reward.assetType === "PI");
+    if (Number(piReward?.amount || 0) > 0) {
       await increaseBalance(
         uid,
-        signIn.rewardAmount,
+        piReward.amount,
         {
           type: "daily_signin_reward",
           relatedType: "engagement_sign_in",
@@ -207,6 +272,23 @@ async function claimDailySignIn(uid) {
       );
     }
 
+    const remoteRewards = rewards.filter((reward) => ["POINTS", "POC"].includes(reward.assetType));
+    if (remoteRewards.length) {
+      const user = await findUserByUid(uid);
+      if (!user) {
+        throw new Error("用户不存在，无法发放积分/POC奖励");
+      }
+      for (const reward of remoteRewards) {
+        await assetGateway.reward({
+          assetType: reward.assetType,
+          user,
+          orderNo: `daily_signin:${uid}:${today}:${reward.assetType}`,
+          amount: reward.amount,
+          idempotencyKey: `daily_signin:${uid}:${today}:${reward.assetType}`,
+          remark: "Pi闪电战每日签到奖励"
+        });
+      }
+    }
   });
 
   return getEngagementStatus(uid);
@@ -239,7 +321,8 @@ async function claimDailyTask(uid, taskKey) {
         claimType: "task",
         taskKey: task.key,
         title: task.title,
-        rewardAmount: task.rewardAmount
+        rewardAmount: task.rewardAmount,
+        rewards: task.rewardAmount > 0 ? [{ assetType: "PI", amount: Number(task.rewardAmount || 0) }] : []
       },
       connection
     );

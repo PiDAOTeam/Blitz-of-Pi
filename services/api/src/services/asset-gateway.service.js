@@ -180,6 +180,25 @@ async function settle({
   });
 }
 
+async function reward({ assetType, user, orderNo, amount, idempotencyKey, remark = "" }) {
+  const normalizedAssetType = normalizeAssetType(assetType);
+  assertGatewayReady(normalizedAssetType);
+  const normalizedAmount = normalizeAmount(normalizedAssetType, amount);
+
+  if (normalizedAmount <= 0) {
+    throw new Error("发奖金额必须大于0");
+  }
+
+  return callGateway("reward", {
+    ...buildIdentity(user),
+    asset_type: normalizedAssetType,
+    external_order_no: orderNo,
+    idempotency_key: idempotencyKey,
+    amount: normalizedAmount,
+    remark
+  });
+}
+
 module.exports = {
   SUPPORTED_REMOTE_ASSETS,
   buildIdentity,
@@ -187,6 +206,7 @@ module.exports = {
   normalizeAmount,
   normalizeAssetType,
   release,
+  reward,
   settle,
   summary
 };

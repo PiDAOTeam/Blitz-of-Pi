@@ -182,7 +182,12 @@ const DEFAULT_GAME_CONFIG = {
     dailySignIn: {
       enabled: true,
       title: "每日签到",
-      rewardAmount: 0.01
+      piRewardEnabled: true,
+      rewardAmount: 0.01,
+      pointsRewardEnabled: false,
+      pointsRewardAmount: 0,
+      pocRewardEnabled: false,
+      pocRewardAmount: 0
     },
     tasks: [
       {
@@ -739,18 +744,32 @@ function normalizeEngagementTask(task = {}, index = 0) {
 
 function normalizeEngagementConfig(engagement = {}) {
   const defaults = DEFAULT_GAME_CONFIG.engagement;
-  const dailyReward = Number(engagement.dailySignIn?.rewardAmount);
+  const dailySignIn = engagement.dailySignIn || {};
+  const dailyReward = Number(dailySignIn.rewardAmount);
+  const pointsReward = Number(dailySignIn.pointsRewardAmount);
+  const pocReward = Number(dailySignIn.pocRewardAmount);
   const sourceTasks = Array.isArray(engagement.tasks) && engagement.tasks.length ? engagement.tasks : defaults.tasks;
 
   return {
     enabled: engagement.enabled !== false,
     dailySignIn: {
-      enabled: engagement.dailySignIn?.enabled !== false,
-      title: String(engagement.dailySignIn?.title || defaults.dailySignIn.title).trim().slice(0, 16),
+      enabled: dailySignIn.enabled !== false,
+      title: String(dailySignIn.title || defaults.dailySignIn.title).trim().slice(0, 16),
+      piRewardEnabled: dailySignIn.piRewardEnabled !== false,
       rewardAmount:
         Number.isFinite(dailyReward) && dailyReward >= 0 && dailyReward <= 10
           ? Number(dailyReward.toFixed(8))
-          : defaults.dailySignIn.rewardAmount
+          : defaults.dailySignIn.rewardAmount,
+      pointsRewardEnabled: Boolean(dailySignIn.pointsRewardEnabled),
+      pointsRewardAmount:
+        Number.isFinite(pointsReward) && pointsReward >= 0 && pointsReward <= 100000
+          ? Math.floor(pointsReward)
+          : defaults.dailySignIn.pointsRewardAmount,
+      pocRewardEnabled: Boolean(dailySignIn.pocRewardEnabled),
+      pocRewardAmount:
+        Number.isFinite(pocReward) && pocReward >= 0 && pocReward <= 100000
+          ? Number(pocReward.toFixed(6))
+          : defaults.dailySignIn.pocRewardAmount
     },
     tasks: sourceTasks
       .slice(0, 20)
