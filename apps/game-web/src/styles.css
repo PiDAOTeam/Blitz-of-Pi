@@ -3348,7 +3348,7 @@ button:disabled {
   animation: board-local-swap .18s ease-out both;
 }
 .game-board.board-server-settle {
-  animation: board-server-settle .22s ease-out both;
+  animation: board-server-settle .18s ease-out both;
 }
 .game-board.board-invalid-swap {
   animation: board-invalid-swap .24s ease-out both;
@@ -3386,8 +3386,8 @@ button:disabled {
     inset 0 1px #ffffff30,
     0 3px 7px #00000024;
   transition:
-    transform .075s ease,
-    filter .075s ease;
+    transform .055s ease,
+    filter .055s ease;
 }
 .tile.tile-has-image {
   background-position: center;
@@ -3598,7 +3598,7 @@ button:disabled {
 .tile.tile-fall-in {
   z-index: 3;
   will-change: transform;
-  animation: tile-fall-in .3s var(--fall-delay, 0ms) cubic-bezier(.16, .92, .22, 1) both;
+  animation: tile-fall-in .26s var(--fall-delay, 0ms) cubic-bezier(.16, .92, .22, 1) both;
 }
 .tile.tile-fall-heavy {
   filter: brightness(1.24) saturate(1.12);
@@ -3659,7 +3659,7 @@ button:disabled {
     0 0 30px #a45cff7a;
 }
 .tile.tile-local-merge.tile-success {
-  animation-duration: .34s;
+  animation-duration: .28s;
 }
 .tile.tile-local-merge:before {
   opacity: .72;
@@ -3681,23 +3681,23 @@ button:disabled {
   opacity: 0;
   pointer-events: none;
   transform: translate(-50%, -50%);
-  animation: tile-local-flare .34s ease-out both;
+  animation: tile-local-flare .28s ease-out both;
 }
 .tile.tile-local-from.merge-right,
 .tile.tile-local-to.merge-right {
-  animation: tile-local-merge-right .34s cubic-bezier(.16, 1.22, .34, 1) both;
+  animation: tile-local-merge-right .28s cubic-bezier(.16, 1.18, .34, 1) both;
 }
 .tile.tile-local-from.merge-left,
 .tile.tile-local-to.merge-left {
-  animation: tile-local-merge-left .34s cubic-bezier(.16, 1.22, .34, 1) both;
+  animation: tile-local-merge-left .28s cubic-bezier(.16, 1.18, .34, 1) both;
 }
 .tile.tile-local-from.merge-down,
 .tile.tile-local-to.merge-down {
-  animation: tile-local-merge-down .34s cubic-bezier(.16, 1.22, .34, 1) both;
+  animation: tile-local-merge-down .28s cubic-bezier(.16, 1.18, .34, 1) both;
 }
 .tile.tile-local-from.merge-up,
 .tile.tile-local-to.merge-up {
-  animation: tile-local-merge-up .34s cubic-bezier(.16, 1.22, .34, 1) both;
+  animation: tile-local-merge-up .28s cubic-bezier(.16, 1.18, .34, 1) both;
 }
 .tile.tile-dragging {
   z-index: 2;
@@ -6187,20 +6187,20 @@ button:disabled {
 @keyframes tile-fall-in {
   0% {
     opacity: .52;
-    transform: translateY(var(--fall-from, -24px)) scale(.9);
+    transform: translate3d(0, var(--fall-from, -24px), 0) scale(.9);
     filter: brightness(1.24) saturate(1.12);
   }
   54% {
     opacity: 1;
-    transform: translateY(5px) scale(1.035);
+    transform: translate3d(0, 4px, 0) scale(1.025);
     filter: brightness(1.3) saturate(1.14);
   }
   76% {
-    transform: translateY(-2px) scale(.99);
+    transform: translate3d(0, -1px, 0) scale(.995);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translate3d(0, 0, 0) scale(1);
     filter: brightness(1);
   }
 }
@@ -6345,11 +6345,11 @@ button:disabled {
 }
 @keyframes board-server-settle {
   0% {
-    transform: scale(.998);
+    transform: translate3d(0, 0, 0) scale(.998);
     filter: brightness(1.02);
   }
   34% {
-    transform: scale(1.01);
+    transform: translate3d(0, 0, 0) scale(1.006);
     filter: brightness(1.22) saturate(1.14);
     box-shadow:
       inset 0 1px #ffffff1f,
@@ -6357,7 +6357,7 @@ button:disabled {
       0 0 34px #ffe06a42;
   }
   to {
-    transform: scale(1);
+    transform: translate3d(0, 0, 0) scale(1);
     filter: brightness(1);
   }
 }

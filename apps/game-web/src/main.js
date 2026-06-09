@@ -198,7 +198,7 @@ function lt(e) {
   }
   return true;
 }
-let Nt = "", j = null, V = null, Be = null, ee = null, y = null, x = null, k = null, Ne = null, Yt = 0, Et = 0, Lt = "", xt = 0, Ee = "", te = 0, pe = -1, Xe = "", le = null, Ge = 0, Me = 0;
+let Nt = "", j = null, V = null, Be = null, ee = null, y = null, x = null, k = null, Ne = null, Yt = 0, Et = 0, Lt = "", xt = 0, Ee = "", te = 0, pe = -1, Xe = "", le = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0;
 const Sa = /* @__PURE__ */ new Map();
 let z = null, W = null, At = 0, q = null;
 const $n = 5e3, Pn = 3, Cn = 9e3, Ha = 1200, Tn = 1800, Ie = 8, Rn = 5e3, Mn = 6, Xt = 8e3, fe = 3, Bn = 16, Nn = 8, $a = 30, $e = 8, Pe = 6, Pa = 0.18, En = 1200;
@@ -206,7 +206,7 @@ function we() {
   Be && (window.clearInterval(Be), Be = null), Ee = "", te = 0, pe = -1;
 }
 function ce() {
-  be && (window.cancelAnimationFrame(be), be = null), ee && (window.clearTimeout(ee), ee = null), le && (window.cancelAnimationFrame(le), le = null), j && (window.cancelAnimationFrame(j), j = null), V && (window.cancelAnimationFrame(V), V = null), z = null, W = null, At = 0, q = null, Ge = 0, Me = 0, document.documentElement.classList.remove("low-performance"), we(), Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, Se = null, me.clear(), Nt = "", y = null, Et = 0, Lt = "", xt = 0, a.pendingSwapSeq = 0, a.pendingSwapPositions = [], Ne?.abort(), Ne = null, x = null, k = null, Yt = 0, a.battleBursts = [], a.battleImpacts = [], a.localBattleEvents = [], a.localSwapFx = null;
+  be && (window.cancelAnimationFrame(be), be = null), ee && (window.clearTimeout(ee), ee = null), le && (window.cancelAnimationFrame(le), le = null), j && (window.cancelAnimationFrame(j), j = null), V && (window.cancelAnimationFrame(V), V = null), z = null, W = null, At = 0, q = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, document.documentElement.classList.remove("low-performance"), we(), Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, Se = null, me.clear(), Nt = "", y = null, Et = 0, Lt = "", xt = 0, a.pendingSwapSeq = 0, a.pendingSwapPositions = [], Ne?.abort(), Ne = null, x = null, k = null, Yt = 0, a.battleBursts = [], a.battleImpacts = [], a.localBattleEvents = [], a.localSwapFx = null;
 }
 function ge() {
   ze && (window.clearTimeout(ze), ze = null);
@@ -235,7 +235,8 @@ function Ln() {
       le = null;
       return;
     }
-    Ge && t - Ge > 42 ? Me += 1 : Me = Math.max(0, Me - 1), Me >= 8 && document.documentElement.classList.add("low-performance"), Ge = t, le = window.requestAnimationFrame(e);
+    const r = Ge ? t - Ge : 0, o = document.documentElement.classList.contains("low-performance");
+    r > 52 ? (Me += 2, clientPerfStableFrames = 0) : r > 42 ? (Me += 1, clientPerfStableFrames = 0) : (Me = Math.max(0, Me - 1), clientPerfStableFrames += 1), Me >= 6 && !o && (document.documentElement.classList.add("low-performance"), clientPerfLowSince = Date.now()), o && a.effectiveVisualEffectMode !== "low" && clientPerfStableFrames > 180 && Date.now() - clientPerfLowSince > 6e3 && (document.documentElement.classList.remove("low-performance"), Me = 0, clientPerfStableFrames = 0), Ge = t, le = window.requestAnimationFrame(e);
   };
   le = window.requestAnimationFrame(e);
 }
@@ -2615,12 +2616,12 @@ function ri() {
 }
 function ii(e, t, r, o = 1) {
   e.classList.remove("tile-fall-in", "tile-fall-heavy");
-  const s = Math.max(1, Math.min(8, Math.round(o || 1))), l = a.effectiveVisualEffectMode === "high" ? 28 : 20, c = Math.max(18, s * l), d = a.effectiveVisualEffectMode === "high" ? Math.min(110, s * 12 + t * 6 + r * 4) : Math.min(70, s * 9 + t * 4);
+  const s = Math.max(1, Math.min(8, Math.round(o || 1))), l = a.effectiveVisualEffectMode === "high" ? 24 : 16, c = Math.max(16, s * l), d = a.effectiveVisualEffectMode === "high" ? Math.min(82, s * 10 + t * 5 + r * 3) : Math.min(46, s * 7 + t * 3);
   e.style.setProperty("--fall-from", `${-c}px`), e.style.setProperty("--fall-delay", `${d}ms`), window.requestAnimationFrame(() => {
     e.classList.add("tile-fall-in"), s >= 3 && e.classList.add("tile-fall-heavy");
   }), window.setTimeout(() => {
     e.classList.remove("tile-fall-in", "tile-fall-heavy"), e.style.removeProperty("--fall-from"), e.style.removeProperty("--fall-delay");
-  }, a.effectiveVisualEffectMode === "high" ? 460 : 360);
+  }, a.effectiveVisualEffectMode === "high" ? 380 : 300);
 }
 function oi(e, t, r = false) {
   const o = t.board || [], s = o.reduce((d, u) => d + u.length, 0);
@@ -2646,7 +2647,7 @@ function oi(e, t, r = false) {
     }
   }
   if (r && ri() && c.length) {
-    const d = a.effectiveVisualEffectMode === "high" ? 28 : 16;
+    const d = a.effectiveVisualEffectMode === "high" ? 24 : 14;
     c.slice(0, d).forEach(({ tile: u, rowIndex: h, colIndex: p }) => {
       ii(u, h, p, l[h]?.[p] || 1);
     });
