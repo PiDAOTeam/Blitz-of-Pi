@@ -48,7 +48,63 @@ Object.assign($t["zh-CN"], {
   inviteLinkCopied: "邀请链接已复制",
   inviteLinkUnavailable: "登录后生成邀请链接",
   inviteAutoBindSuccess: "已绑定邀请人",
-  inviteAutoBindFailed: "邀请链接无效，请手动绑定"
+  inviteAutoBindFailed: "邀请链接无效，请手动绑定",
+  pointsAsset: "积分",
+  dailySignInTitle: "每日签到",
+  dailyRewardAvailable: "有 {count} 个奖励可领",
+  dailyRewardFallback: "做任务，领每日奖励",
+  dailyRewardGo: "去看看",
+  piRewardShort: "Pi 奖励",
+  modePointsTag: "积分对战",
+  modePocTag: "POC对战",
+  modePiTag: "Pi对战",
+  modeEntryRewardText: "{entry}入场，胜者预计{reward}，{cap}",
+  modePiEntryRewardText: "{entry}入场，胜者预计{reward}，{rank}解锁",
+  dailyTaskModePrefix: "仅限：{modes}",
+  dailyTaskModeFallback: "仅限：小富豪 / 大富豪 / 超级富豪",
+  dailyTaskDefaultTitle: "每日任务",
+  dailyTaskWinCount: "胜利对局",
+  dailyTaskPaidBattleCount: "付费对局",
+  dailyTaskBattleCount: "完成对局",
+  dailyTaskClaimed: "已领取",
+  dailyTaskClaim: "领 {amount}",
+  dailyActiveEyebrow: "每日活跃",
+  dailySheetTitle: "签到和任务",
+  dailySheetSummary: "每天来玩几局，把可领奖励拿走。",
+  todaySignIn: "今日签到",
+  signInClaim: "签到领 {amount}",
+  signInUnavailable: "暂不可领",
+  signInTomorrow: "明天再来领",
+  signInReadyHint: "打开就能领",
+  noDailyTasks: "暂无任务",
+  dailyTasksReady: "{count} 个任务可领",
+  dailyTasksKeepGoing: "今日任务继续加油",
+  claiming: "领取中...",
+  claimSuccess: "领取成功",
+  copyPiUsername: "复制",
+  noPiUsername: "暂无Pi用户名",
+  copyPiUsernameSuccess: "Pi用户名已复制",
+  copyPiUsernameFailed: "复制失败，请长按用户名复制",
+  ledgerRecharge: "充值",
+  ledgerReward: "获奖",
+  ledgerBattleEntry: "入场费",
+  ledgerBattleRefund: "退回",
+  ledgerWithdrawLock: "提现冻结",
+  ledgerWithdrawUnlock: "提现退回",
+  ledgerWithdrawComplete: "提现完成",
+  ledgerWithdrawReject: "提现驳回",
+  ledgerTransferOut: "转账支出",
+  ledgerTransferIn: "转账收入",
+  ledgerTransferFee: "转账手续费",
+  ledgerInviteReward: "邀请奖励",
+  ledgerInviteCommission: "邀请提成",
+  ledgerDailySigninReward: "签到奖励",
+  ledgerDailyTaskReward: "任务奖励",
+  ledgerIncome: "收入",
+  ledgerExpense: "支出",
+  ledgerLock: "冻结",
+  ledgerUnlock: "解冻",
+  ledgerDefault: "流水"
 });
 Object.assign($t.en, {
   myInviteLink: "My Invite Link",
@@ -57,7 +113,63 @@ Object.assign($t.en, {
   inviteLinkCopied: "Invite link copied",
   inviteLinkUnavailable: "Login to create link",
   inviteAutoBindSuccess: "Inviter bound",
-  inviteAutoBindFailed: "Invite link invalid. Bind manually."
+  inviteAutoBindFailed: "Invite link invalid. Bind manually.",
+  pointsAsset: "Points",
+  dailySignInTitle: "Daily Check-in",
+  dailyRewardAvailable: "{count} reward ready",
+  dailyRewardFallback: "Do tasks, earn daily rewards",
+  dailyRewardGo: "View",
+  piRewardShort: "Pi Reward",
+  modePointsTag: "Points Battle",
+  modePocTag: "POC Battle",
+  modePiTag: "Pi Battle",
+  modeEntryRewardText: "Entry {entry}, win {reward}, {cap}",
+  modePiEntryRewardText: "Entry {entry}, win {reward}, unlock at {rank}",
+  dailyTaskModePrefix: "Modes: {modes}",
+  dailyTaskModeFallback: "Modes: Small Rich / Big Rich / Super Rich",
+  dailyTaskDefaultTitle: "Daily Task",
+  dailyTaskWinCount: "Win battles",
+  dailyTaskPaidBattleCount: "Paid battles",
+  dailyTaskBattleCount: "Complete battles",
+  dailyTaskClaimed: "Claimed",
+  dailyTaskClaim: "Claim {amount}",
+  dailyActiveEyebrow: "Daily",
+  dailySheetTitle: "Check-in & Tasks",
+  dailySheetSummary: "Play a few battles daily and claim rewards.",
+  todaySignIn: "Today",
+  signInClaim: "Claim {amount}",
+  signInUnavailable: "Unavailable",
+  signInTomorrow: "Come back tomorrow",
+  signInReadyHint: "Open to claim",
+  noDailyTasks: "No tasks",
+  dailyTasksReady: "{count} task ready",
+  dailyTasksKeepGoing: "Keep going today",
+  claiming: "Claiming...",
+  claimSuccess: "Claimed",
+  copyPiUsername: "Copy",
+  noPiUsername: "No Pi username",
+  copyPiUsernameSuccess: "Pi username copied",
+  copyPiUsernameFailed: "Copy failed. Long press to copy.",
+  ledgerRecharge: "Recharge",
+  ledgerReward: "Reward",
+  ledgerBattleEntry: "Entry Fee",
+  ledgerBattleRefund: "Refund",
+  ledgerWithdrawLock: "Withdraw Lock",
+  ledgerWithdrawUnlock: "Withdraw Return",
+  ledgerWithdrawComplete: "Withdraw Paid",
+  ledgerWithdrawReject: "Withdraw Rejected",
+  ledgerTransferOut: "Transfer Out",
+  ledgerTransferIn: "Transfer In",
+  ledgerTransferFee: "Transfer Fee",
+  ledgerInviteReward: "Invite Reward",
+  ledgerInviteCommission: "Invite Commission",
+  ledgerDailySigninReward: "Check-in Reward",
+  ledgerDailyTaskReward: "Task Reward",
+  ledgerIncome: "Income",
+  ledgerExpense: "Expense",
+  ledgerLock: "Locked",
+  ledgerUnlock: "Unlocked",
+  ledgerDefault: "Ledger"
 });
 let M = null, A = null, be = null, ze = null, he = 0, Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0;
 const vn = 1100, va = 2600, Sn = 80, me = /* @__PURE__ */ new Set();
@@ -376,7 +488,7 @@ function modeAssetType(e) {
 }
 function formatModeAmount(e, t) {
   const r = modeAssetType(e), o = Number(t || 0);
-  return r === "POINTS" ? `${Math.floor(o)} \u79EF\u5206` : r === "POC" ? `${Number(o || 0).toFixed(2).replace(/\.?0+$/, "")} POC` : r === "FREE" ? n("modeEconomyFree") : b(o);
+  return r === "POINTS" ? `${Math.floor(o)} ${n("pointsAsset")}` : r === "POC" ? `${Number(o || 0).toFixed(2).replace(/\.?0+$/, "")} POC` : r === "FREE" ? n("modeEconomyFree") : b(o);
 }
 function formatHistoryTotal(e = []) {
   const t = e.reduce((r, o) => {
@@ -387,7 +499,7 @@ function formatHistoryTotal(e = []) {
 }
 function assetUnitLabel(e) {
   const t = String(e || "").toUpperCase();
-  return t === "POINTS" ? "\u79EF\u5206" : t || "-";
+  return t === "POINTS" ? n("pointsAsset") : t || "-";
 }
 function getRemoteAssetSnapshot(e) {
   if (e !== "POINTS" && e !== "POC") return null;
@@ -431,6 +543,33 @@ function G(e) {
 function B(e) {
   return G(e);
 }
+const TEXT_LOCALIZE_MAP = {
+  en: {
+    "\u79EF\u5206": "Points",
+    "\u6BCF\u65E5\u7B7E\u5230": "Daily Check-in",
+    "\u5B8C\u62103\u5C40": "Complete 3 battles",
+    "\u8D621\u5C40": "Win 1 battle",
+    "\u94DC\u724C\u961F\u957F": "Bronze Captain",
+    "\u94F6\u724C\u961F\u957F": "Silver Captain",
+    "\u91D1\u724C\u961F\u957F": "Gold Captain",
+    "\u95EA\u7535\u4F19\u4F34": "Lightning Partner",
+    "\u597D\u53CB": "Friend"
+  }
+};
+function localizeText(e) {
+  const t = String(e || "");
+  if (a.language === "zh-CN") return t;
+  return TEXT_LOCALIZE_MAP[a.language]?.[t] || TEXT_LOCALIZE_MAP.en?.[t] || t;
+}
+function localizeInviteLevelName(e) {
+  return localizeText(e || n("inviteNoLevel"));
+}
+function localizeTaskTitle(e) {
+  return localizeText(e || n("dailyTaskDefaultTitle"));
+}
+function localizeCondition(e) {
+  return e === "win_count" ? n("dailyTaskWinCount") : e === "paid_battle_count" ? n("dailyTaskPaidBattleCount") : n("dailyTaskBattleCount");
+}
 function mt(e) {
   const t = a.gameConfig?.operation, r = t?.localizedContent || {}, o = r[a.language]?.[e], s = r.en?.[e], l = r["zh-CN"]?.[e], c = e === "ruleSummary" ? t?.rankRules?.ruleSummary : t?.[e];
   return a.language !== "zh-CN" ? String(o || s || er(e) || "").trim() : String(o || s || l || c || "").trim();
@@ -464,7 +603,7 @@ function ar() {
     <section class="invite-mini-panel">
       <div>
         <span>${i(n("myInviteLevel"))}</span>
-        <strong>${i(e.stats.levelName || r?.name || n("inviteNoLevel"))}</strong>
+        <strong>${i(localizeInviteLevelName(e.stats.levelName || r?.name || n("inviteNoLevel")))}</strong>
         <small>${i(n("inviteCount", { count: e.stats.directInviteCount || 0 }))} \xB7 ${i(n("inviteCommissionRate", { rate: o }))}</small>
       </div>
       <button type="button" class="secondary" data-open-invite>${t > 0 ? i(n("inviteRewardReady", { amount: b(t) })) : i(n("inviteFriends"))}</button>
@@ -724,8 +863,8 @@ function yr(e) {
   `;
 }
 function Ga(e = "", t = "") {
-  const r = { recharge: "\u5145\u503C", reward: "\u83B7\u5956", battle_entry: "\u5165\u573A\u8D39", battle_refund: "\u9000\u56DE", withdraw_lock: "\u63D0\u73B0\u51BB\u7ED3", withdraw_unlock: "\u63D0\u73B0\u9000\u56DE", withdraw_complete: "\u63D0\u73B0\u5B8C\u6210", withdraw_reject: "\u63D0\u73B0\u9A73\u56DE", transfer_out: "\u8F6C\u8D26\u652F\u51FA", transfer_in: "\u8F6C\u8D26\u6536\u5165", transfer_fee: "\u8F6C\u8D26\u624B\u7EED\u8D39", invite_reward: "\u9080\u8BF7\u5956\u52B1", invite_commission: "\u9080\u8BF7\u63D0\u6210", daily_signin_reward: "\u7B7E\u5230\u5956\u52B1", daily_task_reward: "\u4EFB\u52A1\u5956\u52B1" };
-  return r[e] ? r[e] : t === "in" ? "\u6536\u5165" : t === "out" ? "\u652F\u51FA" : t === "lock" ? "\u51BB\u7ED3" : t === "unlock" ? "\u89E3\u51BB" : e || "\u6D41\u6C34";
+  const r = { recharge: "ledgerRecharge", reward: "ledgerReward", battle_entry: "ledgerBattleEntry", battle_refund: "ledgerBattleRefund", withdraw_lock: "ledgerWithdrawLock", withdraw_unlock: "ledgerWithdrawUnlock", withdraw_complete: "ledgerWithdrawComplete", withdraw_reject: "ledgerWithdrawReject", transfer_out: "ledgerTransferOut", transfer_in: "ledgerTransferIn", transfer_fee: "ledgerTransferFee", invite_reward: "ledgerInviteReward", invite_commission: "ledgerInviteCommission", daily_signin_reward: "ledgerDailySigninReward", daily_task_reward: "ledgerDailyTaskReward" };
+  return r[e] ? n(r[e]) : t === "in" ? n("ledgerIncome") : t === "out" ? n("ledgerExpense") : t === "lock" ? n("ledgerLock") : t === "unlock" ? n("ledgerUnlock") : e || n("ledgerDefault");
 }
 function kr(e = "") {
   return e === "in" || e === "unlock" ? "+" : e === "out" || e === "lock" ? "-" : "";
@@ -735,10 +874,10 @@ function getLedgerAssetType(e = {}) {
 }
 function formatLedgerAmount(e = {}) {
   const t = getLedgerAssetType(e), r = Number(e.amount || 0);
-  return t === "POINTS" ? `${Math.floor(r)} \u79EF\u5206` : t === "POC" ? `${r.toFixed(2).replace(/\.?0+$/, "")} POC` : `${r.toFixed(4)} Pi`;
+  return t === "POINTS" ? `${Math.floor(r)} ${n("pointsAsset")}` : t === "POC" ? `${r.toFixed(2).replace(/\.?0+$/, "")} POC` : `${r.toFixed(4)} Pi`;
 }
 function walletLedgerFilterLabel(e) {
-  return e === "POINTS" ? "\u79EF\u5206" : e === "POC" ? "POC" : e === "PI" ? "Pi" : "\u5168\u90E8";
+  return e === "POINTS" ? n("pointsAsset") : e === "POC" ? "POC" : e === "PI" ? "Pi" : n("all");
 }
 function vr(e) {
   const T = e?.allLedgers || [...(e?.ledgers || []), ...(e?.assetLedgers || [])], t = T.filter((p) => a.walletLedgerFilter === "all" || getLedgerAssetType(p) === a.walletLedgerFilter), r = n("walletLedger") === "walletLedger" ? "\u94B1\u5305\u660E\u7EC6" : n("walletLedger"), o = n("emptyWalletLedger") === "emptyWalletLedger" ? "\u6682\u65E0\u94B1\u5305\u6D41\u6C34" : n("emptyWalletLedger"), s = n("ledgerBalanceAfter") === "ledgerBalanceAfter" ? "\u4F59\u989D" : n("ledgerBalanceAfter"), l = a.walletLedgerExpanded, c = Math.max(1, Math.ceil(t.length / fe)), d = Math.min(Math.max(1, a.walletLedgerPage), c), u = l ? t.slice((d - 1) * fe, d * fe) : t.slice(0, fe), h = l ? n("walletLedgerPager", { page: d, totalPages: c }) : n("recentRecords", { count: Math.min(fe, t.length) }), P = ["all", "PI", "POINTS", "POC"];
@@ -947,7 +1086,7 @@ function Br(e) {
   return Math.round(Number(pt(e)?.platformFeeRate || 0) * 100);
 }
 function oa() {
-  return (a.inviteInfo?.config?.levels || a.gameConfig?.inviteRewards?.levels || []).filter((e) => e && e.enabled !== false).map((e) => ({ key: String(e.key || ""), name: String(e.name || ""), commissionRate: Number(e.commissionRate || 0), minBalance: Number(e.minBalance || 0), minDirectInvites: Number(e.minDirectInvites || 0) })).filter((e) => e.key && e.commissionRate > 0);
+  return (a.inviteInfo?.config?.levels || a.gameConfig?.inviteRewards?.levels || []).filter((e) => e && e.enabled !== false).map((e) => ({ key: String(e.key || ""), name: localizeInviteLevelName(e.name), commissionRate: Number(e.commissionRate || 0), minBalance: Number(e.minBalance || 0), minDirectInvites: Number(e.minDirectInvites || 0) })).filter((e) => e.key && e.commissionRate > 0);
 }
 function Ja() {
   const e = oa();
@@ -996,12 +1135,12 @@ function renderDailyRewardEntry() {
     <button type="button" class="daily-reward-cta" id="open-daily-rewards">
       <span class="daily-reward-badge" aria-hidden="true">\u2605</span>
       <span class="daily-reward-copy">
-        <strong>\u6BCF\u65E5\u7B7E\u5230</strong>
-        <small>${i(o > 0 ? `\u6709 ${o} \u4E2A\u5956\u52B1\u53EF\u9886` : "\u505A\u4EFB\u52A1\uFF0C\u9886\u6BCF\u65E5\u5956\u52B1")}</small>
+        <strong>${i(n("dailySignInTitle"))}</strong>
+        <small>${i(o > 0 ? n("dailyRewardAvailable", { count: o }) : n("dailyRewardFallback"))}</small>
       </span>
       <span class="daily-reward-prize">
-        <b>${i(s > 0 ? `+${b(s)}` : "\u53BB\u770B\u770B")}</b>
-        <small>Pi \u5956\u52B1</small>
+        <b>${i(s > 0 ? `+${b(s)}` : n("dailyRewardGo"))}</b>
+        <small>${i(n("piRewardShort"))}</small>
       </span>
       <span class="home-invite-arrow" aria-hidden="true">\u203A</span>
     </button>
@@ -1009,15 +1148,15 @@ function renderDailyRewardEntry() {
 }
 function dailyTaskModeText(e = []) {
   const t = ["quick_battle", "points_battle", "poc_battle", "pi_battle"], r = (Array.isArray(e) ? e : []).filter((o) => t.includes(o));
-  return r.length ? `仅限：${r.map(I).join(" / ")}` : "仅限：小富豪 / 大富豪 / 超级富豪";
+  return r.length ? n("dailyTaskModePrefix", { modes: r.map(I).join(" / ") }) : n("dailyTaskModeFallback");
 }
 function renderDailyTaskItem(e) {
-  const t = Math.min(100, Math.round(Number(e.progress || 0) / Math.max(1, Number(e.requiredCount || 1)) * 100)), r = e.claimed ? "\u5DF2\u9886\u53D6" : e.claimable ? `\u9886 ${b(e.rewardAmount)} Pi` : `${e.progress || 0}/${e.requiredCount || 1}`;
+  const t = Math.min(100, Math.round(Number(e.progress || 0) / Math.max(1, Number(e.requiredCount || 1)) * 100)), r = e.claimed ? n("dailyTaskClaimed") : e.claimable ? n("dailyTaskClaim", { amount: b(e.rewardAmount) }) : `${e.progress || 0}/${e.requiredCount || 1}`;
   return `
     <article class="daily-task-card ${e.claimable ? "claimable" : ""} ${e.claimed ? "claimed" : ""}">
       <div>
-        <strong>${i(e.title || "\u6BCF\u65E5\u4EFB\u52A1")}</strong>
-        <span>${i(e.condition === "win_count" ? "\u80DC\u5229\u5BF9\u5C40" : e.condition === "paid_battle_count" ? "\u4ED8\u8D39\u5BF9\u5C40" : "\u5B8C\u6210\u5BF9\u5C40")} ${i(`${e.progress || 0}/${e.requiredCount || 1}`)}</span>
+        <strong>${i(localizeTaskTitle(e.title))}</strong>
+        <span>${i(localizeCondition(e.condition))} ${i(`${e.progress || 0}/${e.requiredCount || 1}`)}</span>
         <small class="daily-task-modes">${i(dailyTaskModeText(e.modes))}</small>
       </div>
       <div class="daily-task-progress"><i style="width:${t}%"></i></div>
@@ -1029,26 +1168,26 @@ function openDailyRewards() {
   const e = a.engagement;
   if (!e?.enabled) return;
   document.querySelectorAll("#daily-reward-sheet-mask").forEach((u) => u.remove());
-  const t = e.dailySignIn || {}, r = t.claimed ? "\u4ECA\u65E5\u5DF2\u7B7E\u5230" : t.claimable ? `\u7B7E\u5230\u9886 ${b(t.rewardAmount)}` : "\u6682\u4E0D\u53EF\u9886", o = (e.tasks || []).filter((u) => u.claimable).length;
+  const t = e.dailySignIn || {}, r = t.claimed ? n("claimedToday") : t.claimable ? n("signInClaim", { amount: b(t.rewardAmount) }) : n("signInUnavailable"), o = (e.tasks || []).filter((u) => u.claimable).length;
   R.insertAdjacentHTML("beforeend", `
     <div class="mode-sheet-mask" id="daily-reward-sheet-mask">
       <section class="mode-sheet daily-reward-sheet">
-        <p class="eyebrow">\u6BCF\u65E5\u6D3B\u8DC3</p>
-        <h2>\u7B7E\u5230\u548C\u4EFB\u52A1</h2>
-        <p class="summary">\u6BCF\u5929\u6765\u73A9\u51E0\u5C40\uFF0C\u628A\u53EF\u9886\u5956\u52B1\u62FF\u8D70\u3002</p>
+        <p class="eyebrow">${i(n("dailyActiveEyebrow"))}</p>
+        <h2>${i(n("dailySheetTitle"))}</h2>
+        <p class="summary">${i(n("dailySheetSummary"))}</p>
         <article class="daily-sign-card ${t.claimable ? "claimable" : ""} ${t.claimed ? "claimed" : ""}">
           <div>
-            <span>\u4ECA\u65E5\u7B7E\u5230</span>
-            <strong>${i(t.title || "\u6BCF\u65E5\u7B7E\u5230")}</strong>
-            <small>${i(t.claimed ? "\u660E\u5929\u518D\u6765\u9886" : "\u6253\u5F00\u5C31\u80FD\u9886")}</small>
+            <span>${i(n("todaySignIn"))}</span>
+            <strong>${i(localizeTaskTitle(t.title || n("dailySignInTitle")))}</strong>
+            <small>${i(t.claimed ? n("signInTomorrow") : n("signInReadyHint"))}</small>
           </div>
           <button type="button" id="claim-daily-sign" ${t.claimable ? "" : "disabled"}>${i(r)}</button>
         </article>
         <div class="daily-task-list">
-          ${(e.tasks || []).map(renderDailyTaskItem).join("") || `<article class="daily-task-empty">\u6682\u65E0\u4EFB\u52A1</article>`}
+          ${(e.tasks || []).map(renderDailyTaskItem).join("") || `<article class="daily-task-empty">${i(n("noDailyTasks"))}</article>`}
         </div>
         <div class="daily-reward-footer">
-          <span>${i(o > 0 ? `${o} \u4E2A\u4EFB\u52A1\u53EF\u9886` : "\u4ECA\u65E5\u4EFB\u52A1\u7EE7\u7EED\u52A0\u6CB9")}</span>
+          <span>${i(o > 0 ? n("dailyTasksReady", { count: o }) : n("dailyTasksKeepGoing"))}</span>
           <button type="button" class="secondary" data-close-daily-rewards="1">${i(n("gotIt"))}</button>
         </div>
         <p id="daily-reward-status" class="summary" role="status" aria-live="polite"></p>
@@ -1058,9 +1197,9 @@ function openDailyRewards() {
   const s = document.querySelector("#daily-reward-status"), l = async (u, h = null) => {
     const p = h || document.querySelector("#claim-daily-sign");
     if (p?.disabled) return;
-    p && (p.disabled = true, p.classList.add("is-loading")), s && (s.textContent = "\u9886\u53D6\u4E2D...");
+    p && (p.disabled = true, p.classList.add("is-loading")), s && (s.textContent = n("claiming"));
     try {
-      a.engagement = await w(u, { method: "POST", body: h ? JSON.stringify({ taskKey: h.dataset.claimTask || "" }) : JSON.stringify({}) }), a.wallet = await w("/api/wallet/me"), s && (s.textContent = "\u9886\u53D6\u6210\u529F"), S("\u9886\u53D6\u6210\u529F", "success"), window.setTimeout(() => {
+      a.engagement = await w(u, { method: "POST", body: h ? JSON.stringify({ taskKey: h.dataset.claimTask || "" }) : JSON.stringify({}) }), a.wallet = await w("/api/wallet/me"), s && (s.textContent = n("claimSuccess")), S(n("claimSuccess"), "success"), window.setTimeout(() => {
         document.querySelector("#daily-reward-sheet-mask")?.remove(), _();
       }, 450);
     } catch (f) {
@@ -1360,25 +1499,25 @@ function _() {
           <article class="arena-card premium">
             <i class="mode-icon ticket" aria-hidden="true"></i>
             <div class="arena-copy">
-              <span>${i("\u79EF\u5206\u5BF9\u6218")}</span>
+              <span>${i(n("modePointsTag"))}</span>
               <strong>${i(I("points_battle"))}</strong>
-              <small>${i(`${formatModeAmount("points_battle", t)}\u5165\u573A\uFF0C\u80DC\u8005\u9884\u8BA1${formatModeAmount("points_battle", r)}\uFF0C${Le("points_battle")}`)}</small>
+              <small>${i(n("modeEntryRewardText", { entry: formatModeAmount("points_battle", t), reward: formatModeAmount("points_battle", r), cap: Le("points_battle") }))}</small>
             </div>
           </article>
           <article class="arena-card premium rich">
             <i class="mode-icon rich" aria-hidden="true"></i>
             <div class="arena-copy">
-              <span>${i("POC\u5BF9\u6218")}</span>
+              <span>${i(n("modePocTag"))}</span>
               <strong>${i(I("poc_battle"))}</strong>
-              <small>${i(`${formatModeAmount("poc_battle", o)}\u5165\u573A\uFF0C\u80DC\u8005\u9884\u8BA1${formatModeAmount("poc_battle", s)}\uFF0C${Le("poc_battle")}`)}</small>
+              <small>${i(n("modeEntryRewardText", { entry: formatModeAmount("poc_battle", o), reward: formatModeAmount("poc_battle", s), cap: Le("poc_battle") }))}</small>
             </div>
           </article>
           <article class="arena-card premium rich">
             <i class="mode-icon rich" aria-hidden="true"></i>
             <div class="arena-copy">
-              <span>${i("Pi\u5BF9\u6218")}</span>
+              <span>${i(n("modePiTag"))}</span>
               <strong>${i(I("pi_battle"))}</strong>
-              <small>${i(`${formatModeAmount("pi_battle", l)}\u5165\u573A\uFF0C\u80DC\u8005\u9884\u8BA1${formatModeAmount("pi_battle", c)}\uFF0C${p}\u89E3\u9501`)}</small>
+              <small>${i(n("modePiEntryRewardText", { entry: formatModeAmount("pi_battle", l), reward: formatModeAmount("pi_battle", c), rank: p }))}</small>
             </div>
           </article>
         </section>
@@ -1575,13 +1714,13 @@ async function copyTextToClipboard(e) {
 async function copyPiUsername() {
   const e = a.user?.piUsername || "";
   if (!e) {
-    S("暂无Pi用户名", "error");
+    S(n("noPiUsername"), "error");
     return;
   }
   try {
-    await copyTextToClipboard(e), S("Pi用户名已复制", "success");
+    await copyTextToClipboard(e), S(n("copyPiUsernameSuccess"), "success");
   } catch {
-    S("复制失败，请长按用户名复制", "error");
+    S(n("copyPiUsernameFailed"), "error");
   }
 }
 function sanitizeInviteCode(e) {
@@ -1681,14 +1820,14 @@ function L() {
           <div class="profile-main">
             <span class="profile-kicker">${i(n("playerProfile"))}</span>
             <strong>${i(e.nickname)}</strong>
-            <small class="pi-username-row"><span>${i(n("piUsername"))}\uFF1A${i(e.piUsername || "-")}</span>${e.piUsername ? `<button type="button" class="copy-pi-username" id="copy-pi-username" aria-label="复制Pi用户名">复制</button>` : ""}</small>
+            <small class="pi-username-row"><span>${i(n("piUsername"))}\uFF1A${i(e.piUsername || "-")}</span>${e.piUsername ? `<button type="button" class="copy-pi-username" id="copy-pi-username" aria-label="${i(n("copyPiUsername"))}">${i(n("copyPiUsername"))}</button>` : ""}</small>
           </div>
           <button type="button" class="ghost-button" id="edit-profile">${i(n("edit"))}</button>
           ${Sr()}
           <section class="profile-wallet" aria-label="${i(n("walletOverview"))}">
             <div class="profile-wallet-grid">
               <article><span>${i(n("availableBalance"))}</span><strong>${b(t?.availableBalance ?? 0)}</strong></article>
-              <article><span>${i("\u79EF\u5206")}</span><strong>${i(getModeBalanceState("points_battle").label)}</strong></article>
+              <article><span>${i(n("pointsAsset"))}</span><strong>${i(getModeBalanceState("points_battle").label)}</strong></article>
               <article><span>${i("POC")}</span><strong>${i(getModeBalanceState("poc_battle").label)}</strong></article>
               <article><span>${i(n("lockedBalance"))}</span><strong>${b(t?.lockedBalance ?? 0)}</strong></article>
               <article><span>${i(n("totalRecharge"))}</span><strong>${b(t?.totalRecharge ?? 0)}</strong></article>
@@ -2080,7 +2219,7 @@ function at() {
         <section class="invite-hero-card">
           <div>
             <span>${i(n("myInviteLevel"))}</span>
-            <strong>${i(e?.stats.levelName || t?.name || n("inviteNoLevel"))}</strong>
+            <strong>${i(localizeInviteLevelName(e?.stats.levelName || t?.name || n("inviteNoLevel")))}</strong>
             <small>${i(n("inviteCommissionRate", { rate: o }))}</small>
           </div>
           <div>
