@@ -398,6 +398,112 @@ function na(e) {
   const t = De(e);
   return { colorClass: Z[e] || Z[0], specialClass: "", label: t.label || "", color: t.color || "#8a35ff", textColor: t.textColor || "#fff6bd", imageUrl: t.imageUrl || "" };
 }
+function clientTileColor(e) {
+  return e >= ka ? e - ka : e >= ya ? e - ya : e >= wa ? e - wa : e;
+}
+function clientIsSpecialTile(e) {
+  return e >= wa;
+}
+function clientSpecialKind(e) {
+  return e >= ka ? "bomb" : e >= ya ? "vertical" : e >= wa ? "horizontal" : "";
+}
+function clientCloneBoard(e) {
+  return Array.isArray(e) ? e.map((t) => Array.isArray(t) ? [...t] : []) : [];
+}
+function clientIsInside(e, t) {
+  return t && t.row >= 0 && t.row < e.length && Array.isArray(e[t.row]) && t.col >= 0 && t.col < e[t.row].length;
+}
+function clientSwap(e, t, r) {
+  const o = e[t.row][t.col];
+  e[t.row][t.col] = e[r.row][r.col], e[r.row][r.col] = o;
+}
+function clientFindMatches(e) {
+  const t = /* @__PURE__ */ new Set(), r = [];
+  for (let o = 0; o < e.length; o += 1) {
+    let s = 0, l = clientTileColor(e[o]?.[0]);
+    for (let c = 1; c <= (e[o]?.length || 0); c += 1) {
+      const d = c < e[o].length ? clientTileColor(e[o][c]) : null;
+      if (d !== l || l === null) {
+        const u = c - s;
+        if (l !== null && u >= 3) {
+          const h = [];
+          for (let p = s; p < c; p += 1) t.add(`${o}:${p}`), h.push({ row: o, col: p });
+          r.push({ orientation: "horizontal", length: u, color: l, cells: h });
+        }
+        s = c, l = d;
+      }
+    }
+  }
+  for (let o = 0; o < Pe; o += 1) {
+    let s = 0, l = clientTileColor(e[0]?.[o]);
+    for (let c = 1; c <= e.length; c += 1) {
+      const d = c < e.length ? clientTileColor(e[c]?.[o]) : null;
+      if (d !== l || l === null) {
+        const u = c - s;
+        if (l !== null && u >= 3) {
+          const h = [];
+          for (let p = s; p < c; p += 1) t.add(`${p}:${o}`), h.push({ row: p, col: o });
+          r.push({ orientation: "vertical", length: u, color: l, cells: h });
+        }
+        s = c, l = d;
+      }
+    }
+  }
+  return t.runs = r, t;
+}
+function clientAddSpecialTargets(e, t) {
+  const r = /* @__PURE__ */ new Set();
+  for (const o of t) {
+    const [s, l] = o.split(":").map(Number), c = e[s]?.[l];
+    if (!clientIsSpecialTile(c)) continue;
+    const d = clientSpecialKind(c);
+    if (d === "horizontal") for (let u = 0; u < Pe; u += 1) r.add(`${s}:${u}`);
+    else if (d === "vertical") for (let u = 0; u < e.length; u += 1) r.add(`${u}:${l}`);
+    else if (d === "bomb") for (let u = s - 1; u <= s + 1; u += 1) for (let h = l - 1; h <= l + 1; h += 1) u >= 0 && u < e.length && h >= 0 && h < Pe && r.add(`${u}:${h}`);
+  }
+  for (const o of r) t.add(o);
+  return r.size;
+}
+function clientSpecialCreation(e, t) {
+  const r = (Array.isArray(e.runs) ? e.runs : []).filter((o) => o.length >= 4).sort((o, s) => s.length - o.length);
+  if (!r.length) return null;
+  const o = r[0], s = [t?.to, t?.from].find((l) => l && o.cells.some((c) => c.row === l.row && c.col === l.col));
+  return { kind: o.length >= 5 ? "bomb" : o.orientation === "horizontal" ? "horizontal" : "vertical", position: s || o.cells[Math.floor(o.cells.length / 2)] };
+}
+function clientDirectSpecialMatches(e, t, r) {
+  const o = /* @__PURE__ */ new Set();
+  [t, r].forEach((s) => {
+    clientIsInside(e, s) && clientIsSpecialTile(e[s.row][s.col]) && o.add(`${s.row}:${s.col}`);
+  });
+  return o.size && clientAddSpecialTargets(e, o), o;
+}
+function waPreviewText(e) {
+  return e.specialTriggered ? `\u7206\u53D1 +${e.scoreGain}` : e.specialCreated ? e.cleared >= 5 ? `\u70B8\u5F39 +${e.scoreGain}` : `\u95EA\u7535 +${e.scoreGain}` : e.attack > 0 ? `\u7535\u51FB +${e.attack}` : e.chain > 1 ? `\u8FDE\u51FB x${e.chain}` : e.cleared >= 4 ? `${e.cleared}\u6D88!` : `+${e.scoreGain}`;
+}
+function yaPreviewSemantic(e) {
+  return e.specialTriggered ? "special_triggered" : e.specialCreated ? e.cleared >= 5 ? "special_bomb" : "special_lightning" : e.attack > 0 ? "attack" : e.chain > 1 ? "combo" : e.cleared >= 4 ? "big_clear" : "score";
+}
+function clientPreviewTone(e) {
+  return e.specialTriggered ? "attack" : e.specialCreated ? "combo" : e.attack > 0 ? "attack" : e.chain > 1 ? "combo" : e.cleared >= 4 ? "clear" : "score";
+}
+function kaPreviewSwap(e, t, r) {
+  const o = a.realtimeRoom?.players?.find((m) => m.uid === a.user?.uid);
+  if (!o?.board || !clientIsInside(o.board, e) || !clientIsInside(o.board, t)) return null;
+  const s = clientCloneBoard(o.board);
+  clientSwap(s, e, t);
+  let l = clientDirectSpecialMatches(s, e, t), c = l.size ? l : clientFindMatches(s);
+  if (!c.size) return null;
+  const d = clientAddSpecialTargets(s, c), u = clientSpecialCreation(c, { from: e, to: t }), h = Math.min(c.size, 18), p = h * 10 + (d > 0 ? 8 : 0), f = Math.min(4, Math.floor(Math.min(h, 16) / 8) + Math.min(1, d > 0 ? 1 : 0)), m = { uid: a.user?.uid || "local", type: "local_preview", seq: r, cleared: h, chain: 1, scoreGain: p, attack: f, specialTriggered: d > 0 ? 1 : 0, specialCreated: u ? 1 : 0, at: Date.now(), localPending: true };
+  return m.previewSemantic = yaPreviewSemantic(m), m.previewTone = clientPreviewTone(m), m.previewText = waPreviewText(m), m;
+}
+function xaPreviewSwap(e, t, r) {
+  try {
+    const o = kaPreviewSwap(e, t, r);
+    o && (nn(o), Si(o));
+  } catch (o) {
+    console.warn("local swap preview failed", o);
+  }
+}
 function Ft(e) {
   return e.isBot ? "\u95EA\u6218Bot" : e.nickname;
 }
@@ -2657,11 +2763,11 @@ function bi(e) {
   return Math.min(a.effectiveVisualEffectMode === "high" ? 10 : 5, Math.round(t + r + o));
 }
 function wi(e) {
-  return e.localPending ? "local" : e.specialTriggered ? "attack" : e.specialCreated ? "combo" : e.attack > 0 ? "attack" : e.chain > 1 ? "combo" : e.cleared >= 4 ? "clear" : "score";
+  return e.localPending && e.previewTone ? e.previewTone : e.localPending ? "local" : e.specialTriggered ? "attack" : e.specialCreated ? "combo" : e.attack > 0 ? "attack" : e.chain > 1 ? "combo" : e.cleared >= 4 ? "clear" : "score";
 }
 function yi(e, t) {
-  const r = e.uid || "unknown", o = e.specialTriggered ? "special_triggered" : e.specialCreated ? e.cleared >= 5 ? "special_bomb" : "special_lightning" : e.attack > 0 ? "attack" : e.chain > 1 ? "combo" : e.cleared >= 4 ? "big_clear" : "score";
-  return `${r}:${t}:${o}`;
+  const r = e.uid || "unknown", o = e.previewSemantic || (e.specialTriggered ? "special_triggered" : e.specialCreated ? e.cleared >= 5 ? "special_bomb" : "special_lightning" : e.attack > 0 ? "attack" : e.chain > 1 ? "combo" : e.cleared >= 4 ? "big_clear" : "score");
+  return `${r}:${t}:${o}:${Number(e.scoreGain || 0)}:${Number(e.attack || 0)}:${Number(e.cleared || 0)}:${Number(e.chain || 1)}`;
 }
 function ki(e) {
   return e.specialTriggered ? "board-clear-attack" : e.specialCreated && e.cleared >= 5 ? "board-clear-chain" : e.specialCreated ? "board-clear-combo" : e.attack > 0 ? "board-clear-attack" : e.chain >= 3 ? "board-clear-chain" : e.chain > 1 ? "board-clear-combo" : e.cleared >= 5 ? "board-clear-big" : e.cleared >= 4 ? "board-clear-good" : "board-clear-normal";
@@ -2728,7 +2834,7 @@ function Mi(e) {
 function nn(e) {
   const t = `${ne(e)}:burst`;
   if (!lt(t) || a.battleBursts.some((g) => g.id === t)) return;
-  const r = a.effectiveVisualEffectMode === "high", o = a.effectiveVisualEffectMode === "low" || document.documentElement.classList.contains("low-performance"), s = wi(e), l = e.localPending ? "" : e.specialTriggered ? `\u7206\u53D1 +${e.scoreGain}` : e.specialCreated ? e.cleared >= 5 ? `\u70B8\u5F39 +${e.scoreGain}` : `\u95EA\u7535 +${e.scoreGain}` : e.attack > 0 ? `\u7535\u51FB +${e.attack}` : e.chain > 1 ? `\u8FDE\u51FB x${e.chain}` : e.cleared >= 4 ? `${e.cleared}\u6D88!` : `+${e.scoreGain}`, c = `${s}:${l}`, d = yi(e, s), u = Date.now() - Bt, h = c === Rt && u < va, p = d === Mt && u < va, f = u < vn;
+  const r = a.effectiveVisualEffectMode === "high", o = a.effectiveVisualEffectMode === "low" || document.documentElement.classList.contains("low-performance"), s = wi(e), l = e.previewText || (e.localPending ? "" : e.specialTriggered ? `\u7206\u53D1 +${e.scoreGain}` : e.specialCreated ? e.cleared >= 5 ? `\u70B8\u5F39 +${e.scoreGain}` : `\u95EA\u7535 +${e.scoreGain}` : e.attack > 0 ? `\u7535\u51FB +${e.attack}` : e.chain > 1 ? `\u8FDE\u51FB x${e.chain}` : e.cleared >= 4 ? `${e.cleared}\u6D88!` : `+${e.scoreGain}`), c = `${s}:${l}`, d = yi(e, s), u = Date.now() - Bt, h = c === Rt && u < va, p = d === Mt && u < va, f = u < vn && (h || p);
   if (l && (f || h || p)) {
     v("client_burst_suppressed", { roomNo: a.roomNo, mode: a.realtimeRoom?.mode || a.selectedMode, message: l, seq: e.seq || 0, result: ne(e), costMs: u, reason: p ? "same_semantic" : h ? "same_text" : "too_soon" }, 0);
     return;
@@ -3217,7 +3323,7 @@ function cn() {
 }
 function dn(e, t) {
   const r = Date.now(), o = `${e.row}:${e.col}:${t.row}:${t.col}`;
-  o === Lt && r - xt < 320 || (Lt = o, xt = r, ut(), a.selectedTile = null, a.lastSwapSentAt = r, a.lastSwapPositions = [e, t], a.lastSwapSeq += 1, a.pendingSwapSeq = a.lastSwapSeq, a.pendingSwapPositions = [e, t], a.battleMessage = "", v("client_swap_send", { roomNo: a.roomNo, mode: a.realtimeRoom?.mode || a.selectedMode, seq: a.lastSwapSeq, latencyMs: a.networkLatencyMs }, 1800), Yn(e, t), Bi(e, t), M?.send(JSON.stringify({ type: "swap_tiles", from: e, to: t, seq: a.lastSwapSeq })), de(12));
+  o === Lt && r - xt < 320 || (Lt = o, xt = r, ut(), a.selectedTile = null, a.lastSwapSentAt = r, a.lastSwapPositions = [e, t], a.lastSwapSeq += 1, a.pendingSwapSeq = a.lastSwapSeq, a.pendingSwapPositions = [e, t], a.battleMessage = "", v("client_swap_send", { roomNo: a.roomNo, mode: a.realtimeRoom?.mode || a.selectedMode, seq: a.lastSwapSeq, latencyMs: a.networkLatencyMs }, 1800), Yn(e, t), Bi(e, t), xaPreviewSwap(e, t, a.lastSwapSeq), M?.send(JSON.stringify({ type: "swap_tiles", from: e, to: t, seq: a.lastSwapSeq })), de(12));
 }
 function Gi(e, t) {
   if (Yt = Date.now(), ut(), document.querySelectorAll(".tile.touching").forEach((r) => r.classList.remove("touching")), !!cn()) {
