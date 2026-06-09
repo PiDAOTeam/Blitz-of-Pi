@@ -341,8 +341,8 @@ function Ve(e) {
   return ee.reduce((t, a) => (t[a.code] = { maintenanceNotice: String(e.get(`i18n_${a.code}_maintenanceNotice`) || ""), rechargeNotice: String(e.get(`i18n_${a.code}_rechargeNotice`) || ""), withdrawNotice: String(e.get(`i18n_${a.code}_withdrawNotice`) || ""), ruleSummary: String(e.get(`i18n_${a.code}_ruleSummary`) || "") }, t), {});
 }
 function ve(e, t) {
-  const a = e.banners[0], n = e.localizedContent || {};
-  return { ...{ projectName: t === "zh-CN" ? e.projectName : e.englishName, englishName: e.englishName || "Blitz of Pi", bannerDescription: a?.description || "" }, ...n[t] || {} };
+  const a = Array.isArray(e?.banners) && e.banners.length ? e.banners[0] : {}, n = e?.localizedContent || {};
+  return { ...{ projectName: t === "zh-CN" ? e?.projectName : e?.englishName, englishName: e?.englishName || "Blitz of Pi", bannerDescription: a?.description || "" }, ...n[t] || {} };
 }
 function Qe(e) {
   const t = ke((a) => ve(e, a), pe);
@@ -718,11 +718,12 @@ function ae(e = "") {
   });
 }
 function Ne(e, t, a, n, s, r, o, m, R, y, x, j, A, B, w, L, T, C, M, U) {
-  Q = [e, t, a, n, s, r, o, m, R, y, x, j, A, B, w, L, T, C, M, U];
-  const J = t.banners[0];
+  const homeConfig = { projectName: "Pi闪电战", englishName: "Blitz of Pi", localizedContent: {}, banners: [], ...(t || {}) };
+  Q = [e, homeConfig, a, n, s, r, o, m, R, y, x, j, A, B, w, L, T, C, M, U];
+  const J = Array.isArray(homeConfig.banners) && homeConfig.banners.length ? homeConfig.banners[0] : {};
   Re(`
-    ${it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, rooms: r, paymentOrders: o, users: m, ledgers: y, battleRooms: x, withdrawOrders: j, reconciliation: A, riskAudit: B, auditLogs: w, rankStarRecords: L, rankChestRecords: T, rankLeaderboard: C, rankWeeklySettlements: M, growthOps: U, banner: J })}
-  `), Ut(t, J, n), jt(), It(), Ft(), Dt();
+    ${it({ admin: e, config: homeConfig, piConfig: a, gameConfig: n, dashboard: s, rooms: r, paymentOrders: o, users: m, ledgers: y, battleRooms: x, withdrawOrders: j, reconciliation: A, riskAudit: B, auditLogs: w, rankStarRecords: L, rankChestRecords: T, rankLeaderboard: C, rankWeeklySettlements: M, growthOps: U, banner: J })}
+  `), Ut(homeConfig, J, n), jt(), It(), Ft(), Dt();
 }
 function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, rooms: r, paymentOrders: o, users: m, ledgers: R, battleRooms: y, withdrawOrders: x, reconciliation: j, riskAudit: A, auditLogs: B, rankStarRecords: w, rankChestRecords: L, rankLeaderboard: T, rankWeeklySettlements: C, growthOps: M, banner: U }) {
   if (_ === "overview") return `

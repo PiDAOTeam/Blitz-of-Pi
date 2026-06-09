@@ -192,12 +192,20 @@ async function readReconciliationReport() {
       `SELECT w.uid, u.pi_username, u.nickname,
               w.available_balance, w.locked_balance, w.total_recharge, w.total_withdraw, w.total_reward,
               COALESCE(SUM(CASE WHEN l.direction = 'in' THEN l.amount ELSE 0 END), 0)
-                - COALESCE(SUM(CASE WHEN l.direction = 'out' AND l.type <> 'withdraw_paid' THEN l.amount ELSE 0 END), 0)
+                - COALESCE(SUM(CASE
+                    WHEN l.direction = 'out'
+                     AND l.type <> 'withdraw_paid'
+                     AND COALESCE(l.related_type, '') <> 'battle_room_entry_consume'
+                    THEN l.amount ELSE 0 END), 0)
                 - COALESCE(SUM(CASE WHEN l.direction = 'lock' THEN l.amount ELSE 0 END), 0)
                 + COALESCE(SUM(CASE WHEN l.direction = 'unlock' THEN l.amount ELSE 0 END), 0) AS expected_available,
               COALESCE(SUM(CASE WHEN l.direction = 'lock' THEN l.amount ELSE 0 END), 0)
                 - COALESCE(SUM(CASE WHEN l.direction = 'unlock' THEN l.amount ELSE 0 END), 0)
-                - COALESCE(SUM(CASE WHEN l.type = 'withdraw_paid' THEN l.amount ELSE 0 END), 0) AS expected_locked
+                - COALESCE(SUM(CASE WHEN l.type = 'withdraw_paid' THEN l.amount ELSE 0 END), 0)
+                - COALESCE(SUM(CASE
+                    WHEN l.direction = 'out'
+                     AND COALESCE(l.related_type, '') = 'battle_room_entry_consume'
+                    THEN l.amount ELSE 0 END), 0) AS expected_locked
        FROM wallets w
        LEFT JOIN users u ON u.uid = w.uid
        LEFT JOIN wallet_ledgers l ON l.uid = w.uid
