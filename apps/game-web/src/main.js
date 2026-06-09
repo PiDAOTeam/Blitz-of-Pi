@@ -198,7 +198,7 @@ function lt(e) {
   }
   return true;
 }
-let Nt = "", j = null, V = null, Be = null, ee = null, y = null, x = null, k = null, Ne = null, Yt = 0, Et = 0, Lt = "", xt = 0, Ee = "", te = 0, pe = -1, Xe = "", le = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0;
+let Nt = "", j = null, V = null, Be = null, ee = null, y = null, x = null, k = null, Ne = null, Yt = 0, Et = 0, Lt = "", xt = 0, Ee = "", te = 0, pe = -1, Xe = "", le = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0;
 const Sa = /* @__PURE__ */ new Map();
 let z = null, W = null, At = 0, q = null;
 const $n = 5e3, Pn = 3, Cn = 9e3, Ha = 1200, Tn = 1800, Ie = 8, Rn = 5e3, Mn = 6, Xt = 8e3, fe = 3, Bn = 16, Nn = 8, $a = 30, $e = 8, Pe = 6, Pa = 0.18, En = 1200;
@@ -206,7 +206,7 @@ function we() {
   Be && (window.clearInterval(Be), Be = null), Ee = "", te = 0, pe = -1;
 }
 function ce() {
-  be && (window.cancelAnimationFrame(be), be = null), ee && (window.clearTimeout(ee), ee = null), le && (window.cancelAnimationFrame(le), le = null), j && (window.cancelAnimationFrame(j), j = null), V && (window.cancelAnimationFrame(V), V = null), z = null, W = null, At = 0, q = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, document.documentElement.classList.remove("low-performance"), we(), Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, Se = null, me.clear(), Nt = "", y = null, Et = 0, Lt = "", xt = 0, a.pendingSwapSeq = 0, a.pendingSwapPositions = [], Ne?.abort(), Ne = null, x = null, k = null, Yt = 0, a.battleBursts = [], a.battleImpacts = [], a.localBattleEvents = [], a.localSwapFx = null;
+  be && (window.cancelAnimationFrame(be), be = null), ee && (window.clearTimeout(ee), ee = null), le && (window.cancelAnimationFrame(le), le = null), j && (window.cancelAnimationFrame(j), j = null), V && (window.cancelAnimationFrame(V), V = null), z = null, W = null, At = 0, q = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0, document.documentElement.classList.remove("low-performance"), we(), Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, Se = null, me.clear(), Nt = "", y = null, Et = 0, Lt = "", xt = 0, a.pendingSwapSeq = 0, a.pendingSwapPositions = [], Ne?.abort(), Ne = null, x = null, k = null, Yt = 0, a.battleBursts = [], a.battleImpacts = [], a.localBattleEvents = [], a.localSwapFx = null;
 }
 function ge() {
   ze && (window.clearTimeout(ze), ze = null);
@@ -500,7 +500,7 @@ function kaPreviewSwap(e, t, r) {
 function xaPreviewSwap(e, t, r) {
   try {
     const o = kaPreviewSwap(e, t, r);
-    o && (nn(o), Si(o));
+    o && (clientPreviewBurstUid = o.uid || "", clientPreviewBurstSeq = Number(o.seq || 0), clientPreviewBurstAt = Date.now(), nn(o), Si(o));
   } catch (o) {
     console.warn("local swap preview failed", o);
   }
@@ -2748,7 +2748,10 @@ function hi(e, t) {
     const p = s ? l.opponentPressureMeter : l.selfPressureMeter;
     flashClass(p, "pressure-hit", 460);
   }
-  s && (nn(r), Si(r));
+  s && (clientShouldSkipServerBurst(r) || nn(r), Si(r));
+}
+function clientShouldSkipServerBurst(e) {
+  return Number(e.seq || 0) > 0 && Number(e.seq || 0) === clientPreviewBurstSeq && (e.uid || "") === clientPreviewBurstUid && Date.now() - clientPreviewBurstAt < 3e3;
 }
 function gi(e, t) {
   const r = ui(e, t);
