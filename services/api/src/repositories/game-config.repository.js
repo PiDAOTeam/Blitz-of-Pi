@@ -222,6 +222,8 @@ const DEFAULT_GAME_CONFIG = {
     autoDowngradeEnabled: true,
     dragTrailEnabled: true,
     hapticEnabled: true,
+    attackWarningEnabled: true,
+    attackWarningText: "被攻击 压力+{attack}",
     animationDurations: {
       localBurstSeconds: 0.56,
       localBurstHighSeconds: 0.72,
@@ -804,6 +806,11 @@ function normalizeVisualEffectsConfig(visualEffects = {}) {
     autoDowngradeEnabled: visualEffects.autoDowngradeEnabled !== false,
     dragTrailEnabled: visualEffects.dragTrailEnabled !== false,
     hapticEnabled: visualEffects.hapticEnabled !== false,
+    attackWarningEnabled: visualEffects.attackWarningEnabled !== false,
+    attackWarningText:
+      String(visualEffects.attackWarningText || defaults.attackWarningText)
+        .trim()
+        .slice(0, 32) || defaults.attackWarningText,
     animationDurations: normalizeAnimationDurations(visualEffects.animationDurations)
   };
 }

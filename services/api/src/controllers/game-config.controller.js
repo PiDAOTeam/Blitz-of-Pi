@@ -110,6 +110,8 @@ async function getPublicGameConfig() {
       autoDowngradeEnabled: config.visualEffects?.autoDowngradeEnabled !== false,
       dragTrailEnabled: config.visualEffects?.dragTrailEnabled !== false,
       hapticEnabled: config.visualEffects?.hapticEnabled !== false,
+      attackWarningEnabled: config.visualEffects?.attackWarningEnabled !== false,
+      attackWarningText: config.visualEffects?.attackWarningText || "被攻击 压力+{attack}",
       animationDurations: config.visualEffects?.animationDurations || {}
     },
     operation: {

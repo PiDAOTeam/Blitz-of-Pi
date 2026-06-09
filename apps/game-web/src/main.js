@@ -34,6 +34,7 @@ const DEFAULT_ANIMATION_DURATIONS = {
   attackLineSeconds: 0.78,
   hitWarningSeconds: 0.62
 };
+const DEFAULT_ATTACK_WARNING_TEXT = "\u88AB\u653B\u51FB \u538B\u529B+{attack}";
 function normalizeAnimationDurations(e = {}) {
   const t = (r, o = DEFAULT_ANIMATION_DURATIONS[r]) => {
     const s = Number(e?.[r]);
@@ -79,7 +80,7 @@ function yn(e) {
 }
 function ve() {
   const e = (t) => t === "high" ? "high" : "balanced";
-  return { defaultMode: e(a.gameConfig?.visualEffects?.defaultMode), piBrowserDefaultMode: e(a.gameConfig?.visualEffects?.piBrowserDefaultMode), allowUserChoice: a.gameConfig?.visualEffects?.allowUserChoice !== false, allowHighMode: true, autoDowngradeEnabled: a.gameConfig?.visualEffects?.autoDowngradeEnabled !== false, dragTrailEnabled: a.gameConfig?.visualEffects?.dragTrailEnabled !== false, hapticEnabled: a.gameConfig?.visualEffects?.hapticEnabled !== false, animationDurations: normalizeAnimationDurations(a.gameConfig?.visualEffects?.animationDurations) };
+  return { defaultMode: e(a.gameConfig?.visualEffects?.defaultMode), piBrowserDefaultMode: e(a.gameConfig?.visualEffects?.piBrowserDefaultMode), allowUserChoice: a.gameConfig?.visualEffects?.allowUserChoice !== false, allowHighMode: true, autoDowngradeEnabled: a.gameConfig?.visualEffects?.autoDowngradeEnabled !== false, dragTrailEnabled: a.gameConfig?.visualEffects?.dragTrailEnabled !== false, hapticEnabled: a.gameConfig?.visualEffects?.hapticEnabled !== false, attackWarningEnabled: a.gameConfig?.visualEffects?.attackWarningEnabled !== false, attackWarningText: String(a.gameConfig?.visualEffects?.attackWarningText || DEFAULT_ATTACK_WARNING_TEXT).trim() || DEFAULT_ATTACK_WARNING_TEXT, animationDurations: normalizeAnimationDurations(a.gameConfig?.visualEffects?.animationDurations) };
 }
 function Oa(e) {
   const t = ve(), r = Zt() ? t.piBrowserDefaultMode : t.defaultMode;
@@ -2777,9 +2778,10 @@ function pi(e) {
     const s = Math.PI * 2 * o / Math.max(1, e.particles), l = 36 + o % 3 * 14 + Math.min(18, e.cleared * 2), c = Math.round(Math.cos(s) * l), d = Math.round(Math.sin(s) * l);
     return `<i style="--dx:${c}px;--dy:${d}px;--delay:${o * 18}ms"></i>`;
   }).join("");
+  const r = Number(e.durationSeconds || 0), o = r > 0 ? `;--battle-burst-duration:${r}s;--battle-burst-score-duration:${Math.max(0.12, r - 0.14)}s;--battle-burst-ring-duration:${Math.min(r, 0.72)}s` : "";
   return `<div
     class="battle-burst ${e.tone} cleared-${Math.min(6, Math.max(3, e.cleared))}"
-    style="left:${e.x}%;top:${e.y}%"
+    style="left:${e.x}%;top:${e.y}%${o}"
   >
     ${e.text ? `<span>${i(e.text)}</span>` : ""}
     ${t ? `<div>${t}</div>` : ""}
@@ -2803,12 +2805,27 @@ function hi(e, t) {
     const p = s ? l.opponentPressureMeter : l.selfPressureMeter;
     flashClass(p, "pressure-hit", animationMs("pressureHitSeconds"));
   }
-  s && (clientShouldSkipServerBurst(r) || nn(r), Si(r));
+  s ? (clientShouldSkipServerBurst(r) || nn(r), Si(r)) : r.attack > 0 && showAttackWarning(r);
 }
 function clientShouldSkipServerBurst(e) {
   const t = Number(e.seq || 0);
   if (t <= 0 || (e.uid || "") !== (a.user?.uid || "")) return false;
   return t === clientPreviewBurstSeq && Date.now() - clientPreviewBurstAt < 3e3 || t === a.pendingSwapSeq || t === a.lastSwapSeq && Date.now() - a.lastSwapSentAt < 4e3;
+}
+function attackWarningText(e) {
+  const t = Math.max(0, Number(e?.attack || 0));
+  return (ve().attackWarningText || DEFAULT_ATTACK_WARNING_TEXT).replaceAll("{attack}", String(t));
+}
+function showAttackWarning(e) {
+  if (ve().attackWarningEnabled === false || Number(e?.attack || 0) <= 0) return;
+  const t = `${ne(e)}:attack-warning`;
+  if (!lt(t) || a.battleBursts.some((h) => h.id === t)) return;
+  const r = attackWarningText(e).trim();
+  if (!r) return;
+  const o = a.effectiveVisualEffectMode === "low" || document.documentElement.classList.contains("low-performance"), s = animationSeconds("hitWarningSeconds"), l = { id: t, text: r, tone: "attack", at: Date.now(), x: 50, y: 34, cleared: Number(e.cleared || 3), chain: Number(e.chain || 1), attack: Number(e.attack || 0), particles: o ? 0 : a.effectiveVisualEffectMode === "high" ? 4 : 2, durationSeconds: s };
+  a.battleBursts = [l], K = "", window.setTimeout(() => {
+    a.battleBursts = a.battleBursts.filter((h) => h.id !== t), K = "", $();
+  }, Math.max(120, Math.round(s * 1e3)));
 }
 function gi(e, t) {
   const r = ui(e, t);
