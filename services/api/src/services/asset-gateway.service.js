@@ -39,6 +39,19 @@ function getGatewayUrl(action) {
   return `${base}/${encodeURIComponent(action)}`;
 }
 
+function isTransientGatewayError(error) {
+  const name = String(error?.name || "");
+  const message = String(error?.message || "");
+  return (
+    name === "AbortError" ||
+    /fetch failed|network|timeout|aborted|ECONNRESET|ETIMEDOUT|EAI_AGAIN/i.test(message)
+  );
+}
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function assertGatewayReady(assetType) {
   const normalizedAssetType = normalizeAssetType(assetType);
 
@@ -58,43 +71,56 @@ async function callGateway(action, payload) {
   const url = getGatewayUrl(action);
   const parsedUrl = new URL(url);
   const requestPath = `${parsedUrl.pathname}${parsedUrl.search || ""}`;
-  const timestamp = String(Math.floor(Date.now() / 1000));
-  const nonce = crypto.randomBytes(12).toString("hex");
-  const signing = `POST${requestPath}${timestamp}${nonce}${rawBody}`;
-  const signature = crypto.createHmac("sha256", ASSET_GATEWAY_APP_SECRET).update(signing).digest("hex");
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), Math.max(1000, Number(ASSET_GATEWAY_TIMEOUT_MS || 8000)));
+  const timeoutMs = Math.max(1000, Number(ASSET_GATEWAY_TIMEOUT_MS || 8000));
+  let lastError = null;
 
-  try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Asset-App-Key": ASSET_GATEWAY_APP_KEY,
-        "X-Asset-Timestamp": timestamp,
-        "X-Asset-Nonce": nonce,
-        "X-Asset-Signature": signature
-      },
-      body: rawBody,
-      signal: controller.signal
-    });
-    const text = await response.text();
-    let data;
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    const timestamp = String(Math.floor(Date.now() / 1000));
+    const nonce = crypto.randomBytes(12).toString("hex");
+    const signing = `POST${requestPath}${timestamp}${nonce}${rawBody}`;
+    const signature = crypto.createHmac("sha256", ASSET_GATEWAY_APP_SECRET).update(signing).digest("hex");
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-      data = text ? JSON.parse(text) : {};
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Asset-App-Key": ASSET_GATEWAY_APP_KEY,
+          "X-Asset-Timestamp": timestamp,
+          "X-Asset-Nonce": nonce,
+          "X-Asset-Signature": signature
+        },
+        body: rawBody,
+        signal: controller.signal
+      });
+      const text = await response.text();
+      let data;
+
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch (error) {
+        throw new Error(`资产网关响应不是JSON: ${text.slice(0, 120)}`);
+      }
+
+      if (!response.ok || Number(data.code) !== 0) {
+        throw new Error(data.msg || `资产网关请求失败: HTTP ${response.status}`);
+      }
+
+      return data.data || {};
     } catch (error) {
-      throw new Error(`资产网关响应不是JSON: ${text.slice(0, 120)}`);
+      lastError = error;
+      if (attempt >= 2 || !isTransientGatewayError(error)) {
+        throw error;
+      }
+      await wait(300);
+    } finally {
+      clearTimeout(timer);
     }
-
-    if (!response.ok || Number(data.code) !== 0) {
-      throw new Error(data.msg || `资产网关请求失败: HTTP ${response.status}`);
-    }
-
-    return data.data || {};
-  } finally {
-    clearTimeout(timer);
   }
+
+  throw lastError || new Error("资产网关请求失败");
 }
 
 function buildIdentity(user = {}) {
