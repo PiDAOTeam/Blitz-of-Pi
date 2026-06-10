@@ -3,8 +3,11 @@ const {
   claimDailySignIn,
   claimDailyTask,
   getEngagementStatus,
-  listAdminEngagementClaims
+  listAdminEngagementClaims,
+  listAdminEngagementRewardJobs,
+  retryEngagementRewardJob
 } = require("../repositories/engagement.repository");
+const { processEngagementRewardOnce } = require("../services/engagement-reward-queue.service");
 
 function toClaimDto(row) {
   let rewards = [];
@@ -32,6 +35,32 @@ function toClaimDto(row) {
   };
 }
 
+function toRewardJobDto(row) {
+  return {
+    id: row.id,
+    uid: row.uid,
+    piUsername: row.pi_username || "",
+    nickname: row.nickname || "",
+    avatarKey: row.avatar_key || "avatar_1",
+    claimId: Number(row.claim_id || 0),
+    claimDate: row.claim_date,
+    claimType: row.claim_type || "",
+    taskKey: row.task_key || "",
+    title: row.title || "",
+    assetType: row.asset_type || "",
+    amount: Number(row.amount || 0),
+    orderNo: row.external_order_no || "",
+    status: row.status || "",
+    attempts: Number(row.attempts || 0),
+    maxAttempts: Number(row.max_attempts || 0),
+    nextRetryAt: row.next_retry_at,
+    processedAt: row.processed_at,
+    lastError: row.last_error || "",
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
 async function getMyEngagementStatus(req) {
   const user = await getUserFromRequest(req);
   return getEngagementStatus(user.uid);
@@ -52,9 +81,28 @@ async function getAdminEngagementClaims() {
   return rows.map(toClaimDto);
 }
 
+async function getAdminEngagementRewardJobs() {
+  const rows = await listAdminEngagementRewardJobs();
+  return rows.map(toRewardJobDto);
+}
+
+async function retryAdminEngagementRewardJob(id) {
+  const changed = await retryEngagementRewardJob(Number(id || 0));
+  return {
+    retried: changed
+  };
+}
+
+async function processAdminEngagementRewardJobs() {
+  return processEngagementRewardOnce(20);
+}
+
 module.exports = {
   claimMyDailySignIn,
   claimMyDailyTask,
   getAdminEngagementClaims,
-  getMyEngagementStatus
+  getAdminEngagementRewardJobs,
+  getMyEngagementStatus,
+  processAdminEngagementRewardJobs,
+  retryAdminEngagementRewardJob
 };

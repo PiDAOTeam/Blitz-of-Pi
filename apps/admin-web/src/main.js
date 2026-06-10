@@ -562,6 +562,27 @@ function Re(e) {
     } catch (r) {
       s && (s.textContent = g(r)), n.disabled = false;
     }
+  }), document.querySelector("#engagement-reward-process")?.addEventListener("click", async (a) => {
+    const n = a.currentTarget, s = document.querySelector("#engagement-reward-status");
+    n.disabled = true, s && (s.textContent = "正在处理...");
+    try {
+      const r = await d("/admin-api/engagement/reward-jobs/process", { method: "POST" });
+      s && (s.textContent = `处理完成：${Number(r.processed || 0)} 条`), await q();
+    } catch (r) {
+      s && (s.textContent = g(r)), n.disabled = false;
+    }
+  }), document.querySelectorAll("[data-engagement-reward-retry]").forEach((a) => {
+    a.addEventListener("click", async () => {
+      const n = a.dataset.engagementRewardRetry || "", s = document.querySelector("#engagement-reward-status");
+      if (!n) return;
+      a.disabled = true, s && (s.textContent = "正在重试...");
+      try {
+        await d(`/admin-api/engagement/reward-jobs/retry/${encodeURIComponent(n)}`, { method: "POST" });
+        s && (s.textContent = "已重新排队"), await q();
+      } catch (r) {
+        s && (s.textContent = g(r)), a.disabled = false;
+      }
+    });
   }), document.querySelector("#add-engagement-task")?.addEventListener("click", () => {
     const a = document.querySelectorAll("[data-engagement-task-row]").length + 1;
     document.querySelector("#engagement-task-list")?.insertAdjacentHTML("beforeend", engagementTaskRows([{
@@ -1569,6 +1590,21 @@ function renderEngagementClaim(e) {
     </article>
   `;
 }
+function engagementRewardJobStatus(e = "") {
+  return { queued: "待发放", processing: "发放中", paid: "已发放", failed: "失败待重试", manual_review: "人工处理" }[e] || e || "-";
+}
+function renderEngagementRewardJob(e) {
+  const t = e.assetType === "POINTS" ? `${Math.floor(Number(e.amount || 0))} 积分` : `${Number(e.amount || 0).toFixed(2).replace(/\.?0+$/, "")} ${i(e.assetType || "")}`, a = ["failed", "manual_review", "processing"].includes(e.status);
+  return `
+    <article class="row-card growth-row">
+      <strong>${i(engagementRewardJobStatus(e.status))}</strong>
+      <span>${i(e.nickname || e.piUsername || h(e.uid))} \xB7 ${i(e.title || "-")}</span>
+      <span>${i(t)} \xB7 ${Number(e.attempts || 0)}/${Number(e.maxAttempts || 0)}</span>
+      <span>${i(e.lastError || O(e.createdAt))}</span>
+      ${a ? `<button type="button" data-engagement-reward-retry="${e.id}">重试</button>` : ""}
+    </article>
+  `;
+}
 function engagementConditionLabel(e = "") {
   return { battle_count: "\u5B8C\u6210\u5BF9\u5C40\u6570", win_count: "\u80DC\u5229\u5BF9\u5C40\u6570", paid_battle_count: "\u4ED8\u8D39\u5BF9\u5C40\u6570" }[e] || "\u5B8C\u6210\u5BF9\u5C40\u6570";
 }
@@ -1627,7 +1663,7 @@ function engagementTaskRows(e = []) {
   `).join("");
 }
 function ft(e, t) {
-  const a = e.transfer || { enabled: true, minAmount: 0.01, maxAmount: 20, dailyLimitAmount: 50, feeRate: 0, feeMinAmount: 0, cooldownSeconds: 10 }, n = e.inviteRewards || { enabled: true, bindEnabled: true, bindRequiredEnabled: true, bindRequiredAfterBattles: 5, bindRequiredModes: ENGAGEMENT_BATTLE_MODES.map((B) => B.key), officialInviterPiUsername: "", bindRequiredMessage: "\u8BF7\u5148\u7ED1\u5B9A\u9080\u8BF7\u4EBA\uFF0C\u518D\u7EE7\u7EED\u5BF9\u6218\u3002", qualificationEnabled: true, qualificationRequiredBattles: 2, qualificationRewardAmount: 0.02, battleCommissionEnabled: true, commissionBase: "entry_fee", maxCommissionRate: 0.2, levels: [] }, engagement = e.engagement || { enabled: true, dailySignIn: { enabled: true, title: "\u6BCF\u65E5\u7B7E\u5230", piRewardEnabled: true, rewardAmount: 0.01, pointsRewardEnabled: false, pointsRewardAmount: 0, pocRewardEnabled: false, pocRewardAmount: 0 }, tasks: ENGAGEMENT_TASK_DEFAULTS }, s = n.levels?.length ? n.levels : [{ key: "starter", name: "\u95EA\u7535\u4F19\u4F34", commissionRate: 0.03, minBalance: 0, minDirectInvites: 0, enabled: true }, { key: "silver", name: "\u94F6\u724C\u961F\u957F", commissionRate: 0.05, minBalance: 5, minDirectInvites: 5, enabled: true }, { key: "gold", name: "\u91D1\u724C\u961F\u957F", commissionRate: 0.08, minBalance: 20, minDirectInvites: 20, enabled: true }], r = t?.transfers || [], o = t?.relations || [], m = t?.rewards || [], engagementClaims = t?.engagementClaims || [], filteredRewards = filterList(m, GROWTH_REWARD_FILTERS, growthRewardFilter), R = N("growth-transfers", r), y = N("growth-relations", o), x = N("growth-rewards", filteredRewards), engagementClaimPager = N("growth-engagement-claims", engagementClaims), j = m.reduce((B, w) => B + Number(w.amount || 0), 0), A = r.reduce((B, w) => B + Number(w.feeAmount || 0), 0), activeRewardFilter = GROWTH_REWARD_FILTERS.find((B) => B.key === growthRewardFilter) || GROWTH_REWARD_FILTERS[0];
+  const a = e.transfer || { enabled: true, minAmount: 0.01, maxAmount: 20, dailyLimitAmount: 50, feeRate: 0, feeMinAmount: 0, cooldownSeconds: 10 }, n = e.inviteRewards || { enabled: true, bindEnabled: true, bindRequiredEnabled: true, bindRequiredAfterBattles: 5, bindRequiredModes: ENGAGEMENT_BATTLE_MODES.map((B) => B.key), officialInviterPiUsername: "", bindRequiredMessage: "\u8BF7\u5148\u7ED1\u5B9A\u9080\u8BF7\u4EBA\uFF0C\u518D\u7EE7\u7EED\u5BF9\u6218\u3002", qualificationEnabled: true, qualificationRequiredBattles: 2, qualificationRewardAmount: 0.02, battleCommissionEnabled: true, commissionBase: "entry_fee", maxCommissionRate: 0.2, levels: [] }, engagement = e.engagement || { enabled: true, dailySignIn: { enabled: true, title: "\u6BCF\u65E5\u7B7E\u5230", piRewardEnabled: true, rewardAmount: 0.01, pointsRewardEnabled: false, pointsRewardAmount: 0, pocRewardEnabled: false, pocRewardAmount: 0 }, tasks: ENGAGEMENT_TASK_DEFAULTS }, s = n.levels?.length ? n.levels : [{ key: "starter", name: "\u95EA\u7535\u4F19\u4F34", commissionRate: 0.03, minBalance: 0, minDirectInvites: 0, enabled: true }, { key: "silver", name: "\u94F6\u724C\u961F\u957F", commissionRate: 0.05, minBalance: 5, minDirectInvites: 5, enabled: true }, { key: "gold", name: "\u91D1\u724C\u961F\u957F", commissionRate: 0.08, minBalance: 20, minDirectInvites: 20, enabled: true }], r = t?.transfers || [], o = t?.relations || [], m = t?.rewards || [], engagementClaims = t?.engagementClaims || [], engagementRewardJobs = t?.engagementRewardJobs || [], filteredRewards = filterList(m, GROWTH_REWARD_FILTERS, growthRewardFilter), R = N("growth-transfers", r), y = N("growth-relations", o), x = N("growth-rewards", filteredRewards), engagementClaimPager = N("growth-engagement-claims", engagementClaims), engagementRewardJobPager = N("growth-engagement-reward-jobs", engagementRewardJobs), j = m.reduce((B, w) => B + Number(w.amount || 0), 0), A = r.reduce((B, w) => B + Number(w.feeAmount || 0), 0), activeRewardFilter = GROWTH_REWARD_FILTERS.find((B) => B.key === growthRewardFilter) || GROWTH_REWARD_FILTERS[0];
   return `
     <section class="panel">
       <div class="section-head">
@@ -1782,6 +1818,21 @@ function ft(e, t) {
       </div>
       <div class="table-list">${engagementClaimPager.items.map(renderEngagementClaim).join("") || '<p class="meta">\u6682\u65E0\u9886\u53D6\u8BB0\u5F55</p>'}</div>
       ${P("growth-engagement-claims", engagementClaims.length)}
+    </section>
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h2>积分/POC发放队列</h2>
+          <p class="meta">自动补发签到奖励。失败会重试，异常可手动处理。</p>
+        </div>
+        <div class="toolbar-actions">
+          <button type="button" id="engagement-reward-process">处理一轮</button>
+          <span class="pill">${engagementRewardJobs.length} 条</span>
+        </div>
+      </div>
+      <p id="engagement-reward-status" class="status"></p>
+      <div class="table-list">${engagementRewardJobPager.items.map(renderEngagementRewardJob).join("") || '<p class="meta">暂无发放任务</p>'}</div>
+      ${P("growth-engagement-reward-jobs", engagementRewardJobs.length)}
     </section>
   `;
 }
@@ -2340,8 +2391,8 @@ async function q() {
       return;
     }
     st();
-    const [e, t, a, n, s, r, o, m, R, y, x, j, A, B, w, L, T, C, M, U, J, k] = await Promise.all([d("/admin-api/auth/me"), d("/admin-api/home-config"), d("/admin-api/pi-config"), d("/admin-api/game-config"), d("/admin-api/dashboard/overview"), d("/admin-api/matches/rooms"), d("/admin-api/payments/orders"), d("/admin-api/users"), d("/admin-api/wallets"), d("/admin-api/wallet-ledgers"), d("/admin-api/battle-rooms"), d("/admin-api/withdraw/orders"), d("/admin-api/reconciliation/report"), d("/admin-api/risk-audit/report"), d("/admin-api/audit-logs"), d("/admin-api/ranks/star-records"), d("/admin-api/ranks/daily-chests"), d("/admin-api/ranks/leaderboard"), d("/admin-api/ranks/weekly-settlements"), d("/admin-api/withdraw/ops").catch(() => null), d("/admin-api/growth/ops").catch(() => null), d("/admin-api/engagement/claims").catch(() => [])]);
-    te = U, Ne(e, t, a, n, s, r, o, m, R, y, x, j, A, B, w, L, T, C, M, { ...(J || {}), engagementClaims: k || [] });
+    const [e, t, a, n, s, r, o, m, R, y, x, j, A, B, w, L, T, C, M, U, J, k, z] = await Promise.all([d("/admin-api/auth/me"), d("/admin-api/home-config"), d("/admin-api/pi-config"), d("/admin-api/game-config"), d("/admin-api/dashboard/overview"), d("/admin-api/matches/rooms"), d("/admin-api/payments/orders"), d("/admin-api/users"), d("/admin-api/wallets"), d("/admin-api/wallet-ledgers"), d("/admin-api/battle-rooms"), d("/admin-api/withdraw/orders"), d("/admin-api/reconciliation/report"), d("/admin-api/risk-audit/report"), d("/admin-api/audit-logs"), d("/admin-api/ranks/star-records"), d("/admin-api/ranks/daily-chests"), d("/admin-api/ranks/leaderboard"), d("/admin-api/ranks/weekly-settlements"), d("/admin-api/withdraw/ops").catch(() => null), d("/admin-api/growth/ops").catch(() => null), d("/admin-api/engagement/claims").catch(() => []), d("/admin-api/engagement/reward-jobs").catch(() => [])]);
+    te = U, Ne(e, t, a, n, s, r, o, m, R, y, x, j, A, B, w, L, T, C, M, { ...(J || {}), engagementClaims: k || [], engagementRewardJobs: z || [] });
   } catch (e) {
     localStorage.removeItem("blitz_admin_token"), ae(`\u540E\u53F0\u52A0\u8F7D\u5931\u8D25\uFF1A${g(e)}`);
   }

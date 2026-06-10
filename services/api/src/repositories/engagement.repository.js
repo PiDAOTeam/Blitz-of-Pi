@@ -1,7 +1,5 @@
 const { query, transaction } = require("../db/mysql");
-const assetGateway = require("../services/asset-gateway.service");
 const { readGameConfig } = require("./game-config.repository");
-const { findUserByUid } = require("./user.repository");
 const { increaseBalance } = require("./wallet.repository");
 
 const SUPPORTED_BATTLE_MODES = [
@@ -51,6 +49,38 @@ async function ensureEngagementSchema() {
       }
     }
   }
+}
+
+async function ensureEngagementRewardJobSchema() {
+  await query(
+    `CREATE TABLE IF NOT EXISTS engagement_asset_reward_jobs (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      uid VARCHAR(64) NOT NULL,
+      claim_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+      claim_date DATE NOT NULL,
+      claim_type VARCHAR(32) NOT NULL DEFAULT '',
+      task_key VARCHAR(64) NOT NULL DEFAULT '',
+      title VARCHAR(64) NOT NULL DEFAULT '',
+      asset_type VARCHAR(16) NOT NULL,
+      amount DECIMAL(18,8) NOT NULL DEFAULT 0,
+      external_order_no VARCHAR(128) NOT NULL,
+      idempotency_key VARCHAR(160) NOT NULL,
+      remark VARCHAR(255) NOT NULL DEFAULT '',
+      status VARCHAR(32) NOT NULL DEFAULT 'queued',
+      attempts INT NOT NULL DEFAULT 0,
+      max_attempts INT NOT NULL DEFAULT 5,
+      next_retry_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+      locked_at TIMESTAMP NULL DEFAULT NULL,
+      processed_at TIMESTAMP NULL DEFAULT NULL,
+      last_error VARCHAR(255) NOT NULL DEFAULT '',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE KEY uk_engagement_reward_idem (idempotency_key),
+      KEY idx_engagement_reward_status_retry (status, next_retry_at, id),
+      KEY idx_engagement_reward_uid_id (uid, id),
+      KEY idx_engagement_reward_claim (claim_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci`
+  );
 }
 
 async function getTodayString(connection = null) {
@@ -223,11 +253,44 @@ async function insertClaim({ uid, claimType, taskKey = "", title, rewardAmount, 
      VALUES (?, CURDATE(), ?, ?, ?, ?, ?, ?, 'claimed')`,
     [uid, claimType, taskKey, title, rewardAmount, rewardSummary, rewardJson]
   );
-  return Number(result?.affectedRows || 0) > 0;
+  return Number(result?.affectedRows || 0) > 0 ? Number(result?.insertId || 0) : 0;
+}
+
+async function enqueueAssetRewardJobs({ uid, claimId, claimType, taskKey = "", title = "", rewards = [], today }, connection) {
+  const remoteRewards = rewards.filter((reward) => ["POINTS", "POC"].includes(reward.assetType));
+
+  for (const reward of remoteRewards) {
+    const assetType = String(reward.assetType || "").toUpperCase();
+    const orderNo = `engagement:${claimType}:${uid}:${today}:${taskKey || "daily"}:${assetType}`;
+    await executor(connection).execute(
+      `INSERT INTO engagement_asset_reward_jobs
+         (uid, claim_id, claim_date, claim_type, task_key, title, asset_type, amount,
+          external_order_no, idempotency_key, remark, status, next_retry_at)
+       VALUES (?, ?, CURDATE(), ?, ?, ?, ?, ?, ?, ?, ?, 'queued', NOW())
+       ON DUPLICATE KEY UPDATE
+         amount = VALUES(amount),
+         title = VALUES(title),
+         remark = VALUES(remark),
+         updated_at = NOW()`,
+      [
+        uid,
+        claimId || 0,
+        claimType,
+        taskKey,
+        title,
+        assetType,
+        reward.amount,
+        orderNo,
+        orderNo,
+        "Pi闪电战每日签到奖励"
+      ]
+    );
+  }
 }
 
 async function claimDailySignIn(uid) {
   await ensureEngagementSchema();
+  await ensureEngagementRewardJobSchema();
 
   await transaction(async (connection) => {
     const config = await readGameConfig();
@@ -242,7 +305,7 @@ async function claimDailySignIn(uid) {
       throw new Error("今日已签到");
     }
 
-    const inserted = await insertClaim(
+    const claimId = await insertClaim(
       {
         uid,
         claimType: "sign_in",
@@ -252,7 +315,7 @@ async function claimDailySignIn(uid) {
       },
       connection
     );
-    if (!inserted) {
+    if (!claimId) {
       throw new Error("今日已签到");
     }
 
@@ -272,23 +335,14 @@ async function claimDailySignIn(uid) {
       );
     }
 
-    const remoteRewards = rewards.filter((reward) => ["POINTS", "POC"].includes(reward.assetType));
-    if (remoteRewards.length) {
-      const user = await findUserByUid(uid);
-      if (!user) {
-        throw new Error("用户不存在，无法发放积分/POC奖励");
-      }
-      for (const reward of remoteRewards) {
-        await assetGateway.reward({
-          assetType: reward.assetType,
-          user,
-          orderNo: `daily_signin:${uid}:${today}:${reward.assetType}`,
-          amount: reward.amount,
-          idempotencyKey: `daily_signin:${uid}:${today}:${reward.assetType}`,
-          remark: "Pi闪电战每日签到奖励"
-        });
-      }
-    }
+    await enqueueAssetRewardJobs({
+      uid,
+      claimId,
+      claimType: "sign_in",
+      title: signIn.title,
+      rewards,
+      today
+    }, connection);
   });
 
   return getEngagementStatus(uid);
@@ -363,6 +417,113 @@ async function listAdminEngagementClaims(limit = 200) {
   );
 }
 
+async function listAdminEngagementRewardJobs(limit = 200) {
+  await ensureEngagementRewardJobSchema();
+  const safeLimit = Math.min(300, Math.max(1, Number.parseInt(String(limit), 10) || 200));
+
+  return query(
+    `SELECT j.*, u.pi_username, u.nickname, u.avatar_key
+     FROM engagement_asset_reward_jobs j
+     LEFT JOIN users u ON u.uid = j.uid
+     ORDER BY j.id DESC
+     LIMIT ${safeLimit}`
+  );
+}
+
+async function listEngagementRewardCandidates(limit = 20) {
+  await ensureEngagementRewardJobSchema();
+  const safeLimit = Math.min(50, Math.max(1, Number.parseInt(String(limit), 10) || 20));
+
+  return query(
+    `SELECT j.*, u.pi_user_id, u.pi_username, u.nickname, u.avatar_key
+     FROM engagement_asset_reward_jobs j
+     LEFT JOIN users u ON u.uid = j.uid
+     WHERE j.status IN ('queued', 'failed')
+       AND j.attempts < j.max_attempts
+       AND (j.next_retry_at IS NULL OR j.next_retry_at <= NOW())
+     ORDER BY j.id ASC
+     LIMIT ${safeLimit}`
+  );
+}
+
+async function markEngagementRewardProcessing(id) {
+  await ensureEngagementRewardJobSchema();
+  const result = await query(
+    `UPDATE engagement_asset_reward_jobs
+     SET status = 'processing',
+         attempts = attempts + 1,
+         locked_at = NOW(),
+         last_error = ''
+     WHERE id = ?
+       AND status IN ('queued', 'failed')
+       AND attempts < max_attempts`,
+    [id]
+  );
+
+  if (Number(result?.affectedRows || 0) < 1) return null;
+
+  const rows = await query(
+    `SELECT j.*, u.pi_user_id, u.pi_username, u.nickname, u.avatar_key
+     FROM engagement_asset_reward_jobs j
+     LEFT JOIN users u ON u.uid = j.uid
+     WHERE j.id = ?
+     LIMIT 1`,
+    [id]
+  );
+  return rows[0] || null;
+}
+
+async function markEngagementRewardPaid(id) {
+  await query(
+    `UPDATE engagement_asset_reward_jobs
+     SET status = 'paid',
+         processed_at = NOW(),
+         last_error = ''
+     WHERE id = ?`,
+    [id]
+  );
+}
+
+async function markEngagementRewardFailed(id, errorMessage, { manualReview = false, nextRetrySeconds = 60 } = {}) {
+  const status = manualReview ? "manual_review" : "failed";
+  await query(
+    `UPDATE engagement_asset_reward_jobs
+     SET status = ?,
+         last_error = ?,
+         next_retry_at = DATE_ADD(NOW(), INTERVAL ? SECOND)
+     WHERE id = ?`,
+    [status, String(errorMessage || "发放失败").slice(0, 255), Math.max(1, Number(nextRetrySeconds || 60)), id]
+  );
+}
+
+async function resetStaleEngagementRewardProcessing(staleMinutes = 10) {
+  await ensureEngagementRewardJobSchema();
+  const result = await query(
+    `UPDATE engagement_asset_reward_jobs
+     SET status = 'failed',
+         last_error = '发放任务超时，已回到失败队列等待重试',
+         next_retry_at = NOW()
+     WHERE status = 'processing'
+       AND locked_at < DATE_SUB(NOW(), INTERVAL ? MINUTE)`,
+    [Math.max(1, Number(staleMinutes || 10))]
+  );
+  return Number(result?.affectedRows || 0);
+}
+
+async function retryEngagementRewardJob(id) {
+  await ensureEngagementRewardJobSchema();
+  const result = await query(
+    `UPDATE engagement_asset_reward_jobs
+     SET status = 'queued',
+         next_retry_at = NOW(),
+         last_error = ''
+     WHERE id = ?
+       AND status IN ('failed', 'manual_review', 'processing')`,
+    [id]
+  );
+  return Number(result?.affectedRows || 0) > 0;
+}
+
 async function listUserEngagementAssetRewardRows(uid, limit = 80) {
   await ensureEngagementSchema();
   const safeLimit = Math.min(120, Math.max(1, Number.parseInt(String(limit), 10) || 80));
@@ -383,6 +544,13 @@ module.exports = {
   claimDailySignIn,
   claimDailyTask,
   getEngagementStatus,
+  listAdminEngagementRewardJobs,
   listAdminEngagementClaims,
+  listEngagementRewardCandidates,
+  markEngagementRewardFailed,
+  markEngagementRewardPaid,
+  markEngagementRewardProcessing,
+  resetStaleEngagementRewardProcessing,
+  retryEngagementRewardJob,
   listUserEngagementAssetRewardRows
 };

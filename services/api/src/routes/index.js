@@ -62,7 +62,10 @@ const {
   claimMyDailySignIn,
   claimMyDailyTask,
   getAdminEngagementClaims,
-  getMyEngagementStatus
+  getAdminEngagementRewardJobs,
+  getMyEngagementStatus,
+  processAdminEngagementRewardJobs,
+  retryAdminEngagementRewardJob
 } = require("../controllers/engagement.controller");
 const {
   createRechargeOrder,
@@ -577,6 +580,22 @@ async function handleRoutes(req, res) {
 
   if (url === "/admin-api/engagement/claims" && method === "GET") {
     ok(res, await getAdminEngagementClaims());
+    return;
+  }
+
+  if (url === "/admin-api/engagement/reward-jobs" && method === "GET") {
+    ok(res, await getAdminEngagementRewardJobs());
+    return;
+  }
+
+  if (url === "/admin-api/engagement/reward-jobs/process" && method === "POST") {
+    ok(res, await processAdminEngagementRewardJobs(), "处理完成");
+    return;
+  }
+
+  if (url.startsWith("/admin-api/engagement/reward-jobs/retry/") && method === "POST") {
+    const id = decodeURIComponent(url.replace("/admin-api/engagement/reward-jobs/retry/", ""));
+    ok(res, await retryAdminEngagementRewardJob(id), "已重新排队");
     return;
   }
 

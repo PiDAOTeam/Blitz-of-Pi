@@ -53,6 +53,28 @@ module.exports = {
       }
     },
     {
+      name: "blitz-engagement-reward",
+      script: "./services/api/src/workers/engagement-reward.worker.js",
+      cwd: __dirname + "/../..",
+      instances: 1,
+      exec_mode: "fork",
+      out_file: "./logs/engagement-reward.out.log",
+      error_file: "./logs/engagement-reward.error.log",
+      env: {
+        ...productionEnv,
+        NODE_ENV: "production",
+        MYSQL_HOST: "127.0.0.1",
+        MYSQL_PORT: 3306,
+        MYSQL_USER: "blitzhashpi",
+        MYSQL_PASSWORD: process.env.MYSQL_PASSWORD || productionEnv.MYSQL_PASSWORD || "change_me",
+        MYSQL_DATABASE: "blitzhashpi",
+        REDIS_HOST: "127.0.0.1",
+        REDIS_PORT: 6379,
+        ENGAGEMENT_REWARD_INTERVAL_MS: 15000,
+        ENGAGEMENT_REWARD_BATCH_SIZE: 20
+      }
+    },
+    {
       name: "blitz-realtime",
       script: "./services/realtime/src/main.js",
       cwd: __dirname + "/../..",
