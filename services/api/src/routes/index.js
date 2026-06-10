@@ -605,10 +605,10 @@ async function handleRoutes(req, res) {
     notFound(res);
   } catch (error) {
     const message = error.message || "服务处理失败";
-    if (!isExpectedBusinessError(message)) {
+    if (!error.expectedBusinessError && !isExpectedBusinessError(message)) {
       console.error("[api] route failed:", error);
     }
-    fail(res, message, 400);
+    fail(res, message, 400, error.businessCode || 1000);
   }
 }
 

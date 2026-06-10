@@ -329,6 +329,14 @@ async function getMyInviteInfo(uid) {
   return {
     config: {
       enabled: config.inviteRewards?.enabled !== false,
+      bindEnabled: config.inviteRewards?.bindEnabled !== false,
+      bindRequiredEnabled: config.inviteRewards?.bindRequiredEnabled !== false,
+      bindRequiredAfterBattles: Number(config.inviteRewards?.bindRequiredAfterBattles || 5),
+      bindRequiredModes: Array.isArray(config.inviteRewards?.bindRequiredModes)
+        ? config.inviteRewards.bindRequiredModes
+        : ["quick_battle", "points_battle", "poc_battle", "pi_battle"],
+      officialInviterPiUsername: config.inviteRewards?.officialInviterPiUsername || "",
+      bindRequiredMessage: config.inviteRewards?.bindRequiredMessage || "请先绑定邀请人，再继续对战。",
       qualificationRequiredBattles: Number(config.inviteRewards?.qualificationRequiredBattles || 2),
       qualificationRewardAmount: Number(config.inviteRewards?.qualificationRewardAmount || 0),
       levels: getEnabledInviteLevels(config).map((item) => ({

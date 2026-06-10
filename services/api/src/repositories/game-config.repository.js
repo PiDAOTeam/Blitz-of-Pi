@@ -144,6 +144,11 @@ const DEFAULT_GAME_CONFIG = {
   inviteRewards: {
     enabled: true,
     bindEnabled: true,
+    bindRequiredEnabled: true,
+    bindRequiredAfterBattles: 5,
+    bindRequiredModes: ["quick_battle", "points_battle", "poc_battle", "pi_battle"],
+    officialInviterPiUsername: "",
+    bindRequiredMessage: "请先绑定邀请人，再继续对战。",
     qualificationEnabled: true,
     qualificationRequiredBattles: 2,
     qualificationRewardAmount: 0.02,
@@ -677,9 +682,15 @@ function normalizeInviteLevel(level = {}, index = 0) {
 
 function normalizeInviteRewardsConfig(inviteRewards = {}) {
   const defaults = DEFAULT_GAME_CONFIG.inviteRewards;
+  const bindRequiredAfterBattles = Number(inviteRewards.bindRequiredAfterBattles);
   const qualificationRequiredBattles = Number(inviteRewards.qualificationRequiredBattles);
   const qualificationRewardAmount = Number(inviteRewards.qualificationRewardAmount);
   const maxCommissionRate = Number(inviteRewards.maxCommissionRate);
+  const bindRequiredModes = Array.isArray(inviteRewards.bindRequiredModes)
+    ? inviteRewards.bindRequiredModes
+        .map((mode) => String(mode || "").trim())
+        .filter((mode, index, list) => SUPPORTED_BATTLE_MODES.includes(mode) && list.indexOf(mode) === index)
+    : defaults.bindRequiredModes;
   const sourceLevels = Array.isArray(inviteRewards.levels) && inviteRewards.levels.length
     ? inviteRewards.levels
     : defaults.levels;
@@ -687,6 +698,14 @@ function normalizeInviteRewardsConfig(inviteRewards = {}) {
   return {
     enabled: inviteRewards.enabled !== false,
     bindEnabled: inviteRewards.bindEnabled !== false,
+    bindRequiredEnabled: inviteRewards.bindRequiredEnabled !== false,
+    bindRequiredAfterBattles:
+      Number.isFinite(bindRequiredAfterBattles) && bindRequiredAfterBattles >= 0 && bindRequiredAfterBattles <= 100
+        ? Math.round(bindRequiredAfterBattles)
+        : defaults.bindRequiredAfterBattles,
+    bindRequiredModes: bindRequiredModes.length ? bindRequiredModes : defaults.bindRequiredModes,
+    officialInviterPiUsername: String(inviteRewards.officialInviterPiUsername || "").trim().replace(/^@+/, "").slice(0, 64),
+    bindRequiredMessage: String(inviteRewards.bindRequiredMessage || defaults.bindRequiredMessage).trim().slice(0, 80),
     qualificationEnabled: inviteRewards.qualificationEnabled !== false,
     qualificationRequiredBattles:
       Number.isFinite(qualificationRequiredBattles) && qualificationRequiredBattles >= 1 && qualificationRequiredBattles <= 100

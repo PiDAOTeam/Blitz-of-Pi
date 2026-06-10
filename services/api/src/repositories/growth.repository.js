@@ -269,6 +269,19 @@ async function countFinishedBattles(uid, connection = null) {
   return Number(rows[0]?.total || 0);
 }
 
+async function countFinishedBattlesForInviteTrial(uid, connection = null) {
+  await ensureGrowthSchema();
+  const [rows] = await executor(connection).execute(
+    `SELECT COUNT(*) AS total
+     FROM battle_rooms
+     WHERE status = 'finished'
+       AND (player_a_uid = ? OR player_b_uid = ?)`,
+    [uid, uid]
+  );
+
+  return Number(rows[0]?.total || 0);
+}
+
 async function findQualificationReward(inviteeUid, connection = null) {
   await ensureGrowthSchema();
   const [rows] = await executor(connection).execute(
@@ -475,6 +488,7 @@ module.exports = {
   findInviteRelationByInvitee,
   createInviteRelation,
   countFinishedBattles,
+  countFinishedBattlesForInviteTrial,
   findQualificationReward,
   createQualificationReward,
   listClaimableRewards,

@@ -363,7 +363,11 @@ async function w(e, t) {
     window.clearTimeout(o);
   }
   const l = await s.json();
-  if (!s.ok || l.code !== 0) throw new Error(l.message || n("requestFailed"));
+  if (!s.ok || l.code !== 0) {
+    const c = new Error(l.message || n("requestFailed"));
+    c.code = l.code;
+    throw c;
+  }
   return l.data;
 }
 function v(e, t = {}, r = En) {
@@ -2464,7 +2468,7 @@ function at() {
         ${e?.inviter ? "" : `<form id="invite-bind-form" class="recharge-form compact-form invite-bind-top">
                 <label>
                   <span>${i(n("inviterPiUsername"))}</span>
-                  <input name="inviterPiUsername" inputmode="text" autocomplete="off" autocapitalize="none" />
+                  <input name="inviterPiUsername" inputmode="text" autocomplete="off" autocapitalize="none" value="${i(e?.config?.officialInviterPiUsername || "")}" />
                 </label>
                 <button type="button" class="secondary" id="search-invite-user">${i(n("searchInviter"))}</button>
                 <div id="invite-user-preview" class="transfer-user-preview"></div>
@@ -2513,17 +2517,17 @@ function at() {
   }), d?.addEventListener("submit", async (f) => {
     if (f.preventDefault(), d.dataset.busy === "true") return;
     const m = new FormData(f.currentTarget), g = String(m.get("inviterPiUsername") || "").trim(), P = p?.piUsername || p?.uid || "";
-    if (!p) {
+    if (!p && !g) {
       c && (c.textContent = n("confirmInviterFirst")), S(n("confirmInviterFirst"), "error");
       return;
     }
-    if (g && g !== P) {
+    if (p && g && g !== P) {
       c && (c.textContent = n("selectedUserChanged")), S(n("selectedUserChanged"), "error");
       return;
     }
     c && (c.textContent = n("processing")), re(d, true);
     try {
-      await w("/api/invite/bind", { method: "POST", body: JSON.stringify({ inviterPiUsername: P }) }), await D(), c && (c.textContent = n("inviteBindSuccess")), S(n("inviteBindSuccess"), "success"), window.setTimeout(at, 500);
+      await w("/api/invite/bind", { method: "POST", body: JSON.stringify({ inviterPiUsername: P || g }) }), await D(), c && (c.textContent = n("inviteBindSuccess")), S(n("inviteBindSuccess"), "success"), window.setTimeout(at, 500);
     } catch (C) {
       const T = N(C) || n("inviteBindFailed");
       c && (c.textContent = T), S(T, "error");
@@ -3543,7 +3547,13 @@ async function un(e = "quick_battle") {
     v("client_match_queueing", { mode: e, queueLength: s.queueLength || 0, waitingSeconds: s.waitingSeconds || 0 }, 0), Vi(o), await it();
   } catch (s) {
     if (a.screen !== "matching" || o !== a.matchSessionId) return;
-    a.matchCancelMessage = N(s), v("client_match_start_failed", { mode: e, message: a.matchCancelMessage, costMs: Date.now() - a.matchStartedAt }, 0), J(n("matchFailed")), O();
+    const l = N(s);
+    if (s?.code === 1601 || /绑定邀请人|邀请人/.test(l)) {
+      a.matchSessionId += 1, a.screen = "home", a.matchStartedAt = 0, a.matchWaitingSeconds = 0, a.matchCanCancel = false, a.matchCancelling = false, a.matchPollFailedCount = 0, a.matchCancelMessage = "", O(), await D().catch(() => {
+      }), at(), S(l, "error");
+      return;
+    }
+    a.matchCancelMessage = l, v("client_match_start_failed", { mode: e, message: a.matchCancelMessage, costMs: Date.now() - a.matchStartedAt }, 0), J(n("matchFailed")), O();
   }
 }
 async function Qi() {

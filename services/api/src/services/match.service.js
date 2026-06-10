@@ -21,6 +21,10 @@ const { settleRankMatch } = require("../repositories/rank.repository");
 const { settleBattleInviteCommission } = require("./growth.service");
 const { observeBattleStage } = require("./battle-observer.service");
 const { findUserByUid } = require("../repositories/user.repository");
+const {
+  countFinishedBattlesForInviteTrial,
+  findInviteRelationByInvitee
+} = require("../repositories/growth.repository");
 
 const matchState = {
   rooms: new Map(),
@@ -179,6 +183,32 @@ function assertModeRankAccess(user, mode, config) {
   if (minIndex > 0 && userIndex >= 0 && userIndex < minIndex) {
     throw new Error(`${BATTLE_MODES[mode]?.name || "高阶场"}需达到${getRankNameByKey(config, minRankKey)}段位后进入`);
   }
+}
+
+async function assertInviteBindingAccess(user, mode, config) {
+  const inviteConfig = config.inviteRewards || {};
+  const modes = Array.isArray(inviteConfig.bindRequiredModes) ? inviteConfig.bindRequiredModes : [];
+  if (
+    inviteConfig.enabled === false ||
+    inviteConfig.bindEnabled === false ||
+    inviteConfig.bindRequiredEnabled === false ||
+    !modes.includes(normalizeBattleMode(mode))
+  ) {
+    return;
+  }
+
+  const allowedBattles = Math.max(0, Number(inviteConfig.bindRequiredAfterBattles ?? 5));
+  const relation = await findInviteRelationByInvitee(user.uid);
+  if (relation) return;
+
+  const finishedBattles = await countFinishedBattlesForInviteTrial(user.uid);
+  if (finishedBattles < allowedBattles) return;
+
+  const message = String(inviteConfig.bindRequiredMessage || "").trim() || "请先绑定邀请人，再继续对战。";
+  const error = new Error(message);
+  error.expectedBusinessError = true;
+  error.businessCode = 1601;
+  throw error;
 }
 
 function getQueueKey(mode) {
@@ -455,6 +485,12 @@ async function createRoomInStore(playerA, playerB, mode = "quick_battle") {
 
   if (modeConfig.enabled === false) {
     throw new Error(`${BATTLE_MODES[battleMode].name}暂未开放`);
+  }
+  if (!isBotUid(playerA.uid)) {
+    await assertInviteBindingAccess(playerA, battleMode, config);
+  }
+  if (!isBotUid(playerB.uid)) {
+    await assertInviteBindingAccess(playerB, battleMode, config);
   }
   isAssetGatewayModeAllowed(battleMode, playerA, config);
   isAssetGatewayModeAllowed(battleMode, playerB, config);
@@ -899,6 +935,7 @@ async function joinQueueWithLock(user, mode) {
   const config = await readGameConfig();
   const timing = getTimingConfig(config);
   assertModeRankAccess(user, mode, config);
+  await assertInviteBindingAccess(user, mode, config);
   isAssetGatewayModeAllowed(mode, user, config);
   const cancelWaitSeconds = Number(timing.matchCancelWaitSeconds || 0);
 
