@@ -34,6 +34,8 @@ function buildAssetBattleLedgers(rows, uid) {
     const rewardAmount = Number(row.reward_amount || 0);
     const isWinner = row.winner_uid === uid;
     const isDraw = !row.winner_uid;
+    const isLoser = row.loser_uid === uid;
+    const entryFeeRefunded = String(row.asset_error || "").includes("已补回入场费");
     const settled = row.asset_settlement_status === "settled";
     const released = row.asset_settlement_status === "released";
     const createdAt = row.created_at;
@@ -88,6 +90,25 @@ function buildAssetBattleLedgers(rows, uid) {
         related_type: "asset_battle_refund",
         related_id: `${row.room_no}:${uid}`,
         remark: `${modeName}平局退回`,
+        created_at: finishedAt,
+        asset_type: assetType,
+        mode: row.mode,
+        settlement_status: row.asset_settlement_status || "",
+        synthetic: true
+      });
+    }
+
+    if (isLoser && entryFee > 0 && entryFeeRefunded) {
+      ledgers.push({
+        id: `asset:${row.room_no}:${uid}:entry-refund`,
+        uid,
+        type: "battle_entry_refund",
+        direction: "in",
+        amount: entryFee,
+        balance_after: null,
+        related_type: "asset_battle_entry_refund",
+        related_id: `${row.room_no}:${uid}`,
+        remark: `${modeName}入场费补回`,
         created_at: finishedAt,
         asset_type: assetType,
         mode: row.mode,

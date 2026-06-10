@@ -206,7 +206,7 @@ async function listUserAssetBattleLedgerRows(uid, limit = 60) {
 
   return query(
     `SELECT room_no, mode, status, player_a_uid, player_b_uid, winner_uid, loser_uid,
-            entry_fee, reward_amount, asset_type, asset_settlement_status,
+            entry_fee, reward_amount, asset_type, asset_settlement_status, asset_error,
             created_at, finished_at
      FROM battle_rooms
      WHERE (player_a_uid = ? OR player_b_uid = ?)
