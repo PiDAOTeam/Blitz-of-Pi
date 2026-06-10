@@ -136,7 +136,8 @@ async function getAdminRankLeaderboard() {
 
 async function settleAdminWeeklyRank() {
   return settleWeeklyLeaderboard({
-    seasonNo: getPreviousWeekSeasonNo()
+    seasonNo: getPreviousWeekSeasonNo(),
+    silentIfSettled: true
   });
 }
 

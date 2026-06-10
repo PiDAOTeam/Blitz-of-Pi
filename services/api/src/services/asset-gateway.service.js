@@ -101,7 +101,11 @@ async function callGateway(action, payload) {
       try {
         data = text ? JSON.parse(text) : {};
       } catch (error) {
-        throw new Error(`资产网关响应不是JSON: ${text.slice(0, 120)}`);
+        const gatewayError = new Error("资产网关暂时不可用，请稍后重试");
+        gatewayError.expectedBusinessError = true;
+        gatewayError.cause = error;
+        gatewayError.gatewaySnippet = text.slice(0, 120);
+        throw gatewayError;
       }
 
       if (!response.ok || Number(data.code) !== 0) {
