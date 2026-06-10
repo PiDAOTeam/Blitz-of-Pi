@@ -2,6 +2,8 @@ const qa = ["localhost", "127.0.0.1"].includes(window.location.hostname), fn = q
 if (!R) throw new Error("\u672A\u627E\u5230\u5E94\u7528\u6302\u8F7D\u8282\u70B9");
 const BRAND_MARK_HTML = '<img class="brand-logo" src="/assets/brand/blitz-logo-128.jpg" alt="" loading="eager" decoding="async" />';
 const Da = "blitz_language", Wa = "blitz_visual_effect_mode", INVITE_CODE_STORAGE_KEY = "blitz_pending_invite_code", Jt = ["zh-CN", "en", "vi", "ko", "ja"], ot = ["balanced", "high"];
+const INVITE_LIST_PAGE_SIZE = 6;
+let inviteRelationPage = 1, inviteIncomePage = 1;
 function gn() {
   const e = localStorage.getItem(Da);
   return Jt.includes(e) ? e : "zh-CN";
@@ -1455,8 +1457,27 @@ function xr(e = Ja()) {
 function Ar(e = "") {
   return e === "battle_commission" ? n("paidCommission") : e === "qualification" ? n("claimInviteReward") : Ga(e);
 }
+function invitePagerHtml(e, t, r) {
+  return t <= 1 ? "" : `
+    <div class="invite-pager">
+      <button type="button" class="secondary" data-invite-page-target="${e}" data-page="${r - 1}" ${r <= 1 ? "disabled" : ""}>${i(n("prevPage"))}</button>
+      <span>${r}/${t}</span>
+      <button type="button" class="secondary" data-invite-page-target="${e}" data-page="${r + 1}" ${r >= t ? "disabled" : ""}>${i(n("nextPage"))}</button>
+    </div>
+  `;
+}
+function bindInvitePagination() {
+  document.querySelectorAll("[data-invite-page-target]").forEach((e) => e.addEventListener("click", () => {
+    const t = e.dataset.invitePageTarget, r = Math.max(1, Number.parseInt(e.dataset.page || "1", 10) || 1);
+    t === "relation" ? inviteRelationPage = r : inviteIncomePage = r;
+    at();
+  }));
+}
 function Fr(e) {
   const t = e.inviter, r = e.invitedUsers || [];
+  const o = Math.max(1, Math.ceil(r.length / INVITE_LIST_PAGE_SIZE));
+  inviteRelationPage = Math.min(Math.max(1, inviteRelationPage), o);
+  const s = (inviteRelationPage - 1) * INVITE_LIST_PAGE_SIZE, l = r.slice(s, s + INVITE_LIST_PAGE_SIZE);
   return `
     <section class="invite-relation-panel">
       <div class="section-title compact">
@@ -1471,7 +1492,7 @@ function Fr(e) {
         ${t ? `<strong>${i(t.nickname || t.piUsername)}</strong><small>${i(t.piUsername || "-")}</small>` : `<strong>${i(n("inviteUnbound"))}</strong><small>${i(n("inviteUnboundHint"))}</small>`}
       </article>
       ${r.length ? `<div class="invite-child-strip">
-              ${r.slice(0, 6).map((o) => `
+              ${l.map((o) => `
                     <article>
                       ${xe(o)}
                       <div>
@@ -1480,12 +1501,15 @@ function Fr(e) {
                       </div>
                     </article>
                   `).join("")}
-            </div>` : `<p class="summary">${i(n("inviteNoChildren"))}</p>`}
+            </div>${invitePagerHtml("relation", o, inviteRelationPage)}` : `<p class="summary">${i(n("inviteNoChildren"))}</p>`}
     </section>
   `;
 }
 function _r(e) {
   const t = e.rewardHistory || [];
+  const r = Math.max(1, Math.ceil(t.length / INVITE_LIST_PAGE_SIZE));
+  inviteIncomePage = Math.min(Math.max(1, inviteIncomePage), r);
+  const o = (inviteIncomePage - 1) * INVITE_LIST_PAGE_SIZE, s = t.slice(o, o + INVITE_LIST_PAGE_SIZE);
   return `
     <section class="invite-reward-history">
       <div class="section-title compact">
@@ -1496,7 +1520,7 @@ function _r(e) {
         <span>${t.length}</span>
       </div>
       ${t.length ? `<div class="invite-income-list">
-              ${t.slice(0, 12).map((r) => {
+              ${s.map((r) => {
     const o = r.inviteeNickname || r.inviteePiUsername || "\u597D\u53CB", s = r.rate > 0 ? ` \xB7 ${sa(r.rate)}%` : "", l = r.battleRoomNo ? ` \xB7 ${r.battleRoomNo}` : "";
     return `
                     <article>
@@ -1508,7 +1532,7 @@ function _r(e) {
                     </article>
                   `;
   }).join("")}
-            </div>` : `<p class="summary">${i(n("inviteNoIncomeHistory"))}</p>`}
+            </div>${invitePagerHtml("income", r, inviteIncomePage)}` : `<p class="summary">${i(n("inviteNoIncomeHistory"))}</p>`}
     </section>
   `;
 }
@@ -2455,7 +2479,7 @@ function at() {
         <p id="invite-status" class="summary" role="status" aria-live="polite"></p>
       </section>
     </main>
-  `, document.querySelector("#back-home")?.addEventListener("click", L), document.querySelector("#copy-invite-link")?.addEventListener("click", () => copyInviteLink());
+  `, document.querySelector("#back-home")?.addEventListener("click", L), document.querySelector("#copy-invite-link")?.addEventListener("click", () => copyInviteLink()), bindInvitePagination();
   const l = document.querySelector("#invite-status"), c = document.querySelector("#invite-bind-status"), d = document.querySelector("#invite-bind-form"), u = d?.querySelector('input[name="inviterPiUsername"]'), h = document.querySelector("#invite-user-preview");
   let p = null;
   u?.addEventListener("input", () => {

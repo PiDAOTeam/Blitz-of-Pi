@@ -7614,6 +7614,27 @@ button:disabled {
   color: #fff173;
   font-size: 15px;
 }
+.invite-pager {
+  display: grid;
+  grid-template-columns: minmax(82px, 1fr) auto minmax(82px, 1fr);
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+.invite-pager span {
+  min-width: 42px;
+  color: #fff3b2;
+  font-size: 12px;
+  font-weight: 1000;
+  text-align: center;
+}
+.invite-pager button {
+  min-height: 38px;
+  padding: 0 12px;
+  border-color: #ffd64a80;
+  color: #fff3b2;
+  font-size: 12px;
+}
 .invite-mini-panel span,
 .invite-dashboard span,
 .invite-user-list span,
