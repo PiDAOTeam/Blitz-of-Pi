@@ -364,7 +364,7 @@ function normalizeRoomLifecycle(room) {
 }
 
 function isPaidMode(mode) {
-  return mode === "ticket_battle" || mode === "rich_battle";
+  return mode !== "quick_battle";
 }
 
 function resolveWaitingReadyTimeout(room) {

@@ -4,6 +4,7 @@ const { transaction } = require("../db/mysql");
 const { readGameConfig } = require("../repositories/game-config.repository");
 const {
   consumeLockedBalance,
+  getWallet,
   increaseBalance,
   lockBalance,
   unlockBalance
@@ -209,6 +210,37 @@ async function assertInviteBindingAccess(user, mode, config) {
   error.expectedBusinessError = true;
   error.businessCode = 1601;
   throw error;
+}
+
+async function assertUserEntryAssetAccess(user, mode, config) {
+  const battleMode = normalizeBattleMode(mode);
+  const modeConfig = config[BATTLE_MODES[battleMode].configKey] || {};
+  const assetType = getModeAssetType(battleMode, modeConfig);
+  const entryFee = normalizeEntryAmount(assetType, modeConfig.entryFee || 0);
+
+  if (entryFee <= 0 || isBotUid(user.uid)) return;
+
+  if (isRemoteAssetType(assetType)) {
+    const summary = await assetGateway.summary(user);
+    const asset = summary?.[assetType] || {};
+    const balance = Number(asset.balance || 0);
+
+    if (!Number.isFinite(balance) || balance < entryFee) {
+      throw new Error(assetType === "POINTS" ? "积分余额不足" : "POC余额不足");
+    }
+    return;
+  }
+
+  if (assetType === "PI") {
+    const wallet = await getWallet(user.uid);
+    const availableBalance = Number(wallet?.available_balance ?? wallet?.balance ?? 0);
+    const lockedBalance = Number(wallet?.locked_balance ?? wallet?.locked ?? 0);
+    const available = availableBalance - lockedBalance;
+
+    if (!Number.isFinite(available) || available < entryFee) {
+      throw new Error("Pi余额不足");
+    }
+  }
 }
 
 function getQueueKey(mode) {
@@ -468,6 +500,51 @@ function takePairForUser(queue, uid) {
   return [self, opponent];
 }
 
+function attachFailedPlayer(error, player, assetType) {
+  if (player?.uid && !error.failedPlayerUid) {
+    error.failedPlayerUid = player.uid;
+    error.failedAssetType = assetType;
+  }
+  return error;
+}
+
+function shouldKeepFailedPairPlayer(player, failedPlayerUid) {
+  return player?.uid && player.uid !== failedPlayerUid && !isBotUid(player.uid);
+}
+
+async function handlePairCreateFailure({ error, queue, pair, mode, user, waitingMs, cancelWaitSeconds, queueKey }) {
+  const failedPlayerUid = error.failedPlayerUid || "";
+
+  if (!failedPlayerUid) {
+    requeueHumanPlayers(queue, pair, mode);
+    await writeJson(queueKey, queue, 3600);
+    throw error;
+  }
+
+  const keepPlayers = pair.filter((player) => shouldKeepFailedPairPlayer(player, failedPlayerUid));
+  requeueHumanPlayers(queue, keepPlayers, mode);
+  await writeJson(queueKey, queue, 3600);
+
+  if (failedPlayerUid === user.uid) {
+    throw error;
+  }
+
+  observeMatchStage("match_pair_skipped_unqualified", {
+    uid: user.uid,
+    failedUid: failedPlayerUid,
+    mode,
+    message: error.message || "对手暂不满足入场条件",
+    queueLength: queue.length
+  });
+
+  return getQueueingResponse({
+    mode,
+    queueLength: queue.length,
+    waitingMs,
+    cancelWaitSeconds
+  });
+}
+
 async function getPersistedRoomDetail(roomNo) {
   return (
     (await readJson(`${REDIS_REALTIME_ROOM_PREFIX}${roomNo}`)) ||
@@ -527,14 +604,18 @@ async function createRoomInStore(playerA, playerB, mode = "quick_battle") {
 
       for (const player of payers) {
         const idempotencyKey = `${room.roomNo}:${player.uid}:freeze`;
-        await assetGateway.freeze({
-          assetType,
-          user: player,
-          roomNo: room.roomNo,
-          amount: entryFee,
-          idempotencyKey,
-          remark: `Pi闪电战${BATTLE_MODES[battleMode].name}入场费冻结`
-        });
+        try {
+          await assetGateway.freeze({
+            assetType,
+            user: player,
+            roomNo: room.roomNo,
+            amount: entryFee,
+            idempotencyKey,
+            remark: `Pi闪电战${BATTLE_MODES[battleMode].name}入场费冻结`
+          });
+        } catch (error) {
+          throw attachFailedPlayer(error, player, assetType);
+        }
         remoteFreezes.push({ player, idempotencyKey });
       }
     }
@@ -544,17 +625,21 @@ async function createRoomInStore(playerA, playerB, mode = "quick_battle") {
         const payers = room.players.filter((player) => !isBotUid(player.uid));
 
         for (const player of payers) {
-          await lockBalance(
-            player.uid,
-            entryFee,
-            {
-              type: "battle_entry_lock",
-              relatedType: "battle_room_entry_lock",
-              relatedId: `${room.roomNo}:${player.uid}`,
-              remark: `Pi闪电战${BATTLE_MODES[battleMode].name}入场费冻结`
-            },
-            connection
-          );
+          try {
+            await lockBalance(
+              player.uid,
+              entryFee,
+              {
+                type: "battle_entry_lock",
+                relatedType: "battle_room_entry_lock",
+                relatedId: `${room.roomNo}:${player.uid}`,
+                remark: `Pi闪电战${BATTLE_MODES[battleMode].name}入场费冻结`
+              },
+              connection
+            );
+          } catch (error) {
+            throw attachFailedPlayer(error, player, assetType);
+          }
         }
       }
 
@@ -937,6 +1022,7 @@ async function joinQueueWithLock(user, mode) {
   assertModeRankAccess(user, mode, config);
   await assertInviteBindingAccess(user, mode, config);
   isAssetGatewayModeAllowed(mode, user, config);
+  await assertUserEntryAssetAccess(user, mode, config);
   const cancelWaitSeconds = Number(timing.matchCancelWaitSeconds || 0);
 
   const cooldownKey = `${REDIS_CANCEL_COOLDOWN_PREFIX}${user.uid}`;
@@ -1042,9 +1128,16 @@ async function joinQueueWithLock(user, mode) {
     try {
       room = await createRoomInStore(playerA, playerB, mode);
     } catch (error) {
-      requeueHumanPlayers(redisQueue, [playerA, playerB], mode);
-      await writeJson(queueKey, redisQueue, 3600);
-      throw error;
+      return handlePairCreateFailure({
+        error,
+        queue: redisQueue,
+        pair: [playerA, playerB],
+        mode,
+        user,
+        waitingMs,
+        cancelWaitSeconds,
+        queueKey
+      });
     }
 
     return createMatchedResponse(user, room.roomNo, { room });
@@ -1221,7 +1314,7 @@ async function getMatchStatusWithoutLock(user) {
     const botEnabled = modeConfig.botMatchEnabled !== false;
     const fallbackBotAfterMs = mode === "quick_battle" ? Number(timing.quickBotFallbackSeconds || 0) * 1000 : 0;
 
-    if (redisQueue.length >= 2) {
+    if (redisQueue.length >= 2 && !isPaidMode(mode)) {
       const lockedResult = await tryWithMatchLock(mode, async () => {
         const latestQueue = sanitizeQueue((await readJson(getQueueKey(mode))) || [], mode);
         const latestItem = latestQueue.find((item) => item.uid === user.uid);
@@ -1259,9 +1352,16 @@ async function getMatchStatusWithoutLock(user) {
         try {
           room = await createRoomInStore(playerA, playerB, mode);
         } catch (error) {
-          requeueHumanPlayers(latestQueue, [playerA, playerB], mode);
-          await writeJson(getQueueKey(mode), latestQueue, 3600);
-          throw error;
+          return handlePairCreateFailure({
+            error,
+            queue: latestQueue,
+            pair: [playerA, playerB],
+            mode,
+            user,
+            waitingMs: latestWaitingMs,
+            cancelWaitSeconds,
+            queueKey: getQueueKey(mode)
+          });
         }
         observeMatchStage("match_status_room_created", {
           roomNo: room.roomNo,

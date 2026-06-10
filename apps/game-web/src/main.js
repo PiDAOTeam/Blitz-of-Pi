@@ -3580,7 +3580,12 @@ async function eo() {
   try {
     await Zi();
   } catch (e) {
-    a.room = null, a.battleMessage = N(e);
+    const t = N(e);
+    if (Ki(t)) {
+      sn(t);
+      return;
+    }
+    a.room = null, a.battleMessage = t;
   }
 }
 async function to(e, t) {
