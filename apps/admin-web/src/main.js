@@ -753,6 +753,36 @@ function Ne(e, t, a, n, s, r, o, m, R, y, x, j, A, B, w, L, T, C, M, U) {
   `), Ut(homeConfig, J, n), jt(), It(), Ft(), Dt();
 }
 function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, rooms: r, paymentOrders: o, users: m, ledgers: R, battleRooms: y, withdrawOrders: x, reconciliation: j, riskAudit: A, auditLogs: B, rankStarRecords: w, rankChestRecords: L, rankLeaderboard: T, rankWeeklySettlements: C, growthOps: M, banner: U }) {
+  const extremeRealtimeState = n?.extremeRealtime || {};
+  const extremeRealtimeAllModes = ["quick_battle", "points_battle", "poc_battle", "pi_battle"];
+  const extremeRealtimeModeNames = {
+    quick_battle: "\u5FEB\u901F\u5F00\u6218",
+    points_battle: "\u5C0F\u5BCC\u8C6A",
+    poc_battle: "\u5927\u5BCC\u8C6A",
+    pi_battle: "\u8D85\u7EA7\u5BCC\u8C6A"
+  };
+  const extremeRealtimeModes = Array.isArray(extremeRealtimeState.enabledModes) ? extremeRealtimeState.enabledModes : [];
+  const extremeRealtimeGrayPercent = Number(extremeRealtimeState.grayPercent || 0);
+  const extremeRealtimeWhiteCount = (extremeRealtimeState.grayUserPiUids || []).length + (extremeRealtimeState.grayUserPiUsernames || []).length;
+  const extremeRealtimeIsFull = Boolean(extremeRealtimeState.enabled) && !extremeRealtimeState.rollbackToLegacy && extremeRealtimeGrayPercent >= 100 && extremeRealtimeAllModes.every((mode) => extremeRealtimeModes.includes(mode));
+  const extremeRealtimeModeSummary = extremeRealtimeAllModes.map((mode) => `${extremeRealtimeModeNames[mode]}\uFF1A${extremeRealtimeModes.includes(mode) ? "\u5F00" : "\u5173"}`).join(" / ");
+  let extremeRealtimeStatusText = "\u5F53\u524D\uFF1A\u672A\u5F00\u542F\uFF0C\u6240\u6709\u7528\u6237\u8D70\u65E7\u7A33\u5B9A\u94FE\u8DEF";
+  let extremeRealtimeStatusClass = "danger";
+  if (extremeRealtimeState.rollbackToLegacy) {
+    extremeRealtimeStatusText = "\u5F53\u524D\uFF1A\u5DF2\u56DE\u9000\uFF0C\u6240\u6709\u7528\u6237\u8D70\u65E7\u94FE\u8DEF";
+  } else if (extremeRealtimeIsFull) {
+    extremeRealtimeStatusText = "\u5F53\u524D\uFF1A\u56DB\u4E2A\u6A21\u5F0F\u5DF2\u5168\u91CF\u5F00\u542F";
+    extremeRealtimeStatusClass = "success";
+  } else if (extremeRealtimeState.enabled && extremeRealtimeWhiteCount > 0 && extremeRealtimeGrayPercent <= 0) {
+    extremeRealtimeStatusText = "\u5F53\u524D\uFF1A\u4EC5\u6D4B\u8BD5\u540D\u5355\u5F00\u542F";
+    extremeRealtimeStatusClass = "warning";
+  } else if (extremeRealtimeState.enabled && extremeRealtimeGrayPercent > 0) {
+    extremeRealtimeStatusText = `\u5F53\u524D\uFF1A\u7070\u5EA6\u5F00\u542F ${extremeRealtimeGrayPercent}%`;
+    extremeRealtimeStatusClass = "warning";
+  } else if (extremeRealtimeState.enabled) {
+    extremeRealtimeStatusText = "\u5F53\u524D\uFF1A\u5DF2\u5F00\u542F\uFF0C\u4F46\u6682\u65E0\u7528\u6237\u751F\u6548";
+    extremeRealtimeStatusClass = "warning";
+  }
   if (_ === "overview") return `
       <section class="overview-hero">
         <div>
@@ -947,18 +977,22 @@ function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, roo
           <p class="meta">\u65B0\u914D\u7F6E\u53EA\u5F71\u54CD\u65B0\u5339\u914D\u623F\u95F4\uFF1B\u5DF2\u521B\u5EFA\u5BF9\u5C40\u6309\u521B\u5EFA\u65F6\u5FEB\u7167\u6267\u884C\u3002</p>
           <hr />
           <h3 class="sub-panel-title">\u6781\u9650\u624B\u611F\u6A21\u5F0F</h3>
+          <div class="ops-state-box ${extremeRealtimeStatusClass}">
+            <strong>${extremeRealtimeStatusText}</strong>
+            <span>${extremeRealtimeModeSummary}</span>
+          </div>
           <label>
-            <span>\u603B\u5F00\u5173</span>
+            <span>\u662F\u5426\u5F00\u542F\u6781\u9650\u624B\u611F</span>
             <select name="extremeRealtimeEnabled">
-              <option value="false" ${n.extremeRealtime?.enabled ? "" : "selected"}>\u5173\u95ED\uFF08\u7A33\u5B9A\u65E7\u94FE\u8DEF\uFF09</option>
-              <option value="true" ${n.extremeRealtime?.enabled ? "selected" : ""}>\u5F00\u542F\u7070\u5EA6</option>
+              <option value="false" ${n.extremeRealtime?.enabled ? "" : "selected"}>\u5173\u95ED\uFF1A\u5168\u90E8\u8D70\u65E7\u7A33\u5B9A\u94FE\u8DEF</option>
+              <option value="true" ${n.extremeRealtime?.enabled ? "selected" : ""}>\u5F00\u542F\uFF1A\u6309\u4E0B\u65B9\u6A21\u5F0F\u548C\u6BD4\u4F8B\u751F\u6548</option>
             </select>
           </label>
           <label>
-            <span>\u4E00\u952E\u56DE\u9000</span>
+            <span>\u7D27\u6025\u56DE\u9000</span>
             <select name="extremeRealtimeRollbackToLegacy">
-              <option value="false" ${n.extremeRealtime?.rollbackToLegacy ? "" : "selected"}>\u4F7F\u7528\u6781\u9650\u94FE\u8DEF</option>
-              <option value="true" ${n.extremeRealtime?.rollbackToLegacy ? "selected" : ""}>\u5F3A\u5236\u56DE\u9000\u65E7\u94FE\u8DEF</option>
+              <option value="false" ${n.extremeRealtime?.rollbackToLegacy ? "" : "selected"}>\u4E0D\u56DE\u9000\uFF1A\u5141\u8BB8\u6781\u9650\u624B\u611F\u751F\u6548</option>
+              <option value="true" ${n.extremeRealtime?.rollbackToLegacy ? "selected" : ""}>\u7ACB\u5373\u56DE\u9000\uFF1A\u5168\u90E8\u6539\u56DE\u65E7\u94FE\u8DEF</option>
             </select>
           </label>
           <div class="checkbox-grid">
@@ -967,7 +1001,7 @@ function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, roo
             <label><input type="checkbox" name="extremeRealtimeMode" value="poc_battle" ${(Array.isArray(n.extremeRealtime?.enabledModes) ? n.extremeRealtime.enabledModes : ["quick_battle", "points_battle", "poc_battle", "pi_battle"]).includes("poc_battle") ? "checked" : ""} /> \u5927\u5BCC\u8C6A\uFF08POC\uFF09</label>
             <label><input type="checkbox" name="extremeRealtimeMode" value="pi_battle" ${(Array.isArray(n.extremeRealtime?.enabledModes) ? n.extremeRealtime.enabledModes : ["quick_battle", "points_battle", "poc_battle", "pi_battle"]).includes("pi_battle") ? "checked" : ""} /> \u8D85\u7EA7\u5BCC\u8C6A\uFF08Pi\uFF09</label>
           </div>
-          <label><span>\u7070\u5EA6\u6BD4\u4F8B\uFF080-100\uFF09</span><input name="extremeRealtimeGrayPercent" type="number" inputmode="decimal" min="0" max="100" step="1" value="${n.extremeRealtime?.grayPercent ?? 0}" /></label>
+          <label><span>\u5F00\u542F\u6BD4\u4F8B\uFF080=\u53EA\u6D4B\u8BD5\u540D\u5355\uFF0C100=\u5168\u90E8\u7528\u6237\uFF09</span><input name="extremeRealtimeGrayPercent" type="number" inputmode="decimal" min="0" max="100" step="1" value="${n.extremeRealtime?.grayPercent ?? 0}" /></label>
           <label><span>\u6D4B\u8BD5 Pi UID</span><textarea name="extremeRealtimeGrayUids" rows="2" placeholder="\u591A\u4E2A\u6362\u884C\uFF0C\u767D\u540D\u5355\u4F18\u5148">${(n.extremeRealtime?.grayUserPiUids || []).join(`
 `)}</textarea></label>
           <label><span>\u6D4B\u8BD5 username</span><textarea name="extremeRealtimeGrayUsernames" rows="2" placeholder="\u53EF\u9009\uFF0C\u591A\u4E2A\u6362\u884C">${(n.extremeRealtime?.grayUserPiUsernames || []).join(`
@@ -976,7 +1010,7 @@ function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, roo
           <label><span>\u5FEB\u7167\u95F4\u9694\u6BEB\u79D2</span><input name="extremeRealtimeSnapshotIntervalMs" type="number" inputmode="decimal" min="500" max="10000" step="100" value="${n.extremeRealtime?.snapshotIntervalMs ?? 2000}" /></label>
           <label><span>\u6700\u5C0F\u64CD\u4F5C\u95F4\u9694\u6BEB\u79D2</span><input name="extremeRealtimeSwapMinIntervalMs" type="number" inputmode="decimal" min="60" max="500" step="10" value="${n.extremeRealtime?.swapMinIntervalMs ?? 120}" /></label>
           <label><span>\u6027\u80FD\u57CB\u70B9\u91C7\u6837</span><input name="extremeRealtimeMetricsSampleRate" type="number" inputmode="decimal" min="0" max="1" step="0.01" value="${n.extremeRealtime?.metricsSampleRate ?? 0.05}" /></label>
-          <p class="meta">\u5EFA\u8BAE\u5148\u5173\u95ED\u603B\u5F00\u5173\uFF0C\u53EA\u7ED9\u767D\u540D\u5355\u771F\u673A\u6D4B\u8BD5\u3002\u5F02\u5E38\u65F6\u5F00\u542F\u201C\u4E00\u952E\u56DE\u9000\u201D\u5373\u53EF\u6062\u590D\u65E7\u94FE\u8DEF\u3002</p>
+          <p class="meta">\u8981\u56DB\u4E2A\u6A21\u5F0F\u5168\u5F00\uFF1A\u4E0A\u65B9\u9009\u5F00\u542F\uFF0C\u56DB\u4E2A\u6A21\u5F0F\u5168\u90E8\u52FE\u9009\uFF0C\u5F00\u542F\u6BD4\u4F8B\u586B 100\uFF0C\u7D27\u6025\u56DE\u9000\u9009\u4E0D\u56DE\u9000\u3002</p>
           <hr />
           <h3 class="sub-panel-title">\u753B\u9762\u4E0E\u6027\u80FD</h3>
           <label>

@@ -551,6 +551,38 @@ body {
   background: #b4232f1f;
   color: #9f1d2a;
 }
+.ops-state-box {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+.ops-state-box strong {
+  font-size: 15px;
+}
+.ops-state-box span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+.ops-state-box.success {
+  border-color: #1f9d55;
+  background: #e9f8ef;
+  color: #126335;
+}
+.ops-state-box.warning {
+  border-color: #d49b25;
+  background: #fff7df;
+  color: #805b08;
+}
+.ops-state-box.danger {
+  border-color: #b4232f;
+  background: #fff0f1;
+  color: #9f1d2a;
+}
 .table-list {
   display: grid;
   gap: 7px;
