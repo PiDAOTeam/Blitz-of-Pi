@@ -225,7 +225,7 @@ function Oe(e) {
         </div>
       `).join("");
 }
-const D = { enabled: false, normalTiles: [{ key: "ruby", name: "\u7EA2\u5B9D\u77F3", label: "", color: "#d3231b", textColor: "#fff6bd", imageUrl: "" }, { key: "amber", name: "\u91D1\u5E01", label: "", color: "#f08a12", textColor: "#fff6bd", imageUrl: "" }, { key: "jade", name: "\u7FE1\u7FE0", label: "", color: "#169950", textColor: "#fff6bd", imageUrl: "" }, { key: "aqua", name: "\u6D77\u6D6A", label: "", color: "#177ed0", textColor: "#fff6bd", imageUrl: "" }, { key: "slate", name: "\u7D2B\u6676", label: "", color: "#8a35ff", textColor: "#fff6bd", imageUrl: "" }, { key: "gold", name: "\u51A0\u519B\u91D1", label: "", color: "#c8a21f", textColor: "#fff6bd", imageUrl: "" }], specialTiles: { horizontal: { name: "\u6A2A\u5411\u95EA\u7535", label: "\u6A2A", color: "#ffe56d", textColor: "#ffe56d", imageUrl: "" }, vertical: { name: "\u7EB5\u5411\u95EA\u7535", label: "\u7EB5", color: "#ffe56d", textColor: "#ffe56d", imageUrl: "" }, bomb: { name: "\u7206\u70B8\u65B9\u5757", label: "\u7206", color: "#ffe56d", textColor: "#ffe56d", imageUrl: "" } } };
+const D = { enabled: false, normalTiles: [{ key: "ruby", name: "\u7EA2\u5B9D\u77F3", label: "", color: "#d6262f", textColor: "#fff6bd", imageUrl: "" }, { key: "amber", name: "\u91D1\u5E01", label: "", color: "#f08a12", textColor: "#fff6bd", imageUrl: "" }, { key: "jade", name: "\u7FE1\u7FE0", label: "", color: "#169950", textColor: "#fff6bd", imageUrl: "" }, { key: "aqua", name: "\u6D77\u6D6A", label: "", color: "#0098e8", textColor: "#fff6bd", imageUrl: "" }, { key: "slate", name: "\u7D2B\u6676", label: "", color: "#6f2cff", textColor: "#fff6bd", imageUrl: "" }, { key: "gold", name: "\u51A0\u519B\u91D1", label: "", color: "#d2a51a", textColor: "#fff6bd", imageUrl: "" }], specialTiles: { horizontal: { name: "\u6A2A\u5411\u95EA\u7535", label: "\u6A2A", color: "#ffe56d", textColor: "#ffe56d", imageUrl: "" }, vertical: { name: "\u7EB5\u5411\u95EA\u7535", label: "\u7EB5", color: "#ffe56d", textColor: "#ffe56d", imageUrl: "" }, bomb: { name: "\u7206\u70B8\u65B9\u5757", label: "\u7206", color: "#ffe56d", textColor: "#ffe56d", imageUrl: "" } } };
 function ze(e) {
   const t = e.operation?.tileTheme || D;
   return { enabled: t.enabled !== false, normalTiles: D.normalTiles.map((a, n) => {
@@ -1032,8 +1032,8 @@ function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, roo
             <strong>\u52A8\u753B\u65F6\u957F\uFF08\u79D2\uFF09</strong>
             <p class="meta">\u8C03\u5C0F\u66F4\u5FEB\uFF0C\u8C03\u5927\u66F4\u660E\u663E\u3002\u5EFA\u8BAE\u4E0D\u8981\u8D85\u8FC7 2 \u79D2\u3002</p>
             <div class="rank-row">
-              <label><span>\u672C\u5730\u5927\u63D0\u793A</span><input name="effectLocalBurstSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.localBurstSeconds ?? 0.56}" /></label>
-              <label><span>\u70AB\u5F69\u672C\u5730\u63D0\u793A</span><input name="effectLocalBurstHighSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.localBurstHighSeconds ?? 0.72}" /></label>
+              <label><span>\u672C\u5730\u5927\u63D0\u793A</span><input name="effectLocalBurstSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.localBurstSeconds ?? 0.96}" /></label>
+              <label><span>\u70AB\u5F69\u672C\u5730\u63D0\u793A</span><input name="effectLocalBurstHighSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.localBurstHighSeconds ?? 1.16}" /></label>
               <label><span>\u670D\u52A1\u7AEF\u63D0\u793A</span><input name="effectServerBurstSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.serverBurstSeconds ?? 1.52}" /></label>
               <label><span>\u70AB\u5F69\u670D\u52A1\u7AEF\u63D0\u793A</span><input name="effectServerBurstHighSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.serverBurstHighSeconds ?? 1.42}" /></label>
             </div>
@@ -1044,10 +1044,10 @@ function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, roo
               <label><span>\u70AB\u5F69\u5F97\u5206\u95EA\u52A8</span><input name="effectImpactHighSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.impactHighSeconds ?? 0.92}" /></label>
             </div>
             <div class="rank-row">
-              <label><span>\u68CB\u76D8\u53CD\u9988</span><input name="effectBoardEffectSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.boardEffectSeconds ?? 0.32}" /></label>
-              <label><span>\u70AB\u5F69\u68CB\u76D8</span><input name="effectBoardEffectHighSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.boardEffectHighSeconds ?? 0.42}" /></label>
-              <label><span>\u65B9\u5757\u7206\u5F00</span><input name="effectTileBurstSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.tileBurstSeconds ?? 0.34}" /></label>
-              <label><span>\u70AB\u5F69\u65B9\u5757\u7206\u5F00</span><input name="effectTileBurstHighSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.tileBurstHighSeconds ?? 0.46}" /></label>
+              <label><span>\u68CB\u76D8\u53CD\u9988</span><input name="effectBoardEffectSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.boardEffectSeconds ?? 0.46}" /></label>
+              <label><span>\u70AB\u5F69\u68CB\u76D8</span><input name="effectBoardEffectHighSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.boardEffectHighSeconds ?? 0.62}" /></label>
+              <label><span>\u65B9\u5757\u7206\u5F00</span><input name="effectTileBurstSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.tileBurstSeconds ?? 0.5}" /></label>
+              <label><span>\u70AB\u5F69\u65B9\u5757\u7206\u5F00</span><input name="effectTileBurstHighSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.tileBurstHighSeconds ?? 0.68}" /></label>
             </div>
             <div class="rank-row">
               <label><span>\u65B9\u5757\u4E0B\u843D</span><input name="effectTileFallSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.tileFallSeconds ?? 0.3}" /></label>
@@ -1059,7 +1059,7 @@ function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, roo
               <label><span>\u6ED1\u52A8\u53CD\u9988</span><input name="effectLocalSwapSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.localSwapSeconds ?? 0.18}" /></label>
               <label><span>\u65E0\u6548\u4EA4\u6362</span><input name="effectInvalidSwapSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.invalidSwapSeconds ?? 0.26}" /></label>
               <label><span>\u653B\u51FB\u7EBF</span><input name="effectAttackLineSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.attackLineSeconds ?? 0.78}" /></label>
-              <label><span>\u88AB\u653B\u51FB\u8B66\u793A</span><input name="effectHitWarningSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.hitWarningSeconds ?? 0.62}" /></label>
+              <label><span>\u88AB\u653B\u51FB\u8B66\u793A</span><input name="effectHitWarningSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.hitWarningSeconds ?? 0.92}" /></label>
             </div>
           </div>
           <button type="submit">\u4FDD\u5B58\u6E38\u620F\u914D\u7F6E</button>

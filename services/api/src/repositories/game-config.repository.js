@@ -247,15 +247,15 @@ const DEFAULT_GAME_CONFIG = {
     attackWarningEnabled: true,
     attackWarningText: "被攻击 压力+{attack}",
     animationDurations: {
-      localBurstSeconds: 0.56,
-      localBurstHighSeconds: 0.72,
+      localBurstSeconds: 0.96,
+      localBurstHighSeconds: 1.16,
       serverBurstSeconds: 1.52,
       serverBurstHighSeconds: 1.42,
       lowPerformanceBurstSeconds: 1.65,
-      boardEffectSeconds: 0.32,
-      boardEffectHighSeconds: 0.42,
-      tileBurstSeconds: 0.34,
-      tileBurstHighSeconds: 0.46,
+      boardEffectSeconds: 0.46,
+      boardEffectHighSeconds: 0.62,
+      tileBurstSeconds: 0.5,
+      tileBurstHighSeconds: 0.68,
       tileFallSeconds: 0.3,
       tileFallHighSeconds: 0.38,
       localSwapSeconds: 0.18,
@@ -266,7 +266,7 @@ const DEFAULT_GAME_CONFIG = {
       pressureHitSeconds: 0.72,
       boardUnderAttackSeconds: 0.58,
       attackLineSeconds: 0.78,
-      hitWarningSeconds: 0.62
+      hitWarningSeconds: 0.92
     }
   },
   operation: {
@@ -320,12 +320,12 @@ const DEFAULT_GAME_CONFIG = {
     tileTheme: {
       enabled: false,
       normalTiles: [
-        { key: "ruby", name: "红宝石", label: "", color: "#d3231b", textColor: "#fff6bd", imageUrl: "" },
+        { key: "ruby", name: "红宝石", label: "", color: "#d6262f", textColor: "#fff6bd", imageUrl: "" },
         { key: "amber", name: "金币", label: "", color: "#f08a12", textColor: "#fff6bd", imageUrl: "" },
         { key: "jade", name: "翡翠", label: "", color: "#169950", textColor: "#fff6bd", imageUrl: "" },
-        { key: "aqua", name: "海浪", label: "", color: "#177ed0", textColor: "#fff6bd", imageUrl: "" },
-        { key: "slate", name: "紫晶", label: "", color: "#8a35ff", textColor: "#fff6bd", imageUrl: "" },
-        { key: "gold", name: "冠军金", label: "", color: "#c8a21f", textColor: "#fff6bd", imageUrl: "" }
+        { key: "aqua", name: "海浪", label: "", color: "#0098e8", textColor: "#fff6bd", imageUrl: "" },
+        { key: "slate", name: "紫晶", label: "", color: "#6f2cff", textColor: "#fff6bd", imageUrl: "" },
+        { key: "gold", name: "冠军金", label: "", color: "#d2a51a", textColor: "#fff6bd", imageUrl: "" }
       ],
       specialTiles: {
         horizontal: { name: "横向闪电", label: "横", color: "#ffe56d", textColor: "#ffe56d", imageUrl: "" },
