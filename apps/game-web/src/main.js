@@ -858,6 +858,12 @@ function formatPublicReward(e, t) {
   if (e === "POC") return `${r.toFixed(2).replace(/\.?0+$/, "")} POC`;
   return `${r.toFixed(2)} Pi`;
 }
+function formatPublicRewardNumber(e, t) {
+  const r = Number(t || 0);
+  if (e === "POINTS") return String(Math.floor(r));
+  if (e === "POC") return r.toFixed(2).replace(/\.?0+$/, "") || "0";
+  return r.toFixed(2).replace(/\.?0+$/, "") || "0";
+}
 function formatAssetReward(e, t) {
   const r = String(e || "PI").toUpperCase(), o = Number(t || 0);
   return r === "POINTS" ? `${Math.floor(o)} ${n("pointsAsset")}` : r === "POC" ? `${o.toFixed(2).replace(/\.?0+$/, "")} POC` : b(o);
@@ -1882,9 +1888,9 @@ function _() {
         </div>
         ${d ? `<section class="trust-strip" aria-label="\u5E73\u53F0\u771F\u5B9E\u6570\u636E">
                 <article><span>${i(n("totalBattles"))}</span><strong>${Zn(d.totalBattles)}</strong></article>
-                <article><span>${i(n("publicRewardPi"))}</span><strong>${i(formatPublicReward("PI", d.totalRewardPi))}</strong></article>
-                <article><span>${i(n("publicRewardPoints"))}</span><strong>${i(formatPublicReward("POINTS", d.totalRewardPoints))}</strong></article>
-                <article><span>${i(n("publicRewardPoc"))}</span><strong>${i(formatPublicReward("POC", d.totalRewardPoc))}</strong></article>
+                <article><span>${i(n("publicRewardPi"))}</span><strong>${i(formatPublicRewardNumber("PI", d.totalRewardPi))}</strong></article>
+                <article><span>${i(n("publicRewardPoints"))}</span><strong>${i(formatPublicRewardNumber("POINTS", d.totalRewardPoints))}</strong></article>
+                <article><span>${i(n("publicRewardPoc"))}</span><strong>${i(formatPublicRewardNumber("POC", d.totalRewardPoc))}</strong></article>
               </section>` : ""}
         ${renderDailyRewardEntry()}
         ${Er()}
@@ -3212,8 +3218,9 @@ function Si(e) {
     r.classList.remove(o);
   }, a.effectiveVisualEffectMode === "high" ? animationMs("boardEffectHighSeconds", 120) : animationMs("boardEffectSeconds", 120)), Ci(e);
 }
-function $i() {
-  return a.effectiveVisualEffectMode === "low" || document.documentElement.classList.contains("low-performance") ? false : !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+function $i(e = false) {
+  if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return false;
+  return e ? a.effectiveVisualEffectMode !== "low" : !(a.effectiveVisualEffectMode === "low" || document.documentElement.classList.contains("low-performance"));
 }
 function Pi(e) {
   const t = [], r = (s) => {
@@ -3234,23 +3241,23 @@ function Pi(e) {
   return t.slice(0, Math.min(l, Math.max(2, Math.min(8, Number(e.cleared || 3) + o))));
 }
 function triggerCanvasSpecialFx(e) {
-  if (!$i()) return;
+  if (!$i(true)) return;
   const t = (Array.isArray(e.specialFx) ? e.specialFx : []).filter((r) => r?.position && r.kind);
   if (!t.length) return;
-  const r = battleFeedbackPower(e), o = a.effectiveVisualEffectMode === "high" ? animationMsAtLeast("boardEffectHighSeconds", 760 + r * 25, 180) : animationMsAtLeast("boardEffectSeconds", 580 + r * 18, 170), s = Date.now();
-  a.canvasSpecialFx = [...(a.canvasSpecialFx || []), ...t.slice(0, a.effectiveVisualEffectMode === "high" ? 3 : 2).map((l) => ({ kind: l.kind, position: l.position, at: s, durationMs: o, cleared: Number(e.cleared || 3), power: r, seed: Math.random() * Math.PI * 2 }))].slice(-4), renderCurrentCanvasBoard(), scheduleCanvasFxFrame(), window.setTimeout(() => {
-    a.canvasSpecialFx = (a.canvasSpecialFx || []).filter((l) => Date.now() - l.at < l.durationMs), renderCurrentCanvasBoard();
-  }, o + 40);
+  const r = document.documentElement.classList.contains("low-performance"), o = battleFeedbackPower(e), s = r ? Math.min(2, o) : o, l = a.effectiveVisualEffectMode === "high" && !r ? animationMsAtLeast("boardEffectHighSeconds", 760 + o * 25, 180) : r ? 420 : animationMsAtLeast("boardEffectSeconds", 580 + o * 18, 170), c = Date.now(), d = r ? 1 : a.effectiveVisualEffectMode === "high" ? 3 : 2;
+  a.canvasSpecialFx = [...(a.canvasSpecialFx || []), ...t.slice(0, d).map((u) => ({ kind: u.kind, position: u.position, at: c, durationMs: l, cleared: Number(e.cleared || 3), power: s, seed: Math.random() * Math.PI * 2 }))].slice(r ? -2 : -4), renderCurrentCanvasBoard(), scheduleCanvasFxFrame(), window.setTimeout(() => {
+    a.canvasSpecialFx = (a.canvasSpecialFx || []).filter((u) => Date.now() - u.at < u.durationMs), renderCurrentCanvasBoard();
+  }, l + 40);
 }
 function Ci(e) {
-  if (!$i()) return;
+  if (!$i(true)) return;
   triggerCanvasSpecialFx(e);
   const t = Pi(e);
   if (!t.length) return;
-  const r = battleFeedbackPower(e), o = battleIsMegaFeedback(e), s = (a.effectiveVisualEffectMode === "high" || o) && (Number(e.cleared || 0) >= 4 || Number(e.chain || 1) > 1 || e.specialTriggered || e.specialCreated), l = s ? animationMsAtLeast("tileBurstHighSeconds", 760 + r * 22, 80) : animationMsAtLeast("tileBurstSeconds", 560, 80);
-  a.canvasTileBursts = [...(a.canvasTileBursts || []), { positions: t, at: Date.now(), durationMs: l, strong: s, power: r, tone: e.attack > 0 || e.specialTriggered ? "attack" : o ? "mega" : "score", seed: Math.random() * Math.PI }].slice(-4), renderCurrentCanvasBoard(), scheduleCanvasFxFrame(), window.setTimeout(() => {
+  const r = document.documentElement.classList.contains("low-performance"), o = battleFeedbackPower(e), s = battleIsMegaFeedback(e), l = (a.effectiveVisualEffectMode === "high" || s) && !r && (Number(e.cleared || 0) >= 4 || Number(e.chain || 1) > 1 || e.specialTriggered || e.specialCreated), c = r ? 360 : l ? animationMsAtLeast("tileBurstHighSeconds", 760 + o * 22, 80) : animationMsAtLeast("tileBurstSeconds", 560, 80), d = r ? Math.min(2, o) : o;
+  a.canvasTileBursts = [...(a.canvasTileBursts || []), { positions: r ? t.slice(0, 3) : t, at: Date.now(), durationMs: c, strong: l, power: d, tone: e.attack > 0 || e.specialTriggered ? "attack" : s ? "mega" : "score", seed: Math.random() * Math.PI }].slice(r ? -2 : -4), renderCurrentCanvasBoard(), scheduleCanvasFxFrame(), window.setTimeout(() => {
     a.canvasTileBursts = (a.canvasTileBursts || []).filter((c) => Date.now() - c.at < c.durationMs), renderCurrentCanvasBoard();
-  }, l + 30);
+  }, c + 30);
 }
 function Ti() {
   const e = oe();
