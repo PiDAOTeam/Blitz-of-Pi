@@ -280,13 +280,14 @@ function lt(e) {
 }
 let Nt = "", j = null, V = null, Be = null, ee = null, y = null, x = null, k = null, Ne = null, Yt = 0, Et = 0, Lt = "", xt = 0, Ee = "", te = 0, pe = -1, Xe = "", le = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPerfLockedLow = false, clientPerfFrameCount = 0, clientPerfLongFrameCount = 0, clientPerfSampleStartedAt = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0, canvasFxFrame = null;
 a.canvasSpecialFx = [];
+a.canvasSpecialBirths = [];
 let cleanupBoardInputListeners = null;
 const Sa = /* @__PURE__ */ new Map();
 let z = null, W = null, At = 0, q = null;
 const $n = 8e3, Pn = 3, Cn = 9e3, Ha = 1200, Tn = 1800, Ie = 8, Rn = 5e3, Mn = 6, Xt = 8e3, fe = 3, Bn = 16, Nn = 8, $a = 30, $e = 8, Pe = 6, Pa = 0.18, En = 1200;
 function we() {
   Be && (window.clearInterval(Be), Be = null), Ee = "", te = 0, pe = -1;
-  canvasFxFrame && (window.cancelAnimationFrame(canvasFxFrame), canvasFxFrame = null), a.canvasSpecialFx = [], a.canvasTileBursts = [];
+  canvasFxFrame && (window.cancelAnimationFrame(canvasFxFrame), canvasFxFrame = null), a.canvasSpecialFx = [], a.canvasSpecialBirths = [], a.canvasTileBursts = [];
 }
 function cleanupBoardInputs() {
   try {
@@ -301,7 +302,7 @@ function cleanupBoardInputs() {
   Ne = null;
 }
 function ce() {
-  be && (window.cancelAnimationFrame(be), be = null), ee && (window.clearTimeout(ee), ee = null), le && (window.cancelAnimationFrame(le), le = null), j && (window.cancelAnimationFrame(j), j = null), V && (window.cancelAnimationFrame(V), V = null), z = null, W = null, At = 0, q = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPerfLockedLow = false, clientPerfFrameCount = 0, clientPerfLongFrameCount = 0, clientPerfSampleStartedAt = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0, document.documentElement.classList.remove("low-performance"), we(), Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, Se = null, me.clear(), Nt = "", y = null, Et = 0, Lt = "", xt = 0, a.pendingSwapSeq = 0, a.pendingSwapPositions = [], cleanupBoardInputs(), x = null, k = null, Yt = 0, a.battleBursts = [], a.battleImpacts = [], a.localBattleEvents = [], a.localSwapFx = null, a.canvasSpecialFx = [];
+  be && (window.cancelAnimationFrame(be), be = null), ee && (window.clearTimeout(ee), ee = null), le && (window.cancelAnimationFrame(le), le = null), j && (window.cancelAnimationFrame(j), j = null), V && (window.cancelAnimationFrame(V), V = null), z = null, W = null, At = 0, q = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPerfLockedLow = false, clientPerfFrameCount = 0, clientPerfLongFrameCount = 0, clientPerfSampleStartedAt = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0, document.documentElement.classList.remove("low-performance"), we(), Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, Se = null, me.clear(), Nt = "", y = null, Et = 0, Lt = "", xt = 0, a.pendingSwapSeq = 0, a.pendingSwapPositions = [], cleanupBoardInputs(), x = null, k = null, Yt = 0, a.battleBursts = [], a.battleImpacts = [], a.localBattleEvents = [], a.localSwapFx = null, a.canvasSpecialFx = [], a.canvasSpecialBirths = [];
 }
 function ge() {
   ze && (window.clearTimeout(ze), ze = null);
@@ -655,7 +656,7 @@ function clientRefillBoardIfStuck(e, t) {
   for (let o = 0; o < $e; o += 1) for (let s = 0; s < Pe; s += 1) e[o][s] = r[o][s];
 }
 function clientResolveBoard(e, t, r = null) {
-  const n = [];
+  const n = [], y = [];
   let o = 0, s = 0, l = 0, c = 0, d = 0, u = r ? clientDirectSpecialMatches(e, r.from, r.to, n) : /* @__PURE__ */ new Set();
   for (; o < 4; ) {
     const h = u.size > 0 ? u : clientFindMatches(e);
@@ -669,11 +670,11 @@ function clientResolveBoard(e, t, r = null) {
       const [C, T] = P.split(":").map(Number);
       e[C][T] = null;
     }
-    f && e[f.position.row]?.[f.position.col] === null && (e[f.position.row][f.position.col] = f.tile, d += 1);
+    f && e[f.position.row]?.[f.position.col] === null && (e[f.position.row][f.position.col] = f.tile, y.push({ kind: f.kind, position: f.position, tile: f.tile }), d += 1);
     clientCollapseBoard(e, t);
     if (s >= 18) break;
   }
-  return { chain: o, totalCleared: s, scoreGain: l, specialTriggered: c, specialCreated: d, specialFx: n };
+  return { chain: o, totalCleared: s, scoreGain: l, specialTriggered: c, specialCreated: d, specialFx: n, specialBirths: y };
 }
 function clientSettleRemainingMatches(e, t) {
   let r = 0;
@@ -719,7 +720,7 @@ function kaPreviewSwap(e, t, r) {
   const l = clientCreateRandom(`${a.realtimeRoom?.roomNo || ""}:${a.clientRoomVersion || a.realtimeRoom?.version || 0}:${r}`), c = clientResolveBoard(s, l, { from: e, to: t });
   if (!c.totalCleared) return null;
   clientSettleRemainingMatches(s, l), clientRefillBoardIfStuck(s, a.realtimeRoom);
-  const d = Math.min(4, Math.max(0, c.chain - 1) + Math.floor(Math.min(c.totalCleared, 16) / 8) + Math.min(1, Number(c.specialTriggered || 0))), u = { uid: a.user?.uid || "local", type: "local_preview", seq: r, cleared: c.totalCleared, chain: c.chain, scoreGain: c.scoreGain, attack: d, specialTriggered: Number(c.specialTriggered || 0), specialCreated: Number(c.specialCreated || 0), specialFx: c.specialFx || [], at: Date.now(), localPending: true, board: s };
+  const d = Math.min(4, Math.max(0, c.chain - 1) + Math.floor(Math.min(c.totalCleared, 16) / 8) + Math.min(1, Number(c.specialTriggered || 0))), u = { uid: a.user?.uid || "local", type: "local_preview", seq: r, cleared: c.totalCleared, chain: c.chain, scoreGain: c.scoreGain, attack: d, specialTriggered: Number(c.specialTriggered || 0), specialCreated: Number(c.specialCreated || 0), specialFx: c.specialFx || [], specialBirths: c.specialBirths || [], at: Date.now(), localPending: true, board: s };
   return u.previewSemantic = yaPreviewSemantic(u), u.previewTone = clientPreviewTone(u), u.previewText = waPreviewText(u), u;
 }
 function xaPreviewSwap(e, t, r) {
@@ -2909,7 +2910,7 @@ function drawCanvasTileBody(e, t, r, o, s, l, c) {
   e.strokeStyle = r >= wa ? "rgba(255, 245, 174, .68)" : "rgba(255, 249, 218, .28)", e.lineWidth = r >= wa ? 1.9 : 1.1, canvasRoundRect(e, o.x + 0.5, o.y + 0.5, o.w - 1, o.h - 1, s), e.stroke();
 }
 function canvasHasActiveFx(e = Date.now()) {
-  return !!(a.tileEffect && e - a.tileEffect.at < 780 || a.localSwapFx && e - a.localSwapFx.at < animationMs("localSwapSeconds", 80) || x && e - x.at < 260 || k && e - k.at < 430 || (a.canvasTileBursts || []).some((t) => e - t.at < t.durationMs) || (a.canvasSpecialFx || []).some((t) => e - t.at < t.durationMs));
+  return !!(a.tileEffect && e - a.tileEffect.at < 780 || a.localSwapFx && e - a.localSwapFx.at < animationMs("localSwapSeconds", 80) || x && e - x.at < 260 || k && e - k.at < 430 || (a.canvasTileBursts || []).some((t) => e - t.at < t.durationMs) || (a.canvasSpecialFx || []).some((t) => e - t.at < t.durationMs) || (a.canvasSpecialBirths || []).some((t) => e - t.at < t.durationMs));
 }
 function renderCurrentCanvasBoard() {
   const e = oe(), t = Zr()?.self;
@@ -2955,10 +2956,14 @@ function drawCanvasSpecialFx(e, t) {
       const p = o.kind === "vertical", f = p ? t.paddingTop : c.cy, m = p ? c.cx : t.paddingLeft, g = p ? t.innerHeight : c.w, P = p ? c.h : t.innerWidth, C = p ? c.cx : t.paddingLeft + t.innerWidth, T = p ? t.paddingTop + t.innerHeight : c.cy, U = p ? e.createLinearGradient(c.cx, f, c.cx, T) : e.createLinearGradient(m, c.cy, C, c.cy);
       U.addColorStop(0, "rgba(255, 230, 102, 0)"), U.addColorStop(0.18, "rgba(255, 249, 181, .62)"), U.addColorStop(0.48, "rgba(255, 255, 255, 1)"), U.addColorStop(0.52, "rgba(255, 255, 255, .96)"), U.addColorStop(0.82, "rgba(82, 221, 255, .58)"), U.addColorStop(1, "rgba(132, 223, 255, 0)");
       e.shadowColor = "rgba(255, 232, 109, .9)", e.shadowBlur = d * 0.28 * h, e.strokeStyle = U, e.lineWidth = Math.max(7, d * (0.24 + u * 0.012 - s * 0.07)), e.beginPath(), e.moveTo(m, f), e.lineTo(C, T), e.stroke(), e.shadowBlur = 0, e.strokeStyle = "rgba(255, 255, 255, .86)", e.lineWidth = Math.max(1.8, d * (0.05 + u * 0.004)), e.beginPath(), e.moveTo(m, f), e.lineTo(C, T), e.stroke();
+      const qe = Math.max(0, Math.sin(Math.min(1, s * 1.35) * Math.PI)), gt = p ? t.innerHeight : t.innerWidth, ha = d * (0.18 + u * 0.025) * (0.7 + qe * 0.8);
+      for (let fa = -1; fa <= 1; fa += 2) {
+        e.strokeStyle = `rgba(255, 250, 188, ${0.52 * l})`, e.lineWidth = Math.max(1.5, d * 0.034), e.beginPath(), p ? (e.moveTo(c.cx - ha * fa, c.cy - gt * 0.16 * qe), e.quadraticCurveTo(c.cx - ha * fa * 1.5, c.cy, c.cx - ha * fa, c.cy + gt * 0.16 * qe)) : (e.moveTo(c.cx - gt * 0.16 * qe, c.cy - ha * fa), e.quadraticCurveTo(c.cx, c.cy - ha * fa * 1.5, c.cx + gt * 0.16 * qe, c.cy - ha * fa)), e.stroke();
+      }
       for (let Te = -1; Te <= 1; Te += 2) e.strokeStyle = `rgba(126, 236, 255, ${0.34 * l})`, e.lineWidth = Math.max(1, d * 0.026), e.beginPath(), p ? (e.moveTo(c.cx + Te * d * 0.16, f), e.lineTo(c.cx + Te * d * 0.16, T)) : (e.moveTo(m, c.cy + Te * d * 0.16), e.lineTo(C, c.cy + Te * d * 0.16)), e.stroke();
-      const Te = p ? g : P, qe = Math.max(5, Math.min(14, Math.round((o.cleared || 3) / 1.5 + u)));
-      for (let gt = 0; gt < qe; gt += 1) {
-        const ha = (gt + 0.5) / qe, fa = (ha * Te + s * d * 1.2) % Te, va = p ? c.cx + Math.sin(gt * 1.7) * d * 0.1 : t.paddingLeft + fa, ba = p ? t.paddingTop + fa : c.cy + Math.cos(gt * 1.5) * d * 0.1;
+      const Te = p ? g : P, vn = Math.max(7, Math.min(18, Math.round((o.cleared || 3) / 1.25 + u)));
+      for (let Bt = 0; Bt < vn; Bt += 1) {
+        const Ma = (Bt + 0.5) / vn, fa = (Ma * Te + s * d * 1.2) % Te, va = p ? c.cx + Math.sin(Bt * 1.7) * d * 0.1 : t.paddingLeft + fa, ba = p ? t.paddingTop + fa : c.cy + Math.cos(Bt * 1.5) * d * 0.1;
         e.fillStyle = "rgba(255, 246, 176, .86)", e.beginPath(), e.arc(va, ba, d * (0.04 + l * 0.035 + u * 0.004), 0, Math.PI * 2), e.fill();
       }
     } else {
@@ -2973,6 +2978,19 @@ function drawCanvasSpecialFx(e, t) {
     e.restore();
   }
 }
+function drawCanvasSpecialBirths(e, t) {
+  const r = Date.now();
+  a.canvasSpecialBirths = (a.canvasSpecialBirths || []).filter((o) => r - o.at < o.durationMs);
+  for (const o of a.canvasSpecialBirths) {
+    const s = Math.min(1, Math.max(0, (r - o.at) / o.durationMs)), l = 1 - s, c = canvasCellRect(t, o.position.row, o.position.col), d = Math.min(c.w, c.h), u = Number(o.tile || 0), h = na(u), p = o.kind === "bomb", f = 0.76 + Math.sin(Math.min(1, s * 1.2) * Math.PI) * 0.34;
+    e.save(), e.globalCompositeOperation = "lighter", e.globalAlpha = Math.max(0, l);
+    const m = e.createRadialGradient(c.cx, c.cy, d * 0.08, c.cx, c.cy, d * (0.7 + s * 0.6));
+    m.addColorStop(0, "rgba(255, 255, 255, .96)"), m.addColorStop(0.3, p ? "rgba(255, 214, 90, .72)" : "rgba(119, 235, 255, .62)"), m.addColorStop(0.7, p ? "rgba(255, 91, 97, .24)" : "rgba(255, 239, 125, .22)"), m.addColorStop(1, "rgba(255, 255, 255, 0)"), e.fillStyle = m, e.beginPath(), e.arc(c.cx, c.cy, d * (0.62 + s * 0.58), 0, Math.PI * 2), e.fill();
+    e.strokeStyle = p ? `rgba(255, 235, 144, ${0.88 * l})` : `rgba(124, 237, 255, ${0.78 * l})`, e.lineWidth = Math.max(2, d * 0.055 * l), e.beginPath(), e.arc(c.cx, c.cy, d * (0.34 + s * 0.46), 0, Math.PI * 2), e.stroke();
+    e.globalAlpha = Math.max(0, l * 0.95), e.translate(c.cx, c.cy), e.scale(f, f), e.translate(-c.cx, -c.cy), drawCanvasTileBody(e, h, u, c, Math.max(8, d * 0.2), true, { glow: l, tone: "success" }), drawCanvasSpecial(e, u, h, c);
+    e.restore();
+  }
+}
 function drawCanvasTileBursts(e, t) {
   const r = Date.now();
   a.canvasTileBursts = (a.canvasTileBursts || []).filter((o) => r - o.at < o.durationMs);
@@ -2980,8 +2998,9 @@ function drawCanvasTileBursts(e, t) {
     const l = Math.min(1, Math.max(0, (r - o.at) / o.durationMs)), c = 1 - l, d = canvasCellRect(t, s.row, s.col), u = Math.min(d.w, d.h), h = Math.max(0, Math.min(6, Number(o.power || 0))), p = o.strong ? 10 + Math.round(h * 1.5) : 6 + Math.round(h), f = o.tone === "attack", m = o.tone === "mega";
     e.save(), e.globalAlpha = Math.max(0, c), e.globalCompositeOperation = "lighter", e.strokeStyle = f ? "rgba(255, 109, 126, .96)" : m ? "rgba(126, 236, 255, .96)" : "rgba(255, 235, 144, .96)", e.lineWidth = Math.max(1.4, u * (0.045 + h * 0.005)), e.beginPath(), e.arc(d.cx, d.cy, u * (0.16 + l * (0.58 + h * 0.045)), 0, Math.PI * 2), e.stroke(), e.fillStyle = f ? "rgba(255, 92, 112, .22)" : m ? "rgba(126, 236, 255, .2)" : "rgba(255, 229, 108, .18)", e.beginPath(), e.arc(d.cx, d.cy, u * (0.08 + l * (0.26 + h * 0.025)), 0, Math.PI * 2), e.fill();
     for (let g = 0; g < p; g += 1) {
-      const P = Math.PI * 2 * g / p + (o.seed || 0), C = u * (0.14 + l * (o.strong ? 0.62 + h * 0.045 : 0.48 + h * 0.03)), T = d.cx + Math.cos(P) * C, U = d.cy + Math.sin(P) * C, Te = u * (0.08 + l * (0.12 + h * 0.012));
-      e.beginPath(), e.moveTo(T, U), e.lineTo(T + Math.cos(P) * Te, U + Math.sin(P) * Te), e.stroke();
+      const P = Math.PI * 2 * g / p + (o.seed || 0), C = u * (0.14 + l * (o.strong ? 0.7 + h * 0.055 : 0.52 + h * 0.035)), T = d.cx + Math.cos(P) * C, U = d.cy + Math.sin(P) * C, Te = u * (0.08 + l * (0.15 + h * 0.016));
+      e.strokeStyle = g % 3 === 0 ? "rgba(255, 255, 255, .82)" : f ? "rgba(255, 128, 118, .72)" : m ? "rgba(127, 238, 255, .78)" : "rgba(255, 230, 112, .76)", e.lineWidth = Math.max(1, u * (0.018 + h * 0.003) * c), e.beginPath(), e.moveTo(T, U), e.lineTo(T + Math.cos(P) * Te, U + Math.sin(P) * Te), e.stroke();
+      if (o.strong && g % 2 === 0) e.fillStyle = g % 4 === 0 ? "rgba(255, 255, 255, .76)" : "rgba(255, 219, 89, .7)", e.beginPath(), e.arc(T + Math.cos(P) * Te * 0.75, U + Math.sin(P) * Te * 0.75, u * (0.025 + h * 0.003) * c, 0, Math.PI * 2), e.fill();
     }
     e.restore();
   }
@@ -3015,7 +3034,7 @@ function renderCanvasBoard(e, t) {
       drawCanvasSpecial(u, C, T, U), u.restore();
     }
   }
-  drawCanvasSpecialFx(u, s), drawCanvasTileBursts(u, s), canvasHasActiveFx(p) && scheduleCanvasFxFrame();
+  drawCanvasSpecialFx(u, s), drawCanvasTileBursts(u, s), drawCanvasSpecialBirths(u, s), canvasHasActiveFx(p) && scheduleCanvasFxFrame();
   return true;
 }
 function Je(e) {
@@ -3222,6 +3241,25 @@ function $i(e = false) {
   if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return false;
   return e ? a.effectiveVisualEffectMode !== "low" : !(a.effectiveVisualEffectMode === "low" || document.documentElement.classList.contains("low-performance"));
 }
+function collectCanvasSpecialBirths(e) {
+  const t = [];
+  const r = /* @__PURE__ */ new Set();
+  const o = (s) => {
+    const l = s?.position || s;
+    if (!l || l.row < 0 || l.row >= $e || l.col < 0 || l.col >= Pe) return;
+    const c = Number(s?.tile ?? e.board?.[l.row]?.[l.col] ?? 0);
+    if (!clientIsSpecialTile(c)) return;
+    const d = `${l.row}:${l.col}`;
+    r.has(d) || (r.add(d), t.push({ kind: s?.kind || clientSpecialKind(c), position: { row: l.row, col: l.col }, tile: c }));
+  };
+  (Array.isArray(e.specialBirths) ? e.specialBirths : []).forEach(o);
+  if (!t.length && e.specialCreated && Array.isArray(e.board)) {
+    a.lastSwapPositions.forEach((s) => {
+      o(s), o({ row: s.row - 1, col: s.col }), o({ row: s.row + 1, col: s.col }), o({ row: s.row, col: s.col - 1 }), o({ row: s.row, col: s.col + 1 });
+    });
+  }
+  return t.slice(0, 2);
+}
 function Pi(e) {
   const t = [], r = (s) => {
     s && (s.row < 0 || s.row >= $e || s.col < 0 || s.col >= Pe || t.some((l) => l.row === s.row && l.col === s.col) || t.push(s));
@@ -3249,9 +3287,18 @@ function triggerCanvasSpecialFx(e) {
     a.canvasSpecialFx = (a.canvasSpecialFx || []).filter((u) => Date.now() - u.at < u.durationMs), renderCurrentCanvasBoard();
   }, l + 40);
 }
+function triggerCanvasSpecialBirths(e) {
+  if (!$i(true)) return;
+  const t = collectCanvasSpecialBirths(e);
+  if (!t.length) return;
+  const r = document.documentElement.classList.contains("low-performance"), o = battleFeedbackPower(e), s = r ? 480 : a.effectiveVisualEffectMode === "high" ? 780 + o * 20 : 620 + o * 16, l = Date.now(), c = r ? 1 : a.effectiveVisualEffectMode === "high" ? 2 : 1;
+  a.canvasSpecialBirths = [...(a.canvasSpecialBirths || []), ...t.slice(0, c).map((d) => ({ kind: d.kind, position: d.position, tile: d.tile, at: l, durationMs: s, power: r ? Math.min(2, o) : o, seed: Math.random() * Math.PI * 2 }))].slice(r ? -2 : -4), renderCurrentCanvasBoard(), scheduleCanvasFxFrame(), window.setTimeout(() => {
+    a.canvasSpecialBirths = (a.canvasSpecialBirths || []).filter((d) => Date.now() - d.at < d.durationMs), renderCurrentCanvasBoard();
+  }, s + 40);
+}
 function Ci(e) {
   if (!$i(true)) return;
-  triggerCanvasSpecialFx(e);
+  triggerCanvasSpecialFx(e), triggerCanvasSpecialBirths(e);
   const t = Pi(e);
   if (!t.length) return;
   const r = document.documentElement.classList.contains("low-performance"), o = battleFeedbackPower(e), s = battleIsMegaFeedback(e), l = (a.effectiveVisualEffectMode === "high" || s) && !r && (Number(e.cleared || 0) >= 4 || Number(e.chain || 1) > 1 || e.specialTriggered || e.specialCreated), c = r ? 360 : l ? animationMsAtLeast("tileBurstHighSeconds", 760 + o * 22, 80) : animationMsAtLeast("tileBurstSeconds", 560, 80), d = r ? Math.min(2, o) : o;
@@ -3441,8 +3488,8 @@ function Fi(e, t, r) {
   return `<div class="rank-change-note ${l ? "up" : "down"}">${c}</div>`;
 }
 function _i(e) {
-  const t = a.tileEffect ? `${a.tileEffect.type}:${a.tileEffect.at}` : "", r = x ? `${x.position.row}:${x.position.col}:${x.direction}:${x.at}` : "", o = k ? `${k.from.row}:${k.from.col}:${k.to.row}:${k.to.col}:${k.direction}:${k.at}` : "", s = a.localSwapFx ? `${a.localSwapFx.from.row}:${a.localSwapFx.from.col}:${a.localSwapFx.to.row}:${a.localSwapFx.to.col}:${a.localSwapFx.at}` : "", l = (a.canvasSpecialFx || []).map((c) => `${c.kind}:${c.position?.row}:${c.position?.col}:${c.at}`).join(",");
-  return `${(e.board || []).map((c) => c.join("")).join("|")}:${a.selectedTile?.row ?? "-"}:${a.selectedTile?.col ?? "-"}:${t}:${r}:${o}:${s}:${l}`;
+  const t = a.tileEffect ? `${a.tileEffect.type}:${a.tileEffect.at}` : "", r = x ? `${x.position.row}:${x.position.col}:${x.direction}:${x.at}` : "", o = k ? `${k.from.row}:${k.from.col}:${k.to.row}:${k.to.col}:${k.direction}:${k.at}` : "", s = a.localSwapFx ? `${a.localSwapFx.from.row}:${a.localSwapFx.from.col}:${a.localSwapFx.to.row}:${a.localSwapFx.to.col}:${a.localSwapFx.at}` : "", l = (a.canvasSpecialFx || []).map((c) => `${c.kind}:${c.position?.row}:${c.position?.col}:${c.at}`).join(","), d = (a.canvasSpecialBirths || []).map((c) => `${c.kind}:${c.position?.row}:${c.position?.col}:${c.at}`).join(",");
+  return `${(e.board || []).map((c) => c.join("")).join("|")}:${a.selectedTile?.row ?? "-"}:${a.selectedTile?.col ?? "-"}:${t}:${r}:${o}:${s}:${l}:${d}`;
 }
 function jt(e) {
   return (e.board || []).map((t) => t.join("")).join("|");
