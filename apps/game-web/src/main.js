@@ -1781,26 +1781,32 @@ function Ot() {
   R.insertAdjacentHTML("beforeend", `
       <div class="mode-sheet-mask" id="leaderboard-sheet-mask">
         <section class="mode-sheet leaderboard-sheet">
-          <p class="eyebrow">${i(n("weeklyReward"))} \xB7 ${i(e?.seasonNo || "")}</p>
-          <h2>${i(n("weeklyTitle"))}</h2>
-          <p class="summary">${i(n("weeklySummary", { modes: o }))}</p>
-          <section class="leaderboard-my-rank">
-            ${r ? `<div><span>${i(n("myWeeklyRank"))}</span><strong>#${r.rankNo}</strong></div>
-                   <div><span>${i(n("weeklyRecord"))}</span><strong>${i(n("rankMeta", { stars: r.weeklyStarGain || 0, wins: r.weeklyWinCount || 0 }))}</strong></div>
-                   <div><span>${i(n("expectedReward"))}</span><strong>${b(r.rewardAmount || 0)}</strong></div>` : `<div><span>${i(n("myWeeklyRank"))}</span><strong>${i(n("notRanked"))}</strong></div>
-                   <div><span>${i(n("weeklyRecord"))}</span><strong>${i(n("rankMeta", { stars: 0, wins: 0 }))}</strong></div>
-                   <div><span>${i(n("rankHow"))}</span><strong>${i(n("winPaidMatch"))}</strong></div>`}
-          </section>
-          ${Or(e?.rewardTiers || [])}
-          <div class="leaderboard-list">
-            ${t.length ? t.map(Ur).join("") : `<article class="leaderboard-empty">${i(n("emptyLeaderboard"))}</article>`}
+          <div class="leaderboard-sheet-head">
+            <p class="eyebrow">${i(n("weeklyReward"))} \xB7 ${i(e?.seasonNo || "")}</p>
+            <h2>${i(n("weeklyTitle"))}</h2>
+            <p class="summary">${i(n("weeklySummary", { modes: o }))}</p>
           </div>
-          <div class="leaderboard-pager">
-            <button type="button" class="secondary" id="leaderboard-prev" ${!e || e.page <= 1 ? "disabled" : ""}>${i(n("prevPage"))}</button>
-            <span>${i(n("leaderboardPager", { page: e?.page || 1, totalPages: e?.totalPages || 1, total: e?.total || 0 }))}</span>
-            <button type="button" class="secondary" id="leaderboard-next" ${!e || e.page >= e.totalPages ? "disabled" : ""}>${i(n("nextPage"))}</button>
+          <div class="leaderboard-scroll-body">
+            <section class="leaderboard-my-rank">
+              ${r ? `<div><span>${i(n("myWeeklyRank"))}</span><strong>#${r.rankNo}</strong></div>
+                     <div><span>${i(n("weeklyRecord"))}</span><strong>${i(n("rankMeta", { stars: r.weeklyStarGain || 0, wins: r.weeklyWinCount || 0 }))}</strong></div>
+                     <div><span>${i(n("expectedReward"))}</span><strong>${b(r.rewardAmount || 0)}</strong></div>` : `<div><span>${i(n("myWeeklyRank"))}</span><strong>${i(n("notRanked"))}</strong></div>
+                     <div><span>${i(n("weeklyRecord"))}</span><strong>${i(n("rankMeta", { stars: 0, wins: 0 }))}</strong></div>
+                     <div><span>${i(n("rankHow"))}</span><strong>${i(n("winPaidMatch"))}</strong></div>`}
+            </section>
+            ${Or(e?.rewardTiers || [])}
+            <div class="leaderboard-list">
+              ${t.length ? t.map(Ur).join("") : `<article class="leaderboard-empty">${i(n("emptyLeaderboard"))}</article>`}
+            </div>
+            <div class="leaderboard-pager">
+              <button type="button" class="secondary" id="leaderboard-prev" ${!e || e.page <= 1 ? "disabled" : ""}>${i(n("prevPage"))}</button>
+              <span>${i(n("leaderboardPager", { page: e?.page || 1, totalPages: e?.totalPages || 1, total: e?.total || 0 }))}</span>
+              <button type="button" class="secondary" id="leaderboard-next" ${!e || e.page >= e.totalPages ? "disabled" : ""}>${i(n("nextPage"))}</button>
+            </div>
           </div>
-          <button type="button" class="secondary" id="close-leaderboard-sheet" data-close-leaderboard="1">${i(n("gotIt"))}</button>
+          <div class="leaderboard-sheet-actions">
+            <button type="button" class="secondary" id="close-leaderboard-sheet" data-close-leaderboard="1">${i(n("gotIt"))}</button>
+          </div>
         </section>
       </div>
     `), document.querySelector("#leaderboard-sheet-mask")?.addEventListener("click", (s) => {

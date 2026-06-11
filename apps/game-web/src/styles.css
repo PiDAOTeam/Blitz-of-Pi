@@ -2404,18 +2404,6 @@ button:disabled {
 .daily-reward-footer button {
   min-width: 92px;
 }
-.leaderboard-sheet > #close-leaderboard-sheet {
-  position: sticky;
-  bottom: 0;
-  z-index: 2;
-  width: min(220px, 100%);
-  margin-top: 14px;
-  background:
-    linear-gradient(
-      180deg,
-      #9748fff5,
-      #5d12bbfa);
-}
 .language-sheet {
   max-height: min(82dvh, 650px);
 }
@@ -2481,13 +2469,58 @@ button:disabled {
   max-height: min(82vh, 720px);
   overflow-y: auto;
 }
+#leaderboard-sheet-mask {
+  overflow: hidden;
+  touch-action: none;
+}
 .leaderboard-sheet {
-  max-height: min(92dvh, 700px);
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 430px);
+  max-height: min(88vh, 700px);
+  overflow: hidden;
   scrollbar-width: none;
+}
+@supports (height: 100dvh) {
+  .leaderboard-sheet {
+    max-height: min(88dvh, 700px);
+  }
 }
 .leaderboard-sheet::-webkit-scrollbar {
   width: 0;
+}
+.leaderboard-sheet-head {
+  flex: 0 0 auto;
+}
+.leaderboard-scroll-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0 -2px;
+  padding: 0 2px 2px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  scrollbar-width: none;
+}
+.leaderboard-scroll-body::-webkit-scrollbar {
+  width: 0;
+}
+.leaderboard-sheet-actions {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  padding-top: 12px;
+  padding-bottom: max(0px, env(safe-area-inset-bottom));
+}
+.leaderboard-sheet-actions #close-leaderboard-sheet {
+  width: min(220px, 100%);
+  background:
+    linear-gradient(
+      180deg,
+      #9748fff5,
+      #5d12bbfa);
 }
 .leaderboard-list {
   display: grid;
