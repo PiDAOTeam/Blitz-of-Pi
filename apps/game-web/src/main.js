@@ -1812,11 +1812,44 @@ function Ot() {
     `), document.querySelector("#leaderboard-sheet-mask")?.addEventListener("click", (s) => {
     const l = s.target;
     (s.target === s.currentTarget || l?.closest("[data-close-leaderboard]")) && document.querySelectorAll("#leaderboard-sheet-mask").forEach((c) => c.remove());
-  }), document.querySelector("#leaderboard-prev")?.addEventListener("click", async () => {
-    document.querySelector("#leaderboard-sheet-mask")?.remove(), await Kt((a.rankLeaderboard?.page || 1) - 1), Ot();
-  }), document.querySelector("#leaderboard-next")?.addEventListener("click", async () => {
-    document.querySelector("#leaderboard-sheet-mask")?.remove(), await Kt((a.rankLeaderboard?.page || 1) + 1), Ot();
+  }), bindLeaderboardPager();
+}
+function bindLeaderboardPager() {
+  document.querySelector("#leaderboard-prev")?.addEventListener("click", () => updateLeaderboardPage((a.rankLeaderboard?.page || 1) - 1));
+  document.querySelector("#leaderboard-next")?.addEventListener("click", () => updateLeaderboardPage((a.rankLeaderboard?.page || 1) + 1));
+}
+function renderLeaderboardPageBody() {
+  const e = a.rankLeaderboard, t = e?.items || [], r = e?.myRank;
+  return `
+    <section class="leaderboard-my-rank">
+      ${r ? `<div><span>${i(n("myWeeklyRank"))}</span><strong>#${r.rankNo}</strong></div>
+             <div><span>${i(n("weeklyRecord"))}</span><strong>${i(n("rankMeta", { stars: r.weeklyStarGain || 0, wins: r.weeklyWinCount || 0 }))}</strong></div>
+             <div><span>${i(n("expectedReward"))}</span><strong>${b(r.rewardAmount || 0)}</strong></div>` : `<div><span>${i(n("myWeeklyRank"))}</span><strong>${i(n("notRanked"))}</strong></div>
+             <div><span>${i(n("weeklyRecord"))}</span><strong>${i(n("rankMeta", { stars: 0, wins: 0 }))}</strong></div>
+             <div><span>${i(n("rankHow"))}</span><strong>${i(n("winPaidMatch"))}</strong></div>`}
+    </section>
+    ${Or(e?.rewardTiers || [])}
+    <div class="leaderboard-list">
+      ${t.length ? t.map(Ur).join("") : `<article class="leaderboard-empty">${i(n("emptyLeaderboard"))}</article>`}
+    </div>
+    <div class="leaderboard-pager">
+      <button type="button" class="secondary" id="leaderboard-prev" ${!e || e.page <= 1 ? "disabled" : ""}>${i(n("prevPage"))}</button>
+      <span>${i(n("leaderboardPager", { page: e?.page || 1, totalPages: e?.totalPages || 1, total: e?.total || 0 }))}</span>
+      <button type="button" class="secondary" id="leaderboard-next" ${!e || e.page >= e.totalPages ? "disabled" : ""}>${i(n("nextPage"))}</button>
+    </div>
+  `;
+}
+async function updateLeaderboardPage(e) {
+  const t = document.querySelector(".leaderboard-scroll-body"), r = document.querySelector(".leaderboard-pager");
+  if (!t || r?.classList.contains("loading")) return;
+  r?.classList.add("loading"), r?.querySelectorAll("button").forEach((o) => {
+    o.disabled = true;
   });
+  try {
+    await Kt(e), t.innerHTML = renderLeaderboardPageBody(), t.scrollTop = 0, bindLeaderboardPager();
+  } finally {
+    document.querySelector(".leaderboard-pager")?.classList.remove("loading");
+  }
 }
 function Or(e) {
   const t = e.slice(0, 5);
