@@ -259,14 +259,27 @@ function lt(e) {
   return true;
 }
 let Nt = "", j = null, V = null, Be = null, ee = null, y = null, x = null, k = null, Ne = null, Yt = 0, Et = 0, Lt = "", xt = 0, Ee = "", te = 0, pe = -1, Xe = "", le = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0;
+let cleanupBoardInputListeners = null;
 const Sa = /* @__PURE__ */ new Map();
 let z = null, W = null, At = 0, q = null;
 const $n = 8e3, Pn = 3, Cn = 9e3, Ha = 1200, Tn = 1800, Ie = 8, Rn = 5e3, Mn = 6, Xt = 8e3, fe = 3, Bn = 16, Nn = 8, $a = 30, $e = 8, Pe = 6, Pa = 0.18, En = 1200;
 function we() {
   Be && (window.clearInterval(Be), Be = null), Ee = "", te = 0, pe = -1;
 }
+function cleanupBoardInputs() {
+  try {
+    cleanupBoardInputListeners?.();
+  } catch {
+  }
+  cleanupBoardInputListeners = null;
+  try {
+    Ne?.abort?.();
+  } catch {
+  }
+  Ne = null;
+}
 function ce() {
-  be && (window.cancelAnimationFrame(be), be = null), ee && (window.clearTimeout(ee), ee = null), le && (window.cancelAnimationFrame(le), le = null), j && (window.cancelAnimationFrame(j), j = null), V && (window.cancelAnimationFrame(V), V = null), z = null, W = null, At = 0, q = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0, document.documentElement.classList.remove("low-performance"), we(), Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, Se = null, me.clear(), Nt = "", y = null, Et = 0, Lt = "", xt = 0, a.pendingSwapSeq = 0, a.pendingSwapPositions = [], Ne?.abort(), Ne = null, x = null, k = null, Yt = 0, a.battleBursts = [], a.battleImpacts = [], a.localBattleEvents = [], a.localSwapFx = null;
+  be && (window.cancelAnimationFrame(be), be = null), ee && (window.clearTimeout(ee), ee = null), le && (window.cancelAnimationFrame(le), le = null), j && (window.cancelAnimationFrame(j), j = null), V && (window.cancelAnimationFrame(V), V = null), z = null, W = null, At = 0, q = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0, document.documentElement.classList.remove("low-performance"), we(), Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, Se = null, me.clear(), Nt = "", y = null, Et = 0, Lt = "", xt = 0, a.pendingSwapSeq = 0, a.pendingSwapPositions = [], cleanupBoardInputs(), x = null, k = null, Yt = 0, a.battleBursts = [], a.battleImpacts = [], a.localBattleEvents = [], a.localSwapFx = null;
 }
 function ge() {
   ze && (window.clearTimeout(ze), ze = null);
@@ -3223,44 +3236,59 @@ function Oi(e, t) {
 function Ui() {
   const e = oe();
   if (!e) return;
-  Ne?.abort(), Ne = new AbortController();
-  const t = { passive: false, capture: true, signal: Ne.signal };
-  e.addEventListener("dragstart", (c) => {
+  cleanupBoardInputs();
+  const t = { passive: false, capture: true };
+  const r = [];
+  const o = (m, g, P, C = t) => {
+    if (!m) return;
+    try {
+      m.addEventListener(g, P, C), r.push([m, g, P, C]);
+    } catch {
+      m.addEventListener(g, P, true), r.push([m, g, P, true]);
+    }
+  };
+  typeof AbortController == "function" && (Ne = new AbortController());
+  cleanupBoardInputListeners = () => {
+    r.forEach(([m, g, P, C]) => m?.removeEventListener(g, P, C));
+    r.length = 0;
+  };
+  o(e, "dragstart", (c) => {
     c.preventDefault();
-  }, t), e.addEventListener("click", (c) => {
+  }, t), o(e, "click", (c) => {
     if (Date.now() - Yt < 260) return;
     const u = c.target?.closest(".tile"), h = Ye(c.clientX, c.clientY) || (u ? en(u.dataset.row, u.dataset.col) : null);
     h && Ji(h);
   }, t);
-  const r = (c) => {
+  const s = (c) => {
     !y || !_a(c.pointerId) || Oe(c.clientX, c.clientY) && c.preventDefault();
-  }, o = (c) => {
-    !y || !_a(c.pointerId) || (Oe(c.clientX, c.clientY), Ue(), Oi(e, c.pointerId));
-  }, s = (c) => {
-    if (!y) return;
-    const d = Di(c);
-    !d || !qi(d.identifier) || Oe(d.clientX, d.clientY) && c.preventDefault();
   }, l = (c) => {
+    !y || !_a(c.pointerId) || (Oe(c.clientX, c.clientY), Ue(), Oi(e, c.pointerId));
+  }, d = (c) => {
     if (!y) return;
-    const d = y.touchId !== null ? Vt(c.changedTouches, y.touchId) : c.changedTouches.item(0);
-    d && Oe(d.clientX, d.clientY), Ue();
+    const u = Di(c);
+    !u || !qi(u.identifier) || Oe(u.clientX, u.clientY) && c.preventDefault();
+  }, u = (c) => {
+    if (!y) return;
+    const h = y.touchId !== null ? Vt(c.changedTouches, y.touchId) : c.changedTouches.item(0);
+    h && Oe(h.clientX, h.clientY), Ue();
   };
-  e.addEventListener("pointerdown", (c) => {
+  o(e, "pointerdown", (c) => {
     if (!c.isPrimary) return;
-    const d = Ye(c.clientX, c.clientY);
-    d && (c.preventDefault(), Et = Date.now() + 420, Fa(d, c.clientX, c.clientY, "pointer", c.pointerId), Wi(e, c.pointerId));
-  }, t), e.addEventListener("touchstart", (c) => {
+    if (c.pointerType === "touch" && ("ontouchstart" in window || navigator.maxTouchPoints > 0)) return;
+    const h = Ye(c.clientX, c.clientY);
+    h && (c.preventDefault(), Fa(h, c.clientX, c.clientY, "pointer", c.pointerId), Wi(e, c.pointerId));
+  }, t), o(e, "touchstart", (c) => {
     if (Date.now() < Et) {
       c.preventDefault();
       return;
     }
-    const d = c.changedTouches.item(0);
-    if (!d) return;
-    const u = Ye(d.clientX, d.clientY);
-    u && (c.preventDefault(), Fa(u, d.clientX, d.clientY, "touch", d.identifier));
-  }, t), document.addEventListener("pointermove", r, t), document.addEventListener("pointerup", o, t), document.addEventListener("pointercancel", () => Ue(), t), document.addEventListener("touchmove", s, t), document.addEventListener("touchend", l, t), document.addEventListener("touchcancel", () => Ue(), t), document.querySelector("#battle-overlay")?.addEventListener("click", async (c) => {
-    const d = c.target;
-    if (d?.closest("#battle-ready-confirm")) {
+    const h = c.changedTouches.item(0);
+    if (!h) return;
+    const p = Ye(h.clientX, h.clientY);
+    p && (c.preventDefault(), Fa(p, h.clientX, h.clientY, "touch", h.identifier));
+  }, t), o(document, "pointermove", s, t), o(document, "pointerup", l, t), o(document, "pointercancel", () => Ue(), t), o(document, "touchmove", d, t), o(document, "touchend", u, t), o(document, "touchcancel", () => Ue(), t), o(document.querySelector("#battle-overlay"), "click", async (c) => {
+    const h = c.target;
+    if (h?.closest("#battle-ready-confirm")) {
       if (!M || M.readyState !== WebSocket.OPEN) {
         a.battleMessage = n("socketNotReady"), $();
         return;
@@ -3268,15 +3296,15 @@ function Ui() {
       M.send(JSON.stringify({ type: "player_ready" })), a.battleMessage = n("readyWaitingOpponent"), $();
       return;
     }
-    if (d?.closest("#battle-back-home")) {
+    if (h?.closest("#battle-back-home")) {
       Q(), O(), ce(), a.screen = "home", a.roomNo = "", a.roomJoinToken = "", a.room = null, a.realtimeRoom = null, a.result = null, a.selectedTile = null, a.battleConnectingAt = 0, a.battleEnteredAt = 0, a.feedback = null, a.feedbackEventId = "", a.battleMessage = "", await D(), _();
       return;
     }
-    if (d?.closest("#battle-restart")) {
+    if (h?.closest("#battle-restart")) {
       await zi();
       return;
     }
-    d?.closest("#battle-paid-next") && (Q(), O(), ce(), a.screen = "home", a.roomNo = "", a.roomJoinToken = "", a.room = null, a.realtimeRoom = null, a.result = null, a.selectedTile = null, a.battleConnectingAt = 0, a.battleEnteredAt = 0, a.feedback = null, a.feedbackEventId = "", a.battleMessage = "", await D(), _(), ma("points_battle"));
+    h?.closest("#battle-paid-next") && (Q(), O(), ce(), a.screen = "home", a.roomNo = "", a.roomJoinToken = "", a.room = null, a.realtimeRoom = null, a.result = null, a.selectedTile = null, a.battleConnectingAt = 0, a.battleEnteredAt = 0, a.feedback = null, a.feedbackEventId = "", a.battleMessage = "", await D(), _(), ma("points_battle"));
   });
 }
 function Hi() {
