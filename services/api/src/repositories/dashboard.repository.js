@@ -205,7 +205,12 @@ async function readDashboard() {
     query("SELECT COUNT(*) AS count FROM battle_rooms WHERE status = 'finished' AND DATE(finished_at) = CURDATE()"),
     query("SELECT COUNT(*) AS count FROM withdraw_orders WHERE DATE(created_at) = CURDATE()"),
     query("SELECT COUNT(*) AS count FROM withdraw_orders WHERE status IN ('pending', 'approved')"),
-    query("SELECT COUNT(*) AS count FROM battle_rooms WHERE status = 'playing'"),
+    query(
+      `SELECT COUNT(*) AS count
+       FROM battle_rooms
+       WHERE status = 'playing'
+         AND created_at >= DATE_SUB(NOW(), INTERVAL 30 MINUTE)`
+    ),
     query(
       `SELECT
          COALESCE(NULLIF(asset_type, ''), 'PI') AS asset_type,

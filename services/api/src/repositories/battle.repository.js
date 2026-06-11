@@ -220,14 +220,19 @@ async function listUserAssetBattleLedgerRows(uid, limit = 60) {
 
 async function expireStaleFreeBotRooms(minutes = 5) {
   const safeMinutes = Math.min(60, Math.max(2, Number.parseInt(String(minutes), 10) || 5));
+  await ensureBattleAssetColumns();
 
   const result = await query(
     `UPDATE battle_rooms
      SET status = 'expired',
-         finished_at = COALESCE(finished_at, NOW())
+         finished_at = COALESCE(finished_at, NOW()),
+         asset_error = CASE
+           WHEN COALESCE(asset_error, '') = '' THEN 'free stale room auto expired'
+           ELSE asset_error
+         END
      WHERE status = 'playing'
        AND entry_fee = 0
-       AND is_bot_room = 1
+       AND COALESCE(asset_type, 'FREE') = 'FREE'
        AND created_at < DATE_SUB(NOW(), INTERVAL ${safeMinutes} MINUTE)`
   );
 

@@ -1,9 +1,15 @@
 const { expireStaleFreeBotRooms } = require("./match.service");
 
 const CHECK_INTERVAL_MS = Math.max(30_000, Number(process.env.ROOM_MAINTENANCE_INTERVAL_MS || 60_000));
-const STALE_FREE_BOT_ROOM_MINUTES = Math.min(
+const STALE_FREE_ROOM_MINUTES = Math.min(
   60,
-  Math.max(2, Number.parseInt(String(process.env.STALE_FREE_BOT_ROOM_MINUTES || 5), 10) || 5)
+  Math.max(
+    2,
+    Number.parseInt(
+      String(process.env.STALE_FREE_ROOM_MINUTES || process.env.STALE_FREE_BOT_ROOM_MINUTES || 5),
+      10
+    ) || 5
+  )
 );
 
 let schedulerStarted = false;
@@ -14,14 +20,14 @@ async function runRoomMaintenance() {
 
   schedulerRunning = true;
   try {
-    const expiredFreeBotRooms = await expireStaleFreeBotRooms(STALE_FREE_BOT_ROOM_MINUTES);
+    const expiredFreeRooms = await expireStaleFreeBotRooms(STALE_FREE_ROOM_MINUTES);
 
-    if (expiredFreeBotRooms > 0) {
-      console.log(`[room-maintenance] expired stale free bot rooms: ${expiredFreeBotRooms}`);
+    if (expiredFreeRooms > 0) {
+      console.log(`[room-maintenance] expired stale free rooms: ${expiredFreeRooms}`);
     }
 
     return {
-      expiredFreeBotRooms
+      expiredFreeRooms
     };
   } catch (error) {
     console.error("[room-maintenance] failed:", error.message);
@@ -48,7 +54,7 @@ function startRoomMaintenanceScheduler() {
   }, CHECK_INTERVAL_MS).unref?.();
 
   console.log(
-    `[room-maintenance] scheduler started interval=${CHECK_INTERVAL_MS}ms staleFreeBotMinutes=${STALE_FREE_BOT_ROOM_MINUTES}`
+    `[room-maintenance] scheduler started interval=${CHECK_INTERVAL_MS}ms staleFreeRoomMinutes=${STALE_FREE_ROOM_MINUTES}`
   );
 }
 

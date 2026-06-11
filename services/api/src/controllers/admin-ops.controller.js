@@ -1,5 +1,6 @@
 const {
   listUsers,
+  getUserSummary,
   listWallets,
   listRecentLedgers,
   updateUserByAdmin,
@@ -45,9 +46,14 @@ function toAdminUserDto(row) {
 }
 
 async function getAdminUsers() {
-  const rows = await listUsers(200);
+  const limit = 200;
+  const [rows, summary] = await Promise.all([listUsers(limit), getUserSummary()]);
 
-  return rows.map(toAdminUserDto);
+  return {
+    items: rows.map(toAdminUserDto),
+    summary,
+    limit
+  };
 }
 
 async function getAdminWallets() {
@@ -239,11 +245,12 @@ async function handleAdminBattleRoom(req, roomNo, payload = {}) {
   }
 
   const entryFee = Number(battle.entry_fee || 0);
+  const assetType = String(battle.asset_type || "FREE").toUpperCase();
   const isBotRoom = Number(battle.is_bot_room || 0) === 1;
 
   if (action === "expire_free_bot") {
-    if (!(entryFee === 0 && isBotRoom)) {
-      throw new Error("只能作废免费机器人异常局，付费局请转人工复核");
+    if (!(entryFee === 0 && assetType === "FREE")) {
+      throw new Error("只能作废免费异常局，付费或资产局请转人工复核");
     }
     if (battle.status === "finished") {
       throw new Error("已正常结束的对局不能作废");
@@ -257,7 +264,9 @@ async function handleAdminBattleRoom(req, roomNo, payload = {}) {
       targetId: roomNo,
       detail: {
         beforeStatus: battle.status,
-        remark: remark || "后台作废免费机器人异常局"
+        assetType,
+        isBotRoom,
+        remark: remark || "后台作废免费异常局"
       },
       ip: req.socket?.remoteAddress || ""
     });
@@ -282,6 +291,7 @@ async function handleAdminBattleRoom(req, roomNo, payload = {}) {
       detail: {
         beforeStatus: battle.status,
         entryFee,
+        assetType,
         isBotRoom,
         remark: remark || "后台标记对局需人工复核"
       },

@@ -23,6 +23,30 @@ async function listUsers(limit = 80) {
   );
 }
 
+async function getUserSummary() {
+  const rows = await query(
+    `SELECT
+       COUNT(*) AS total,
+       SUM(CASE WHEN COALESCE(u.status, 1) = 1 THEN 1 ELSE 0 END) AS normal,
+       SUM(CASE WHEN COALESCE(u.status, 1) <> 1 THEN 1 ELSE 0 END) AS banned,
+       SUM(CASE WHEN COALESCE(u.profile_completed, 0) = 0 THEN 1 ELSE 0 END) AS profile_missing,
+       SUM(CASE WHEN COALESCE(u.profile_completed, 0) = 1 THEN 1 ELSE 0 END) AS profile_completed,
+       SUM(CASE WHEN COALESCE(w.locked_balance, 0) > 0 THEN 1 ELSE 0 END) AS locked_balance
+     FROM users u
+     LEFT JOIN wallets w ON w.uid = u.uid`
+  );
+  const summary = rows[0] || {};
+
+  return {
+    total: Number(summary.total || 0),
+    normal: Number(summary.normal || 0),
+    banned: Number(summary.banned || 0),
+    profileMissing: Number(summary.profile_missing || 0),
+    profileCompleted: Number(summary.profile_completed || 0),
+    lockedBalance: Number(summary.locked_balance || 0)
+  };
+}
+
 async function listWallets(limit = 80) {
   const safeLimit = Math.min(200, Math.max(1, Number.parseInt(String(limit), 10) || 80));
 
@@ -94,6 +118,7 @@ async function listUserLedgers(uid, limit = 80) {
 
 module.exports = {
   listUsers,
+  getUserSummary,
   listWallets,
   listRecentLedgers,
   updateUserByAdmin,

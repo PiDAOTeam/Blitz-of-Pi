@@ -82,7 +82,11 @@ async function checkPaymentIntegrity(report) {
 async function checkBattleIntegrity(report) {
   const [summary] = await query(`
     SELECT
-      SUM(CASE WHEN b.status = 'playing' AND b.created_at < DATE_SUB(NOW(), INTERVAL 5 MINUTE) THEN 1 ELSE 0 END) AS stale_playing_rooms,
+      SUM(CASE
+        WHEN b.status = 'playing'
+         AND b.created_at < DATE_SUB(NOW(), INTERVAL 5 MINUTE)
+         AND (b.entry_fee > 0 OR COALESCE(b.asset_type, 'FREE') <> 'FREE')
+        THEN 1 ELSE 0 END) AS stale_playing_rooms,
       SUM(CASE WHEN b.entry_fee > 0 AND b.is_bot_room = 1 THEN 1 ELSE 0 END) AS paid_bot_rooms,
       SUM(CASE WHEN b.status = 'manual_review' THEN 1 ELSE 0 END) AS manual_review_rooms,
       SUM(CASE
@@ -106,7 +110,7 @@ async function checkBattleIntegrity(report) {
   }
 
   if (toNumber(summary.stale_playing_rooms) > 0) {
-    report.add("warning", "存在超时进行中房间", "超过 5 分钟仍处于 playing 的房间可能需要人工复核。", summary);
+    report.add("warning", "存在资产场超时房间", "超过 5 分钟仍处于 playing 的付费/资产房需要人工复核；免费快速局会自动作废。", summary);
     return;
   }
 
@@ -115,7 +119,7 @@ async function checkBattleIntegrity(report) {
     return;
   }
 
-  report.add("ok", "对局结算健康", "超时房间、付费机器人局和待复核房间均正常。", summary);
+  report.add("ok", "对局结算健康", "资产场超时房间、付费机器人局和待复核房间均正常。", summary);
 }
 
 async function checkWalletIntegrity(report) {

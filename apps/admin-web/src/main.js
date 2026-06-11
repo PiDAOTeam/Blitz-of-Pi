@@ -163,10 +163,14 @@ function filterList(e = [], t = [], a = "all") {
 function filterCount(e = [], t) {
   return e.filter((a) => t.match(a)).length;
 }
-function renderListFilters(e = [], t = [], a = "all", n = "") {
+function getFilterCount(e = [], t, a = null) {
+  if (a && Object.prototype.hasOwnProperty.call(a, t.key)) return Number(a[t.key] || 0);
+  return filterCount(e, t);
+}
+function renderListFilters(e = [], t = [], a = "all", n = "", s = null) {
   return `
     <div class="payment-filter-bar">
-      ${t.map((s) => `<button type="button" data-list-filter-group="${n}" data-list-filter-value="${s.key}" class="${a === s.key ? "active" : ""}">${i(s.label)} <b>${filterCount(e, s)}</b></button>`).join("")}
+      ${t.map((r) => `<button type="button" data-list-filter-group="${n}" data-list-filter-value="${r.key}" class="${a === r.key ? "active" : ""}">${i(r.label)} <b>${getFilterCount(e, r, s)}</b></button>`).join("")}
     </div>
   `;
 }
@@ -662,13 +666,13 @@ function at(e) {
 }
 function isObserverActionable(e = {}) {
   const t = e.stage || "";
-  return t === "settlement_retry" || t === "match_watch_failed" || t === "client_realtime_retry_failed" || t === "realtime_tick_slow" || t === "realtime_tick_skipped" || t === "realtime_broadcast_slow";
+  return t === "settlement_retry" || t === "client_realtime_retry_failed";
 }
 function getObserverActionCount(e = {}) {
-  return Number(e.settlement_retry || 0) + Number(e.match_watch_failed || 0) + Number(e.client_realtime_retry_failed || 0) + Number(e.realtime_tick_slow || 0) + Number(e.realtime_tick_skipped || 0) + Number(e.realtime_broadcast_slow || 0);
+  return Number(e.settlement_retry || 0) + Number(e.client_realtime_retry_failed || 0);
 }
 function getObserverWatchCount(e = {}) {
-  return Number(e.client_match_poll_failed || 0) + Number(e.client_realtime_connect_slow || 0);
+  return Number(e.client_match_poll_failed || 0) + Number(e.client_realtime_connect_slow || 0) + Number(e.match_watch_failed || 0) + Number(e.realtime_tick_slow || 0) + Number(e.realtime_tick_skipped || 0) + Number(e.realtime_broadcast_slow || 0);
 }
 function nt(e) {
   const t = e?.counters || {}, a = e?.recentEvents || [], n = [["\u8FDB\u5165\u961F\u5217", t.match_queue_join || 0, "\u4ECA\u65E5\u5339\u914D\u8BF7\u6C42"], ["\u7528\u6237\u70B9\u5339\u914D", t.client_match_start || 0, "\u524D\u7AEF\u53D1\u8D77\u6B21\u6570"], ["\u521B\u5EFA\u623F\u95F4", (t.match_room_created || 0) + (t.match_status_room_created || 0), "\u771F\u4EBA/\u8F6E\u8BE2\u6210\u623F"], ["\u63A8\u9001\u63A5\u5165", t.match_watch_join || 0, "\u670D\u52A1\u7AEF\u5339\u914DWS"], ["\u7528\u6237\u8FDB\u623F", t.client_match_enter_room || 0, "\u5339\u914D\u6210\u529F\u5230\u8FDB\u623F"], ["WS\u8FDB\u623F", t.realtime_join || 0, "\u8FDB\u5165\u5B9E\u65F6\u623F\u95F4"], ["\u6536\u5230\u9996\u5305", t.client_realtime_first_state || 0, "\u7528\u6237\u7AEF\u9996\u4E2A\u623F\u95F4\u5305"], ["\u6B63\u5F0F\u5F00\u5C40", t.realtime_started || 0, "\u53CC\u65B9\u51C6\u5907\u5B8C\u6210"], ["\u64CD\u4F5C\u62E6\u622A", t.realtime_swap_error || 0, "\u9650\u9891/\u623F\u95F4\u8FC7\u671F"], ["\u7528\u6237\u5F31\u7F51", t.client_realtime_slow || 0, "\u5BA2\u6237\u7AEF\u7F51\u7EDC\u89C2\u5BDF"], ["Tick\u6162", t.realtime_tick_slow || 0, "\u670D\u52A1\u7AEF\u5FAA\u73AF\u8017\u65F6\u9AD8"], ["\u5E7F\u64AD\u6162", t.realtime_broadcast_slow || 0, "\u623F\u95F4\u72B6\u6001\u4E0B\u53D1\u6162"], ["\u7ED3\u7B97\u5B8C\u6210", t.settlement_done || 0, "\u5B9E\u65F6\u7ED3\u7B97\u95ED\u73AF"]], s = getObserverActionCount(t), r = getObserverWatchCount(t);
@@ -679,8 +683,9 @@ function nt(e) {
           <p class="tag">Realtime Trace</p>
           <h2>\u5BF9\u5C40\u94FE\u8DEF\u89C2\u6D4B</h2>
         </div>
-        <span class="pill ${s ? "warning" : "ok"}">${s ? `${s} \u4E2A\u9700\u5904\u7406` : r ? `${r} \u6761\u89C2\u5BDF` : "\u94FE\u8DEF\u6B63\u5E38"}</span>
+        <span class="pill ${s ? "warning" : "ok"}">${s ? `${s} \u4E2A\u9700\u5173\u6CE8` : r ? `\u4ECA\u65E5\u7D2F\u8BA1 ${r} \u6761\u89C2\u5BDF` : "\u94FE\u8DEF\u6B63\u5E38"}</span>
       </div>
+      <p class="meta">\u8FD9\u91CC\u662F\u4ECA\u65E5\u7D2F\u8BA1\uFF0C\u5F31\u7F51\u3001\u964D\u7EA7\u548C\u6162 Tick \u4E0D\u7B49\u4E8E\u5F53\u524D\u6545\u969C\u3002</p>
       <div class="observer-stats">
         ${n.map(([r, o, m]) => f(String(r), o, String(m))).join("")}
       </div>
@@ -753,6 +758,16 @@ function Ne(e, t, a, n, s, r, o, m, R, y, x, j, A, B, w, L, T, C, M, U) {
   `), Ut(homeConfig, J, n), jt(), It(), Ft(), Dt();
 }
 function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, rooms: r, paymentOrders: o, users: m, ledgers: R, battleRooms: y, withdrawOrders: x, reconciliation: j, riskAudit: A, auditLogs: B, rankStarRecords: w, rankChestRecords: L, rankLeaderboard: T, rankWeeklySettlements: C, growthOps: M, banner: U }) {
+  const userItems = Array.isArray(m) ? m : Array.isArray(m?.items) ? m.items : [];
+  const userSummary = !Array.isArray(m) && m?.summary ? m.summary : null;
+  const userLoadedLimit = Number(!Array.isArray(m) && m?.limit || userItems.length || 0);
+  const userFilterCounts = userSummary ? {
+    all: Number(userSummary.total || 0),
+    normal: Number(userSummary.normal || 0),
+    banned: Number(userSummary.banned || 0),
+    profile_missing: Number(userSummary.profileMissing || 0),
+    locked_balance: Number(userSummary.lockedBalance || 0)
+  } : null;
   const extremeRealtimeState = n?.extremeRealtime || {};
   const extremeRealtimeAllModes = ["quick_battle", "points_battle", "poc_battle", "pi_battle"];
   const extremeRealtimeModeNames = {
@@ -1246,17 +1261,17 @@ function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, roo
   if (_ === "reconciliation") return St(j);
   if (_ === "risk") return Et(A);
   if (_ === "users") {
-    const filteredUsers = filterList(m, USER_LIST_FILTERS, userListFilter), activeUserFilter = USER_LIST_FILTERS.find((v) => v.key === userListFilter) || USER_LIST_FILTERS[0];
+    const filteredUsers = filterList(userItems, USER_LIST_FILTERS, userListFilter), activeUserFilter = USER_LIST_FILTERS.find((v) => v.key === userListFilter) || USER_LIST_FILTERS[0], activeUserCount = userFilterCounts?.[activeUserFilter.key] ?? filteredUsers.length, userLoadedText = userSummary ? `当前显示最近 ${userItems.length}/${userLoadedLimit || userItems.length} 人，当前列表筛选 ${filteredUsers.length} 人。` : `当前加载 ${userItems.length} 人，当前筛选 ${filteredUsers.length} 人。`;
     return W ? Tt(W) : `
       <section class="panel">
         <div class="section-head">
           <div>
             <h2>\u7528\u6237\u4E0E\u94B1\u5305</h2>
-            <p class="meta">\u6309\u8D26\u53F7\u72B6\u6001\u3001\u8D44\u6599\u5B8C\u6210\u5EA6\u548C\u51BB\u7ED3\u4F59\u989D\u5206\u7C7B\u67E5\u770B\u3002</p>
+            <p class="meta">\u6309\u8D26\u53F7\u72B6\u6001\u3001\u8D44\u6599\u5B8C\u6210\u5EA6\u548C\u51BB\u7ED3\u4F59\u989D\u5206\u7C7B\u67E5\u770B\u3002${i(userLoadedText)}</p>
           </div>
-          <span class="pill">${i(activeUserFilter.label)} ${filteredUsers.length} \u4EBA</span>
+          <span class="pill">${i(activeUserFilter.label)} ${activeUserCount} \u4EBA</span>
         </div>
-        ${renderListFilters(m, USER_LIST_FILTERS, userListFilter, "users")}
+        ${renderListFilters(userItems, USER_LIST_FILTERS, userListFilter, "users", userFilterCounts)}
         <div class="table-list">
           ${N("users", filteredUsers).items.map(Bt).join("") || '<p class="meta">\u6682\u65E0\u7528\u6237</p>'}
         </div>
@@ -1265,7 +1280,7 @@ function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, roo
     `;
   }
   if (_ === "ranks") {
-    const k = n.operation?.ranks?.length ? n.operation.ranks : [], c = G === "all" ? m : m.filter((v) => v.rankKey === G || v.rankName === G), l = N("ranks-users", c), p = N("ranks-stars", w), u = N("ranks-chests", L), b = N("ranks-weekly", C), se = L.reduce((v, ie) => v + Number(ie.rewardAmount || 0), 0), z = C.reduce((v, ie) => v + Number(ie.rewardAmount || 0), 0), de = n.operation?.rankRules, xe = Se(de);
+    const k = n.operation?.ranks?.length ? n.operation.ranks : [], c = G === "all" ? userItems : userItems.filter((v) => v.rankKey === G || v.rankName === G), l = N("ranks-users", c), p = N("ranks-stars", w), u = N("ranks-chests", L), b = N("ranks-weekly", C), se = L.reduce((v, ie) => v + Number(ie.rewardAmount || 0), 0), z = C.reduce((v, ie) => v + Number(ie.rewardAmount || 0), 0), de = n.operation?.rankRules, xe = Se(de);
     const rankModeText = (Array.isArray(de?.rankedModes) ? de.rankedModes.map(oe) : []).join("\u3001") || "\u672A\u5F00\u542F";
     const weeklyModeText = (Array.isArray(de?.weeklyLeaderboardModes) ? de.weeklyLeaderboardModes.map(oe) : []).join("\u3001") || "\u672A\u5F00\u542F";
     const weeklyRewardText = xe.length ? `\u7B2C${xe[0].fromRank}-${xe[xe.length - 1].toRank}\u540D` : "\u672A\u914D\u7F6E";
@@ -2184,7 +2199,7 @@ function Mt(e) {
   }).filter((t) => t.fromRank > 0 && t.toRank > 0 && t.amount > 0).sort((t, a) => t.fromRank - a.fromRank || t.toRank - a.toRank);
 }
 function qt(e) {
-  const t = e.winnerUid ? X({ nickname: e.winnerNickname, piUsername: e.winnerPiUsername, uid: e.winnerUid }) : e.status === "expired" ? "\u7CFB\u7EDF\u8D85\u65F6\u7ED3\u675F" : "\u672A\u7ED3\u675F", a = ce(e), n = e.status !== "finished" && e.status !== "expired" && e.entryFee === 0 && e.isBotRoom, s = e.status !== "finished" && e.status !== "manual_review" && e.status !== "expired";
+  const t = e.winnerUid ? X({ nickname: e.winnerNickname, piUsername: e.winnerPiUsername, uid: e.winnerUid }) : e.status === "expired" ? "\u7CFB\u7EDF\u8D85\u65F6\u7ED3\u675F" : "\u672A\u7ED3\u675F", a = ce(e), n = e.status !== "finished" && e.status !== "expired" && e.entryFee === 0 && String(e.assetType || "FREE").toUpperCase() === "FREE", s = e.status !== "finished" && e.status !== "manual_review" && e.status !== "expired" && (e.entryFee > 0 || String(e.assetType || "FREE").toUpperCase() !== "FREE");
   return `
     <article class="room-item ${a || e.status === "expired" ? "room-warning" : ""}">
       <h3>${i(e.roomNo)} ${a ? '<span class="status-chip danger">\u7591\u4F3C\u5361\u5C40</span>' : ""}</h3>
@@ -2382,7 +2397,7 @@ function Dt() {
     s.addEventListener("click", async () => {
       const r = s.dataset.roomNo || "", o = s.dataset.battleAction || "";
       if (!r || !o) return;
-      const m = o === "expire_free_bot" ? "\u4F5C\u5E9F\u514D\u8D39\u5F02\u5E38\u5C40" : "\u8F6C\u4EBA\u5DE5\u590D\u6838", R = window.prompt(`\u8BF7\u8F93\u5165${m}\u539F\u56E0\uFF1A`, o === "expire_free_bot" ? "\u514D\u8D39\u673A\u5668\u4EBA\u5C40\u8D85\u65F6\u672A\u7ED3\u675F" : "\u5BF9\u5C40\u5F02\u5E38\uFF0C\u9700\u4EBA\u5DE5\u590D\u6838");
+      const m = o === "expire_free_bot" ? "\u4F5C\u5E9F\u514D\u8D39\u5F02\u5E38\u5C40" : "\u8F6C\u4EBA\u5DE5\u590D\u6838", R = window.prompt(`\u8BF7\u8F93\u5165${m}\u539F\u56E0\uFF1A`, o === "expire_free_bot" ? "\u514D\u8D39\u5C40\u8D85\u65F6\u672A\u7ED3\u675F" : "\u5BF9\u5C40\u5F02\u5E38\uFF0C\u9700\u4EBA\u5DE5\u590D\u6838");
       if (!(R === null || !window.confirm(`\u786E\u8BA4${m}\uFF1F
 \u623F\u95F4\uFF1A${r}
 \u539F\u56E0\uFF1A${R || "-"}`))) {
