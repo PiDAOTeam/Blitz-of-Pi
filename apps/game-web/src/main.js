@@ -85,7 +85,7 @@ function yn(e) {
 }
 function ve() {
   const e = (t) => t === "high" ? "high" : "balanced";
-  return { defaultMode: e(a.gameConfig?.visualEffects?.defaultMode), piBrowserDefaultMode: e(a.gameConfig?.visualEffects?.piBrowserDefaultMode), allowUserChoice: a.gameConfig?.visualEffects?.allowUserChoice !== false, allowHighMode: true, autoDowngradeEnabled: a.gameConfig?.visualEffects?.autoDowngradeEnabled !== false, dragTrailEnabled: a.gameConfig?.visualEffects?.dragTrailEnabled !== false, hapticEnabled: a.gameConfig?.visualEffects?.hapticEnabled !== false, attackWarningEnabled: a.gameConfig?.visualEffects?.attackWarningEnabled !== false, attackWarningText: String(a.gameConfig?.visualEffects?.attackWarningText || DEFAULT_ATTACK_WARNING_TEXT).trim() || DEFAULT_ATTACK_WARNING_TEXT, animationDurations: normalizeAnimationDurations(a.gameConfig?.visualEffects?.animationDurations) };
+  return { defaultMode: e(a.gameConfig?.visualEffects?.defaultMode), piBrowserDefaultMode: e(a.gameConfig?.visualEffects?.piBrowserDefaultMode), allowUserChoice: a.gameConfig?.visualEffects?.allowUserChoice !== false, allowHighMode: true, autoDowngradeEnabled: a.gameConfig?.visualEffects?.autoDowngradeEnabled !== false, dragTrailEnabled: a.gameConfig?.visualEffects?.dragTrailEnabled !== false, hapticEnabled: a.gameConfig?.visualEffects?.hapticEnabled !== false, soundEnabled: a.gameConfig?.visualEffects?.soundEnabled !== false, attackWarningEnabled: a.gameConfig?.visualEffects?.attackWarningEnabled !== false, attackWarningText: String(a.gameConfig?.visualEffects?.attackWarningText || DEFAULT_ATTACK_WARNING_TEXT).trim() || DEFAULT_ATTACK_WARNING_TEXT, animationDurations: normalizeAnimationDurations(a.gameConfig?.visualEffects?.animationDurations) };
 }
 function extremeRealtimeConfig() {
   const e = a.gameConfig?.extremeRealtime || {};
@@ -257,9 +257,10 @@ Object.assign($t.en, {
   ledgerUnlock: "Unlocked",
   ledgerDefault: "Ledger"
 });
-let M = null, A = null, be = null, ze = null, he = 0, Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0;
+let M = null, A = null, be = null, ze = null, he = 0, Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, finishFeedbackKey = "";
 const vn = 1100, va = 2600, Sn = 80, me = /* @__PURE__ */ new Set();
-let Se = null;
+let Se = null, battleAudioContext = null, battleAudioUnlocked = false;
+const battleSfxLastPlayed = /* @__PURE__ */ new Map();
 function Ua() {
   return Se = { board: document.querySelector("#game-board"), overlay: document.querySelector("#battle-overlay"), feedbackLayer: document.querySelector("#battle-feedback-layer"), shell: document.querySelector(".battle-shell"), roomLabel: document.querySelector("#battle-room-label"), title: document.querySelector("#battle-title"), modeLabel: document.querySelector("#battle-mode-label"), timerWrap: document.querySelector("#battle-timer-wrap"), timer: document.querySelector("#battle-timer"), timerBar: document.querySelector("#battle-timer-bar"), selfCard: document.querySelector("#battle-self-card"), opponentCard: document.querySelector("#battle-opponent-card"), selfName: document.querySelector("#battle-self-name"), opponentName: document.querySelector("#battle-opponent-name"), selfScore: document.querySelector("#battle-self-score"), opponentScore: document.querySelector("#battle-opponent-score"), selfPressureMeter: document.querySelector("#battle-self-pressure-meter"), opponentPressureMeter: document.querySelector("#battle-opponent-pressure-meter"), selfPressure: document.querySelector("#battle-self-pressure"), opponentPressure: document.querySelector("#battle-opponent-pressure"), networkPill: document.querySelector("#network-pill") }, Se;
 }
@@ -278,7 +279,7 @@ function lt(e) {
   }
   return true;
 }
-let Nt = "", j = null, V = null, Be = null, ee = null, y = null, x = null, k = null, Ne = null, Yt = 0, Et = 0, Lt = "", xt = 0, Ee = "", te = 0, pe = -1, Xe = "", le = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPerfLockedLow = false, clientPerfFrameCount = 0, clientPerfLongFrameCount = 0, clientPerfSampleStartedAt = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0, canvasFxFrame = null;
+let Nt = "", j = null, V = null, Be = null, ee = null, y = null, x = null, k = null, Ne = null, Yt = 0, Et = 0, Lt = "", xt = 0, Ee = "", te = 0, pe = -1, Xe = "", le = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPerfLockedLow = false, clientPerfFrameCount = 0, clientPerfLongFrameCount = 0, clientPerfSampleStartedAt = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0, canvasFxFrame = null, canvasBreathTimer = null;
 a.canvasSpecialFx = [];
 a.canvasSpecialBirths = [];
 let cleanupBoardInputListeners = null;
@@ -287,7 +288,7 @@ let z = null, W = null, At = 0, q = null;
 const $n = 8e3, Pn = 3, Cn = 9e3, Ha = 1200, Tn = 1800, Ie = 8, Rn = 5e3, Mn = 6, Xt = 8e3, fe = 3, Bn = 16, Nn = 8, $a = 30, $e = 8, Pe = 6, Pa = 0.18, En = 1200;
 function we() {
   Be && (window.clearInterval(Be), Be = null), Ee = "", te = 0, pe = -1;
-  canvasFxFrame && (window.cancelAnimationFrame(canvasFxFrame), canvasFxFrame = null), a.canvasSpecialFx = [], a.canvasSpecialBirths = [], a.canvasTileBursts = [];
+  canvasFxFrame && (window.cancelAnimationFrame(canvasFxFrame), canvasFxFrame = null), canvasBreathTimer && (window.clearTimeout(canvasBreathTimer), canvasBreathTimer = null), a.canvasSpecialFx = [], a.canvasSpecialBirths = [], a.canvasTileBursts = [];
 }
 function cleanupBoardInputs() {
   try {
@@ -302,7 +303,7 @@ function cleanupBoardInputs() {
   Ne = null;
 }
 function ce() {
-  be && (window.cancelAnimationFrame(be), be = null), ee && (window.clearTimeout(ee), ee = null), le && (window.cancelAnimationFrame(le), le = null), j && (window.cancelAnimationFrame(j), j = null), V && (window.cancelAnimationFrame(V), V = null), z = null, W = null, At = 0, q = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPerfLockedLow = false, clientPerfFrameCount = 0, clientPerfLongFrameCount = 0, clientPerfSampleStartedAt = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0, document.documentElement.classList.remove("low-performance"), we(), Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, Se = null, me.clear(), Nt = "", y = null, Et = 0, Lt = "", xt = 0, a.pendingSwapSeq = 0, a.pendingSwapPositions = [], cleanupBoardInputs(), x = null, k = null, Yt = 0, a.battleBursts = [], a.battleImpacts = [], a.localBattleEvents = [], a.localSwapFx = null, a.canvasSpecialFx = [], a.canvasSpecialBirths = [];
+  be && (window.cancelAnimationFrame(be), be = null), ee && (window.clearTimeout(ee), ee = null), le && (window.cancelAnimationFrame(le), le = null), j && (window.cancelAnimationFrame(j), j = null), V && (window.cancelAnimationFrame(V), V = null), z = null, W = null, At = 0, q = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPerfLockedLow = false, clientPerfFrameCount = 0, clientPerfLongFrameCount = 0, clientPerfSampleStartedAt = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0, document.documentElement.classList.remove("low-performance"), we(), Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, finishFeedbackKey = "", Se = null, me.clear(), Nt = "", y = null, Et = 0, Lt = "", xt = 0, a.pendingSwapSeq = 0, a.pendingSwapPositions = [], cleanupBoardInputs(), x = null, k = null, Yt = 0, a.battleBursts = [], a.battleImpacts = [], a.localBattleEvents = [], a.localSwapFx = null, a.canvasSpecialFx = [], a.canvasSpecialBirths = [];
 }
 function ge() {
   ze && (window.clearTimeout(ze), ze = null);
@@ -736,8 +737,8 @@ function applyPredictedSwap(e, t, r) {
     const o = kaPreviewSwap(e, t, r), s = xa(a.realtimeRoom, a.user?.uid || "");
     if (!o || !s?.board || !clientIsInside(s.board, e) || !clientIsInside(s.board, t)) return false;
     const l = clientCloneBoard(o.board || s.board), c = a.realtimeRoom?.players?.find((d) => d.uid !== s.uid);
-    s.board = l, s.score = Number(s.score || 0) + Number(o.scoreGain || 0), s.combo = Number(o.chain || 1), s.lastGain = Number(o.scoreGain || 0), s.pressure = Math.max(0, Number(s.pressure || 0) - 1), c && (c.pressure = Number(c.pressure || 0) + Number(o.attack || 0)), a.clientPredictedBoard = clientCloneBoard(l), Re = "", renderCanvasBoard(oe(), s), clientPreviewBurstUid = o.uid || "", clientPreviewBurstSeq = Number(o.seq || 0), clientPreviewBurstAt = Date.now(), nn(o), Si(o);
-    return true;
+    s.board = l, s.score = Number(s.score || 0) + Number(o.scoreGain || 0), s.combo = Number(o.chain || 1), s.lastGain = Number(o.scoreGain || 0), s.pressure = Math.max(0, Number(s.pressure || 0) - 1), c && (c.pressure = Number(c.pressure || 0) + Number(o.attack || 0)), a.clientPredictedBoard = clientCloneBoard(l), Re = "", renderCanvasBoard(oe(), s), clientPreviewBurstUid = o.uid || "", clientPreviewBurstSeq = Number(o.seq || 0), clientPreviewBurstAt = Date.now(), nn(o), Si(o), Number(o.attack || 0) > 0 && Ni({ id: `${ne(o)}:attack-line`, type: "attack-line", from: "self", attack: Number(o.attack || 0) }), playBattleEventFeedback(o, true);
+    return o;
   } catch (o) {
     console.warn("local predicted swap failed", o);
     return false;
@@ -763,6 +764,83 @@ function de(e) {
     navigator.vibrate(e);
   } catch {
   }
+}
+function battleSoundEnabled() {
+  return a.gameConfig?.visualEffects?.soundEnabled !== false && !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+}
+function ensureBattleAudioContext() {
+  if (!battleSoundEnabled()) return null;
+  try {
+    const e = window.AudioContext || window.webkitAudioContext;
+    if (!e) return null;
+    battleAudioContext || (battleAudioContext = new e());
+    battleAudioContext.state === "suspended" && battleAudioContext.resume?.().catch?.(() => {
+    });
+    return battleAudioContext;
+  } catch {
+    return null;
+  }
+}
+function unlockBattleAudio() {
+  if (battleAudioUnlocked) return;
+  const e = ensureBattleAudioContext();
+  e && (battleAudioUnlocked = true);
+}
+function setupBattleAudioUnlock() {
+  ["pointerdown", "touchstart", "click"].forEach((e) => document.addEventListener(e, unlockBattleAudio, { passive: true, capture: true }));
+}
+function playBattleSfx(e, t = 0) {
+  if (!battleSoundEnabled()) return;
+  const r = Date.now(), o = battleSfxLastPlayed.get(e) || 0, s = e === "swap" ? 55 : 110;
+  if (r - o < s) return;
+  battleSfxLastPlayed.set(e, r);
+  const l = ensureBattleAudioContext();
+  if (!l || l.state === "closed") return;
+  try {
+    const c = Math.max(0, Math.min(6, Number(t || 0))), d = l.currentTime + 0.002, u = l.createGain(), h = Math.min(0.07, 0.026 + c * 0.004);
+    u.gain.setValueAtTime(0.0001, d), u.gain.exponentialRampToValueAtTime(h, d + 0.012), u.gain.exponentialRampToValueAtTime(0.0001, d + 0.24 + c * 0.018), u.connect(l.destination);
+    const p = (m, g, P = 0, C = "triangle", T = 0) => {
+      const U = l.createOscillator(), Te = l.createGain(), qe = Math.max(0.025, Number(g || 0.06));
+      U.type = C, U.frequency.setValueAtTime(Math.max(50, m), d + P), T ? U.frequency.exponentialRampToValueAtTime(Math.max(50, m + T), d + P + qe) : U.frequency.setValueAtTime(Math.max(50, m), d + P + qe), Te.gain.setValueAtTime(0.0001, d + P), Te.gain.exponentialRampToValueAtTime(1, d + P + 0.008), Te.gain.exponentialRampToValueAtTime(0.0001, d + P + qe), U.connect(Te), Te.connect(u), U.start(d + P), U.stop(d + P + qe + 0.025), window.setTimeout(() => {
+        try {
+          U.disconnect(), Te.disconnect();
+        } catch {
+        }
+      }, Math.ceil((P + qe + 0.08) * 1e3));
+    };
+    if (e === "swap") p(360, 0.045, 0, "triangle", 120);
+    else if (e === "clear") p(520, 0.06, 0, "sine", 180), p(780, 0.07, 0.045, "triangle", -90);
+    else if (e === "combo") p(520, 0.052, 0, "triangle", 160), p(720, 0.056, 0.05, "triangle", 210), p(1040, 0.08, 0.105, "sine", -110);
+    else if (e === "special") p(410, 0.055, 0, "sawtooth", 360), p(920, 0.09, 0.055, "triangle", 260), p(1280, 0.08, 0.13, "sine", -240);
+    else if (e === "attack") p(260, 0.06, 0, "sawtooth", 420), p(760, 0.08, 0.04, "triangle", 280);
+    else if (e === "hit") p(190, 0.09, 0, "sawtooth", -55), p(120, 0.12, 0.045, "triangle", -25);
+    else if (e === "finishWin") p(520, 0.09, 0, "triangle", 180), p(760, 0.1, 0.08, "triangle", 250), p(1120, 0.14, 0.18, "sine", -80);
+    else if (e === "finishLose") p(360, 0.11, 0, "triangle", -90), p(220, 0.16, 0.08, "sine", -35);
+    else p(420, 0.08, 0, "triangle", 0);
+    window.setTimeout(() => {
+      try {
+        u.disconnect();
+      } catch {
+      }
+    }, 420);
+  } catch {
+  }
+}
+function playBattleEventFeedback(e, t = false) {
+  if (!e) return;
+  const r = battleFeedbackPower(e);
+  e.specialTriggered || e.specialCreated ? playBattleSfx("special", r) : Number(e.attack || 0) > 0 ? playBattleSfx("attack", r) : Number(e.chain || 1) >= 2 || battleIsMegaFeedback(e) ? playBattleSfx("combo", r) : playBattleSfx("clear", r), t && de(vi(e));
+}
+function playFinishFeedback(e, t) {
+  if (!e || e.status !== "finished" || !t) return;
+  const r = `${e.roomNo}:${e.status}:${e.winnerUid || "draw"}:${e.finishReason || ""}`;
+  if (r === finishFeedbackKey) return;
+  finishFeedbackKey = r;
+  if (!e.winnerUid) {
+    playBattleSfx("clear", 1), de([18, 16, 18]);
+    return;
+  }
+  e.winnerUid === t.uid ? (playBattleSfx("finishWin", 4), de([28, 22, 46, 30, 58])) : (playBattleSfx("finishLose", 2), de([38, 30, 22]));
 }
 function Un(e, t) {
   const r = a.selectedTile;
@@ -2875,7 +2953,7 @@ function getBoardGeometry(e) {
 }
 function canvasCellRect(e, t, r) {
   const o = e.paddingLeft + r * (e.tileWidth + e.gap), s = e.paddingTop + t * (e.tileHeight + e.gap);
-  return { x: o, y: s, w: Math.max(2, e.tileWidth - 1), h: Math.max(2, e.tileHeight - 1), cx: o + e.tileWidth / 2, cy: s + e.tileHeight / 2 };
+  return { x: o, y: s, w: Math.max(2, e.tileWidth - 1), h: Math.max(2, e.tileHeight - 1), cx: o + e.tileWidth / 2, cy: s + e.tileHeight / 2, row: t, col: r };
 }
 function canvasRoundRect(e, t, r, o, s, l) {
   e.beginPath(), e.roundRect ? e.roundRect(t, r, o, s, l) : (e.moveTo(t + l, r), e.lineTo(t + o - l, r), e.quadraticCurveTo(t + o, r, t + o, r + l), e.lineTo(t + o, r + s - l), e.quadraticCurveTo(t + o, r + s, t + o - l, r + s), e.lineTo(t + l, r + s), e.quadraticCurveTo(t, r + s, t, r + s - l), e.lineTo(t, r + l), e.quadraticCurveTo(t, r, t + l, r));
@@ -2922,6 +3000,19 @@ function scheduleCanvasFxFrame() {
     canvasFxFrame = null, renderCurrentCanvasBoard(), canvasHasActiveFx() && scheduleCanvasFxFrame();
   });
 }
+function canvasHasSpecialBreath() {
+  if (a.screen !== "battle" || a.realtimeRoom?.status !== "playing") return false;
+  if (a.effectiveVisualEffectMode === "low" || document.documentElement.classList.contains("low-performance")) return false;
+  if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return false;
+  const e = Zr()?.self?.board || [];
+  return e.some((t) => (t || []).some((r) => clientIsSpecialTile(r)));
+}
+function scheduleCanvasBreathFrame() {
+  if (canvasBreathTimer || canvasFxFrame || !canvasHasSpecialBreath()) return;
+  canvasBreathTimer = window.setTimeout(() => {
+    canvasBreathTimer = null, renderCurrentCanvasBoard(), scheduleCanvasBreathFrame();
+  }, a.effectiveVisualEffectMode === "high" ? 120 : 180);
+}
 function canvasEffectForCell(e, t, r, o) {
   const s = { scale: 1, dx: 0, dy: 0, glow: 0, tone: "normal" };
   if (a.tileEffect && o - a.tileEffect.at < 760 && a.tileEffect.positions?.some((l) => l.row === e && l.col === t)) {
@@ -2933,6 +3024,10 @@ function canvasEffectForCell(e, t, r, o) {
 function drawCanvasSpecial(e, t, r, o) {
   const s = Math.min(o.w, o.h), l = o.cx, c = o.cy;
   e.save(), e.lineCap = "round", e.lineJoin = "round";
+  if (t >= wa && a.screen === "battle" && a.effectiveVisualEffectMode !== "low" && !document.documentElement.classList.contains("low-performance") && !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+    const d = (Math.sin(Date.now() / 430 + o.row * 0.7 + o.col * 0.45) + 1) / 2, u = t >= ka ? "rgba(255, 207, 72," : t >= ya ? "rgba(123, 236, 255," : "rgba(255, 237, 112,", h = 0.22 + d * 0.22;
+    e.globalCompositeOperation = "lighter", e.strokeStyle = `${u} ${h})`, e.lineWidth = Math.max(1.4, s * (0.035 + d * 0.018)), e.shadowColor = `${u} ${0.42 + d * 0.18})`, e.shadowBlur = s * (0.12 + d * 0.07), canvasRoundRect(e, o.x + s * 0.06, o.y + s * 0.06, o.w - s * 0.12, o.h - s * 0.12, Math.max(5, s * 0.16)), e.stroke(), e.shadowBlur = 0, e.globalCompositeOperation = "source-over";
+  }
   if (t >= ka) {
     const d = s * 0.2;
     e.shadowColor = "rgba(255, 210, 82, .72)", e.shadowBlur = s * 0.2, e.fillStyle = "rgba(255, 246, 184, .95)", e.beginPath(), e.arc(l, c + s * 0.02, d, 0, Math.PI * 2), e.fill(), e.shadowBlur = 0, e.strokeStyle = "rgba(118, 69, 15, .42)", e.lineWidth = Math.max(1.5, s * 0.045), e.stroke(), e.strokeStyle = "rgba(255, 242, 158, .95)", e.lineWidth = Math.max(2, s * 0.055), e.beginPath(), e.moveTo(l + d * 0.5, c - d * 0.72), e.quadraticCurveTo(l + d * 1.2, c - d * 1.22, l + d * 1.48, c - d * 1.9), e.stroke(), e.strokeStyle = "rgba(255, 115, 84, .62)", e.lineWidth = Math.max(1, s * 0.026), e.beginPath(), e.arc(l, c + s * 0.02, d * 1.52, -0.5, Math.PI * 1.5), e.stroke(), e.fillStyle = "rgba(255, 255, 255, .95)", e.beginPath(), e.arc(l - d * 0.42, c - d * 0.32, Math.max(1.5, d * 0.22), 0, Math.PI * 2), e.fill();
@@ -3034,7 +3129,7 @@ function renderCanvasBoard(e, t) {
       drawCanvasSpecial(u, C, T, U), u.restore();
     }
   }
-  drawCanvasSpecialFx(u, s), drawCanvasTileBursts(u, s), drawCanvasSpecialBirths(u, s), canvasHasActiveFx(p) && scheduleCanvasFxFrame();
+  drawCanvasSpecialFx(u, s), drawCanvasTileBursts(u, s), drawCanvasSpecialBirths(u, s), canvasHasActiveFx(p) ? scheduleCanvasFxFrame() : scheduleCanvasBreathFrame();
   return true;
 }
 function Je(e) {
@@ -3162,8 +3257,10 @@ function pi(e) {
   </div>`;
 }
 function fi(e) {
+  const t = Math.max(0, Math.round(Number(e.attack || e.power || 0)));
   return e.type === "attack-line" ? `<div class="battle-attack-line ${e.from}" aria-hidden="true">
       <i></i>
+      ${t > 0 ? `<span>+${i(String(t))}</span>` : ""}
     </div>` : `<div class="battle-hit-warning ${e.from}" aria-hidden="true">
     <i></i>
   </div>`;
@@ -3179,7 +3276,11 @@ function hi(e, t) {
     const p = s ? l.opponentPressureMeter : l.selfPressureMeter;
     flashClass(p, "pressure-hit", animationMs("pressureHitSeconds"));
   }
-  s ? (clientShouldSkipServerBurst(r) || nn(r), Si(r)) : r.attack > 0 && showAttackWarning(r);
+  if (s) {
+    const p = clientShouldSkipServerBurst(r);
+    p || (nn(r), Number(r.attack || 0) > 0 && Ni({ id: `${o}:attack-line`, type: "attack-line", from: "self", attack: Number(r.attack || 0) }), playBattleEventFeedback(r, false)), Si(r);
+  } else
+    r.attack > 0 && (showAttackWarning(r), Ni({ id: `${o}:self-hit`, type: "self-hit", from: "opponent", attack: Number(r.attack || 0) }), playBattleSfx("hit", battleFeedbackPower(r)), de(vi(r)));
 }
 function clientShouldSkipServerBurst(e) {
   const t = Number(e.seq || 0);
@@ -3206,6 +3307,7 @@ function gi(e, t) {
   if (!r || !lt(`${r.id}:haptic`)) return;
   a.localBattleEvents = a.localBattleEvents.filter((s) => s.uid !== t.uid), a.feedbackEventId = r.id, a.feedback = null, K = "";
   const o = e.events.find((s) => s.uid === t.uid);
+  if (o && clientShouldSkipServerBurst(o)) return;
   de(o ? vi(o) : 12);
 }
 function bi(e) {
@@ -3339,7 +3441,7 @@ function nn(e) {
 function Bi(e, t) {
   const r = Date.now();
   const o = oe();
-  a.localSwapFx = { from: e, to: t, at: r }, flashClass(o, "board-local-swap", animationMs("localSwapSeconds")), ae("success", [e, t]), renderCurrentCanvasBoard(), scheduleCanvasFxFrame(), window.setTimeout(() => {
+  playBattleSfx("swap"), a.localSwapFx = { from: e, to: t, at: r }, flashClass(o, "board-local-swap", animationMs("localSwapSeconds")), ae("success", [e, t]), renderCurrentCanvasBoard(), scheduleCanvasFxFrame(), window.setTimeout(() => {
     a.localSwapFx?.at === r && (a.localSwapFx = null, $());
   }, animationMs("localSwapSeconds", 20));
 }
@@ -3450,7 +3552,8 @@ function Ai(e, t, r, o) {
     </section>`;
   if (s) {
     const p = Fi(e, t, o), f = e.winnerUid ? e.winnerUid === t.uid ? n("win") : n("lose") : n("draw"), m = e.winnerUid === t.uid, g = Math.abs(r.score - o.score), P = X(e.mode), C = ie(e.mode), T = C > 0 && !!e.winnerUid && m, U = T ? "" : modeAssetType(e.mode) === "PI" ? n("settlementNoReward") : a.language === "zh-CN" ? "本局无奖励" : "No reward", Te = formatModeAmount(e.mode, C), qe = P > 0 ? (a.language === "zh-CN" ? `入场费 ${formatModeAmount(e.mode, P)}` : `Entry ${formatModeAmount(e.mode, P)}`) : n("freeMatch"), gt = m ? n("winUpsell") : g > 0 && g <= 250 ? n("closeLossHint", { gap: g }) : n("loseRetryHint"), fa = e.mode === "quick_battle" && m && !o.isBot;
-    return `<section class="finish-mask">
+    const vn = e.winnerUid ? m ? "finish-win" : "finish-lose" : "finish-draw";
+    return `<section class="finish-mask finish-reveal ${vn}">
       <div class="finish-card">
         <p class="eyebrow">${i(n("battleSettlement"))}</p>
         <h2>${i(f)}</h2>
@@ -3715,7 +3818,7 @@ function Hi() {
   const qe = ft(t.events).slice(0, 4).map(ne).join("|");
   qe !== Ke && (hi(t, e), an(t, e), Ke = qe);
   const gt = on(t), ha = `${c ? "waiting" : za() ? "vs" : !l && ht(t) > 0 ? "ready" : l ? "finished" : "none"}:${t.roomNo}:${t.winnerUid}:${o.score}:${s.score}:${o.pressure}:${s.pressure}:${t.finishReason || ""}:${gt}:${o.readyAt || 0}:${s.readyAt || 0}`;
-  ha !== Ve && (m.overlay && (m.overlay.innerHTML = Ai(t, e, o, s)), Ve = ha), l && hr(t, e);
+  ha !== Ve && (m.overlay && (m.overlay.innerHTML = Ai(t, e, o, s)), Ve = ha), l && (hr(t, e), playFinishFeedback(t, e));
   const ga = [a.battleBursts.map((E) => E.id).join("|"), a.battleImpacts.map((E) => E.id).join("|")].join("::");
   ga !== K && (m.feedbackLayer && (m.feedbackLayer.innerHTML = mi()), K = ga);
 }
@@ -3851,8 +3954,8 @@ function dn(e, t) {
     return;
   }
   Lt = o, xt = r, ut(), a.selectedTile = null, a.lastSwapSentAt = r, a.lastSwapPositions = [e, t], a.lastSwapSeq = l, a.pendingSwapSeq = l, a.pendingSwapPositions = [e, t], a.battleMessage = "", v("client_swap_send", { roomNo: a.roomNo, mode: a.realtimeRoom?.mode || a.selectedMode, seq: a.lastSwapSeq, latencyMs: a.networkLatencyMs, protocol: "swap_cmd" }, 1800), Yn(e, t), Bi(e, t);
-  a.pendingSwapQueue = [...(a.pendingSwapQueue || []), { seq: a.lastSwapSeq, positions: [e, t], sentAt: r, baseVersion: s }].slice(-extremeRealtimeConfig().maxPendingSwaps), a.clientPredictionStats.sent += 1, applyPredictedSwap(e, t, a.lastSwapSeq), M?.send(JSON.stringify({ type: "swap_cmd", roomNo: a.roomNo, seq: a.lastSwapSeq, baseVersion: s, from: e, to: t, clientAt: r }));
-  de(12);
+  a.pendingSwapQueue = [...(a.pendingSwapQueue || []), { seq: a.lastSwapSeq, positions: [e, t], sentAt: r, baseVersion: s }].slice(-extremeRealtimeConfig().maxPendingSwaps), a.clientPredictionStats.sent += 1;
+  applyPredictedSwap(e, t, a.lastSwapSeq), M?.send(JSON.stringify({ type: "swap_cmd", roomNo: a.roomNo, seq: a.lastSwapSeq, baseVersion: s, from: e, to: t, clientAt: r }));
 }
 function Gi(e, t) {
   if (Yt = Date.now(), ut(), !!cn()) {
@@ -4017,5 +4120,6 @@ async function ao() {
     console.error("\u521D\u59CB\u5316\u5931\u8D25", e), Fe(n("initFailed", { message: N(e) }));
   }
 }
+setupBattleAudioUnlock();
 ao();
 

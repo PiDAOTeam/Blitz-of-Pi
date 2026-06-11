@@ -244,6 +244,7 @@ const DEFAULT_GAME_CONFIG = {
     autoDowngradeEnabled: true,
     dragTrailEnabled: true,
     hapticEnabled: true,
+    soundEnabled: true,
     attackWarningEnabled: true,
     attackWarningText: "被攻击 压力+{attack}",
     animationDurations: {
@@ -395,6 +396,34 @@ function splitLines(value, fallback = []) {
     .slice(0, 50)
     .concat([])
     .slice(0, 50) || fallback;
+}
+
+function normalizeTextValue(value, fallback = "") {
+  if (typeof value === "string" || typeof value === "number") {
+    const text = String(value).trim();
+    return text === "[object Object]" ? fallback : text;
+  }
+
+  if (value && typeof value === "object") {
+    const candidates = [
+      value["zh-CN"],
+      value.zh,
+      value.cn,
+      value.default,
+      value.text,
+      value.value,
+      value.en
+    ];
+
+    for (const candidate of candidates) {
+      if (typeof candidate === "string" || typeof candidate === "number") {
+        const text = String(candidate).trim();
+        if (text) return text;
+      }
+    }
+  }
+
+  return fallback;
 }
 
 function normalizeRate(value, fallback, max = 1) {
@@ -894,9 +923,10 @@ function normalizeVisualEffectsConfig(visualEffects = {}) {
     autoDowngradeEnabled: visualEffects.autoDowngradeEnabled !== false,
     dragTrailEnabled: visualEffects.dragTrailEnabled !== false,
     hapticEnabled: visualEffects.hapticEnabled !== false,
+    soundEnabled: visualEffects.soundEnabled !== false,
     attackWarningEnabled: visualEffects.attackWarningEnabled !== false,
     attackWarningText:
-      String(visualEffects.attackWarningText || defaults.attackWarningText)
+      normalizeTextValue(visualEffects.attackWarningText, defaults.attackWarningText)
         .trim()
         .slice(0, 32) || defaults.attackWarningText,
     animationDurations: normalizeAnimationDurations(visualEffects.animationDurations)
