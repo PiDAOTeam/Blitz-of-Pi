@@ -428,7 +428,7 @@ function isAssetGatewayModeAllowed(mode, user, config) {
     return true;
   }
   if (!assetGatewayConfig.enabled) {
-    throw new Error("积分/POC 场正在灰度中，暂未开放");
+    throw new Error("积分/POC 资产同步未开启，暂未开放");
   }
   if (modeAssetType === "POINTS" && !assetGatewayConfig.pointsEnabled) {
     throw new Error("小富豪积分场暂未开放");
@@ -443,7 +443,7 @@ function isAssetGatewayModeAllowed(mode, user, config) {
     const piUid = String(user.piUserId || user.pi_user_id || "").trim();
     const piUsername = String(user.piUsername || user.pi_username || "").trim().toLowerCase();
     if (!grayUids.has(piUid) && !grayNames.has(piUsername)) {
-      throw new Error("该资产场当前仅对灰度用户开放");
+      throw new Error("该资产场当前仅对指定用户开放");
     }
   }
 

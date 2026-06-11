@@ -59,7 +59,7 @@ function assertGatewayReady(assetType) {
     throw new Error(`资产类型 ${assetType} 不支持远程网关`);
   }
   if (!ASSET_GATEWAY_ENABLED) {
-    throw new Error("资产网关未开启，请先在后台灰度启用");
+    throw new Error("资产网关未开启，请先在后台开启资产同步");
   }
   if (!ASSET_GATEWAY_APP_KEY || !ASSET_GATEWAY_APP_SECRET) {
     throw new Error("资产网关密钥未配置");

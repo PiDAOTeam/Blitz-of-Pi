@@ -21,8 +21,8 @@ async function getPublicGameConfig() {
 
   return {
     quickBattle: exposeMode(config.quickBattle),
-    ticketBattle: exposeMode(config.ticketBattle),
-    richBattle: exposeMode(config.richBattle),
+    ticketBattle: { ...exposeMode(config.piBattle), key: "ticket_battle", name: "超级富豪（Pi）" },
+    richBattle: { ...exposeMode(config.piBattle), key: "rich_battle", name: "超级富豪（Pi）" },
     pointsBattle: exposeMode(config.pointsBattle),
     pocBattle: exposeMode(config.pocBattle),
     piBattle: exposeMode(config.piBattle),
@@ -41,18 +41,12 @@ async function getPublicGameConfig() {
     timing: config.timing || {},
     capacity: config.capacity || {},
     extremeRealtime: {
-      enabled: Boolean(config.extremeRealtime?.enabled),
-      rollbackToLegacy: Boolean(config.extremeRealtime?.rollbackToLegacy),
-      enabledModes: Array.isArray(config.extremeRealtime?.enabledModes)
-        ? config.extremeRealtime.enabledModes
-        : ["quick_battle", "points_battle", "poc_battle", "pi_battle"],
-      grayPercent: Number(config.extremeRealtime?.grayPercent || 0),
-      grayUserPiUids: Array.isArray(config.extremeRealtime?.grayUserPiUids)
-        ? config.extremeRealtime.grayUserPiUids
-        : [],
-      grayUserPiUsernames: Array.isArray(config.extremeRealtime?.grayUserPiUsernames)
-        ? config.extremeRealtime.grayUserPiUsernames
-        : [],
+      enabled: true,
+      rollbackToLegacy: false,
+      enabledModes: ["quick_battle", "points_battle", "poc_battle", "pi_battle"],
+      grayPercent: 100,
+      grayUserPiUids: [],
+      grayUserPiUsernames: [],
       maxPendingSwaps: Number(config.extremeRealtime?.maxPendingSwaps || 3),
       snapshotIntervalMs: Number(config.extremeRealtime?.snapshotIntervalMs || 2000),
       swapMinIntervalMs: Number(config.extremeRealtime?.swapMinIntervalMs || 120),

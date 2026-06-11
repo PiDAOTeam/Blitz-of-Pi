@@ -12,7 +12,7 @@ function bn() {
   const e = localStorage.getItem(Wa);
   return ot.includes(e) ? e : "balanced";
 }
-const Z = ["ruby", "amber", "jade", "aqua", "slate", "gold"], wa = 10, ya = 20, ka = 30, a = { user: null, home: null, wallet: null, rankStatus: null, rankLeaderboard: null, piConfig: null, gameConfig: null, inviteInfo: null, engagement: null, battleHistory: [], battleHistoryPage: 1, battleHistoryTotal: 0, battleHistoryTotalPages: 1, battleHistoryFilter: "all", walletLedgerExpanded: false, walletLedgerPage: 1, walletLedgerFilter: "all", screen: "loading", activePanel: "home", selectedMode: "quick_battle", roomNo: "", roomJoinToken: "", room: null, realtimeRoom: null, result: null, selectedTile: null, tileEffect: null, battleMessage: "", networkStatus: "connecting", networkLatencyMs: 0, vsIntroUntil: 0, lastRoomStateAt: 0, lastSwapSentAt: 0, lastSwapSeq: 0, pendingSwapSeq: 0, pendingSwapPositions: [], pendingSwapQueue: [], clientRoomVersion: 0, clientPredictedBoard: null, clientPredictionStats: { sent: 0, ack: 0, reject: 0, rollback: 0, corrected: 0, longFrames: 0 }, lastSwapPositions: [], battleConnectingAt: 0, battleEnteredAt: 0, feedbackEventId: "", feedback: null, battleBursts: [], battleImpacts: [], localBattleEvents: [], localSwapFx: null, matchPollTimer: null, matchUiTimer: null, matchStartedAt: 0, matchWaitingSeconds: 0, matchCanCancel: false, matchCancelMessage: "", matchCancelling: false, matchSessionId: 0, matchPollFailedCount: 0, language: gn(), visualEffectMode: bn(), effectiveVisualEffectMode: "balanced", profileOptions: null, withdrawWallets: [] }, St = [{ code: "zh-CN", flag: "\u{1F1E8}\u{1F1F3}", nativeName: "\u4E2D\u6587", displayName: "\u7B80\u4F53\u4E2D\u6587" }, { code: "en", flag: "\u{1F1FA}\u{1F1F8}", nativeName: "English", displayName: "English" }, { code: "vi", flag: "\u{1F1FB}\u{1F1F3}", nativeName: "Ti\u1EBFng Vi\u1EC7t", displayName: "\u8D8A\u5357\u8BED" }, { code: "ko", flag: "\u{1F1F0}\u{1F1F7}", nativeName: "\uD55C\uAD6D\uC5B4", displayName: "\u97E9\u8BED" }, { code: "ja", flag: "\u{1F1EF}\u{1F1F5}", nativeName: "\u65E5\u672C\u8A9E", displayName: "\u65E5\u8BED" }], $t = { "zh-CN": { languageTitle: "\u9009\u62E9\u8BED\u8A00", languageSummary: "\u5207\u6362\u540E\u4F1A\u7ACB\u5373\u751F\u6548\uFF0C\u5E76\u81EA\u52A8\u8BB0\u4F4F\u4F60\u7684\u9009\u62E9\u3002", languageCancel: "\u53D6\u6D88", homeProjectNameFallback: "Pi\u95EA\u7535\u6218", homeEnglishNameFallback: "BLITZ OF PI", realtimePvp: "\u5B9E\u65F6PVP", match3: "6x8\u4E09\u6D88", piReward: "Pi\u5956\u52B1", gameTips: "\u73A9\u6CD5\u6280\u5DE7", rankBoard: "\u6BB5\u4F4D\u699C", totalPlayers: "\u603B\u73A9\u5BB6", totalBattles: "\u7D2F\u8BA1\u5BF9\u5C40", todayBattles: "\u4ECA\u65E5\u5BF9\u5C40", totalRewards: "\u5DF2\u53D1\u5956\u52B1", practiceMode: "\u7EC3\u624B\u6A21\u5F0F", quickBattle: "\u5FEB\u901F\u5F00\u6218", quickBattleDesc: "\u514D\u8D39\u7EC3\u624B\uFF0C\u4E45\u7B49\u8865\u673A\u5668\u4EBA\u3002", lowEntryReward: "\u4F4E\u95E8\u69DB\u5956\u52B1", ticketBattle: "\u5C0F\u5BCC\u8C6A\u573A", ticketBattleDesc: "\u4F4E\u95E8\u69DB\u771F\u4EBA\u573A\uFF0C\u8BA1\u5165\u5468\u699C\u3002", highPrizePool: "\u9AD8\u5956\u6C60\u523A\u6FC0", richBattle: "\u5927\u5BCC\u8C6A\u573A", richBattleDesc: "\u9AD8\u5956\u6C60\u771F\u4EBA\u573A\uFF0C{rank}\u89E3\u9501\u3002", rankRoute: "\u51B2\u6BB5\u8DEF\u7EBF", quickShort: "\u5FEB\u901F", ticketShort: "\u5C0F\u5BCC\u8C6A", richShort: "\u5927\u5BCC\u8C6A", maintenanceTitle: "\u7EF4\u62A4\u516C\u544A", maintenanceFallback: "\u5E73\u53F0\u7EF4\u62A4\u4E2D\uFF0C\u90E8\u5206\u529F\u80FD\u53EF\u80FD\u6682\u4E0D\u53EF\u7528\u3002", activityFallback: "\u6D3B\u52A8\u516C\u544A", activityDescriptionFallback: "\u5B8C\u6210\u5BF9\u5C40\u3001\u63D0\u5347\u6BB5\u4F4D\uFF0C\u8D62\u53D6 Pi \u5956\u52B1\u3002", ruleSwap: "\u73A9\u6CD5\uFF1A\u4EA4\u6362\u76F8\u90BB\u65B9\u5757\uFF0C\u4E09\u8FDE\u5373\u53EF\u6D88\u9664", ruleCombo: "\u6280\u5DE7\uFF1A\u8FDE\u51FB\u8D8A\u9AD8\uFF0C\u5BF9\u624B\u538B\u529B\u8D8A\u5927", ruleGoal: "\u76EE\u6807\uFF1A90\u79D2\u5185\u6253\u51FA\u66F4\u9AD8\u5206\u6570", chooseBattleMode: "\u9009\u62E9\u5BF9\u6218\u6A21\u5F0F", home: "\u9996\u9875", battle: "\u5F00\u6218", mine: "\u6211\u7684", battleMode: "\u5BF9\u6218\u6A21\u5F0F", chooseModeTitle: "\u9009\u62E9\u5BF9\u6218\u6A21\u5F0F", quickModeDetail: "\u514D\u8D39\u7EC3\u624B\uFF0C\u4E45\u7B49\u8865\u673A\u5668\u4EBA\u3002", ticketModeDetail: "\u4F4E\u95E8\u69DB\u771F\u4EBA\u573A\uFF0C{weekly}", richModeDetail: "\u9AD8\u5956\u6C60\u771F\u4EBA\u573A\uFF0C{rank}\u89E3\u9501\u3002", weeklyOn: "\u8BA1\u5165\u5468\u699C\u5956\u52B1\u3002", weeklyOff: "\u4E0D\u8BA1\u5468\u699C\u3002", richUnlock: " \xB7 {rank}\u89E3\u9501", balanceAndStars: "\u4F59\u989D {balance} Pi \xB7 \u80DC+{win}/\u8D1F-{lose} \xB7 \u9752\u94DC{protection}", protected: "\u6709\u4FDD\u62A4", unprotected: "\u65E0\u4FDD\u62A4" }, en: { languageTitle: "Choose Language", languageSummary: "Changes apply instantly and will be remembered on this device.", languageCancel: "Cancel", homeProjectNameFallback: "Blitz of Pi", homeEnglishNameFallback: "BLITZ OF PI", realtimePvp: "Real-time PVP", match3: "6x8 Match-3", piReward: "Pi Rewards", gameTips: "How to Play", rankBoard: "Rank Board", totalPlayers: "Players", totalBattles: "Battles", todayBattles: "Today", totalRewards: "Rewards Paid", practiceMode: "Practice", quickBattle: "Quick Battle", quickBattleDesc: "Free practice. Bots fill long waits.", lowEntryReward: "Low Entry", ticketBattle: "Small Rich Room", ticketBattleDesc: "Low-entry real-player room.", highPrizePool: "High Prize", richBattle: "Big Rich Room", richBattleDesc: "High-prize room. Unlocks at {rank}.", rankRoute: "Rank Path", quickShort: "Quick", ticketShort: "Small", richShort: "Big", maintenanceTitle: "Maintenance", maintenanceFallback: "The platform is under maintenance. Some features may be unavailable.", activityFallback: "Event", activityDescriptionFallback: "Play battles, climb ranks, and win Pi rewards.", ruleSwap: "Swap adjacent tiles and match 3 to clear.", ruleCombo: "Higher combos create more pressure.", ruleGoal: "Score higher within 90 seconds.", chooseBattleMode: "Choose Battle Mode", home: "Home", battle: "Battle", mine: "Mine", battleMode: "Battle Mode", chooseModeTitle: "Choose Battle Mode", quickModeDetail: "Free practice. Bots fill long waits.", ticketModeDetail: "Low-entry real-player room. {weekly}", richModeDetail: "High-prize room. Unlocks at {rank}.", weeklyOn: "Counts for weekly rewards.", weeklyOff: "Not counted weekly.", richUnlock: " \xB7 {rank} unlock", balanceAndStars: "Bal {balance} Pi \xB7 W+{win}/L-{lose} \xB7 Bronze {protection}", protected: "protected", unprotected: "not protected" }, vi: { languageTitle: "Ch\u1ECDn ng\xF4n ng\u1EEF", languageSummary: "Thay \u0111\u1ED5i c\xF3 hi\u1EC7u l\u1EF1c ngay v\xE0 s\u1EBD \u0111\u01B0\u1EE3c ghi nh\u1EDB.", languageCancel: "H\u1EE7y", homeProjectNameFallback: "Blitz of Pi", homeEnglishNameFallback: "BLITZ OF PI", realtimePvp: "PVP th\u1EDDi gian th\u1EF1c", match3: "6x8 gh\xE9p 3", piReward: "Th\u01B0\u1EDFng Pi", gameTips: "M\u1EB9o ch\u01A1i", rankBoard: "B\u1EA3ng h\u1EA1ng", totalPlayers: "Ng\u01B0\u1EDDi ch\u01A1i", totalBattles: "Tr\u1EADn \u0111\xE3 ch\u01A1i", todayBattles: "H\xF4m nay", totalRewards: "Pi \u0111\xE3 th\u01B0\u1EDFng", practiceMode: "Luy\u1EC7n t\u1EADp", quickBattle: "\u0110\u1EA5u nhanh", quickBattleDesc: "Mi\u1EC5n ph\xED. Tr\u1EADn ng\u01B0\u1EDDi th\u1EADt {cap}; tr\u1EADn bot kh\xF4ng t\xEDnh h\u1EA1ng ho\u1EB7c th\u01B0\u1EDFng tu\u1EA7n.", lowEntryReward: "Ph\xED th\u1EA5p", ticketBattle: "Ph\xF2ng Ti\u1EC3u ph\xFA", ticketBattleDesc: "M\u1ED7i b\xEAn tr\u1EA3 {fee} Pi, ng\u01B0\u1EDDi th\u1EAFng d\u1EF1 ki\u1EBFn nh\u1EADn {reward} Pi, {cap}.", highPrizePool: "Gi\u1EA3i l\u1EDBn", richBattle: "Ph\xF2ng \u0110\u1EA1i ph\xFA", richBattleDesc: "M\u1ED7i b\xEAn tr\u1EA3 {fee} Pi, th\u1EAFng d\u1EF1 ki\u1EBFn nh\u1EADn {reward} Pi, {rank} m\u1EDF kh\xF3a Tinh di\u1EC7u/Vua.", rankRoute: "L\u1ED9 tr\xECnh h\u1EA1ng", quickShort: "Nhanh", ticketShort: "Ti\u1EC3u ph\xFA", richShort: "\u0110\u1EA1i ph\xFA", maintenanceTitle: "B\u1EA3o tr\xEC", maintenanceFallback: "N\u1EC1n t\u1EA3ng \u0111ang b\u1EA3o tr\xEC, m\u1ED9t s\u1ED1 t\xEDnh n\u0103ng c\xF3 th\u1EC3 t\u1EA1m d\u1EEBng.", activityFallback: "S\u1EF1 ki\u1EC7n", activityDescriptionFallback: "Thi \u0111\u1EA5u, leo h\u1EA1ng v\xE0 nh\u1EADn th\u01B0\u1EDFng Pi.", ruleSwap: "\u0110\u1ED5i \xF4 li\u1EC1n k\u1EC1, gh\xE9p 3 \u0111\u1EC3 x\xF3a.", ruleCombo: "Combo c\xE0ng cao, \xE1p l\u1EF1c c\xE0ng l\u1EDBn.", ruleGoal: "Ghi \u0111i\u1EC3m cao h\u01A1n trong 90 gi\xE2y.", chooseBattleMode: "Ch\u1ECDn ch\u1EBF \u0111\u1ED9", home: "Trang ch\u1EE7", battle: "\u0110\u1EA5u", mine: "C\u1EE7a t\xF4i", battleMode: "Ch\u1EBF \u0111\u1ED9 \u0111\u1EA5u", chooseModeTitle: "Ch\u1ECDn ch\u1EBF \u0111\u1ED9", quickModeDetail: "Luy\u1EC7n mi\u1EC5n ph\xED. Tr\u1EADn ng\u01B0\u1EDDi th\u1EADt {cap}; ch\u1EDD l\xE2u c\xF3 th\u1EC3 g\u1EB7p bot v\xE0 kh\xF4ng t\xEDnh h\u1EA1ng/tu\u1EA7n.", ticketModeDetail: "M\u1ED7i b\xEAn tr\u1EA3 {fee} Pi, th\u1EAFng nh\u1EADn {reward} Pi, {cap}, {weekly}", richModeDetail: "M\u1ED7i b\xEAn tr\u1EA3 {fee} Pi, th\u1EAFng nh\u1EADn {reward} Pi, {rank} m\u1EDF kh\xF3a Tinh di\u1EC7u/Vua, {weekly}", weeklyOn: "T\xEDnh th\u01B0\u1EDFng tu\u1EA7n.", weeklyOff: "Kh\xF4ng t\xEDnh tu\u1EA7n.", richUnlock: " \xB7 m\u1EDF \u1EDF {rank}", balanceAndStars: "S\u1ED1 d\u01B0 {balance} Pi; th\u1EAFng +{win} sao, thua -{lose} sao, \u0110\u1ED3ng {protection}.", protected: "\u0111\u01B0\u1EE3c b\u1EA3o v\u1EC7", unprotected: "kh\xF4ng b\u1EA3o v\u1EC7" }, ko: { languageTitle: "\uC5B8\uC5B4 \uC120\uD0DD", languageSummary: "\uBCC0\uACBD \uC989\uC2DC \uC801\uC6A9\uB418\uBA70 \uC774 \uAE30\uAE30\uC5D0 \uC800\uC7A5\uB429\uB2C8\uB2E4.", languageCancel: "\uCDE8\uC18C", homeProjectNameFallback: "Blitz of Pi", homeEnglishNameFallback: "BLITZ OF PI", realtimePvp: "\uC2E4\uC2DC\uAC04 PVP", match3: "6x8 \uB9E4\uCE583", piReward: "Pi \uBCF4\uC0C1", gameTips: "\uD50C\uB808\uC774 \uD301", rankBoard: "\uB7AD\uD0B9", totalPlayers: "\uCD1D \uC720\uC800", totalBattles: "\uB204\uC801 \uB300\uC804", todayBattles: "\uC624\uB298 \uB300\uC804", totalRewards: "\uC9C0\uAE09 \uBCF4\uC0C1", practiceMode: "\uC5F0\uC2B5 \uBAA8\uB4DC", quickBattle: "\uBE60\uB978 \uB300\uC804", quickBattleDesc: "\uBB34\uB8CC \uC785\uC7A5. \uC2E4\uC81C \uC720\uC800 \uB300\uC804\uC740 {cap}; \uBD07 \uB300\uC804\uC740 \uB7AD\uD06C/\uC8FC\uAC04 \uBCF4\uC0C1 \uC81C\uC678.", lowEntryReward: "\uB0AE\uC740 \uCC38\uAC00\uBE44", ticketBattle: "\uC2A4\uBAB0 \uB9AC\uCE58", ticketBattleDesc: "\uC591\uCABD {fee} Pi \uC9C0\uBD88, \uC2B9\uC790 \uC608\uC0C1 {reward} Pi \uD68D\uB4DD, {cap}.", highPrizePool: "\uD070 \uC0C1\uAE08", richBattle: "\uBE45 \uB9AC\uCE58", richBattleDesc: "\uC591\uCABD {fee} Pi \uC9C0\uBD88, \uC2B9\uC790 \uC608\uC0C1 {reward} Pi \uD68D\uB4DD, {rank}\uBD80\uD130 \uC2A4\uD0C0\uB77C\uC774\uD2B8/\uD0B9 \uB3C4\uC804.", rankRoute: "\uB7AD\uD06C \uACBD\uB85C", quickShort: "\uBE60\uB978", ticketShort: "\uC2A4\uBAB0", richShort: "\uBE45", maintenanceTitle: "\uC810\uAC80 \uC548\uB0B4", maintenanceFallback: "\uD50C\uB7AB\uD3FC \uC810\uAC80 \uC911\uC785\uB2C8\uB2E4. \uC77C\uBD80 \uAE30\uB2A5\uC744 \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.", activityFallback: "\uC774\uBCA4\uD2B8", activityDescriptionFallback: "\uB300\uC804\uD558\uACE0 \uB7AD\uD06C\uB97C \uC62C\uB824 Pi \uBCF4\uC0C1\uC744 \uBC1B\uC73C\uC138\uC694.", ruleSwap: "\uC778\uC811 \uBE14\uB85D\uC744 \uBC14\uAFD4 3\uAC1C\uB97C \uB9DE\uCD94\uC138\uC694.", ruleCombo: "\uCF64\uBCF4\uAC00 \uB192\uC744\uC218\uB85D \uC0C1\uB300 \uC555\uBC15\uC774 \uCEE4\uC9D1\uB2C8\uB2E4.", ruleGoal: "90\uCD08 \uC548\uC5D0 \uB354 \uB192\uC740 \uC810\uC218\uB97C \uB0B4\uC138\uC694.", chooseBattleMode: "\uB300\uC804 \uBAA8\uB4DC \uC120\uD0DD", home: "\uD648", battle: "\uB300\uC804", mine: "\uB0B4 \uC815\uBCF4", battleMode: "\uB300\uC804 \uBAA8\uB4DC", chooseModeTitle: "\uB300\uC804 \uBAA8\uB4DC \uC120\uD0DD", quickModeDetail: "\uBB34\uB8CC \uC5F0\uC2B5. \uC2E4\uC81C \uC720\uC800 \uB300\uC804\uC740 {cap}; \uB300\uAE30 \uD6C4 \uBD07 \uB9E4\uCE6D \uAC00\uB2A5\uD558\uBA70 \uB7AD\uD06C/\uC8FC\uAC04 \uC81C\uC678.", ticketModeDetail: "\uC591\uCABD {fee} Pi \uC9C0\uBD88, \uC2B9\uC790 {reward} Pi \uD68D\uB4DD, {cap}, {weekly}", richModeDetail: "\uC591\uCABD {fee} Pi \uC9C0\uBD88, \uC2B9\uC790 {reward} Pi \uD68D\uB4DD, {rank}\uBD80\uD130 \uC2A4\uD0C0\uB77C\uC774\uD2B8/\uD0B9 \uB3C4\uC804, {weekly}", weeklyOn: "\uC8FC\uAC04 \uBCF4\uC0C1 \uBC18\uC601.", weeklyOff: "\uC8FC\uAC04 \uC81C\uC678.", richUnlock: " \xB7 {rank} \uD574\uC81C", balanceAndStars: "\uC794\uC561 {balance} Pi; \uC2B9\uB9AC +{win}\uC131, \uD328\uBC30 -{lose}\uC131, \uBE0C\uB860\uC988 {protection}.", protected: "\uBCF4\uD638", unprotected: "\uBCF4\uD638 \uC5C6\uC74C" }, ja: { languageTitle: "\u8A00\u8A9E\u3092\u9078\u629E", languageSummary: "\u5909\u66F4\u306F\u3059\u3050\u53CD\u6620\u3055\u308C\u3001\u3053\u306E\u7AEF\u672B\u306B\u4FDD\u5B58\u3055\u308C\u307E\u3059\u3002", languageCancel: "\u30AD\u30E3\u30F3\u30BB\u30EB", homeProjectNameFallback: "Blitz of Pi", homeEnglishNameFallback: "BLITZ OF PI", realtimePvp: "\u30EA\u30A2\u30EB\u30BF\u30A4\u30E0PVP", match3: "6x8\u30DE\u30C3\u30C13", piReward: "Pi\u5831\u916C", gameTips: "\u904A\u3073\u65B9", rankBoard: "\u30E9\u30F3\u30AF\u699C", totalPlayers: "\u7DCF\u30D7\u30EC\u30A4\u30E4\u30FC", totalBattles: "\u7D2F\u8A08\u5BFE\u6226", todayBattles: "\u672C\u65E5\u5BFE\u6226", totalRewards: "\u914D\u5E03\u5831\u916C", practiceMode: "\u7DF4\u7FD2\u30E2\u30FC\u30C9", quickBattle: "\u30AF\u30A4\u30C3\u30AF\u5BFE\u6226", quickBattleDesc: "\u7121\u6599\u53C2\u52A0\u3002\u771F\u4EBA\u6226\u306F{cap}\uFF1BBot\u6226\u306F\u30E9\u30F3\u30AF/\u9031\u9593\u5831\u916C\u5BFE\u8C61\u5916\u3002", lowEntryReward: "\u4F4E\u53C2\u52A0\u8CBB", ticketBattle: "\u5C0F\u5BCC\u8C6A\u5834", ticketBattleDesc: "\u53CC\u65B9 {fee} Pi\u3001\u52DD\u8005\u306F\u7D04 {reward} Pi\u3001{cap}\u3002", highPrizePool: "\u9AD8\u8CDE\u91D1", richBattle: "\u5927\u5BCC\u8C6A\u5834", richBattleDesc: "\u53CC\u65B9 {fee} Pi\u3001\u52DD\u8005\u306F\u7D04 {reward} Pi\u3001{rank}\u304B\u3089\u661F\u8000/\u738B\u8005\u3078\u6311\u6226\u3002", rankRoute: "\u30E9\u30F3\u30AF\u9053", quickShort: "\u5FEB\u901F", ticketShort: "\u5C0F\u5BCC\u8C6A", richShort: "\u5927\u5BCC\u8C6A", maintenanceTitle: "\u30E1\u30F3\u30C6\u30CA\u30F3\u30B9", maintenanceFallback: "\u30E1\u30F3\u30C6\u30CA\u30F3\u30B9\u4E2D\u3067\u3059\u3002\u4E00\u90E8\u6A5F\u80FD\u304C\u5229\u7528\u3067\u304D\u306A\u3044\u5834\u5408\u304C\u3042\u308A\u307E\u3059\u3002", activityFallback: "\u30A4\u30D9\u30F3\u30C8", activityDescriptionFallback: "\u5BFE\u6226\u3057\u3066\u30E9\u30F3\u30AF\u3092\u4E0A\u3052\u3001Pi\u5831\u916C\u3092\u7372\u5F97\u3057\u307E\u3057\u3087\u3046\u3002", ruleSwap: "\u96A3\u306E\u30D6\u30ED\u30C3\u30AF\u3092\u5165\u308C\u66FF\u3048\u30013\u3064\u63C3\u3048\u3066\u6D88\u3057\u307E\u3059\u3002", ruleCombo: "\u30B3\u30F3\u30DC\u304C\u9AD8\u3044\u307B\u3069\u76F8\u624B\u3078\u306E\u5727\u529B\u304C\u5897\u3048\u307E\u3059\u3002", ruleGoal: "90\u79D2\u4EE5\u5185\u306B\u3088\u308A\u9AD8\u3044\u30B9\u30B3\u30A2\u3092\u72D9\u3044\u307E\u3059\u3002", chooseBattleMode: "\u5BFE\u6226\u30E2\u30FC\u30C9\u9078\u629E", home: "\u30DB\u30FC\u30E0", battle: "\u5BFE\u6226", mine: "\u30DE\u30A4", battleMode: "\u5BFE\u6226\u30E2\u30FC\u30C9", chooseModeTitle: "\u5BFE\u6226\u30E2\u30FC\u30C9\u9078\u629E", quickModeDetail: "\u7121\u6599\u7DF4\u7FD2\u3002\u771F\u4EBA\u6226\u306F{cap}\uFF1B\u5F85\u6A5F\u5F8C\u306EBot\u6226\u306F\u30E9\u30F3\u30AF/\u9031\u9593\u5BFE\u8C61\u5916\u3002", ticketModeDetail: "\u53CC\u65B9 {fee} Pi\u3001\u52DD\u8005 {reward} Pi\u3001{cap}\u3001{weekly}", richModeDetail: "\u53CC\u65B9 {fee} Pi\u3001\u52DD\u8005 {reward} Pi\u3001{rank}\u304B\u3089\u661F\u8000/\u738B\u8005\u3078\u6311\u6226\u3001{weekly}", weeklyOn: "\u9031\u9593\u5831\u916C\u306B\u53CD\u6620\u3002", weeklyOff: "\u9031\u9593\u5BFE\u8C61\u5916\u3002", richUnlock: " \xB7 {rank}\u3067\u89E3\u653E", balanceAndStars: "\u6B8B\u9AD8 {balance} Pi\uFF1B\u52DD\u5229 +{win} \u661F\u3001\u6557\u5317 -{lose} \u661F\u3001\u30D6\u30ED\u30F3\u30BA\u306F{protection}\u3002", protected: "\u4FDD\u8B77\u3042\u308A", unprotected: "\u4FDD\u8B77\u306A\u3057" } };
+const Z = ["ruby", "amber", "jade", "aqua", "slate", "gold"], wa = 10, ya = 20, ka = 30, a = { user: null, home: null, wallet: null, rankStatus: null, rankLeaderboard: null, piConfig: null, gameConfig: null, inviteInfo: null, engagement: null, battleHistory: [], battleHistoryPage: 1, battleHistoryTotal: 0, battleHistoryTotalPages: 1, battleHistoryFilter: "all", walletLedgerExpanded: false, walletLedgerPage: 1, walletLedgerFilter: "all", screen: "loading", activePanel: "home", selectedMode: "quick_battle", roomNo: "", roomJoinToken: "", room: null, realtimeRoom: null, result: null, selectedTile: null, tileEffect: null, battleMessage: "", networkStatus: "connecting", networkLatencyMs: 0, vsIntroUntil: 0, lastRoomStateAt: 0, lastSwapSentAt: 0, lastSwapSeq: 0, pendingSwapSeq: 0, pendingSwapPositions: [], pendingSwapQueue: [], clientRoomVersion: 0, clientPredictedBoard: null, clientPredictionStats: { sent: 0, ack: 0, reject: 0, rollback: 0, corrected: 0, longFrames: 0 }, lastSwapPositions: [], battleConnectingAt: 0, battleEnteredAt: 0, feedbackEventId: "", feedback: null, battleBursts: [], battleImpacts: [], localBattleEvents: [], localSwapFx: null, canvasTileBursts: [], matchPollTimer: null, matchUiTimer: null, matchStartedAt: 0, matchWaitingSeconds: 0, matchCanCancel: false, matchCancelMessage: "", matchCancelling: false, matchSessionId: 0, matchPollFailedCount: 0, language: gn(), visualEffectMode: bn(), effectiveVisualEffectMode: "balanced", profileOptions: null, withdrawWallets: [] }, St = [{ code: "zh-CN", flag: "\u{1F1E8}\u{1F1F3}", nativeName: "\u4E2D\u6587", displayName: "\u7B80\u4F53\u4E2D\u6587" }, { code: "en", flag: "\u{1F1FA}\u{1F1F8}", nativeName: "English", displayName: "English" }, { code: "vi", flag: "\u{1F1FB}\u{1F1F3}", nativeName: "Ti\u1EBFng Vi\u1EC7t", displayName: "\u8D8A\u5357\u8BED" }, { code: "ko", flag: "\u{1F1F0}\u{1F1F7}", nativeName: "\uD55C\uAD6D\uC5B4", displayName: "\u97E9\u8BED" }, { code: "ja", flag: "\u{1F1EF}\u{1F1F5}", nativeName: "\u65E5\u672C\u8A9E", displayName: "\u65E5\u8BED" }], $t = { "zh-CN": { languageTitle: "\u9009\u62E9\u8BED\u8A00", languageSummary: "\u5207\u6362\u540E\u4F1A\u7ACB\u5373\u751F\u6548\uFF0C\u5E76\u81EA\u52A8\u8BB0\u4F4F\u4F60\u7684\u9009\u62E9\u3002", languageCancel: "\u53D6\u6D88", homeProjectNameFallback: "Pi\u95EA\u7535\u6218", homeEnglishNameFallback: "BLITZ OF PI", realtimePvp: "\u5B9E\u65F6PVP", match3: "6x8\u4E09\u6D88", piReward: "Pi\u5956\u52B1", gameTips: "\u73A9\u6CD5\u6280\u5DE7", rankBoard: "\u6BB5\u4F4D\u699C", totalPlayers: "\u603B\u73A9\u5BB6", totalBattles: "\u7D2F\u8BA1\u5BF9\u5C40", todayBattles: "\u4ECA\u65E5\u5BF9\u5C40", totalRewards: "\u5DF2\u53D1\u5956\u52B1", practiceMode: "\u7EC3\u624B\u6A21\u5F0F", quickBattle: "\u5FEB\u901F\u5F00\u6218", quickBattleDesc: "\u514D\u8D39\u7EC3\u624B\uFF0C\u4E45\u7B49\u8865\u673A\u5668\u4EBA\u3002", lowEntryReward: "\u4F4E\u95E8\u69DB\u5956\u52B1", ticketBattle: "\u5C0F\u5BCC\u8C6A\u573A", ticketBattleDesc: "\u4F4E\u95E8\u69DB\u771F\u4EBA\u573A\uFF0C\u8BA1\u5165\u5468\u699C\u3002", highPrizePool: "\u9AD8\u5956\u6C60\u523A\u6FC0", richBattle: "\u5927\u5BCC\u8C6A\u573A", richBattleDesc: "\u9AD8\u5956\u6C60\u771F\u4EBA\u573A\uFF0C{rank}\u89E3\u9501\u3002", rankRoute: "\u51B2\u6BB5\u8DEF\u7EBF", quickShort: "\u5FEB\u901F", ticketShort: "\u5C0F\u5BCC\u8C6A", richShort: "\u5927\u5BCC\u8C6A", maintenanceTitle: "\u7EF4\u62A4\u516C\u544A", maintenanceFallback: "\u5E73\u53F0\u7EF4\u62A4\u4E2D\uFF0C\u90E8\u5206\u529F\u80FD\u53EF\u80FD\u6682\u4E0D\u53EF\u7528\u3002", activityFallback: "\u6D3B\u52A8\u516C\u544A", activityDescriptionFallback: "\u5B8C\u6210\u5BF9\u5C40\u3001\u63D0\u5347\u6BB5\u4F4D\uFF0C\u8D62\u53D6 Pi \u5956\u52B1\u3002", ruleSwap: "\u73A9\u6CD5\uFF1A\u4EA4\u6362\u76F8\u90BB\u65B9\u5757\uFF0C\u4E09\u8FDE\u5373\u53EF\u6D88\u9664", ruleCombo: "\u6280\u5DE7\uFF1A\u8FDE\u51FB\u8D8A\u9AD8\uFF0C\u5BF9\u624B\u538B\u529B\u8D8A\u5927", ruleGoal: "\u76EE\u6807\uFF1A90\u79D2\u5185\u6253\u51FA\u66F4\u9AD8\u5206\u6570", chooseBattleMode: "\u9009\u62E9\u5BF9\u6218\u6A21\u5F0F", home: "\u9996\u9875", battle: "\u5F00\u6218", mine: "\u6211\u7684", battleMode: "\u5BF9\u6218\u6A21\u5F0F", chooseModeTitle: "\u9009\u62E9\u5BF9\u6218\u6A21\u5F0F", quickModeDetail: "\u514D\u8D39\u7EC3\u624B\uFF0C\u4E45\u7B49\u8865\u673A\u5668\u4EBA\u3002", ticketModeDetail: "\u4F4E\u95E8\u69DB\u771F\u4EBA\u573A\uFF0C{weekly}", richModeDetail: "\u9AD8\u5956\u6C60\u771F\u4EBA\u573A\uFF0C{rank}\u89E3\u9501\u3002", weeklyOn: "\u8BA1\u5165\u5468\u699C\u5956\u52B1\u3002", weeklyOff: "\u4E0D\u8BA1\u5468\u699C\u3002", richUnlock: " \xB7 {rank}\u89E3\u9501", balanceAndStars: "\u4F59\u989D {balance} Pi \xB7 \u80DC+{win}/\u8D1F-{lose} \xB7 \u9752\u94DC{protection}", protected: "\u6709\u4FDD\u62A4", unprotected: "\u65E0\u4FDD\u62A4" }, en: { languageTitle: "Choose Language", languageSummary: "Changes apply instantly and will be remembered on this device.", languageCancel: "Cancel", homeProjectNameFallback: "Blitz of Pi", homeEnglishNameFallback: "BLITZ OF PI", realtimePvp: "Real-time PVP", match3: "6x8 Match-3", piReward: "Pi Rewards", gameTips: "How to Play", rankBoard: "Rank Board", totalPlayers: "Players", totalBattles: "Battles", todayBattles: "Today", totalRewards: "Rewards Paid", practiceMode: "Practice", quickBattle: "Quick Battle", quickBattleDesc: "Free practice. Bots fill long waits.", lowEntryReward: "Low Entry", ticketBattle: "Small Rich Room", ticketBattleDesc: "Low-entry real-player room.", highPrizePool: "High Prize", richBattle: "Big Rich Room", richBattleDesc: "High-prize room. Unlocks at {rank}.", rankRoute: "Rank Path", quickShort: "Quick", ticketShort: "Small", richShort: "Big", maintenanceTitle: "Maintenance", maintenanceFallback: "The platform is under maintenance. Some features may be unavailable.", activityFallback: "Event", activityDescriptionFallback: "Play battles, climb ranks, and win Pi rewards.", ruleSwap: "Swap adjacent tiles and match 3 to clear.", ruleCombo: "Higher combos create more pressure.", ruleGoal: "Score higher within 90 seconds.", chooseBattleMode: "Choose Battle Mode", home: "Home", battle: "Battle", mine: "Mine", battleMode: "Battle Mode", chooseModeTitle: "Choose Battle Mode", quickModeDetail: "Free practice. Bots fill long waits.", ticketModeDetail: "Low-entry real-player room. {weekly}", richModeDetail: "High-prize room. Unlocks at {rank}.", weeklyOn: "Counts for weekly rewards.", weeklyOff: "Not counted weekly.", richUnlock: " \xB7 {rank} unlock", balanceAndStars: "Bal {balance} Pi \xB7 W+{win}/L-{lose} \xB7 Bronze {protection}", protected: "protected", unprotected: "not protected" }, vi: { languageTitle: "Ch\u1ECDn ng\xF4n ng\u1EEF", languageSummary: "Thay \u0111\u1ED5i c\xF3 hi\u1EC7u l\u1EF1c ngay v\xE0 s\u1EBD \u0111\u01B0\u1EE3c ghi nh\u1EDB.", languageCancel: "H\u1EE7y", homeProjectNameFallback: "Blitz of Pi", homeEnglishNameFallback: "BLITZ OF PI", realtimePvp: "PVP th\u1EDDi gian th\u1EF1c", match3: "6x8 gh\xE9p 3", piReward: "Th\u01B0\u1EDFng Pi", gameTips: "M\u1EB9o ch\u01A1i", rankBoard: "B\u1EA3ng h\u1EA1ng", totalPlayers: "Ng\u01B0\u1EDDi ch\u01A1i", totalBattles: "Tr\u1EADn \u0111\xE3 ch\u01A1i", todayBattles: "H\xF4m nay", totalRewards: "Pi \u0111\xE3 th\u01B0\u1EDFng", practiceMode: "Luy\u1EC7n t\u1EADp", quickBattle: "\u0110\u1EA5u nhanh", quickBattleDesc: "Mi\u1EC5n ph\xED. Tr\u1EADn ng\u01B0\u1EDDi th\u1EADt {cap}; tr\u1EADn bot kh\xF4ng t\xEDnh h\u1EA1ng ho\u1EB7c th\u01B0\u1EDFng tu\u1EA7n.", lowEntryReward: "Ph\xED th\u1EA5p", ticketBattle: "Ph\xF2ng Ti\u1EC3u ph\xFA", ticketBattleDesc: "M\u1ED7i b\xEAn tr\u1EA3 {fee} Pi, ng\u01B0\u1EDDi th\u1EAFng d\u1EF1 ki\u1EBFn nh\u1EADn {reward} Pi, {cap}.", highPrizePool: "Gi\u1EA3i l\u1EDBn", richBattle: "Ph\xF2ng \u0110\u1EA1i ph\xFA", richBattleDesc: "M\u1ED7i b\xEAn tr\u1EA3 {fee} Pi, th\u1EAFng d\u1EF1 ki\u1EBFn nh\u1EADn {reward} Pi, {rank} m\u1EDF kh\xF3a Tinh di\u1EC7u/Vua.", rankRoute: "L\u1ED9 tr\xECnh h\u1EA1ng", quickShort: "Nhanh", ticketShort: "Ti\u1EC3u ph\xFA", richShort: "\u0110\u1EA1i ph\xFA", maintenanceTitle: "B\u1EA3o tr\xEC", maintenanceFallback: "N\u1EC1n t\u1EA3ng \u0111ang b\u1EA3o tr\xEC, m\u1ED9t s\u1ED1 t\xEDnh n\u0103ng c\xF3 th\u1EC3 t\u1EA1m d\u1EEBng.", activityFallback: "S\u1EF1 ki\u1EC7n", activityDescriptionFallback: "Thi \u0111\u1EA5u, leo h\u1EA1ng v\xE0 nh\u1EADn th\u01B0\u1EDFng Pi.", ruleSwap: "\u0110\u1ED5i \xF4 li\u1EC1n k\u1EC1, gh\xE9p 3 \u0111\u1EC3 x\xF3a.", ruleCombo: "Combo c\xE0ng cao, \xE1p l\u1EF1c c\xE0ng l\u1EDBn.", ruleGoal: "Ghi \u0111i\u1EC3m cao h\u01A1n trong 90 gi\xE2y.", chooseBattleMode: "Ch\u1ECDn ch\u1EBF \u0111\u1ED9", home: "Trang ch\u1EE7", battle: "\u0110\u1EA5u", mine: "C\u1EE7a t\xF4i", battleMode: "Ch\u1EBF \u0111\u1ED9 \u0111\u1EA5u", chooseModeTitle: "Ch\u1ECDn ch\u1EBF \u0111\u1ED9", quickModeDetail: "Luy\u1EC7n mi\u1EC5n ph\xED. Tr\u1EADn ng\u01B0\u1EDDi th\u1EADt {cap}; ch\u1EDD l\xE2u c\xF3 th\u1EC3 g\u1EB7p bot v\xE0 kh\xF4ng t\xEDnh h\u1EA1ng/tu\u1EA7n.", ticketModeDetail: "M\u1ED7i b\xEAn tr\u1EA3 {fee} Pi, th\u1EAFng nh\u1EADn {reward} Pi, {cap}, {weekly}", richModeDetail: "M\u1ED7i b\xEAn tr\u1EA3 {fee} Pi, th\u1EAFng nh\u1EADn {reward} Pi, {rank} m\u1EDF kh\xF3a Tinh di\u1EC7u/Vua, {weekly}", weeklyOn: "T\xEDnh th\u01B0\u1EDFng tu\u1EA7n.", weeklyOff: "Kh\xF4ng t\xEDnh tu\u1EA7n.", richUnlock: " \xB7 m\u1EDF \u1EDF {rank}", balanceAndStars: "S\u1ED1 d\u01B0 {balance} Pi; th\u1EAFng +{win} sao, thua -{lose} sao, \u0110\u1ED3ng {protection}.", protected: "\u0111\u01B0\u1EE3c b\u1EA3o v\u1EC7", unprotected: "kh\xF4ng b\u1EA3o v\u1EC7" }, ko: { languageTitle: "\uC5B8\uC5B4 \uC120\uD0DD", languageSummary: "\uBCC0\uACBD \uC989\uC2DC \uC801\uC6A9\uB418\uBA70 \uC774 \uAE30\uAE30\uC5D0 \uC800\uC7A5\uB429\uB2C8\uB2E4.", languageCancel: "\uCDE8\uC18C", homeProjectNameFallback: "Blitz of Pi", homeEnglishNameFallback: "BLITZ OF PI", realtimePvp: "\uC2E4\uC2DC\uAC04 PVP", match3: "6x8 \uB9E4\uCE583", piReward: "Pi \uBCF4\uC0C1", gameTips: "\uD50C\uB808\uC774 \uD301", rankBoard: "\uB7AD\uD0B9", totalPlayers: "\uCD1D \uC720\uC800", totalBattles: "\uB204\uC801 \uB300\uC804", todayBattles: "\uC624\uB298 \uB300\uC804", totalRewards: "\uC9C0\uAE09 \uBCF4\uC0C1", practiceMode: "\uC5F0\uC2B5 \uBAA8\uB4DC", quickBattle: "\uBE60\uB978 \uB300\uC804", quickBattleDesc: "\uBB34\uB8CC \uC785\uC7A5. \uC2E4\uC81C \uC720\uC800 \uB300\uC804\uC740 {cap}; \uBD07 \uB300\uC804\uC740 \uB7AD\uD06C/\uC8FC\uAC04 \uBCF4\uC0C1 \uC81C\uC678.", lowEntryReward: "\uB0AE\uC740 \uCC38\uAC00\uBE44", ticketBattle: "\uC2A4\uBAB0 \uB9AC\uCE58", ticketBattleDesc: "\uC591\uCABD {fee} Pi \uC9C0\uBD88, \uC2B9\uC790 \uC608\uC0C1 {reward} Pi \uD68D\uB4DD, {cap}.", highPrizePool: "\uD070 \uC0C1\uAE08", richBattle: "\uBE45 \uB9AC\uCE58", richBattleDesc: "\uC591\uCABD {fee} Pi \uC9C0\uBD88, \uC2B9\uC790 \uC608\uC0C1 {reward} Pi \uD68D\uB4DD, {rank}\uBD80\uD130 \uC2A4\uD0C0\uB77C\uC774\uD2B8/\uD0B9 \uB3C4\uC804.", rankRoute: "\uB7AD\uD06C \uACBD\uB85C", quickShort: "\uBE60\uB978", ticketShort: "\uC2A4\uBAB0", richShort: "\uBE45", maintenanceTitle: "\uC810\uAC80 \uC548\uB0B4", maintenanceFallback: "\uD50C\uB7AB\uD3FC \uC810\uAC80 \uC911\uC785\uB2C8\uB2E4. \uC77C\uBD80 \uAE30\uB2A5\uC744 \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.", activityFallback: "\uC774\uBCA4\uD2B8", activityDescriptionFallback: "\uB300\uC804\uD558\uACE0 \uB7AD\uD06C\uB97C \uC62C\uB824 Pi \uBCF4\uC0C1\uC744 \uBC1B\uC73C\uC138\uC694.", ruleSwap: "\uC778\uC811 \uBE14\uB85D\uC744 \uBC14\uAFD4 3\uAC1C\uB97C \uB9DE\uCD94\uC138\uC694.", ruleCombo: "\uCF64\uBCF4\uAC00 \uB192\uC744\uC218\uB85D \uC0C1\uB300 \uC555\uBC15\uC774 \uCEE4\uC9D1\uB2C8\uB2E4.", ruleGoal: "90\uCD08 \uC548\uC5D0 \uB354 \uB192\uC740 \uC810\uC218\uB97C \uB0B4\uC138\uC694.", chooseBattleMode: "\uB300\uC804 \uBAA8\uB4DC \uC120\uD0DD", home: "\uD648", battle: "\uB300\uC804", mine: "\uB0B4 \uC815\uBCF4", battleMode: "\uB300\uC804 \uBAA8\uB4DC", chooseModeTitle: "\uB300\uC804 \uBAA8\uB4DC \uC120\uD0BD", quickModeDetail: "\uBB34\uB8CC \uC5F0\uC2B5. \uC2E4\uC81C \uC720\uC800 \uB300\uC804\uC740 {cap}; \uB300\uAE30 \uD6C4 \uBD07 \uB9E4\uCE6D \uAC00\uB2A5\uD558\uBA70 \uB7AD\uD06C/\uC8FC\uAC04 \uC81C\uC678.", ticketModeDetail: "\uC591\uCABD {fee} Pi \uC9C0\uBD88, \uC2B9\uC790 {reward} Pi \uD68D\uB4DD, {cap}, {weekly}", richModeDetail: "\uC591\uCABD {fee} Pi \uC9C0\uBD88, \uC2B9\uC790 {reward} Pi \uD68D\uB4DD, {rank}\uBD80\uD130 \uC2A4\uD0C0\uB77C\uC774\uD2B8/\uD0B9 \uB3C4\uC804, {weekly}", weeklyOn: "\uC8FC\uAC04 \uBCF4\uC0C1 \uBC18\uC601.", weeklyOff: "\uC8FC\uAC04 \uC81C\uC678.", richUnlock: " \xB7 {rank} \uD574\uC81C", balanceAndStars: "\uC794\uC561 {balance} Pi; \uC2B9\uB9AC +{win}\uC131, \uD328\uBC30 -{lose}\uC131, \uBE0C\uB860\uC988 {protection}.", protected: "\uBCF4\uD638", unprotected: "\uBCF4\uD638 \uC5C6\uC74C" }, ja: { languageTitle: "\u8A00\u8A9E\u3092\u9078\u629E", languageSummary: "\u5909\u66F4\u306F\u3059\u3050\u53CD\u6620\u3055\u308C\u3001\u3053\u306E\u7AEF\u672B\u306B\u4FDD\u5B58\u3055\u308C\u307E\u3059\u3002", languageCancel: "\u30AD\u30E3\u30F3\u30BB\u30EB", homeProjectNameFallback: "Blitz of Pi", homeEnglishNameFallback: "BLITZ OF PI", realtimePvp: "\u30EA\u30A2\u30EB\u30BF\u30A4\u30E0PVP", match3: "6x8\u30DE\u30C3\u30C13", piReward: "Pi\u5831\u916C", gameTips: "\u904A\u3073\u65B9", rankBoard: "\u30E9\u30F3\u30AF\u699C", totalPlayers: "\u7DCF\u30D7\u30EC\u30A4\u30E4\u30FC", totalBattles: "\u7D2F\u8A08\u5BFE\u6226", todayBattles: "\u672C\u65E5\u5BFE\u6226", totalRewards: "\u914D\u5E03\u5831\u916C", practiceMode: "\u7DF4\u7FD2\u30E2\u30FC\u30C9", quickBattle: "\u30AF\u30A4\u30C3\u30AF\u5BFE\u6226", quickBattleDesc: "\u7121\u6599\u53C2\u52A0\u3002\u771F\u4EBA\u6226\u306F{cap}\uFF1BBot\u6226\u306F\u30E9\u30F3\u30AF/\u9031\u9593\u5831\u916C\u5BFE\u8C61\u5916\u3002", lowEntryReward: "\u4F4E\u53C2\u52A0\u8CBB", ticketBattle: "\u5C0F\u5BCC\u8C6A\u5834", ticketBattleDesc: "\u53CC\u65B9 {fee} Pi\u3001\u52DD\u8005\u306F\u7D04 {reward} Pi\u3001{cap}\u3002", highPrizePool: "\u9AD8\u8CDE\u91D1", richBattle: "\u5927\u5BCC\u8C6A\u5834", richBattleDesc: "\u53CC\u65B9 {fee} Pi\u3001\u52DD\u8005\u306F\u7D04 {reward} Pi\u3001{rank}\u304B\u3089\u661F\u8000/\u738B\u8005\u3078\u6311\u6226\u3002", rankRoute: "\u30E9\u30F3\u30AF\u9053", quickShort: "\u5FEB\u901F", ticketShort: "\u5C0F\u5BCC\u8C6A", richShort: "\u5927\u5BCC\u8C6A", maintenanceTitle: "\u30E1\u30F3\u30C6\u30CA\u30F3\u30B9", maintenanceFallback: "\u30E1\u30F3\u30C6\u30CA\u30F3\u30B9\u4E2D\u3067\u3059\u3002\u4E00\u90E8\u6A5F\u80FD\u304C\u5229\u7528\u3067\u304D\u306A\u3044\u5834\u5408\u304C\u3042\u308A\u307E\u3059\u3002", activityFallback: "\u30A4\u30D9\u30F3\u30C8", activityDescriptionFallback: "\u5BFE\u6226\u3057\u3066\u30E9\u30F3\u30AF\u3092\u4E0A\u3052\u3001Pi\u5831\u916C\u3092\u7372\u5F97\u3057\u307E\u3057\u3087\u3046\u3002", ruleSwap: "\u96A3\u306E\u30D6\u30ED\u30C3\u30AF\u3092\u5165\u308C\u66FF\u3048\u30013\u3064\u63C3\u3048\u3066\u6D88\u3057\u307E\u3059\u3002", ruleCombo: "\u30B3\u30F3\u30DC\u304C\u9AD8\u3044\u307B\u3069\u76F8\u624B\u3078\u306E\u5727\u529B\u304C\u5897\u3048\u307E\u3059\u3002", ruleGoal: "90\u79D2\u4EE5\u5185\u306B\u3088\u308A\u9AD8\u3044\u30B9\u30B3\u30A2\u3092\u72D9\u3044\u307E\u3059\u3002", chooseBattleMode: "\u5BFE\u6226\u30E2\u30FC\u30C9\u9078\u629E", home: "\u30DB\u30FC\u30E0", battle: "\u5BFE\u6226", mine: "\u30DE\u30A4", battleMode: "\u5BFE\u6226\u30E2\u30FC\u30C9", chooseModeTitle: "\u5BFE\u6226\u30E2\u30FC\u30C9\u9078\u629E", quickModeDetail: "\u7121\u6599\u7DF4\u7FD2\u3002\u771F\u4EBA\u6226\u306F{cap}\uFF1B\u5F85\u6A5F\u5F8C\u306EBot\u6226\u306F\u30E9\u30F3\u30AF/\u9031\u9593\u5BFE\u8C61\u5916\u3002", ticketModeDetail: "\u53CC\u65B9 {fee} Pi\u3001\u52DD\u8005 {reward} Pi\u3001{cap}\u3001{weekly}", richModeDetail: "\u53CC\u65B9 {fee} Pi\u3001\u52DD\u8005 {reward} Pi\u3001{rank}\u304B\u3089\u661F\u8000/\u738B\u8005\u3078\u6311\u6226\u3001{weekly}", weeklyOn: "\u9031\u9593\u5831\u916C\u306B\u53CD\u6620\u3002", weeklyOff: "\u9031\u9593\u5BFE\u8C61\u5916\u3002", richUnlock: " \xB7 {rank}\u3067\u89E3\u653E", balanceAndStars: "\u6B8B\u9AD8 {balance} Pi\uFF1B\u52DD\u5229 +{win} \u661F\u3001\u6557\u5317 -{lose} \u661F\u3001\u30D6\u30ED\u30F3\u30BA\u306F{protection}\u3002", protected: "\u4FDD\u8B77\u3042\u308A", unprotected: "\u4FDD\u8B77\u306A\u3057" } };
 document.documentElement.lang = a.language;
 const DEFAULT_ANIMATION_DURATIONS = {
   localBurstSeconds: 0.56,
@@ -87,33 +87,16 @@ function ve() {
 function extremeRealtimeConfig() {
   const e = a.gameConfig?.extremeRealtime || {};
   return {
-    enabled: Boolean(e.enabled),
-    rollbackToLegacy: Boolean(e.rollbackToLegacy),
-    enabledModes: Array.isArray(e.enabledModes) && e.enabledModes.length ? e.enabledModes : ["quick_battle", "points_battle", "poc_battle", "pi_battle"],
-    grayPercent: Math.max(0, Math.min(100, Number(e.grayPercent || 0))),
-    grayUserPiUids: Array.isArray(e.grayUserPiUids) ? e.grayUserPiUids.map((t) => String(t || "").trim()).filter(Boolean) : [],
-    grayUserPiUsernames: Array.isArray(e.grayUserPiUsernames) ? e.grayUserPiUsernames.map((t) => String(t || "").trim().toLowerCase()).filter(Boolean) : [],
+    enabled: true,
+    enabledModes: ["quick_battle", "points_battle", "poc_battle", "pi_battle"],
     maxPendingSwaps: Math.max(1, Math.min(6, Number(e.maxPendingSwaps || 3))),
     snapshotIntervalMs: Math.max(500, Math.min(1e4, Number(e.snapshotIntervalMs || 2e3))),
     swapMinIntervalMs: Math.max(60, Math.min(500, Number(e.swapMinIntervalMs || 120))),
     metricsSampleRate: Math.max(0, Math.min(1, Number(e.metricsSampleRate ?? 0.05)))
   };
 }
-function clientHashPercent(e = "") {
-  let t = 0;
-  const r = String(e || "");
-  for (let o = 0; o < r.length; o += 1) t = (t * 31 + r.charCodeAt(o)) >>> 0;
-  return t % 100;
-}
 function isExtremeRealtimeActive(e = a.realtimeRoom) {
-  const t = extremeRealtimeConfig(), r = a.user;
-  if (!e || !r || !t.enabled || t.rollbackToLegacy || !t.enabledModes.includes(e.mode)) return false;
-  const o = String(r.uid || "").trim(), s = String(r.piUsername || r.pi_username || "").trim().toLowerCase();
-  if (o && t.grayUserPiUids.includes(o)) return true;
-  if (s && t.grayUserPiUsernames.includes(s)) return true;
-  if (t.grayPercent >= 100) return true;
-  if (t.grayPercent <= 0) return false;
-  return clientHashPercent(`${e.roomNo}:${o}`) < t.grayPercent;
+  return Boolean(e && a.user);
 }
 function resetPredictionState() {
   a.pendingSwapSeq = 0, a.pendingSwapPositions = [], a.pendingSwapQueue = [], a.clientPredictedBoard = null, a.clientRoomVersion = Number(a.realtimeRoom?.version || 0);
@@ -292,13 +275,15 @@ function lt(e) {
   }
   return true;
 }
-let Nt = "", j = null, V = null, Be = null, ee = null, y = null, x = null, k = null, Ne = null, Yt = 0, Et = 0, Lt = "", xt = 0, Ee = "", te = 0, pe = -1, Xe = "", le = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPerfLockedLow = false, clientPerfFrameCount = 0, clientPerfLongFrameCount = 0, clientPerfSampleStartedAt = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0;
+let Nt = "", j = null, V = null, Be = null, ee = null, y = null, x = null, k = null, Ne = null, Yt = 0, Et = 0, Lt = "", xt = 0, Ee = "", te = 0, pe = -1, Xe = "", le = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPerfLockedLow = false, clientPerfFrameCount = 0, clientPerfLongFrameCount = 0, clientPerfSampleStartedAt = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0, canvasFxFrame = null;
+a.canvasSpecialFx = [];
 let cleanupBoardInputListeners = null;
 const Sa = /* @__PURE__ */ new Map();
 let z = null, W = null, At = 0, q = null;
 const $n = 8e3, Pn = 3, Cn = 9e3, Ha = 1200, Tn = 1800, Ie = 8, Rn = 5e3, Mn = 6, Xt = 8e3, fe = 3, Bn = 16, Nn = 8, $a = 30, $e = 8, Pe = 6, Pa = 0.18, En = 1200;
 function we() {
   Be && (window.clearInterval(Be), Be = null), Ee = "", te = 0, pe = -1;
+  canvasFxFrame && (window.cancelAnimationFrame(canvasFxFrame), canvasFxFrame = null), a.canvasSpecialFx = [], a.canvasTileBursts = [];
 }
 function cleanupBoardInputs() {
   try {
@@ -313,7 +298,7 @@ function cleanupBoardInputs() {
   Ne = null;
 }
 function ce() {
-  be && (window.cancelAnimationFrame(be), be = null), ee && (window.clearTimeout(ee), ee = null), le && (window.cancelAnimationFrame(le), le = null), j && (window.cancelAnimationFrame(j), j = null), V && (window.cancelAnimationFrame(V), V = null), z = null, W = null, At = 0, q = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPerfLockedLow = false, clientPerfFrameCount = 0, clientPerfLongFrameCount = 0, clientPerfSampleStartedAt = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0, document.documentElement.classList.remove("low-performance"), we(), Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, Se = null, me.clear(), Nt = "", y = null, Et = 0, Lt = "", xt = 0, a.pendingSwapSeq = 0, a.pendingSwapPositions = [], cleanupBoardInputs(), x = null, k = null, Yt = 0, a.battleBursts = [], a.battleImpacts = [], a.localBattleEvents = [], a.localSwapFx = null;
+  be && (window.cancelAnimationFrame(be), be = null), ee && (window.clearTimeout(ee), ee = null), le && (window.cancelAnimationFrame(le), le = null), j && (window.cancelAnimationFrame(j), j = null), V && (window.cancelAnimationFrame(V), V = null), z = null, W = null, At = 0, q = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPerfLockedLow = false, clientPerfFrameCount = 0, clientPerfLongFrameCount = 0, clientPerfSampleStartedAt = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0, document.documentElement.classList.remove("low-performance"), we(), Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, Se = null, me.clear(), Nt = "", y = null, Et = 0, Lt = "", xt = 0, a.pendingSwapSeq = 0, a.pendingSwapPositions = [], cleanupBoardInputs(), x = null, k = null, Yt = 0, a.battleBursts = [], a.battleImpacts = [], a.localBattleEvents = [], a.localSwapFx = null, a.canvasSpecialFx = [];
 }
 function ge() {
   ze && (window.clearTimeout(ze), ze = null);
@@ -600,18 +585,19 @@ function clientFindMatches(e) {
   }
   return t.runs = r, t;
 }
-function clientAddSpecialTargets(e, t) {
-  const r = /* @__PURE__ */ new Set();
-  for (const o of t) {
-    const [s, l] = o.split(":").map(Number), c = e[s]?.[l];
-    if (!clientIsSpecialTile(c)) continue;
-    const d = clientSpecialKind(c);
-    if (d === "horizontal") for (let u = 0; u < Pe; u += 1) r.add(`${s}:${u}`);
-    else if (d === "vertical") for (let u = 0; u < e.length; u += 1) r.add(`${u}:${l}`);
-    else if (d === "bomb") for (let u = s - 1; u <= s + 1; u += 1) for (let h = l - 1; h <= l + 1; h += 1) u >= 0 && u < e.length && h >= 0 && h < Pe && r.add(`${u}:${h}`);
+function clientAddSpecialTargets(e, t, r = null) {
+  const o = /* @__PURE__ */ new Set();
+  for (const s of t) {
+    const [l, c] = s.split(":").map(Number), d = e[l]?.[c];
+    if (!clientIsSpecialTile(d)) continue;
+    const u = clientSpecialKind(d);
+    r && !r.some((h) => h.kind === u && h.position?.row === l && h.position?.col === c) && r.push({ kind: u, position: { row: l, col: c }, tile: d });
+    if (u === "horizontal") for (let h = 0; h < Pe; h += 1) o.add(`${l}:${h}`);
+    else if (u === "vertical") for (let h = 0; h < e.length; h += 1) o.add(`${h}:${c}`);
+    else if (u === "bomb") for (let h = l - 1; h <= l + 1; h += 1) for (let p = c - 1; p <= c + 1; p += 1) h >= 0 && h < e.length && p >= 0 && p < Pe && o.add(`${h}:${p}`);
   }
-  for (const o of r) t.add(o);
-  return r.size;
+  for (const s of o) t.add(s);
+  return o.size;
 }
 function clientSpecialCreation(e, t) {
   const r = (Array.isArray(e.runs) ? e.runs : []).filter((o) => o.length >= 4).sort((o, s) => s.length - o.length);
@@ -620,12 +606,12 @@ function clientSpecialCreation(e, t) {
   const l = o.length >= 5 ? "bomb" : o.orientation === "horizontal" ? "horizontal" : "vertical";
   return { kind: l, position: s || o.cells[Math.floor(o.cells.length / 2)], tile: clientMakeSpecialTile(o.color, l) };
 }
-function clientDirectSpecialMatches(e, t, r) {
-  const o = /* @__PURE__ */ new Set();
-  [t, r].forEach((s) => {
-    clientIsInside(e, s) && clientIsSpecialTile(e[s.row][s.col]) && o.add(`${s.row}:${s.col}`);
+function clientDirectSpecialMatches(e, t, r, o = null) {
+  const s = /* @__PURE__ */ new Set();
+  [t, r].forEach((l) => {
+    clientIsInside(e, l) && clientIsSpecialTile(e[l.row][l.col]) && s.add(`${l.row}:${l.col}`);
   });
-  return o.size && clientAddSpecialTargets(e, o), o;
+  return s.size && clientAddSpecialTargets(e, s, o), s;
 }
 function clientCollapseBoard(e, t) {
   for (let r = 0; r < Pe; r += 1) {
@@ -666,12 +652,13 @@ function clientRefillBoardIfStuck(e, t) {
   for (let o = 0; o < $e; o += 1) for (let s = 0; s < Pe; s += 1) e[o][s] = r[o][s];
 }
 function clientResolveBoard(e, t, r = null) {
-  let o = 0, s = 0, l = 0, c = 0, d = 0, u = r ? clientDirectSpecialMatches(e, r.from, r.to) : /* @__PURE__ */ new Set();
+  const n = [];
+  let o = 0, s = 0, l = 0, c = 0, d = 0, u = r ? clientDirectSpecialMatches(e, r.from, r.to, n) : /* @__PURE__ */ new Set();
   for (; o < 4; ) {
     const h = u.size > 0 ? u : clientFindMatches(e);
     if (u = /* @__PURE__ */ new Set(), h.size === 0) break;
     o += 1;
-    const p = clientAddSpecialTargets(e, h);
+    const p = clientAddSpecialTargets(e, h, n);
     c += p > 0 ? 1 : 0;
     const f = clientSpecialCreation(h, o === 1 ? r : null), m = Math.min(h.size, 18), g = Math.min(m, Math.max(0, 18 - s));
     s += g, l += g * 10 + Math.min(o - 1, 3) * 8 + c * 8;
@@ -683,7 +670,7 @@ function clientResolveBoard(e, t, r = null) {
     clientCollapseBoard(e, t);
     if (s >= 18) break;
   }
-  return { chain: o, totalCleared: s, scoreGain: l, specialTriggered: c, specialCreated: d };
+  return { chain: o, totalCleared: s, scoreGain: l, specialTriggered: c, specialCreated: d, specialFx: n };
 }
 function clientSettleRemainingMatches(e, t) {
   let r = 0;
@@ -712,7 +699,7 @@ function kaPreviewSwap(e, t, r) {
   const l = clientCreateRandom(`${a.realtimeRoom?.roomNo || ""}:${a.clientRoomVersion || a.realtimeRoom?.version || 0}:${r}`), c = clientResolveBoard(s, l, { from: e, to: t });
   if (!c.totalCleared) return null;
   clientSettleRemainingMatches(s, l), clientRefillBoardIfStuck(s, a.realtimeRoom);
-  const d = Math.min(4, Math.max(0, c.chain - 1) + Math.floor(Math.min(c.totalCleared, 16) / 8) + Math.min(1, Number(c.specialTriggered || 0))), u = { uid: a.user?.uid || "local", type: "local_preview", seq: r, cleared: c.totalCleared, chain: c.chain, scoreGain: c.scoreGain, attack: d, specialTriggered: Number(c.specialTriggered || 0), specialCreated: Number(c.specialCreated || 0), at: Date.now(), localPending: true, board: s };
+  const d = Math.min(4, Math.max(0, c.chain - 1) + Math.floor(Math.min(c.totalCleared, 16) / 8) + Math.min(1, Number(c.specialTriggered || 0))), u = { uid: a.user?.uid || "local", type: "local_preview", seq: r, cleared: c.totalCleared, chain: c.chain, scoreGain: c.scoreGain, attack: d, specialTriggered: Number(c.specialTriggered || 0), specialCreated: Number(c.specialCreated || 0), specialFx: c.specialFx || [], at: Date.now(), localPending: true, board: s };
   return u.previewSemantic = yaPreviewSemantic(u), u.previewTone = clientPreviewTone(u), u.previewText = waPreviewText(u), u;
 }
 function xaPreviewSwap(e, t, r) {
@@ -833,8 +820,8 @@ function modeAssetMeta(e) {
     points_battle: { configKey: "pointsBattle", assetType: "POINTS", name: a.language === "zh-CN" ? "\u5C0F\u5BCC\u8C6A" : "Small Rich", icon: "ticket", detailKey: "ticketModeDetail" },
     poc_battle: { configKey: "pocBattle", assetType: "POC", name: a.language === "zh-CN" ? "\u5927\u5BCC\u8C6A" : "Big Rich", icon: "rich", detailKey: "ticketModeDetail" },
     pi_battle: { configKey: "piBattle", assetType: "PI", name: a.language === "zh-CN" ? "\u8D85\u7EA7\u5BCC\u8C6A" : "Super Rich", icon: "rich", detailKey: "richModeDetail" },
-    ticket_battle: { configKey: "ticketBattle", assetType: "PI", name: n("ticketBattle"), icon: "ticket", detailKey: "ticketModeDetail" },
-    rich_battle: { configKey: "richBattle", assetType: "PI", name: n("richBattle"), icon: "rich", detailKey: "richModeDetail" }
+    ticket_battle: { configKey: "piBattle", assetType: "PI", name: a.language === "zh-CN" ? "\u8D85\u7EA7\u5BCC\u8C6A" : "Super Rich", icon: "rich", detailKey: "richModeDetail" },
+    rich_battle: { configKey: "piBattle", assetType: "PI", name: a.language === "zh-CN" ? "\u8D85\u7EA7\u5BCC\u8C6A" : "Super Rich", icon: "rich", detailKey: "richModeDetail" }
   };
   return t[e] || t.quick_battle;
 }
@@ -1060,15 +1047,15 @@ function Dt(e) {
 }
 function lr(e) {
   const t = F();
-  return e === "quick_battle" ? `\u6700\u9AD8${We(t.quickBattleMaxRankKey || "silver")}` : e === "points_battle" || e === "poc_battle" || e === "ticket_battle" ? `\u6700\u9AD8${We(t.ticketBattleMaxRankKey || "platinum")}` : `\u51B2${We("starlight")}/${We("king")}`;
+  return e === "quick_battle" ? `\u6700\u9AD8${We(t.quickBattleMaxRankKey || "silver")}` : e === "points_battle" || e === "poc_battle" ? `\u6700\u9AD8${We(t.ticketBattleMaxRankKey || "platinum")}` : `\u51B2${We("starlight")}/${We("king")}`;
 }
 function Le(e) {
   if (a.language === "zh-CN") return lr(e);
-  const t = F(), r = e === "quick_battle" ? B(t.quickBattleMaxRankKey || "silver") : e === "points_battle" || e === "poc_battle" || e === "ticket_battle" ? B(t.ticketBattleMaxRankKey || "platinum") : `${B("starlight")}/${B("king")}`;
-  return e === "rich_battle" || e === "pi_battle" ? `push ${r}` : `up to ${r}`;
+  const t = F(), r = e === "quick_battle" ? B(t.quickBattleMaxRankKey || "silver") : e === "points_battle" || e === "poc_battle" ? B(t.ticketBattleMaxRankKey || "platinum") : `${B("starlight")}/${B("king")}`;
+  return e === "pi_battle" || e === "rich_battle" || e === "ticket_battle" ? `push ${r}` : `up to ${r}`;
 }
 function cr(e) {
-  const t = F(), r = e === "quick_battle" ? t.quickBattleMaxRankKey || "silver" : e === "points_battle" || e === "poc_battle" || e === "ticket_battle" ? t.ticketBattleMaxRankKey || "platinum" : "";
+  const t = F(), r = e === "quick_battle" ? t.quickBattleMaxRankKey || "silver" : e === "points_battle" || e === "poc_battle" ? t.ticketBattleMaxRankKey || "platinum" : "";
   if (!r) return false;
   const o = It(r), s = It(Ae(a.user?.rankName)), l = a.rankStatus;
   return s > o || s === o && Number(l?.stars || 0) >= Number(l?.starsPerRank || 5);
@@ -2852,30 +2839,101 @@ function ei(e, t, r) {
   }
   return e.finishReason === "timeout" ? n("timeoutFinish") : e.finishReason === "ready_timeout" ? n("readyTimeoutFinish") : n("settledFinish");
 }
-function Ut(e) {
-  return (e.board || []).map((t, r) => t.map((o, s) => {
-    const l = na(o);
-    return `<button
-            type="button"
-            class="${tn(o, r, s)}"
-            style="${In(l)}"
-            data-row="${r}"
-            data-col="${s}"
-            draggable="false"
-            aria-label="row ${r + 1}, column ${s + 1}"
-          >${ti(l.label)}</button>`;
-  }).join("")).join("");
-}
-function tn(e, t, r) {
-  const o = a.selectedTile?.row === t && a.selectedTile?.col === r, s = na(e), l = zn(t, r), c = jn(t, r), d = Un(t, r), u = Jn(t, r), h = Kn(t, r);
-  return `tile ${s.colorClass}${s.specialClass}${aa() && s.imageUrl ? " tile-has-image" : ""}${o ? " selected" : ""}${d}${l}${c}${u}${h}`;
-}
 function getBoardGeometry(e) {
   if (!e) return null;
   const t = e.getBoundingClientRect();
   if (t.width <= 0 || t.height <= 0) return null;
   const r = window.getComputedStyle(e), o = Number.parseFloat(r.paddingLeft) || 0, s = Number.parseFloat(r.paddingRight) || o, l = Number.parseFloat(r.paddingTop) || o, c = Number.parseFloat(r.paddingBottom) || l, d = Number.parseFloat(r.gap) || 0, u = Math.max(1, t.width - o - s), h = Math.max(1, t.height - l - c), p = Math.max(1, (u - d * (Pe - 1)) / Pe), f = Math.max(1, (h - d * ($e - 1)) / $e);
   return { rect: t, paddingLeft: o, paddingTop: l, gap: d, innerWidth: u, innerHeight: h, tileWidth: p, tileHeight: f, startX: t.left + o, startY: t.top + l };
+}
+function canvasCellRect(e, t, r) {
+  const o = e.paddingLeft + r * (e.tileWidth + e.gap), s = e.paddingTop + t * (e.tileHeight + e.gap);
+  return { x: o, y: s, w: Math.max(2, e.tileWidth - 1), h: Math.max(2, e.tileHeight - 1), cx: o + e.tileWidth / 2, cy: s + e.tileHeight / 2 };
+}
+function canvasRoundRect(e, t, r, o, s, l) {
+  e.beginPath(), e.roundRect ? e.roundRect(t, r, o, s, l) : (e.moveTo(t + l, r), e.lineTo(t + o - l, r), e.quadraticCurveTo(t + o, r, t + o, r + l), e.lineTo(t + o, r + s - l), e.quadraticCurveTo(t + o, r + s, t + o - l, r + s), e.lineTo(t + l, r + s), e.quadraticCurveTo(t, r + s, t, r + s - l), e.lineTo(t, r + l), e.quadraticCurveTo(t, r, t + l, r));
+}
+function canvasHexToRgba(e, t = 1) {
+  const r = String(e || "").trim();
+  if (!/^#[0-9a-f]{6}$/i.test(r)) return `rgba(255, 226, 120, ${t})`;
+  const o = Number.parseInt(r.slice(1, 3), 16), s = Number.parseInt(r.slice(3, 5), 16), l = Number.parseInt(r.slice(5, 7), 16);
+  return `rgba(${o}, ${s}, ${l}, ${t})`;
+}
+function canvasHasActiveFx(e = Date.now()) {
+  return !!(a.tileEffect && e - a.tileEffect.at < 780 || a.localSwapFx && e - a.localSwapFx.at < animationMs("localSwapSeconds", 80) || x && e - x.at < 260 || k && e - k.at < 430 || (a.canvasTileBursts || []).some((t) => e - t.at < t.durationMs) || (a.canvasSpecialFx || []).some((t) => e - t.at < t.durationMs));
+}
+function renderCurrentCanvasBoard() {
+  const e = oe(), t = Zr()?.self;
+  e && t && renderCanvasBoard(e, t);
+}
+function scheduleCanvasFxFrame() {
+  if (canvasFxFrame || !canvasHasActiveFx()) return;
+  canvasFxFrame = window.requestAnimationFrame(() => {
+    canvasFxFrame = null, renderCurrentCanvasBoard(), canvasHasActiveFx() && scheduleCanvasFxFrame();
+  });
+}
+function canvasEffectForCell(e, t, r, o) {
+  const s = { scale: 1, dx: 0, dy: 0, glow: 0, tone: "normal" };
+  if (a.tileEffect && o - a.tileEffect.at < 760 && a.tileEffect.positions?.some((l) => l.row === e && l.col === t)) {
+    const l = Math.min(1, (o - a.tileEffect.at) / 760);
+    s.tone = a.tileEffect.type, s.glow = 1 - l, a.tileEffect.type === "success" ? s.scale += Math.sin(l * Math.PI) * 0.075 : s.dx += Math.sin(l * Math.PI * 6) * 4 * (1 - l);
+  }
+  return s;
+}
+function drawCanvasSpecial(e, t, r, o) {
+  const s = Math.min(o.w, o.h), l = o.cx, c = o.cy;
+  e.save(), e.lineCap = "round", e.lineJoin = "round";
+  if (t >= ka) {
+    const d = s * 0.2;
+    e.shadowColor = "rgba(255, 210, 82, .72)", e.shadowBlur = s * 0.2, e.fillStyle = "rgba(255, 246, 184, .95)", e.beginPath(), e.arc(l, c + s * 0.02, d, 0, Math.PI * 2), e.fill(), e.shadowBlur = 0, e.strokeStyle = "rgba(118, 69, 15, .42)", e.lineWidth = Math.max(1.5, s * 0.045), e.stroke(), e.strokeStyle = "rgba(255, 242, 158, .95)", e.lineWidth = Math.max(2, s * 0.055), e.beginPath(), e.moveTo(l + d * 0.5, c - d * 0.72), e.quadraticCurveTo(l + d * 1.2, c - d * 1.22, l + d * 1.48, c - d * 1.9), e.stroke(), e.strokeStyle = "rgba(255, 115, 84, .62)", e.lineWidth = Math.max(1, s * 0.026), e.beginPath(), e.arc(l, c + s * 0.02, d * 1.52, -0.5, Math.PI * 1.5), e.stroke(), e.fillStyle = "rgba(255, 255, 255, .95)", e.beginPath(), e.arc(l - d * 0.42, c - d * 0.32, Math.max(1.5, d * 0.22), 0, Math.PI * 2), e.fill();
+  } else if (t >= wa) {
+    const d = t >= ya;
+    const u = d ? e.createLinearGradient(l, o.y + s * 0.12, l, o.y + o.h - s * 0.12) : e.createLinearGradient(o.x + s * 0.12, c, o.x + o.w - s * 0.12, c);
+    u.addColorStop(0, "rgba(255, 251, 187, .08)"), u.addColorStop(0.5, "rgba(255, 245, 151, .52)"), u.addColorStop(1, "rgba(255, 251, 187, .08)"), e.strokeStyle = u, e.lineWidth = Math.max(3, s * 0.13), e.beginPath(), d ? (e.moveTo(l, o.y + s * 0.14), e.lineTo(l, o.y + o.h - s * 0.14)) : (e.moveTo(o.x + s * 0.14, c), e.lineTo(o.x + o.w - s * 0.14, c)), e.stroke(), e.fillStyle = "rgba(255, 250, 184, .96)", e.strokeStyle = "rgba(85, 45, 8, .28)", e.lineWidth = Math.max(1, s * 0.035), e.beginPath();
+    d ? (e.moveTo(l + s * 0.05, c - s * 0.34), e.lineTo(l - s * 0.16, c + s * 0.03), e.lineTo(l + s * 0.02, c + s * 0.03), e.lineTo(l - s * 0.07, c + s * 0.36), e.lineTo(l + s * 0.22, c - s * 0.08), e.lineTo(l + s * 0.04, c - s * 0.08)) : (e.moveTo(l - s * 0.36, c - s * 0.02), e.lineTo(l - s * 0.04, c - s * 0.18), e.lineTo(l - s * 0.04, c), e.lineTo(l + s * 0.36, c - s * 0.08), e.lineTo(l + s * 0.02, c + s * 0.18), e.lineTo(l + s * 0.02, c)), e.closePath(), e.fill(), e.stroke();
+  } else if (r.label) {
+    e.fillStyle = r.textColor || "#fff6bd", e.font = `700 ${Math.max(11, Math.floor(s * 0.28))}px system-ui, sans-serif`, e.textAlign = "center", e.textBaseline = "middle", e.fillText(r.label, l, c);
+  }
+  e.restore();
+}
+function drawCanvasSpecialFx(e, t) {
+  const r = Date.now();
+  a.canvasSpecialFx = (a.canvasSpecialFx || []).filter((o) => r - o.at < o.durationMs);
+  for (const o of a.canvasSpecialFx) {
+    const s = Math.min(1, Math.max(0, (r - o.at) / o.durationMs)), l = 1 - s, c = canvasCellRect(t, o.position.row, o.position.col), d = Math.min(c.w, c.h);
+    e.save(), e.globalCompositeOperation = "lighter", e.globalAlpha = Math.max(0, l);
+    if (o.kind === "horizontal" || o.kind === "vertical") {
+      const u = o.kind === "vertical", h = u ? t.paddingTop : c.cy, p = u ? c.cx : t.paddingLeft, f = u ? t.innerHeight : c.w, m = u ? c.h : t.innerWidth, g = u ? c.cx : t.paddingLeft + t.innerWidth, P = u ? t.paddingTop + t.innerHeight : c.cy, C = u ? e.createLinearGradient(c.cx, h, c.cx, P) : e.createLinearGradient(p, c.cy, g, c.cy);
+      C.addColorStop(0, "rgba(255, 230, 102, 0)"), C.addColorStop(0.22, "rgba(255, 249, 181, .45)"), C.addColorStop(0.5, "rgba(255, 255, 255, .95)"), C.addColorStop(0.78, "rgba(132, 223, 255, .42)"), C.addColorStop(1, "rgba(132, 223, 255, 0)");
+      e.strokeStyle = C, e.lineWidth = Math.max(5, d * (0.18 - s * 0.05)), e.beginPath(), e.moveTo(p, h), e.lineTo(g, P), e.stroke(), e.strokeStyle = "rgba(255, 255, 255, .55)", e.lineWidth = Math.max(1.2, d * 0.035), e.beginPath(), e.moveTo(p, h), e.lineTo(g, P), e.stroke();
+      const T = u ? f : m, U = Math.max(3, Math.min(8, Math.round((o.cleared || 3) / 2)));
+      for (let Te = 0; Te < U; Te += 1) {
+        const qe = (Te + 0.5) / U, gt = (qe * T + s * d * 1.2) % T, ha = u ? c.cx + Math.sin(Te * 1.7) * d * 0.1 : t.paddingLeft + gt, fa = u ? t.paddingTop + gt : c.cy + Math.cos(Te * 1.5) * d * 0.1;
+        e.fillStyle = "rgba(255, 246, 176, .72)", e.beginPath(), e.arc(ha, fa, d * (0.035 + l * 0.025), 0, Math.PI * 2), e.fill();
+      }
+    } else {
+      const u = d * (0.4 + s * 1.55), h = e.createRadialGradient(c.cx, c.cy, d * 0.12, c.cx, c.cy, u);
+      h.addColorStop(0, "rgba(255, 255, 255, .95)"), h.addColorStop(0.22, "rgba(255, 230, 98, .72)"), h.addColorStop(0.48, "rgba(255, 94, 94, .34)"), h.addColorStop(1, "rgba(255, 94, 94, 0)"), e.fillStyle = h, e.beginPath(), e.arc(c.cx, c.cy, u, 0, Math.PI * 2), e.fill(), e.strokeStyle = "rgba(255, 246, 185, .72)", e.lineWidth = Math.max(2, d * 0.055 * l), e.beginPath(), e.arc(c.cx, c.cy, d * (0.46 + s * 1.1), 0, Math.PI * 2), e.stroke();
+      for (let p = 0; p < 10; p += 1) {
+        const f = p / 10 * Math.PI * 2 + (o.seed || 0), m = d * (0.28 + s * 1.25), g = c.cx + Math.cos(f) * m, P = c.cy + Math.sin(f) * m;
+        e.strokeStyle = "rgba(255, 232, 122, .62)", e.lineWidth = Math.max(1, d * 0.025 * l), e.beginPath(), e.moveTo(c.cx + Math.cos(f) * d * 0.22, c.cy + Math.sin(f) * d * 0.22), e.lineTo(g, P), e.stroke();
+      }
+    }
+    e.restore();
+  }
+}
+function drawCanvasTileBursts(e, t) {
+  const r = Date.now();
+  a.canvasTileBursts = (a.canvasTileBursts || []).filter((o) => r - o.at < o.durationMs);
+  for (const o of a.canvasTileBursts) for (const s of o.positions || []) {
+    const l = Math.min(1, Math.max(0, (r - o.at) / o.durationMs)), c = 1 - l, d = canvasCellRect(t, s.row, s.col), u = Math.min(d.w, d.h), h = o.strong ? 7 : 4;
+    e.save(), e.globalAlpha = Math.max(0, c), e.strokeStyle = o.tone === "attack" ? "rgba(255, 109, 126, .92)" : "rgba(255, 235, 144, .92)", e.lineWidth = Math.max(1.2, u * 0.035), e.beginPath(), e.arc(d.cx, d.cy, u * (0.18 + l * 0.45), 0, Math.PI * 2), e.stroke();
+    for (let p = 0; p < h; p += 1) {
+      const f = Math.PI * 2 * p / h + (o.seed || 0), m = u * (0.16 + l * 0.42), g = d.cx + Math.cos(f) * m, P = d.cy + Math.sin(f) * m, C = u * (0.06 + l * 0.08);
+      e.beginPath(), e.moveTo(g, P), e.lineTo(g + Math.cos(f) * C, P + Math.sin(f) * C), e.stroke();
+    }
+    e.restore();
+  }
 }
 function renderCanvasBoard(e, t) {
   const r = e?.querySelector?.("#battle-board-canvas"), o = t?.board || [], s = getBoardGeometry(e);
@@ -2886,114 +2944,38 @@ function renderCanvasBoard(e, t) {
   const u = r.getContext("2d");
   if (!u) return false;
   u.setTransform(l, 0, 0, l, 0, 0), u.clearRect(0, 0, s.rect.width, s.rect.height);
-  const h = s.paddingLeft, p = s.paddingTop, f = s.gap, m = s.tileWidth, g = s.tileHeight, P = Math.max(8, Math.min(m, g) * 0.2);
-  for (let C = 0; C < $e; C += 1) {
-    for (let T = 0; T < Pe; T += 1) {
-      const U = o[C]?.[T], Te = na(U), qe = h + T * (m + f), gt = p + C * (g + f), ha = Math.max(2, m - 1), E = Math.max(2, g - 1);
-      u.save(), u.beginPath(), u.roundRect ? u.roundRect(qe, gt, ha, E, P) : (u.moveTo(qe + P, gt), u.lineTo(qe + ha - P, gt), u.quadraticCurveTo(qe + ha, gt, qe + ha, gt + P), u.lineTo(qe + ha, gt + E - P), u.quadraticCurveTo(qe + ha, gt + E, qe + ha - P, gt + E), u.lineTo(qe + P, gt + E), u.quadraticCurveTo(qe, gt + E, qe, gt + E - P), u.lineTo(qe, gt + P), u.quadraticCurveTo(qe, gt, qe + P, gt)), u.fillStyle = Te.color || "#8a35ff", u.shadowColor = "rgba(255, 228, 123, .22)", u.shadowBlur = a.effectiveVisualEffectMode === "high" ? 10 : 5, u.fill(), u.shadowBlur = 0;
-      const H = u.createLinearGradient(qe, gt, qe, gt + E);
-      H.addColorStop(0, "rgba(255,255,255,.28)"), H.addColorStop(0.45, "rgba(255,255,255,.04)"), H.addColorStop(1, "rgba(0,0,0,.22)"), u.fillStyle = H, u.fill(), u.lineWidth = 1, u.strokeStyle = "rgba(255, 236, 174, .2)", u.stroke();
-      if (a.selectedTile?.row === C && a.selectedTile?.col === T) u.lineWidth = 3, u.strokeStyle = "rgba(255,245,185,.78)", u.stroke();
-      if (U >= wa) {
-        u.fillStyle = "rgba(255, 244, 175, .95)", u.font = `${Math.max(13, Math.floor(Math.min(m, g) * 0.34))}px system-ui, sans-serif`, u.textAlign = "center", u.textBaseline = "middle", u.fillText(Te.label || (U >= ka ? "\u7206" : U >= ya ? "\u7EB5" : "\u6A2A"), qe + ha / 2, gt + E / 2);
-      } else if (Te.label) {
-        u.fillStyle = Te.textColor || "#fff6bd", u.font = `${Math.max(11, Math.floor(Math.min(m, g) * 0.28))}px system-ui, sans-serif`, u.textAlign = "center", u.textBaseline = "middle", u.fillText(Te.label, qe + ha / 2, gt + E / 2);
+  const h = Math.max(8, Math.min(s.tileWidth, s.tileHeight) * 0.2), p = Date.now(), f = a.effectiveVisualEffectMode === "high" && !document.documentElement.classList.contains("low-performance");
+  const m = u.createLinearGradient(0, 0, 0, s.rect.height);
+  m.addColorStop(0, "rgba(255, 231, 133, .08)"), m.addColorStop(0.45, "rgba(122, 76, 210, .08)"), m.addColorStop(1, "rgba(12, 2, 28, .18)"), u.fillStyle = m, u.fillRect(0, 0, s.rect.width, s.rect.height);
+  for (let g = 0; g < $e; g += 1) for (let P = 0; P < Pe; P += 1) {
+    const C = canvasCellRect(s, g, P);
+    u.save(), canvasRoundRect(u, C.x + 1, C.y + 1, C.w - 2, C.h - 2, h * 0.9), u.fillStyle = "rgba(255, 255, 255, .035)", u.fill(), u.restore();
+  }
+  for (let g = 0; g < $e; g += 1) {
+    for (let P = 0; P < Pe; P += 1) {
+      const C = o[g]?.[P], T = na(C), U = canvasCellRect(s, g, P), Te = Math.min(U.w, U.h), qe = canvasEffectForCell(g, P, C, p), gt = a.selectedTile?.row === g && a.selectedTile?.col === P, ha = a.selectedTile && !gt && _e(a.selectedTile, { row: g, col: P });
+      u.save(), u.translate(U.cx + qe.dx, U.cy + qe.dy), u.scale(qe.scale, qe.scale), u.translate(-U.cx, -U.cy), canvasRoundRect(u, U.x, U.y + Math.max(1, Te * 0.035), U.w, U.h, h), u.fillStyle = "rgba(0, 0, 0, .24)", u.fill();
+      canvasRoundRect(u, U.x, U.y, U.w, U.h, h), u.shadowColor = C >= wa || qe.glow > 0 ? canvasHexToRgba(T.color, f ? 0.58 : 0.38) : "rgba(255, 228, 123, .18)", u.shadowBlur = f ? 13 : 7, u.fillStyle = T.color || "#8a35ff", u.fill(), u.shadowBlur = 0;
+      const E = u.createLinearGradient(U.x, U.y, U.x, U.y + U.h);
+      E.addColorStop(0, "rgba(255,255,255,.36)"), E.addColorStop(0.32, "rgba(255,255,255,.08)"), E.addColorStop(0.72, "rgba(0,0,0,.08)"), E.addColorStop(1, "rgba(0,0,0,.28)"), u.fillStyle = E, u.fill(), u.strokeStyle = C >= wa ? "rgba(255, 245, 174, .54)" : "rgba(255, 246, 204, .22)", u.lineWidth = C >= wa ? 1.6 : 1, u.stroke();
+      u.beginPath(), u.moveTo(U.x + U.w * 0.18, U.y + U.h * 0.18), u.lineTo(U.x + U.w * 0.42, U.y + U.h * 0.08), u.strokeStyle = "rgba(255, 255, 255, .32)", u.lineWidth = Math.max(1, Te * 0.035), u.stroke();
+      if (ha) u.strokeStyle = "rgba(255, 239, 159, .28)", u.lineWidth = 2, u.stroke();
+      if (gt) {
+        const H = 0.72 + Math.sin(p / 110) * 0.2;
+        u.strokeStyle = `rgba(255, 244, 174, ${H})`, u.lineWidth = 3, u.stroke(), u.strokeStyle = "rgba(255, 255, 255, .48)", u.lineWidth = 1.2, canvasRoundRect(u, U.x + 4, U.y + 4, U.w - 8, U.h - 8, Math.max(4, h - 4)), u.stroke();
       }
-      u.restore();
+      if (qe.glow > 0) u.strokeStyle = qe.tone === "fail" ? `rgba(255, 92, 111, ${0.75 * qe.glow})` : `rgba(255, 236, 138, ${0.85 * qe.glow})`, u.lineWidth = 2.4, canvasRoundRect(u, U.x - 1, U.y - 1, U.w + 2, U.h + 2, h + 1), u.stroke();
+      drawCanvasSpecial(u, C, T, U), u.restore();
     }
   }
+  drawCanvasSpecialFx(u, s), drawCanvasTileBursts(u, s), canvasHasActiveFx(p) && scheduleCanvasFxFrame();
   return true;
-}
-function ti(e) {
-  return e ? `<span>${i(e)}</span>` : "";
-}
-function ai(e, t) {
-  const r = e.querySelector("span");
-  if (!t) {
-    r?.remove();
-    return;
-  }
-  if (r) {
-    r.textContent !== t && (r.textContent = t);
-    return;
-  }
-  const o = document.createElement("span");
-  o.textContent = t, e.appendChild(o);
 }
 function Je(e) {
   return e.map((t) => [...t]);
 }
-function Ht(e) {
-  return e.map((t) => t.map(() => 0));
-}
-function ni(e, t) {
-  const r = Ht(t);
-  if (!e.length || !t.length || e.length !== t.length) return r;
-  const o = t.length, s = Math.max(...t.map((l) => l.length));
-  for (let l = 0; l < s; l += 1) {
-    const c = e.map((u) => u[l]), d = /* @__PURE__ */ new Set();
-    for (let u = o - 1; u >= 0; u -= 1) {
-      const h = t[u]?.[l];
-      if (h === void 0) continue;
-      let p = -1;
-      for (let f = u; f >= 0; f -= 1) if (!d.has(f) && c[f] === h) {
-        p = f;
-        break;
-      }
-      p >= 0 ? (d.add(p), r[u][l] = Math.max(0, u - p)) : r[u][l] = u + 1;
-    }
-  }
-  return r;
-}
-function ri() {
-  return a.effectiveVisualEffectMode === "low" || document.documentElement.classList.contains("low-performance") ? false : !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-}
-function ii(e, t, r, o = 1) {
-  e.classList.remove("tile-fall-in", "tile-fall-heavy");
-  const s = Math.max(1, Math.min(8, Math.round(o || 1))), l = a.effectiveVisualEffectMode === "high" ? 24 : 16, c = Math.max(16, s * l), d = a.effectiveVisualEffectMode === "high" ? Math.min(82, s * 10 + t * 5 + r * 3) : Math.min(46, s * 7 + t * 3);
-  e.style.setProperty("--fall-from", `${-c}px`), e.style.setProperty("--fall-delay", `${d}ms`), window.requestAnimationFrame(() => {
-    e.classList.add("tile-fall-in"), s >= 3 && e.classList.add("tile-fall-heavy");
-  }), window.setTimeout(() => {
-    e.classList.remove("tile-fall-in", "tile-fall-heavy"), e.style.removeProperty("--fall-from"), e.style.removeProperty("--fall-delay");
-  }, a.effectiveVisualEffectMode === "high" ? animationMs("tileFallHighSeconds", 80) : animationMs("tileFallSeconds", 80));
-}
 function oi(e, t, r = false) {
-  if (e.classList.contains("canvas-board")) {
-    renderCanvasBoard(e, t), se = Je(t.board || []);
-    return;
-  }
-  const o = t.board || [], s = o.reduce((d, u) => d + u.length, 0);
-  const l = e.querySelectorAll(".tile[data-row][data-col]");
-  if (l.length !== s) {
-    e.innerHTML = Ut(t), se = Je(o), Ht(o);
-    return;
-  }
-  const c = new Map();
-  l.forEach((T) => c.set(`${T.dataset.row}:${T.dataset.col}`, T));
-  const d = r ? ni(se, o) : Ht(o), u = [];
-  for (let h = 0; h < o.length; h += 1) {
-    const p = o[h] || [];
-    for (let f = 0; f < p.length; f += 1) {
-      const m = p[f], g = c.get(`${h}:${f}`);
-      if (!g) {
-        e.innerHTML = Ut(t), se = Je(o);
-        return;
-      }
-      const P = se[h]?.[f];
-      r && P !== void 0 && P !== m && u.push({ tile: g, rowIndex: h, colIndex: f });
-      const C = tn(m, h, f);
-      g.className !== C && (g.className = C);
-      const T = na(m);
-      Dn(g, T), ai(g, T.label);
-    }
-  }
-  if (r && ri() && u.length) {
-    const h = a.effectiveVisualEffectMode === "high" ? 24 : 14;
-    u.slice(0, h).forEach(({ tile: p, rowIndex: f, colIndex: m }) => {
-      ii(p, f, m, d[f]?.[m] || 1);
-    });
-  }
-  se = Je(o);
+  renderCanvasBoard(e, t), se = Je(t.board || []);
 }
 function si(e, t) {
   const r = ft(e).filter((d) => !d.at || Date.now() - d.at <= Xt), o = (d, u = false) => {
@@ -3207,17 +3189,24 @@ function Pi(e) {
   const o = a.effectiveVisualEffectMode === "high" ? 6 : 3;
   return t.slice(0, Math.min(o, Math.max(2, Number(e.cleared || 3))));
 }
+function triggerCanvasSpecialFx(e) {
+  if (!$i()) return;
+  const t = (Array.isArray(e.specialFx) ? e.specialFx : []).filter((r) => r?.position && r.kind);
+  if (!t.length) return;
+  const r = a.effectiveVisualEffectMode === "high" ? animationMs("boardEffectHighSeconds", 180) : animationMs("boardEffectSeconds", 170), o = Date.now();
+  a.canvasSpecialFx = [...(a.canvasSpecialFx || []), ...t.slice(0, a.effectiveVisualEffectMode === "high" ? 3 : 2).map((s) => ({ kind: s.kind, position: s.position, at: o, durationMs: r, cleared: Number(e.cleared || 3), seed: Math.random() * Math.PI * 2 }))].slice(-4), renderCurrentCanvasBoard(), scheduleCanvasFxFrame(), window.setTimeout(() => {
+    a.canvasSpecialFx = (a.canvasSpecialFx || []).filter((s) => Date.now() - s.at < s.durationMs), renderCurrentCanvasBoard();
+  }, r + 40);
+}
 function Ci(e) {
   if (!$i()) return;
+  triggerCanvasSpecialFx(e);
   const t = Pi(e);
-  t.length && t.forEach((r, o) => {
-    const s = document.querySelector(`.tile[data-row="${r.row}"][data-col="${r.col}"]`);
-    s && (s.classList.remove("tile-burst", "tile-burst-strong"), s.style.setProperty("--burst-delay", `${o * 18}ms`), window.requestAnimationFrame(() => {
-      s.classList.add("tile-burst"), a.effectiveVisualEffectMode === "high" && (Number(e.cleared || 0) >= 4 || Number(e.chain || 1) > 1 || e.specialTriggered || e.specialCreated) && s.classList.add("tile-burst-strong");
-    }), window.setTimeout(() => {
-      s.classList.remove("tile-burst", "tile-burst-strong"), s.style.removeProperty("--burst-delay");
-    }, a.effectiveVisualEffectMode === "high" ? animationMs("tileBurstHighSeconds", 80) : animationMs("tileBurstSeconds", 80)));
-  });
+  if (!t.length) return;
+  const r = a.effectiveVisualEffectMode === "high" && (Number(e.cleared || 0) >= 4 || Number(e.chain || 1) > 1 || e.specialTriggered || e.specialCreated), o = r ? animationMs("tileBurstHighSeconds", 80) : animationMs("tileBurstSeconds", 80);
+  a.canvasTileBursts = [...(a.canvasTileBursts || []), { positions: t, at: Date.now(), durationMs: o, strong: r, tone: e.attack > 0 || e.specialTriggered ? "attack" : "score", seed: Math.random() * Math.PI }].slice(-4), renderCurrentCanvasBoard(), scheduleCanvasFxFrame(), window.setTimeout(() => {
+    a.canvasTileBursts = (a.canvasTileBursts || []).filter((s) => Date.now() - s.at < s.durationMs), renderCurrentCanvasBoard();
+  }, o + 30);
 }
 function Ti() {
   const e = oe();
@@ -3252,7 +3241,7 @@ function nn(e) {
 function Bi(e, t) {
   const r = Date.now();
   const o = oe();
-  flashClass(o, "board-local-swap", animationMs("localSwapSeconds")), ae("success", [e, t]), window.setTimeout(() => {
+  a.localSwapFx = { from: e, to: t, at: r }, flashClass(o, "board-local-swap", animationMs("localSwapSeconds")), ae("success", [e, t]), renderCurrentCanvasBoard(), scheduleCanvasFxFrame(), window.setTimeout(() => {
     a.localSwapFx?.at === r && (a.localSwapFx = null, $());
   }, animationMs("localSwapSeconds", 20));
 }
@@ -3401,14 +3390,14 @@ function Fi(e, t, r) {
   return `<div class="rank-change-note ${l ? "up" : "down"}">${c}</div>`;
 }
 function _i(e) {
-  const t = a.tileEffect ? `${a.tileEffect.type}:${a.tileEffect.at}` : "", r = x ? `${x.position.row}:${x.position.col}:${x.direction}:${x.at}` : "", o = k ? `${k.from.row}:${k.from.col}:${k.to.row}:${k.to.col}:${k.direction}:${k.at}` : "", s = a.localSwapFx ? `${a.localSwapFx.from.row}:${a.localSwapFx.from.col}:${a.localSwapFx.to.row}:${a.localSwapFx.to.col}:${a.localSwapFx.at}` : "";
-  return `${(e.board || []).map((l) => l.join("")).join("|")}:${a.selectedTile?.row ?? "-"}:${a.selectedTile?.col ?? "-"}:${t}:${r}:${o}:${s}`;
+  const t = a.tileEffect ? `${a.tileEffect.type}:${a.tileEffect.at}` : "", r = x ? `${x.position.row}:${x.position.col}:${x.direction}:${x.at}` : "", o = k ? `${k.from.row}:${k.from.col}:${k.to.row}:${k.to.col}:${k.direction}:${k.at}` : "", s = a.localSwapFx ? `${a.localSwapFx.from.row}:${a.localSwapFx.from.col}:${a.localSwapFx.to.row}:${a.localSwapFx.to.col}:${a.localSwapFx.at}` : "", l = (a.canvasSpecialFx || []).map((c) => `${c.kind}:${c.position?.row}:${c.position?.col}:${c.at}`).join(",");
+  return `${(e.board || []).map((c) => c.join("")).join("|")}:${a.selectedTile?.row ?? "-"}:${a.selectedTile?.col ?? "-"}:${t}:${r}:${o}:${s}:${l}`;
 }
 function jt(e) {
   return (e.board || []).map((t) => t.join("")).join("|");
 }
 function Fa(e, t, r, o, s) {
-  y?.handled || (y = { position: e, x: t, y: r, pointerId: o === "pointer" ? s : null, touchId: o === "touch" ? s : null, at: Date.now(), handled: false, source: o }, document.querySelector(`.tile[data-row="${e.row}"][data-col="${e.col}"]`)?.classList.add("touching"));
+  y?.handled || (y = { position: e, x: t, y: r, pointerId: o === "pointer" ? s : null, touchId: o === "touch" ? s : null, at: Date.now(), handled: false, source: o });
 }
 function _a(e) {
   return y ? y.pointerId === null ? (y.pointerId = e, true) : y.pointerId === e : false;
@@ -3425,7 +3414,7 @@ function Oe(e, t) {
   return d ? (y.handled = true, Gi(y.position, d), y = null, true) : !!c;
 }
 function Ue() {
-  y = null, ut(), document.querySelectorAll(".tile.touching").forEach((e) => e.classList.remove("touching"));
+  y = null, ut();
 }
 function Vt(e, t) {
   for (let r = 0; r < e.length; r += 1) {
@@ -3556,7 +3545,7 @@ function Hi() {
     sn(n("staleRoomMatched"));
     return;
   }
-  const p = t.roomNo.replace(/^room_/, "").slice(-8).toUpperCase(), f = Pt !== t.roomNo, useCanvasBoard = isExtremeRealtimeActive(t);
+  const p = t.roomNo.replace(/^room_/, "").slice(-8).toUpperCase(), f = Pt !== t.roomNo;
   Ln(), (f || !document.querySelector("#game-board")) && (Pt = t.roomNo, Se = null, Re = "", je = "", se = Je(o.board || []), Ve = "", Ke = "", K = "", R.innerHTML = `
     <main class="battle-shell ${t.remainSeconds <= 10 && !l ? "battle-final-countdown" : ""}">
       <header class="battle-header">
@@ -3594,8 +3583,8 @@ function Hi() {
       </section>
 
       <section class="board-panel">
-        <div class="game-board${Ta()}${useCanvasBoard ? " canvas-board" : ""}" id="game-board">
-          ${useCanvasBoard ? '<canvas id="battle-board-canvas" class="battle-board-canvas"></canvas>' : Ut(o)}
+        <div class="game-board${Ta()} canvas-board" id="game-board">
+          <canvas id="battle-board-canvas" class="battle-board-canvas"></canvas>
         </div>
       </section>
 
@@ -3619,7 +3608,7 @@ function Hi() {
   if (U !== Re) {
     const E = m.board, H = !!Re, ue = Te !== je;
     if (E) {
-      E.className = `game-board${Ta()}${useCanvasBoard ? " canvas-board" : ""}`, useCanvasBoard && !E.querySelector("#battle-board-canvas") && (E.innerHTML = '<canvas id="battle-board-canvas" class="battle-board-canvas"></canvas>'), !useCanvasBoard && E.querySelector("#battle-board-canvas") && (E.innerHTML = Ut(o)), oi(E, o, H && ue && !l);
+      E.className = `game-board${Ta()} canvas-board`, E.querySelector("#battle-board-canvas") || (E.innerHTML = '<canvas id="battle-board-canvas" class="battle-board-canvas"></canvas>'), oi(E, o, H && ue && !l);
       const ba = t.events.find((pn) => pn.uid === e.uid), mn = !!(ba?.at && Date.now() - ba.at < 1400);
       H && ue && !mn && !l && Date.now() - a.lastSwapSentAt < 1800 && Ti();
     }
@@ -3752,30 +3741,23 @@ function ln(e = true) {
   };
 }
 function cn() {
-  if (isExtremeRealtimeActive()) {
-    const e = extremeRealtimeConfig();
-    return (a.pendingSwapQueue || []).length >= e.maxPendingSwaps ? false : a.realtimeRoom?.status === "waiting_ready" ? (a.battleMessage = n("waitBothReady"), $(), false) : a.realtimeRoom && ht(a.realtimeRoom) > 0 ? (a.battleMessage = n("waitReady"), $(), false) : !M || M.readyState !== WebSocket.OPEN ? (a.battleMessage = n("socketNotReady"), $(), false) : true;
-  }
-  return a.pendingSwapSeq && Date.now() - a.lastSwapSentAt < 2200 ? false : (a.pendingSwapSeq && zt(), a.realtimeRoom?.status === "waiting_ready" ? (a.battleMessage = n("waitBothReady"), $(), false) : a.realtimeRoom && ht(a.realtimeRoom) > 0 ? (a.battleMessage = n("waitReady"), $(), false) : !M || M.readyState !== WebSocket.OPEN ? (a.battleMessage = n("socketNotReady"), $(), false) : true);
+  const e = extremeRealtimeConfig();
+  return (a.pendingSwapQueue || []).length >= e.maxPendingSwaps ? false : a.realtimeRoom?.status === "waiting_ready" ? (a.battleMessage = n("waitBothReady"), $(), false) : a.realtimeRoom && ht(a.realtimeRoom) > 0 ? (a.battleMessage = n("waitReady"), $(), false) : !M || M.readyState !== WebSocket.OPEN ? (a.battleMessage = n("socketNotReady"), $(), false) : true;
 }
 function dn(e, t) {
   const r = Date.now(), o = `${e.row}:${e.col}:${t.row}:${t.col}`;
-  if (o === Lt && r - xt < (isExtremeRealtimeActive() ? 120 : 320)) return;
-  const s = isExtremeRealtimeActive(), l = Number(a.clientRoomVersion || a.realtimeRoom?.version || 0), c = a.lastSwapSeq + 1;
-  if (s && !kaPreviewSwap(e, t, c)) {
+  if (o === Lt && r - xt < 120) return;
+  const s = Number(a.clientRoomVersion || a.realtimeRoom?.version || 0), l = a.lastSwapSeq + 1;
+  if (!kaPreviewSwap(e, t, l)) {
     Lt = o, xt = r, ut(), a.selectedTile = null, a.lastSwapPositions = [e, t], Mi([e, t]);
     return;
   }
-  Lt = o, xt = r, ut(), a.selectedTile = null, a.lastSwapSentAt = r, a.lastSwapPositions = [e, t], a.lastSwapSeq = c, a.pendingSwapSeq = c, a.pendingSwapPositions = [e, t], a.battleMessage = "", v("client_swap_send", { roomNo: a.roomNo, mode: a.realtimeRoom?.mode || a.selectedMode, seq: a.lastSwapSeq, latencyMs: a.networkLatencyMs, protocol: s ? "swap_cmd" : "swap_tiles" }, 1800), Yn(e, t), Bi(e, t);
-  if (s) {
-    a.pendingSwapQueue = [...(a.pendingSwapQueue || []), { seq: a.lastSwapSeq, positions: [e, t], sentAt: r, baseVersion: l }].slice(-extremeRealtimeConfig().maxPendingSwaps), a.clientPredictionStats.sent += 1, applyPredictedSwap(e, t, a.lastSwapSeq), M?.send(JSON.stringify({ type: "swap_cmd", roomNo: a.roomNo, seq: a.lastSwapSeq, baseVersion: l, from: e, to: t, clientAt: r }));
-  } else {
-    xaPreviewSwap(e, t, a.lastSwapSeq), M?.send(JSON.stringify({ type: "swap_tiles", from: e, to: t, seq: a.lastSwapSeq }));
-  }
+  Lt = o, xt = r, ut(), a.selectedTile = null, a.lastSwapSentAt = r, a.lastSwapPositions = [e, t], a.lastSwapSeq = l, a.pendingSwapSeq = l, a.pendingSwapPositions = [e, t], a.battleMessage = "", v("client_swap_send", { roomNo: a.roomNo, mode: a.realtimeRoom?.mode || a.selectedMode, seq: a.lastSwapSeq, latencyMs: a.networkLatencyMs, protocol: "swap_cmd" }, 1800), Yn(e, t), Bi(e, t);
+  a.pendingSwapQueue = [...(a.pendingSwapQueue || []), { seq: a.lastSwapSeq, positions: [e, t], sentAt: r, baseVersion: s }].slice(-extremeRealtimeConfig().maxPendingSwaps), a.clientPredictionStats.sent += 1, applyPredictedSwap(e, t, a.lastSwapSeq), M?.send(JSON.stringify({ type: "swap_cmd", roomNo: a.roomNo, seq: a.lastSwapSeq, baseVersion: s, from: e, to: t, clientAt: r }));
   de(12);
 }
 function Gi(e, t) {
-  if (Yt = Date.now(), ut(), document.querySelectorAll(".tile.touching").forEach((r) => r.classList.remove("touching")), !!cn()) {
+  if (Yt = Date.now(), ut(), !!cn()) {
     if (!_e(e, t)) {
       a.battleMessage = n("onlyAdjacent"), ae("fail", [e, t]), de([12, 18, 12]), $();
       return;

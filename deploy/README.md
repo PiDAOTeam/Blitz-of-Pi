@@ -117,4 +117,4 @@ bash deploy/scripts/deploy-backend.sh
 - 大富豪：POC，后端保留 6 位精度，前端展示最多 2 位小数
 - 超级富豪：Pi，沿用项目内 Pi 钱包和支付逻辑
 
-HashPi 网关总开关、积分开关、POC 开关和灰度 UID / username 在后台管理里配置；真实网关密钥在 `.env.production` 里配置。
+HashPi 网关总开关、积分开关、POC 开关和指定开放 UID / username 在后台管理里配置；真实网关密钥在 `.env.production` 里配置。

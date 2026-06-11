@@ -27,7 +27,7 @@ const DEFAULT_GAME_CONFIG = {
   },
   ticketBattle: {
     key: "ticket_battle",
-    name: "小富豪场（旧Pi）",
+    name: "超级富豪（Pi）",
     assetType: "PI",
     enabled: true,
     entryFee: 0.3,
@@ -38,7 +38,7 @@ const DEFAULT_GAME_CONFIG = {
   },
   richBattle: {
     key: "rich_battle",
-    name: "大富豪场（旧Pi）",
+    name: "超级富豪（Pi）",
     assetType: "PI",
     enabled: true,
     entryFee: 1,
@@ -87,7 +87,7 @@ const DEFAULT_GAME_CONFIG = {
     pocEnabled: false,
     grayUserPiUids: [],
     grayUserPiUsernames: [],
-    opsNote: "灰度开启后，小富豪使用积分，大富豪使用POC；积分门票只能填写整数。"
+    opsNote: "小富豪使用积分，大富豪使用POC；积分门票只能填写整数。"
   },
   timing: {
     quickBotFallbackSeconds: 30,
@@ -110,10 +110,10 @@ const DEFAULT_GAME_CONFIG = {
     realtimeMaxPayloadBytes: 2048
   },
   extremeRealtime: {
-    enabled: false,
+    enabled: true,
     rollbackToLegacy: false,
     enabledModes: ["quick_battle", "points_battle", "poc_battle", "pi_battle"],
-    grayPercent: 0,
+    grayPercent: 100,
     grayUserPiUids: [],
     grayUserPiUsernames: [],
     maxPendingSwaps: 3,
@@ -539,19 +539,14 @@ function normalizeCapacityConfig(capacity = {}) {
 
 function normalizeExtremeRealtimeConfig(extremeRealtime = {}) {
   const defaults = DEFAULT_GAME_CONFIG.extremeRealtime;
-  const enabledModes = Array.isArray(extremeRealtime.enabledModes)
-    ? extremeRealtime.enabledModes.filter((mode) => SUPPORTED_BATTLE_MODES.includes(mode))
-    : defaults.enabledModes;
 
   return {
-    enabled: Boolean(extremeRealtime.enabled),
-    rollbackToLegacy: Boolean(extremeRealtime.rollbackToLegacy),
-    enabledModes: enabledModes.length ? enabledModes : defaults.enabledModes,
-    grayPercent: normalizeNumberInRange(extremeRealtime.grayPercent, defaults.grayPercent, 0, 100),
-    grayUserPiUids: splitLines(extremeRealtime.grayUserPiUids || extremeRealtime.gray_user_pi_uids || []),
-    grayUserPiUsernames: splitLines(
-      extremeRealtime.grayUserPiUsernames || extremeRealtime.gray_user_pi_usernames || []
-    ),
+    enabled: true,
+    rollbackToLegacy: false,
+    enabledModes: [...defaults.enabledModes],
+    grayPercent: 100,
+    grayUserPiUids: [],
+    grayUserPiUsernames: [],
     maxPendingSwaps: normalizeNumberInRange(
       extremeRealtime.maxPendingSwaps,
       defaults.maxPendingSwaps,

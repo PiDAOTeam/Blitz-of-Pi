@@ -35,7 +35,6 @@ const botMoveAt = new Map();
 const settlementQueue = [];
 const settlementQueuedRooms = new Set();
 
-const SWAP_MIN_INTERVAL_MS = 240;
 const SWAP_MAX_PER_WINDOW = 28;
 const SWAP_WINDOW_MS = 10_000;
 const ROOM_TICK_MS = 1000;
@@ -55,10 +54,10 @@ const DEFAULT_REALTIME_LIMITS = {
   maxPayloadBytes: 2048
 };
 const DEFAULT_EXTREME_REALTIME = {
-  enabled: false,
+  enabled: true,
   rollbackToLegacy: false,
   enabledModes: ["quick_battle", "points_battle", "poc_battle", "pi_battle"],
-  grayPercent: 0,
+  grayPercent: 100,
   grayUserPiUids: [],
   grayUserPiUsernames: [],
   maxPendingSwaps: 3,
@@ -137,32 +136,16 @@ function normalizeRealtimeLimits(config = {}) {
   };
 }
 
-function normalizeList(value) {
-  if (Array.isArray(value)) {
-    return value.map((item) => String(item || "").trim()).filter(Boolean).slice(0, 100);
-  }
-  return String(value || "")
-    .split(/\r?\n|,/)
-    .map((item) => item.trim())
-    .filter(Boolean)
-    .slice(0, 100);
-}
-
 function normalizeExtremeRealtimeConfig(config = {}) {
   const source = config.extremeRealtime || config || {};
-  const enabledModes = normalizeList(source.enabledModes).filter((mode) =>
-    DEFAULT_EXTREME_REALTIME.enabledModes.includes(mode)
-  );
 
   return {
-    enabled: Boolean(source.enabled),
-    rollbackToLegacy: Boolean(source.rollbackToLegacy),
-    enabledModes: enabledModes.length ? enabledModes : DEFAULT_EXTREME_REALTIME.enabledModes,
-    grayPercent: normalizeLimit(source.grayPercent, DEFAULT_EXTREME_REALTIME.grayPercent, 0, 100),
-    grayUserPiUids: normalizeList(source.grayUserPiUids || source.gray_user_pi_uids),
-    grayUserPiUsernames: normalizeList(source.grayUserPiUsernames || source.gray_user_pi_usernames).map((item) =>
-      item.toLowerCase()
-    ),
+    enabled: true,
+    rollbackToLegacy: false,
+    enabledModes: [...DEFAULT_EXTREME_REALTIME.enabledModes],
+    grayPercent: 100,
+    grayUserPiUids: [],
+    grayUserPiUsernames: [],
     maxPendingSwaps: normalizeLimit(source.maxPendingSwaps, DEFAULT_EXTREME_REALTIME.maxPendingSwaps, 1, 6),
     snapshotIntervalMs: normalizeLimit(
       source.snapshotIntervalMs,
@@ -252,31 +235,8 @@ function getClientSet(roomNo) {
   return roomClients.get(roomNo);
 }
 
-function hashToPercent(value = "") {
-  let hash = 0;
-  const text = String(value || "");
-  for (let index = 0; index < text.length; index += 1) {
-    hash = (hash * 31 + text.charCodeAt(index)) >>> 0;
-  }
-  return hash % 100;
-}
-
-function getRoomPlayer(room, uid) {
-  return room?.players?.find((player) => player.uid === uid) || null;
-}
-
 function isExtremeRealtimeEnabled(room, uid = "") {
-  if (!room || !uid || !extremeRealtime.enabled || extremeRealtime.rollbackToLegacy) return false;
-  if (!extremeRealtime.enabledModes.includes(room.mode)) return false;
-
-  const player = getRoomPlayer(room, uid);
-  const username = String(player?.piUsername || player?.pi_username || "").trim().toLowerCase();
-  if (extremeRealtime.grayUserPiUids.includes(uid)) return true;
-  if (username && extremeRealtime.grayUserPiUsernames.includes(username)) return true;
-  if (extremeRealtime.grayPercent >= 100) return true;
-  if (extremeRealtime.grayPercent <= 0) return false;
-
-  return hashToPercent(`${room.roomNo}:${uid}`) < extremeRealtime.grayPercent;
+  return Boolean(room && uid);
 }
 
 function getRoomDelta(room) {
@@ -798,39 +758,29 @@ async function handleSwap(socket, payload) {
   const roomNo = socket.roomNo;
   const uid = socket.uid;
   const swapSeq = Number(payload?.seq || 0);
-  const wantsExtremeProtocol = payload?.type === "swap_cmd";
   const clientAt = Number(payload?.clientAt || 0);
   const baseVersion = Number(payload?.baseVersion || 0);
-  const swapErrorExtra = swapSeq > 0 ? { kind: "swap_rejected", seq: swapSeq } : {};
 
   if (!roomNo || !uid) {
-    if (wantsExtremeProtocol) {
-      send(socket, {
-        type: "swap_reject",
-        seq: swapSeq,
-        reason: "请先进入房间",
-        serverVersion: 0,
-        clientAt
-      });
-    } else {
-      sendError(socket, "请先进入房间", swapErrorExtra);
-    }
+    send(socket, {
+      type: "swap_reject",
+      seq: swapSeq,
+      reason: "请先进入房间",
+      serverVersion: 0,
+      clientAt
+    });
     return;
   }
 
   const room = await loadRoom(roomNo);
   if (!room) {
-    if (wantsExtremeProtocol) {
-      send(socket, {
-        type: "swap_reject",
-        seq: swapSeq,
-        reason: "房间不存在或已过期",
-        serverVersion: 0,
-        clientAt
-      });
-    } else {
-      sendError(socket, "房间不存在或已过期", swapErrorExtra);
-    }
+    send(socket, {
+      type: "swap_reject",
+      seq: swapSeq,
+      reason: "房间不存在或已过期",
+      serverVersion: 0,
+      clientAt
+    });
     observeRealtimeStage("realtime_swap_error", {
       roomNo,
       uid,
@@ -839,24 +789,19 @@ async function handleSwap(socket, payload) {
     return;
   }
 
-  const useExtremeProtocol = wantsExtremeProtocol && isExtremeRealtimeEnabled(room, uid);
   const rejectSwap = (reason, extra = {}) => {
-    if (useExtremeProtocol) {
-      send(socket, {
-        type: "swap_reject",
-        seq: swapSeq,
-        reason,
-        serverVersion: Number(room.version || 1),
-        clientAt,
-        room: toPublicRoom(room, uid),
-        ...extra
-      });
-    } else {
-      sendError(socket, reason, swapErrorExtra);
-    }
+    send(socket, {
+      type: "swap_reject",
+      seq: swapSeq,
+      reason,
+      serverVersion: Number(room.version || 1),
+      clientAt,
+      room: toPublicRoom(room, uid),
+      ...extra
+    });
   };
 
-  if (useExtremeProtocol && baseVersion > 0) {
+  if (baseVersion > 0) {
     const serverVersion = Number(room.version || 1);
     const allowedLag = Math.max(1, Number(extremeRealtime.maxPendingSwaps || DEFAULT_EXTREME_REALTIME.maxPendingSwaps) + 1);
     if (baseVersion > serverVersion + 1 || serverVersion - baseVersion > allowedLag) {
@@ -894,22 +839,14 @@ async function handleSwap(socket, payload) {
   }
 
   if (swapSeq > 0 && bucket.lastSeq >= swapSeq) {
-    if (useExtremeProtocol) {
-      send(socket, {
-        type: "swap_reject",
-        seq: swapSeq,
-        reason: "duplicate_seq",
-        serverVersion: Number(room.version || 1),
-        clientAt,
-        room: toPublicRoom(room, uid)
-      });
-    } else {
-      send(socket, {
-        type: "room_state",
-        room: toPublicRoom(room, uid),
-        message: ""
-      });
-    }
+    send(socket, {
+      type: "swap_reject",
+      seq: swapSeq,
+      reason: "duplicate_seq",
+      serverVersion: Number(room.version || 1),
+      clientAt,
+      room: toPublicRoom(room, uid)
+    });
     swapBuckets.set(bucketKey, bucket);
     observeRealtimeStage("realtime_swap_error", {
       roomNo,
@@ -917,20 +854,18 @@ async function handleSwap(socket, payload) {
       message: "duplicate_seq",
       seq: swapSeq
     });
-    if (useExtremeProtocol) {
-      observeRealtimeStage("realtime_swap_reject", {
-        roomNo,
-        uid,
-        mode: room.mode,
-        status: room.status,
-        message: "duplicate_seq",
-        seq: swapSeq
-      });
-    }
+    observeRealtimeStage("realtime_swap_reject", {
+      roomNo,
+      uid,
+      mode: room.mode,
+      status: room.status,
+      message: "duplicate_seq",
+      seq: swapSeq
+    });
     return;
   }
 
-  const minIntervalMs = useExtremeProtocol ? extremeRealtime.swapMinIntervalMs : SWAP_MIN_INTERVAL_MS;
+  const minIntervalMs = extremeRealtime.swapMinIntervalMs;
   if (now - bucket.lastAt < minIntervalMs || bucket.count >= SWAP_MAX_PER_WINDOW) {
     rejectSwap("操作过快，请稍后再试", { reasonCode: "rate_limited" });
     swapBuckets.set(bucketKey, bucket);
@@ -939,16 +874,14 @@ async function handleSwap(socket, payload) {
       uid,
       message: "rate_limited"
     });
-    if (useExtremeProtocol) {
-      observeRealtimeStage("realtime_swap_reject", {
-        roomNo,
-        uid,
-        mode: room.mode,
-        status: room.status,
-        message: "rate_limited",
-        seq: swapSeq
-      });
-    }
+    observeRealtimeStage("realtime_swap_reject", {
+      roomNo,
+      uid,
+      mode: room.mode,
+      status: room.status,
+      message: "rate_limited",
+      seq: swapSeq
+    });
     return;
   }
 
@@ -976,19 +909,15 @@ async function handleSwap(socket, payload) {
       status: room.status,
       message: result.message
     });
-    if (useExtremeProtocol) {
-      observeRealtimeStage("realtime_swap_reject", {
-        roomNo,
-        uid,
-        mode: room.mode,
-        status: room.status,
-        message: result.message,
-        seq: swapSeq
-      });
-    }
-    if (useExtremeProtocol) {
-      return;
-    }
+    observeRealtimeStage("realtime_swap_reject", {
+      roomNo,
+      uid,
+      mode: room.mode,
+      status: room.status,
+      message: result.message,
+      seq: swapSeq
+    });
+    return;
   } else {
     const latestEvent = Array.isArray(room.events) ? room.events[0] : null;
     if (
@@ -1020,52 +949,35 @@ async function handleSwap(socket, payload) {
       });
     }
 
-    if (useExtremeProtocol) {
-      const publicRoom = toPublicRoom(room, uid);
-      send(socket, {
-        type: "swap_ack",
-        seq: swapSeq,
-        version: Number(room.version || 1),
-        scoreGain: Number(result.scoreGain || 0),
-        attack: Number(result.attack || 0),
-        event: result.event || latestEvent || null,
-        boardPatch: {
-          type: "full_board",
-          board: result.board || publicRoom.players.find((player) => player.uid === uid)?.board || []
-        },
-        room: publicRoom,
-        clientAt,
-        serverAt: Date.now()
-      });
-      broadcastRoomDelta(roomNo, {
-        message: "",
-        sourceSeq: swapSeq
-      });
-      observeRealtimeStage("realtime_swap_ack", {
-        roomNo,
-        uid,
-        mode: room.mode,
-        status: room.status,
-        seq: swapSeq,
-        result: String(room.version || 1)
-      });
-      return;
-    }
-
-    if (bucket.count === 1 || bucket.count % 8 === 0 || room.status === "finished") {
-      observeRealtimeStage("realtime_swap_ok", {
-        roomNo,
-        uid,
-        mode: room.mode,
-        status: room.status,
-        result: String(bucket.count)
-      });
-    }
+    const publicRoom = toPublicRoom(room, uid);
+    send(socket, {
+      type: "swap_ack",
+      seq: swapSeq,
+      version: Number(room.version || 1),
+      scoreGain: Number(result.scoreGain || 0),
+      attack: Number(result.attack || 0),
+      event: result.event || latestEvent || null,
+      boardPatch: {
+        type: "full_board",
+        board: result.board || publicRoom.players.find((player) => player.uid === uid)?.board || []
+      },
+      room: publicRoom,
+      clientAt,
+      serverAt: Date.now()
+    });
+    broadcastRoomDelta(roomNo, {
+      message: "",
+      sourceSeq: swapSeq
+    });
+    observeRealtimeStage("realtime_swap_ack", {
+      roomNo,
+      uid,
+      mode: room.mode,
+      status: room.status,
+      seq: swapSeq,
+      result: String(room.version || 1)
+    });
   }
-
-  broadcastRoom(roomNo, {
-    message: result.message
-  });
 }
 
 async function cleanup(socket) {
@@ -1294,8 +1206,24 @@ function attachRealtime(httpServer) {
           return;
         }
 
-        if (payload.type === "swap_tiles" || payload.type === "swap_cmd") {
+        if (payload.type === "swap_cmd") {
           await handleSwap(socket, payload);
+          return;
+        }
+
+        if (payload.type === "swap_tiles") {
+          send(socket, {
+            type: "swap_reject",
+            seq: Number(payload.seq || 0),
+            reason: "页面版本过旧，请刷新后再进入对局",
+            serverVersion: 0,
+            clientAt: Number(payload.clientAt || 0)
+          });
+          observeRealtimeStage("realtime_swap_reject", {
+            roomNo: socket.roomNo || "",
+            uid: socket.uid || "",
+            message: "legacy_swap_tiles"
+          });
           return;
         }
 
