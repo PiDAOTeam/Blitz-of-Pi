@@ -187,6 +187,22 @@ function Y(e) {
 function i(e) {
   return String(e || "").replace(/[&<>"']/g, (t) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[t] || t);
 }
+function plainConfigText(e, t = "") {
+  if (typeof e == "string" || typeof e == "number") {
+    const a = String(e).trim();
+    return a === "[object Object]" ? t : a;
+  }
+  if (e && typeof e == "object") {
+    const a = [e["zh-CN"], e.zh, e.cn, e.default, e.text, e.value, e.en];
+    for (const n of a) {
+      if (typeof n == "string" || typeof n == "number") {
+        const s = String(n).trim();
+        if (s) return s;
+      }
+    }
+  }
+  return t;
+}
 function E(e) {
   return i(e);
 }
@@ -1032,7 +1048,7 @@ function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, roo
               <option value="false" ${n.visualEffects?.attackWarningEnabled === false ? "selected" : ""}>\u5173\u95ED</option>
             </select>
           </label>
-          <label><span>\u88AB\u653B\u51FB\u63D0\u793A\u6587\u6848</span><input name="effectAttackWarningText" maxlength="32" value="${ve(n.visualEffects?.attackWarningText || "\u88AB\u653B\u51FB \u538B\u529B+{attack}")}" /></label>
+          <label><span>\u88AB\u653B\u51FB\u63D0\u793A\u6587\u6848</span><input name="effectAttackWarningText" maxlength="32" value="${i(plainConfigText(n.visualEffects?.attackWarningText, "\u88AB\u653B\u51FB \u538B\u529B+{attack}"))}" /></label>
           <p class="meta">{attack} \u4F1A\u81EA\u52A8\u66FF\u6362\u4E3A\u538B\u529B\u503C\u3002\u5EFA\u8BAE\u6587\u6848\u77ED\u4E00\u70B9\uFF0C\u4E0D\u8981\u6321\u68CB\u76D8\u3002</p>
           <p class="meta">\u5EFA\u8BAE\uFF1APi Browser \u4FDD\u6301\u5747\u8861\u6A21\u5F0F\uFF0C\u5E76\u5F00\u542F\u201C\u5361\u987F\u65F6\u81EA\u52A8\u964D\u4F4E\u7279\u6548\u201D\u3002\u5F31\u673A\u4F18\u5148\u6D41\u7545\uFF0C\u597D\u673A\u624D\u770B\u66F4\u591A\u7279\u6548\u3002</p>
           <div class="avatar-config">
