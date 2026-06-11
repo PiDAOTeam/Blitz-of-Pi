@@ -109,6 +109,18 @@ const DEFAULT_GAME_CONFIG = {
     realtimeIdleTimeoutSeconds: 90,
     realtimeMaxPayloadBytes: 2048
   },
+  extremeRealtime: {
+    enabled: false,
+    rollbackToLegacy: false,
+    enabledModes: ["quick_battle", "points_battle", "poc_battle", "pi_battle"],
+    grayPercent: 0,
+    grayUserPiUids: [],
+    grayUserPiUsernames: [],
+    maxPendingSwaps: 3,
+    snapshotIntervalMs: 2000,
+    swapMinIntervalMs: 120,
+    metricsSampleRate: 0.05
+  },
   withdrawRisk: {
     minAmount: 0.1,
     dailyLimitAmount: 10,
@@ -525,8 +537,50 @@ function normalizeCapacityConfig(capacity = {}) {
   };
 }
 
+function normalizeExtremeRealtimeConfig(extremeRealtime = {}) {
+  const defaults = DEFAULT_GAME_CONFIG.extremeRealtime;
+  const enabledModes = Array.isArray(extremeRealtime.enabledModes)
+    ? extremeRealtime.enabledModes.filter((mode) => SUPPORTED_BATTLE_MODES.includes(mode))
+    : defaults.enabledModes;
+
+  return {
+    enabled: Boolean(extremeRealtime.enabled),
+    rollbackToLegacy: Boolean(extremeRealtime.rollbackToLegacy),
+    enabledModes: enabledModes.length ? enabledModes : defaults.enabledModes,
+    grayPercent: normalizeNumberInRange(extremeRealtime.grayPercent, defaults.grayPercent, 0, 100),
+    grayUserPiUids: splitLines(extremeRealtime.grayUserPiUids || extremeRealtime.gray_user_pi_uids || []),
+    grayUserPiUsernames: splitLines(
+      extremeRealtime.grayUserPiUsernames || extremeRealtime.gray_user_pi_usernames || []
+    ),
+    maxPendingSwaps: normalizeNumberInRange(
+      extremeRealtime.maxPendingSwaps,
+      defaults.maxPendingSwaps,
+      1,
+      6
+    ),
+    snapshotIntervalMs: normalizeNumberInRange(
+      extremeRealtime.snapshotIntervalMs,
+      defaults.snapshotIntervalMs,
+      500,
+      10000
+    ),
+    swapMinIntervalMs: normalizeNumberInRange(
+      extremeRealtime.swapMinIntervalMs,
+      defaults.swapMinIntervalMs,
+      60,
+      500
+    ),
+    metricsSampleRate: normalizeRate(
+      Number(extremeRealtime.metricsSampleRate),
+      defaults.metricsSampleRate,
+      1
+    )
+  };
+}
+
 async function syncRealtimeConfigToRedis(config) {
   const capacity = normalizeCapacityConfig(config?.capacity || {});
+  const extremeRealtime = normalizeExtremeRealtimeConfig(config?.extremeRealtime || {});
   await redisSet(
     REALTIME_CONFIG_REDIS_KEY,
     JSON.stringify({
@@ -534,7 +588,8 @@ async function syncRealtimeConfigToRedis(config) {
       maxConnectionsPerUser: capacity.realtimeMaxConnectionsPerUser,
       heartbeatSeconds: capacity.realtimeHeartbeatSeconds,
       idleTimeoutSeconds: capacity.realtimeIdleTimeoutSeconds,
-      maxPayloadBytes: capacity.realtimeMaxPayloadBytes
+      maxPayloadBytes: capacity.realtimeMaxPayloadBytes,
+      extremeRealtime
     }),
     86400
   );
@@ -1073,6 +1128,7 @@ async function readGameConfig() {
         visualEffects: normalizeVisualEffectsConfig(value.visualEffects),
         timing: normalizeTimingConfig(value.timing),
         capacity: normalizeCapacityConfig(value.capacity),
+        extremeRealtime: normalizeExtremeRealtimeConfig(value.extremeRealtime),
         operation: normalizeConfig({ operation: value.operation }).operation
       };
     }
@@ -1101,6 +1157,7 @@ function normalizeConfig(payload) {
   const engagement = normalizeEngagementConfig(payload.engagement);
   const visualEffects = normalizeVisualEffectsConfig(payload.visualEffects);
   const assetGateway = normalizeAssetGatewayConfig(payload.assetGateway);
+  const extremeRealtime = normalizeExtremeRealtimeConfig(payload.extremeRealtime);
   const operation = {
     ...DEFAULT_GAME_CONFIG.operation,
     ...(payload.operation || {})
@@ -1118,6 +1175,7 @@ function normalizeConfig(payload) {
     assetGateway,
     timing: normalizeTimingConfig(payload.timing),
     capacity: normalizeCapacityConfig(payload.capacity),
+    extremeRealtime,
     withdrawRisk,
     rechargeBonus,
     transfer,

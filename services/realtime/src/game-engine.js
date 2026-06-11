@@ -306,6 +306,7 @@ function createRealtimeRoom(baseRoom) {
     players: baseRoom.players.map((player, index) =>
       createPlayerState(player, Date.now() + index * 997 + player.uid.length)
     ),
+    version: 1,
     events: []
   };
 }
@@ -717,7 +718,8 @@ function applySwap(room, uid, from, to, seq = 0) {
   self.pressure = Math.max(0, self.pressure - 1);
   self.validMoveCount = Number(self.validMoveCount || 0) + 1;
   opponent.pressure += attack;
-  room.events.unshift({
+  room.version = Number(room.version || 1) + 1;
+  const event = {
     uid,
     type: "swap",
     seq: Number(seq || 0),
@@ -728,14 +730,20 @@ function applySwap(room, uid, from, to, seq = 0) {
     specialTriggered: Number(result.specialTriggered || 0),
     specialCreated: Number(result.specialCreated || 0),
     at: Date.now()
-  });
+  };
+  room.events.unshift(event);
   room.events = room.events.slice(0, 12);
 
   finishIfNeeded(room);
 
   return {
     ok: true,
-    message: attack > 0 ? `连锁攻击 +${attack}` : `消除得分 +${result.scoreGain}`
+    message: attack > 0 ? `连锁攻击 +${attack}` : `消除得分 +${result.scoreGain}`,
+    event,
+    version: room.version,
+    scoreGain: result.scoreGain,
+    attack,
+    board: cloneBoard(self.board)
   };
 }
 
@@ -756,6 +764,7 @@ function applyBotMove(room) {
   bot.lastGain = gain * chain;
   bot.validMoveCount = Number(bot.validMoveCount || 0) + 1;
   human.pressure += attack;
+  room.version = Number(room.version || 1) + 1;
   room.events.unshift({
     uid: bot.uid,
     type: "bot_move",
@@ -782,6 +791,7 @@ function toPublicRoom(room, viewerUid = "") {
   return {
     roomNo: room.roomNo,
     mode: room.mode,
+    version: Number(room.version || 1),
     status: room.status,
     remainSeconds,
     readySeconds,

@@ -40,6 +40,24 @@ async function getPublicGameConfig() {
     },
     timing: config.timing || {},
     capacity: config.capacity || {},
+    extremeRealtime: {
+      enabled: Boolean(config.extremeRealtime?.enabled),
+      rollbackToLegacy: Boolean(config.extremeRealtime?.rollbackToLegacy),
+      enabledModes: Array.isArray(config.extremeRealtime?.enabledModes)
+        ? config.extremeRealtime.enabledModes
+        : ["quick_battle", "points_battle", "poc_battle", "pi_battle"],
+      grayPercent: Number(config.extremeRealtime?.grayPercent || 0),
+      grayUserPiUids: Array.isArray(config.extremeRealtime?.grayUserPiUids)
+        ? config.extremeRealtime.grayUserPiUids
+        : [],
+      grayUserPiUsernames: Array.isArray(config.extremeRealtime?.grayUserPiUsernames)
+        ? config.extremeRealtime.grayUserPiUsernames
+        : [],
+      maxPendingSwaps: Number(config.extremeRealtime?.maxPendingSwaps || 3),
+      snapshotIntervalMs: Number(config.extremeRealtime?.snapshotIntervalMs || 2000),
+      swapMinIntervalMs: Number(config.extremeRealtime?.swapMinIntervalMs || 120),
+      metricsSampleRate: Number(config.extremeRealtime?.metricsSampleRate ?? 0.05)
+    },
     withdrawRisk: {
       minAmount: Number(config.withdrawRisk?.minAmount || 0),
       dailyLimitAmount: Number(config.withdrawRisk?.dailyLimitAmount || 0),

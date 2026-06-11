@@ -12,7 +12,7 @@ function bn() {
   const e = localStorage.getItem(Wa);
   return ot.includes(e) ? e : "balanced";
 }
-const Z = ["ruby", "amber", "jade", "aqua", "slate", "gold"], wa = 10, ya = 20, ka = 30, a = { user: null, home: null, wallet: null, rankStatus: null, rankLeaderboard: null, piConfig: null, gameConfig: null, inviteInfo: null, engagement: null, battleHistory: [], battleHistoryPage: 1, battleHistoryTotal: 0, battleHistoryTotalPages: 1, battleHistoryFilter: "all", walletLedgerExpanded: false, walletLedgerPage: 1, walletLedgerFilter: "all", screen: "loading", activePanel: "home", selectedMode: "quick_battle", roomNo: "", roomJoinToken: "", room: null, realtimeRoom: null, result: null, selectedTile: null, tileEffect: null, battleMessage: "", networkStatus: "connecting", networkLatencyMs: 0, vsIntroUntil: 0, lastRoomStateAt: 0, lastSwapSentAt: 0, lastSwapSeq: 0, pendingSwapSeq: 0, pendingSwapPositions: [], lastSwapPositions: [], battleConnectingAt: 0, battleEnteredAt: 0, feedbackEventId: "", feedback: null, battleBursts: [], battleImpacts: [], localBattleEvents: [], localSwapFx: null, matchPollTimer: null, matchUiTimer: null, matchStartedAt: 0, matchWaitingSeconds: 0, matchCanCancel: false, matchCancelMessage: "", matchCancelling: false, matchSessionId: 0, matchPollFailedCount: 0, language: gn(), visualEffectMode: bn(), effectiveVisualEffectMode: "balanced", profileOptions: null, withdrawWallets: [] }, St = [{ code: "zh-CN", flag: "\u{1F1E8}\u{1F1F3}", nativeName: "\u4E2D\u6587", displayName: "\u7B80\u4F53\u4E2D\u6587" }, { code: "en", flag: "\u{1F1FA}\u{1F1F8}", nativeName: "English", displayName: "English" }, { code: "vi", flag: "\u{1F1FB}\u{1F1F3}", nativeName: "Ti\u1EBFng Vi\u1EC7t", displayName: "\u8D8A\u5357\u8BED" }, { code: "ko", flag: "\u{1F1F0}\u{1F1F7}", nativeName: "\uD55C\uAD6D\uC5B4", displayName: "\u97E9\u8BED" }, { code: "ja", flag: "\u{1F1EF}\u{1F1F5}", nativeName: "\u65E5\u672C\u8A9E", displayName: "\u65E5\u8BED" }], $t = { "zh-CN": { languageTitle: "\u9009\u62E9\u8BED\u8A00", languageSummary: "\u5207\u6362\u540E\u4F1A\u7ACB\u5373\u751F\u6548\uFF0C\u5E76\u81EA\u52A8\u8BB0\u4F4F\u4F60\u7684\u9009\u62E9\u3002", languageCancel: "\u53D6\u6D88", homeProjectNameFallback: "Pi\u95EA\u7535\u6218", homeEnglishNameFallback: "BLITZ OF PI", realtimePvp: "\u5B9E\u65F6PVP", match3: "6x8\u4E09\u6D88", piReward: "Pi\u5956\u52B1", gameTips: "\u73A9\u6CD5\u6280\u5DE7", rankBoard: "\u6BB5\u4F4D\u699C", totalPlayers: "\u603B\u73A9\u5BB6", totalBattles: "\u7D2F\u8BA1\u5BF9\u5C40", todayBattles: "\u4ECA\u65E5\u5BF9\u5C40", totalRewards: "\u5DF2\u53D1\u5956\u52B1", practiceMode: "\u7EC3\u624B\u6A21\u5F0F", quickBattle: "\u5FEB\u901F\u5F00\u6218", quickBattleDesc: "\u514D\u8D39\u7EC3\u624B\uFF0C\u4E45\u7B49\u8865\u673A\u5668\u4EBA\u3002", lowEntryReward: "\u4F4E\u95E8\u69DB\u5956\u52B1", ticketBattle: "\u5C0F\u5BCC\u8C6A\u573A", ticketBattleDesc: "\u4F4E\u95E8\u69DB\u771F\u4EBA\u573A\uFF0C\u8BA1\u5165\u5468\u699C\u3002", highPrizePool: "\u9AD8\u5956\u6C60\u523A\u6FC0", richBattle: "\u5927\u5BCC\u8C6A\u573A", richBattleDesc: "\u9AD8\u5956\u6C60\u771F\u4EBA\u573A\uFF0C{rank}\u89E3\u9501\u3002", rankRoute: "\u51B2\u6BB5\u8DEF\u7EBF", quickShort: "\u5FEB\u901F", ticketShort: "\u5C0F\u5BCC\u8C6A", richShort: "\u5927\u5BCC\u8C6A", maintenanceTitle: "\u7EF4\u62A4\u516C\u544A", maintenanceFallback: "\u5E73\u53F0\u7EF4\u62A4\u4E2D\uFF0C\u90E8\u5206\u529F\u80FD\u53EF\u80FD\u6682\u4E0D\u53EF\u7528\u3002", activityFallback: "\u6D3B\u52A8\u516C\u544A", activityDescriptionFallback: "\u5B8C\u6210\u5BF9\u5C40\u3001\u63D0\u5347\u6BB5\u4F4D\uFF0C\u8D62\u53D6 Pi \u5956\u52B1\u3002", ruleSwap: "\u73A9\u6CD5\uFF1A\u4EA4\u6362\u76F8\u90BB\u65B9\u5757\uFF0C\u4E09\u8FDE\u5373\u53EF\u6D88\u9664", ruleCombo: "\u6280\u5DE7\uFF1A\u8FDE\u51FB\u8D8A\u9AD8\uFF0C\u5BF9\u624B\u538B\u529B\u8D8A\u5927", ruleGoal: "\u76EE\u6807\uFF1A90\u79D2\u5185\u6253\u51FA\u66F4\u9AD8\u5206\u6570", chooseBattleMode: "\u9009\u62E9\u5BF9\u6218\u6A21\u5F0F", home: "\u9996\u9875", battle: "\u5F00\u6218", mine: "\u6211\u7684", battleMode: "\u5BF9\u6218\u6A21\u5F0F", chooseModeTitle: "\u9009\u62E9\u5BF9\u6218\u6A21\u5F0F", quickModeDetail: "\u514D\u8D39\u7EC3\u624B\uFF0C\u4E45\u7B49\u8865\u673A\u5668\u4EBA\u3002", ticketModeDetail: "\u4F4E\u95E8\u69DB\u771F\u4EBA\u573A\uFF0C{weekly}", richModeDetail: "\u9AD8\u5956\u6C60\u771F\u4EBA\u573A\uFF0C{rank}\u89E3\u9501\u3002", weeklyOn: "\u8BA1\u5165\u5468\u699C\u5956\u52B1\u3002", weeklyOff: "\u4E0D\u8BA1\u5468\u699C\u3002", richUnlock: " \xB7 {rank}\u89E3\u9501", balanceAndStars: "\u4F59\u989D {balance} Pi \xB7 \u80DC+{win}/\u8D1F-{lose} \xB7 \u9752\u94DC{protection}", protected: "\u6709\u4FDD\u62A4", unprotected: "\u65E0\u4FDD\u62A4" }, en: { languageTitle: "Choose Language", languageSummary: "Changes apply instantly and will be remembered on this device.", languageCancel: "Cancel", homeProjectNameFallback: "Blitz of Pi", homeEnglishNameFallback: "BLITZ OF PI", realtimePvp: "Real-time PVP", match3: "6x8 Match-3", piReward: "Pi Rewards", gameTips: "How to Play", rankBoard: "Rank Board", totalPlayers: "Players", totalBattles: "Battles", todayBattles: "Today", totalRewards: "Rewards Paid", practiceMode: "Practice", quickBattle: "Quick Battle", quickBattleDesc: "Free practice. Bots fill long waits.", lowEntryReward: "Low Entry", ticketBattle: "Small Rich Room", ticketBattleDesc: "Low-entry real-player room.", highPrizePool: "High Prize", richBattle: "Big Rich Room", richBattleDesc: "High-prize room. Unlocks at {rank}.", rankRoute: "Rank Path", quickShort: "Quick", ticketShort: "Small", richShort: "Big", maintenanceTitle: "Maintenance", maintenanceFallback: "The platform is under maintenance. Some features may be unavailable.", activityFallback: "Event", activityDescriptionFallback: "Play battles, climb ranks, and win Pi rewards.", ruleSwap: "Swap adjacent tiles and match 3 to clear.", ruleCombo: "Higher combos create more pressure.", ruleGoal: "Score higher within 90 seconds.", chooseBattleMode: "Choose Battle Mode", home: "Home", battle: "Battle", mine: "Mine", battleMode: "Battle Mode", chooseModeTitle: "Choose Battle Mode", quickModeDetail: "Free practice. Bots fill long waits.", ticketModeDetail: "Low-entry real-player room. {weekly}", richModeDetail: "High-prize room. Unlocks at {rank}.", weeklyOn: "Counts for weekly rewards.", weeklyOff: "Not counted weekly.", richUnlock: " \xB7 {rank} unlock", balanceAndStars: "Bal {balance} Pi \xB7 W+{win}/L-{lose} \xB7 Bronze {protection}", protected: "protected", unprotected: "not protected" }, vi: { languageTitle: "Ch\u1ECDn ng\xF4n ng\u1EEF", languageSummary: "Thay \u0111\u1ED5i c\xF3 hi\u1EC7u l\u1EF1c ngay v\xE0 s\u1EBD \u0111\u01B0\u1EE3c ghi nh\u1EDB.", languageCancel: "H\u1EE7y", homeProjectNameFallback: "Blitz of Pi", homeEnglishNameFallback: "BLITZ OF PI", realtimePvp: "PVP th\u1EDDi gian th\u1EF1c", match3: "6x8 gh\xE9p 3", piReward: "Th\u01B0\u1EDFng Pi", gameTips: "M\u1EB9o ch\u01A1i", rankBoard: "B\u1EA3ng h\u1EA1ng", totalPlayers: "Ng\u01B0\u1EDDi ch\u01A1i", totalBattles: "Tr\u1EADn \u0111\xE3 ch\u01A1i", todayBattles: "H\xF4m nay", totalRewards: "Pi \u0111\xE3 th\u01B0\u1EDFng", practiceMode: "Luy\u1EC7n t\u1EADp", quickBattle: "\u0110\u1EA5u nhanh", quickBattleDesc: "Mi\u1EC5n ph\xED. Tr\u1EADn ng\u01B0\u1EDDi th\u1EADt {cap}; tr\u1EADn bot kh\xF4ng t\xEDnh h\u1EA1ng ho\u1EB7c th\u01B0\u1EDFng tu\u1EA7n.", lowEntryReward: "Ph\xED th\u1EA5p", ticketBattle: "Ph\xF2ng Ti\u1EC3u ph\xFA", ticketBattleDesc: "M\u1ED7i b\xEAn tr\u1EA3 {fee} Pi, ng\u01B0\u1EDDi th\u1EAFng d\u1EF1 ki\u1EBFn nh\u1EADn {reward} Pi, {cap}.", highPrizePool: "Gi\u1EA3i l\u1EDBn", richBattle: "Ph\xF2ng \u0110\u1EA1i ph\xFA", richBattleDesc: "M\u1ED7i b\xEAn tr\u1EA3 {fee} Pi, th\u1EAFng d\u1EF1 ki\u1EBFn nh\u1EADn {reward} Pi, {rank} m\u1EDF kh\xF3a Tinh di\u1EC7u/Vua.", rankRoute: "L\u1ED9 tr\xECnh h\u1EA1ng", quickShort: "Nhanh", ticketShort: "Ti\u1EC3u ph\xFA", richShort: "\u0110\u1EA1i ph\xFA", maintenanceTitle: "B\u1EA3o tr\xEC", maintenanceFallback: "N\u1EC1n t\u1EA3ng \u0111ang b\u1EA3o tr\xEC, m\u1ED9t s\u1ED1 t\xEDnh n\u0103ng c\xF3 th\u1EC3 t\u1EA1m d\u1EEBng.", activityFallback: "S\u1EF1 ki\u1EC7n", activityDescriptionFallback: "Thi \u0111\u1EA5u, leo h\u1EA1ng v\xE0 nh\u1EADn th\u01B0\u1EDFng Pi.", ruleSwap: "\u0110\u1ED5i \xF4 li\u1EC1n k\u1EC1, gh\xE9p 3 \u0111\u1EC3 x\xF3a.", ruleCombo: "Combo c\xE0ng cao, \xE1p l\u1EF1c c\xE0ng l\u1EDBn.", ruleGoal: "Ghi \u0111i\u1EC3m cao h\u01A1n trong 90 gi\xE2y.", chooseBattleMode: "Ch\u1ECDn ch\u1EBF \u0111\u1ED9", home: "Trang ch\u1EE7", battle: "\u0110\u1EA5u", mine: "C\u1EE7a t\xF4i", battleMode: "Ch\u1EBF \u0111\u1ED9 \u0111\u1EA5u", chooseModeTitle: "Ch\u1ECDn ch\u1EBF \u0111\u1ED9", quickModeDetail: "Luy\u1EC7n mi\u1EC5n ph\xED. Tr\u1EADn ng\u01B0\u1EDDi th\u1EADt {cap}; ch\u1EDD l\xE2u c\xF3 th\u1EC3 g\u1EB7p bot v\xE0 kh\xF4ng t\xEDnh h\u1EA1ng/tu\u1EA7n.", ticketModeDetail: "M\u1ED7i b\xEAn tr\u1EA3 {fee} Pi, th\u1EAFng nh\u1EADn {reward} Pi, {cap}, {weekly}", richModeDetail: "M\u1ED7i b\xEAn tr\u1EA3 {fee} Pi, th\u1EAFng nh\u1EADn {reward} Pi, {rank} m\u1EDF kh\xF3a Tinh di\u1EC7u/Vua, {weekly}", weeklyOn: "T\xEDnh th\u01B0\u1EDFng tu\u1EA7n.", weeklyOff: "Kh\xF4ng t\xEDnh tu\u1EA7n.", richUnlock: " \xB7 m\u1EDF \u1EDF {rank}", balanceAndStars: "S\u1ED1 d\u01B0 {balance} Pi; th\u1EAFng +{win} sao, thua -{lose} sao, \u0110\u1ED3ng {protection}.", protected: "\u0111\u01B0\u1EE3c b\u1EA3o v\u1EC7", unprotected: "kh\xF4ng b\u1EA3o v\u1EC7" }, ko: { languageTitle: "\uC5B8\uC5B4 \uC120\uD0DD", languageSummary: "\uBCC0\uACBD \uC989\uC2DC \uC801\uC6A9\uB418\uBA70 \uC774 \uAE30\uAE30\uC5D0 \uC800\uC7A5\uB429\uB2C8\uB2E4.", languageCancel: "\uCDE8\uC18C", homeProjectNameFallback: "Blitz of Pi", homeEnglishNameFallback: "BLITZ OF PI", realtimePvp: "\uC2E4\uC2DC\uAC04 PVP", match3: "6x8 \uB9E4\uCE583", piReward: "Pi \uBCF4\uC0C1", gameTips: "\uD50C\uB808\uC774 \uD301", rankBoard: "\uB7AD\uD0B9", totalPlayers: "\uCD1D \uC720\uC800", totalBattles: "\uB204\uC801 \uB300\uC804", todayBattles: "\uC624\uB298 \uB300\uC804", totalRewards: "\uC9C0\uAE09 \uBCF4\uC0C1", practiceMode: "\uC5F0\uC2B5 \uBAA8\uB4DC", quickBattle: "\uBE60\uB978 \uB300\uC804", quickBattleDesc: "\uBB34\uB8CC \uC785\uC7A5. \uC2E4\uC81C \uC720\uC800 \uB300\uC804\uC740 {cap}; \uBD07 \uB300\uC804\uC740 \uB7AD\uD06C/\uC8FC\uAC04 \uBCF4\uC0C1 \uC81C\uC678.", lowEntryReward: "\uB0AE\uC740 \uCC38\uAC00\uBE44", ticketBattle: "\uC2A4\uBAB0 \uB9AC\uCE58", ticketBattleDesc: "\uC591\uCABD {fee} Pi \uC9C0\uBD88, \uC2B9\uC790 \uC608\uC0C1 {reward} Pi \uD68D\uB4DD, {cap}.", highPrizePool: "\uD070 \uC0C1\uAE08", richBattle: "\uBE45 \uB9AC\uCE58", richBattleDesc: "\uC591\uCABD {fee} Pi \uC9C0\uBD88, \uC2B9\uC790 \uC608\uC0C1 {reward} Pi \uD68D\uB4DD, {rank}\uBD80\uD130 \uC2A4\uD0C0\uB77C\uC774\uD2B8/\uD0B9 \uB3C4\uC804.", rankRoute: "\uB7AD\uD06C \uACBD\uB85C", quickShort: "\uBE60\uB978", ticketShort: "\uC2A4\uBAB0", richShort: "\uBE45", maintenanceTitle: "\uC810\uAC80 \uC548\uB0B4", maintenanceFallback: "\uD50C\uB7AB\uD3FC \uC810\uAC80 \uC911\uC785\uB2C8\uB2E4. \uC77C\uBD80 \uAE30\uB2A5\uC744 \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.", activityFallback: "\uC774\uBCA4\uD2B8", activityDescriptionFallback: "\uB300\uC804\uD558\uACE0 \uB7AD\uD06C\uB97C \uC62C\uB824 Pi \uBCF4\uC0C1\uC744 \uBC1B\uC73C\uC138\uC694.", ruleSwap: "\uC778\uC811 \uBE14\uB85D\uC744 \uBC14\uAFD4 3\uAC1C\uB97C \uB9DE\uCD94\uC138\uC694.", ruleCombo: "\uCF64\uBCF4\uAC00 \uB192\uC744\uC218\uB85D \uC0C1\uB300 \uC555\uBC15\uC774 \uCEE4\uC9D1\uB2C8\uB2E4.", ruleGoal: "90\uCD08 \uC548\uC5D0 \uB354 \uB192\uC740 \uC810\uC218\uB97C \uB0B4\uC138\uC694.", chooseBattleMode: "\uB300\uC804 \uBAA8\uB4DC \uC120\uD0DD", home: "\uD648", battle: "\uB300\uC804", mine: "\uB0B4 \uC815\uBCF4", battleMode: "\uB300\uC804 \uBAA8\uB4DC", chooseModeTitle: "\uB300\uC804 \uBAA8\uB4DC \uC120\uD0DD", quickModeDetail: "\uBB34\uB8CC \uC5F0\uC2B5. \uC2E4\uC81C \uC720\uC800 \uB300\uC804\uC740 {cap}; \uB300\uAE30 \uD6C4 \uBD07 \uB9E4\uCE6D \uAC00\uB2A5\uD558\uBA70 \uB7AD\uD06C/\uC8FC\uAC04 \uC81C\uC678.", ticketModeDetail: "\uC591\uCABD {fee} Pi \uC9C0\uBD88, \uC2B9\uC790 {reward} Pi \uD68D\uB4DD, {cap}, {weekly}", richModeDetail: "\uC591\uCABD {fee} Pi \uC9C0\uBD88, \uC2B9\uC790 {reward} Pi \uD68D\uB4DD, {rank}\uBD80\uD130 \uC2A4\uD0C0\uB77C\uC774\uD2B8/\uD0B9 \uB3C4\uC804, {weekly}", weeklyOn: "\uC8FC\uAC04 \uBCF4\uC0C1 \uBC18\uC601.", weeklyOff: "\uC8FC\uAC04 \uC81C\uC678.", richUnlock: " \xB7 {rank} \uD574\uC81C", balanceAndStars: "\uC794\uC561 {balance} Pi; \uC2B9\uB9AC +{win}\uC131, \uD328\uBC30 -{lose}\uC131, \uBE0C\uB860\uC988 {protection}.", protected: "\uBCF4\uD638", unprotected: "\uBCF4\uD638 \uC5C6\uC74C" }, ja: { languageTitle: "\u8A00\u8A9E\u3092\u9078\u629E", languageSummary: "\u5909\u66F4\u306F\u3059\u3050\u53CD\u6620\u3055\u308C\u3001\u3053\u306E\u7AEF\u672B\u306B\u4FDD\u5B58\u3055\u308C\u307E\u3059\u3002", languageCancel: "\u30AD\u30E3\u30F3\u30BB\u30EB", homeProjectNameFallback: "Blitz of Pi", homeEnglishNameFallback: "BLITZ OF PI", realtimePvp: "\u30EA\u30A2\u30EB\u30BF\u30A4\u30E0PVP", match3: "6x8\u30DE\u30C3\u30C13", piReward: "Pi\u5831\u916C", gameTips: "\u904A\u3073\u65B9", rankBoard: "\u30E9\u30F3\u30AF\u699C", totalPlayers: "\u7DCF\u30D7\u30EC\u30A4\u30E4\u30FC", totalBattles: "\u7D2F\u8A08\u5BFE\u6226", todayBattles: "\u672C\u65E5\u5BFE\u6226", totalRewards: "\u914D\u5E03\u5831\u916C", practiceMode: "\u7DF4\u7FD2\u30E2\u30FC\u30C9", quickBattle: "\u30AF\u30A4\u30C3\u30AF\u5BFE\u6226", quickBattleDesc: "\u7121\u6599\u53C2\u52A0\u3002\u771F\u4EBA\u6226\u306F{cap}\uFF1BBot\u6226\u306F\u30E9\u30F3\u30AF/\u9031\u9593\u5831\u916C\u5BFE\u8C61\u5916\u3002", lowEntryReward: "\u4F4E\u53C2\u52A0\u8CBB", ticketBattle: "\u5C0F\u5BCC\u8C6A\u5834", ticketBattleDesc: "\u53CC\u65B9 {fee} Pi\u3001\u52DD\u8005\u306F\u7D04 {reward} Pi\u3001{cap}\u3002", highPrizePool: "\u9AD8\u8CDE\u91D1", richBattle: "\u5927\u5BCC\u8C6A\u5834", richBattleDesc: "\u53CC\u65B9 {fee} Pi\u3001\u52DD\u8005\u306F\u7D04 {reward} Pi\u3001{rank}\u304B\u3089\u661F\u8000/\u738B\u8005\u3078\u6311\u6226\u3002", rankRoute: "\u30E9\u30F3\u30AF\u9053", quickShort: "\u5FEB\u901F", ticketShort: "\u5C0F\u5BCC\u8C6A", richShort: "\u5927\u5BCC\u8C6A", maintenanceTitle: "\u30E1\u30F3\u30C6\u30CA\u30F3\u30B9", maintenanceFallback: "\u30E1\u30F3\u30C6\u30CA\u30F3\u30B9\u4E2D\u3067\u3059\u3002\u4E00\u90E8\u6A5F\u80FD\u304C\u5229\u7528\u3067\u304D\u306A\u3044\u5834\u5408\u304C\u3042\u308A\u307E\u3059\u3002", activityFallback: "\u30A4\u30D9\u30F3\u30C8", activityDescriptionFallback: "\u5BFE\u6226\u3057\u3066\u30E9\u30F3\u30AF\u3092\u4E0A\u3052\u3001Pi\u5831\u916C\u3092\u7372\u5F97\u3057\u307E\u3057\u3087\u3046\u3002", ruleSwap: "\u96A3\u306E\u30D6\u30ED\u30C3\u30AF\u3092\u5165\u308C\u66FF\u3048\u30013\u3064\u63C3\u3048\u3066\u6D88\u3057\u307E\u3059\u3002", ruleCombo: "\u30B3\u30F3\u30DC\u304C\u9AD8\u3044\u307B\u3069\u76F8\u624B\u3078\u306E\u5727\u529B\u304C\u5897\u3048\u307E\u3059\u3002", ruleGoal: "90\u79D2\u4EE5\u5185\u306B\u3088\u308A\u9AD8\u3044\u30B9\u30B3\u30A2\u3092\u72D9\u3044\u307E\u3059\u3002", chooseBattleMode: "\u5BFE\u6226\u30E2\u30FC\u30C9\u9078\u629E", home: "\u30DB\u30FC\u30E0", battle: "\u5BFE\u6226", mine: "\u30DE\u30A4", battleMode: "\u5BFE\u6226\u30E2\u30FC\u30C9", chooseModeTitle: "\u5BFE\u6226\u30E2\u30FC\u30C9\u9078\u629E", quickModeDetail: "\u7121\u6599\u7DF4\u7FD2\u3002\u771F\u4EBA\u6226\u306F{cap}\uFF1B\u5F85\u6A5F\u5F8C\u306EBot\u6226\u306F\u30E9\u30F3\u30AF/\u9031\u9593\u5BFE\u8C61\u5916\u3002", ticketModeDetail: "\u53CC\u65B9 {fee} Pi\u3001\u52DD\u8005 {reward} Pi\u3001{cap}\u3001{weekly}", richModeDetail: "\u53CC\u65B9 {fee} Pi\u3001\u52DD\u8005 {reward} Pi\u3001{rank}\u304B\u3089\u661F\u8000/\u738B\u8005\u3078\u6311\u6226\u3001{weekly}", weeklyOn: "\u9031\u9593\u5831\u916C\u306B\u53CD\u6620\u3002", weeklyOff: "\u9031\u9593\u5BFE\u8C61\u5916\u3002", richUnlock: " \xB7 {rank}\u3067\u89E3\u653E", balanceAndStars: "\u6B8B\u9AD8 {balance} Pi\uFF1B\u52DD\u5229 +{win} \u661F\u3001\u6557\u5317 -{lose} \u661F\u3001\u30D6\u30ED\u30F3\u30BA\u306F{protection}\u3002", protected: "\u4FDD\u8B77\u3042\u308A", unprotected: "\u4FDD\u8B77\u306A\u3057" } };
+const Z = ["ruby", "amber", "jade", "aqua", "slate", "gold"], wa = 10, ya = 20, ka = 30, a = { user: null, home: null, wallet: null, rankStatus: null, rankLeaderboard: null, piConfig: null, gameConfig: null, inviteInfo: null, engagement: null, battleHistory: [], battleHistoryPage: 1, battleHistoryTotal: 0, battleHistoryTotalPages: 1, battleHistoryFilter: "all", walletLedgerExpanded: false, walletLedgerPage: 1, walletLedgerFilter: "all", screen: "loading", activePanel: "home", selectedMode: "quick_battle", roomNo: "", roomJoinToken: "", room: null, realtimeRoom: null, result: null, selectedTile: null, tileEffect: null, battleMessage: "", networkStatus: "connecting", networkLatencyMs: 0, vsIntroUntil: 0, lastRoomStateAt: 0, lastSwapSentAt: 0, lastSwapSeq: 0, pendingSwapSeq: 0, pendingSwapPositions: [], pendingSwapQueue: [], clientRoomVersion: 0, clientPredictedBoard: null, clientPredictionStats: { sent: 0, ack: 0, reject: 0, rollback: 0, corrected: 0, longFrames: 0 }, lastSwapPositions: [], battleConnectingAt: 0, battleEnteredAt: 0, feedbackEventId: "", feedback: null, battleBursts: [], battleImpacts: [], localBattleEvents: [], localSwapFx: null, matchPollTimer: null, matchUiTimer: null, matchStartedAt: 0, matchWaitingSeconds: 0, matchCanCancel: false, matchCancelMessage: "", matchCancelling: false, matchSessionId: 0, matchPollFailedCount: 0, language: gn(), visualEffectMode: bn(), effectiveVisualEffectMode: "balanced", profileOptions: null, withdrawWallets: [] }, St = [{ code: "zh-CN", flag: "\u{1F1E8}\u{1F1F3}", nativeName: "\u4E2D\u6587", displayName: "\u7B80\u4F53\u4E2D\u6587" }, { code: "en", flag: "\u{1F1FA}\u{1F1F8}", nativeName: "English", displayName: "English" }, { code: "vi", flag: "\u{1F1FB}\u{1F1F3}", nativeName: "Ti\u1EBFng Vi\u1EC7t", displayName: "\u8D8A\u5357\u8BED" }, { code: "ko", flag: "\u{1F1F0}\u{1F1F7}", nativeName: "\uD55C\uAD6D\uC5B4", displayName: "\u97E9\u8BED" }, { code: "ja", flag: "\u{1F1EF}\u{1F1F5}", nativeName: "\u65E5\u672C\u8A9E", displayName: "\u65E5\u8BED" }], $t = { "zh-CN": { languageTitle: "\u9009\u62E9\u8BED\u8A00", languageSummary: "\u5207\u6362\u540E\u4F1A\u7ACB\u5373\u751F\u6548\uFF0C\u5E76\u81EA\u52A8\u8BB0\u4F4F\u4F60\u7684\u9009\u62E9\u3002", languageCancel: "\u53D6\u6D88", homeProjectNameFallback: "Pi\u95EA\u7535\u6218", homeEnglishNameFallback: "BLITZ OF PI", realtimePvp: "\u5B9E\u65F6PVP", match3: "6x8\u4E09\u6D88", piReward: "Pi\u5956\u52B1", gameTips: "\u73A9\u6CD5\u6280\u5DE7", rankBoard: "\u6BB5\u4F4D\u699C", totalPlayers: "\u603B\u73A9\u5BB6", totalBattles: "\u7D2F\u8BA1\u5BF9\u5C40", todayBattles: "\u4ECA\u65E5\u5BF9\u5C40", totalRewards: "\u5DF2\u53D1\u5956\u52B1", practiceMode: "\u7EC3\u624B\u6A21\u5F0F", quickBattle: "\u5FEB\u901F\u5F00\u6218", quickBattleDesc: "\u514D\u8D39\u7EC3\u624B\uFF0C\u4E45\u7B49\u8865\u673A\u5668\u4EBA\u3002", lowEntryReward: "\u4F4E\u95E8\u69DB\u5956\u52B1", ticketBattle: "\u5C0F\u5BCC\u8C6A\u573A", ticketBattleDesc: "\u4F4E\u95E8\u69DB\u771F\u4EBA\u573A\uFF0C\u8BA1\u5165\u5468\u699C\u3002", highPrizePool: "\u9AD8\u5956\u6C60\u523A\u6FC0", richBattle: "\u5927\u5BCC\u8C6A\u573A", richBattleDesc: "\u9AD8\u5956\u6C60\u771F\u4EBA\u573A\uFF0C{rank}\u89E3\u9501\u3002", rankRoute: "\u51B2\u6BB5\u8DEF\u7EBF", quickShort: "\u5FEB\u901F", ticketShort: "\u5C0F\u5BCC\u8C6A", richShort: "\u5927\u5BCC\u8C6A", maintenanceTitle: "\u7EF4\u62A4\u516C\u544A", maintenanceFallback: "\u5E73\u53F0\u7EF4\u62A4\u4E2D\uFF0C\u90E8\u5206\u529F\u80FD\u53EF\u80FD\u6682\u4E0D\u53EF\u7528\u3002", activityFallback: "\u6D3B\u52A8\u516C\u544A", activityDescriptionFallback: "\u5B8C\u6210\u5BF9\u5C40\u3001\u63D0\u5347\u6BB5\u4F4D\uFF0C\u8D62\u53D6 Pi \u5956\u52B1\u3002", ruleSwap: "\u73A9\u6CD5\uFF1A\u4EA4\u6362\u76F8\u90BB\u65B9\u5757\uFF0C\u4E09\u8FDE\u5373\u53EF\u6D88\u9664", ruleCombo: "\u6280\u5DE7\uFF1A\u8FDE\u51FB\u8D8A\u9AD8\uFF0C\u5BF9\u624B\u538B\u529B\u8D8A\u5927", ruleGoal: "\u76EE\u6807\uFF1A90\u79D2\u5185\u6253\u51FA\u66F4\u9AD8\u5206\u6570", chooseBattleMode: "\u9009\u62E9\u5BF9\u6218\u6A21\u5F0F", home: "\u9996\u9875", battle: "\u5F00\u6218", mine: "\u6211\u7684", battleMode: "\u5BF9\u6218\u6A21\u5F0F", chooseModeTitle: "\u9009\u62E9\u5BF9\u6218\u6A21\u5F0F", quickModeDetail: "\u514D\u8D39\u7EC3\u624B\uFF0C\u4E45\u7B49\u8865\u673A\u5668\u4EBA\u3002", ticketModeDetail: "\u4F4E\u95E8\u69DB\u771F\u4EBA\u573A\uFF0C{weekly}", richModeDetail: "\u9AD8\u5956\u6C60\u771F\u4EBA\u573A\uFF0C{rank}\u89E3\u9501\u3002", weeklyOn: "\u8BA1\u5165\u5468\u699C\u5956\u52B1\u3002", weeklyOff: "\u4E0D\u8BA1\u5468\u699C\u3002", richUnlock: " \xB7 {rank}\u89E3\u9501", balanceAndStars: "\u4F59\u989D {balance} Pi \xB7 \u80DC+{win}/\u8D1F-{lose} \xB7 \u9752\u94DC{protection}", protected: "\u6709\u4FDD\u62A4", unprotected: "\u65E0\u4FDD\u62A4" }, en: { languageTitle: "Choose Language", languageSummary: "Changes apply instantly and will be remembered on this device.", languageCancel: "Cancel", homeProjectNameFallback: "Blitz of Pi", homeEnglishNameFallback: "BLITZ OF PI", realtimePvp: "Real-time PVP", match3: "6x8 Match-3", piReward: "Pi Rewards", gameTips: "How to Play", rankBoard: "Rank Board", totalPlayers: "Players", totalBattles: "Battles", todayBattles: "Today", totalRewards: "Rewards Paid", practiceMode: "Practice", quickBattle: "Quick Battle", quickBattleDesc: "Free practice. Bots fill long waits.", lowEntryReward: "Low Entry", ticketBattle: "Small Rich Room", ticketBattleDesc: "Low-entry real-player room.", highPrizePool: "High Prize", richBattle: "Big Rich Room", richBattleDesc: "High-prize room. Unlocks at {rank}.", rankRoute: "Rank Path", quickShort: "Quick", ticketShort: "Small", richShort: "Big", maintenanceTitle: "Maintenance", maintenanceFallback: "The platform is under maintenance. Some features may be unavailable.", activityFallback: "Event", activityDescriptionFallback: "Play battles, climb ranks, and win Pi rewards.", ruleSwap: "Swap adjacent tiles and match 3 to clear.", ruleCombo: "Higher combos create more pressure.", ruleGoal: "Score higher within 90 seconds.", chooseBattleMode: "Choose Battle Mode", home: "Home", battle: "Battle", mine: "Mine", battleMode: "Battle Mode", chooseModeTitle: "Choose Battle Mode", quickModeDetail: "Free practice. Bots fill long waits.", ticketModeDetail: "Low-entry real-player room. {weekly}", richModeDetail: "High-prize room. Unlocks at {rank}.", weeklyOn: "Counts for weekly rewards.", weeklyOff: "Not counted weekly.", richUnlock: " \xB7 {rank} unlock", balanceAndStars: "Bal {balance} Pi \xB7 W+{win}/L-{lose} \xB7 Bronze {protection}", protected: "protected", unprotected: "not protected" }, vi: { languageTitle: "Ch\u1ECDn ng\xF4n ng\u1EEF", languageSummary: "Thay \u0111\u1ED5i c\xF3 hi\u1EC7u l\u1EF1c ngay v\xE0 s\u1EBD \u0111\u01B0\u1EE3c ghi nh\u1EDB.", languageCancel: "H\u1EE7y", homeProjectNameFallback: "Blitz of Pi", homeEnglishNameFallback: "BLITZ OF PI", realtimePvp: "PVP th\u1EDDi gian th\u1EF1c", match3: "6x8 gh\xE9p 3", piReward: "Th\u01B0\u1EDFng Pi", gameTips: "M\u1EB9o ch\u01A1i", rankBoard: "B\u1EA3ng h\u1EA1ng", totalPlayers: "Ng\u01B0\u1EDDi ch\u01A1i", totalBattles: "Tr\u1EADn \u0111\xE3 ch\u01A1i", todayBattles: "H\xF4m nay", totalRewards: "Pi \u0111\xE3 th\u01B0\u1EDFng", practiceMode: "Luy\u1EC7n t\u1EADp", quickBattle: "\u0110\u1EA5u nhanh", quickBattleDesc: "Mi\u1EC5n ph\xED. Tr\u1EADn ng\u01B0\u1EDDi th\u1EADt {cap}; tr\u1EADn bot kh\xF4ng t\xEDnh h\u1EA1ng ho\u1EB7c th\u01B0\u1EDFng tu\u1EA7n.", lowEntryReward: "Ph\xED th\u1EA5p", ticketBattle: "Ph\xF2ng Ti\u1EC3u ph\xFA", ticketBattleDesc: "M\u1ED7i b\xEAn tr\u1EA3 {fee} Pi, ng\u01B0\u1EDDi th\u1EAFng d\u1EF1 ki\u1EBFn nh\u1EADn {reward} Pi, {cap}.", highPrizePool: "Gi\u1EA3i l\u1EDBn", richBattle: "Ph\xF2ng \u0110\u1EA1i ph\xFA", richBattleDesc: "M\u1ED7i b\xEAn tr\u1EA3 {fee} Pi, th\u1EAFng d\u1EF1 ki\u1EBFn nh\u1EADn {reward} Pi, {rank} m\u1EDF kh\xF3a Tinh di\u1EC7u/Vua.", rankRoute: "L\u1ED9 tr\xECnh h\u1EA1ng", quickShort: "Nhanh", ticketShort: "Ti\u1EC3u ph\xFA", richShort: "\u0110\u1EA1i ph\xFA", maintenanceTitle: "B\u1EA3o tr\xEC", maintenanceFallback: "N\u1EC1n t\u1EA3ng \u0111ang b\u1EA3o tr\xEC, m\u1ED9t s\u1ED1 t\xEDnh n\u0103ng c\xF3 th\u1EC3 t\u1EA1m d\u1EEBng.", activityFallback: "S\u1EF1 ki\u1EC7n", activityDescriptionFallback: "Thi \u0111\u1EA5u, leo h\u1EA1ng v\xE0 nh\u1EADn th\u01B0\u1EDFng Pi.", ruleSwap: "\u0110\u1ED5i \xF4 li\u1EC1n k\u1EC1, gh\xE9p 3 \u0111\u1EC3 x\xF3a.", ruleCombo: "Combo c\xE0ng cao, \xE1p l\u1EF1c c\xE0ng l\u1EDBn.", ruleGoal: "Ghi \u0111i\u1EC3m cao h\u01A1n trong 90 gi\xE2y.", chooseBattleMode: "Ch\u1ECDn ch\u1EBF \u0111\u1ED9", home: "Trang ch\u1EE7", battle: "\u0110\u1EA5u", mine: "C\u1EE7a t\xF4i", battleMode: "Ch\u1EBF \u0111\u1ED9 \u0111\u1EA5u", chooseModeTitle: "Ch\u1ECDn ch\u1EBF \u0111\u1ED9", quickModeDetail: "Luy\u1EC7n mi\u1EC5n ph\xED. Tr\u1EADn ng\u01B0\u1EDDi th\u1EADt {cap}; ch\u1EDD l\xE2u c\xF3 th\u1EC3 g\u1EB7p bot v\xE0 kh\xF4ng t\xEDnh h\u1EA1ng/tu\u1EA7n.", ticketModeDetail: "M\u1ED7i b\xEAn tr\u1EA3 {fee} Pi, th\u1EAFng nh\u1EADn {reward} Pi, {cap}, {weekly}", richModeDetail: "M\u1ED7i b\xEAn tr\u1EA3 {fee} Pi, th\u1EAFng nh\u1EADn {reward} Pi, {rank} m\u1EDF kh\xF3a Tinh di\u1EC7u/Vua, {weekly}", weeklyOn: "T\xEDnh th\u01B0\u1EDFng tu\u1EA7n.", weeklyOff: "Kh\xF4ng t\xEDnh tu\u1EA7n.", richUnlock: " \xB7 m\u1EDF \u1EDF {rank}", balanceAndStars: "S\u1ED1 d\u01B0 {balance} Pi; th\u1EAFng +{win} sao, thua -{lose} sao, \u0110\u1ED3ng {protection}.", protected: "\u0111\u01B0\u1EE3c b\u1EA3o v\u1EC7", unprotected: "kh\xF4ng b\u1EA3o v\u1EC7" }, ko: { languageTitle: "\uC5B8\uC5B4 \uC120\uD0DD", languageSummary: "\uBCC0\uACBD \uC989\uC2DC \uC801\uC6A9\uB418\uBA70 \uC774 \uAE30\uAE30\uC5D0 \uC800\uC7A5\uB429\uB2C8\uB2E4.", languageCancel: "\uCDE8\uC18C", homeProjectNameFallback: "Blitz of Pi", homeEnglishNameFallback: "BLITZ OF PI", realtimePvp: "\uC2E4\uC2DC\uAC04 PVP", match3: "6x8 \uB9E4\uCE583", piReward: "Pi \uBCF4\uC0C1", gameTips: "\uD50C\uB808\uC774 \uD301", rankBoard: "\uB7AD\uD0B9", totalPlayers: "\uCD1D \uC720\uC800", totalBattles: "\uB204\uC801 \uB300\uC804", todayBattles: "\uC624\uB298 \uB300\uC804", totalRewards: "\uC9C0\uAE09 \uBCF4\uC0C1", practiceMode: "\uC5F0\uC2B5 \uBAA8\uB4DC", quickBattle: "\uBE60\uB978 \uB300\uC804", quickBattleDesc: "\uBB34\uB8CC \uC785\uC7A5. \uC2E4\uC81C \uC720\uC800 \uB300\uC804\uC740 {cap}; \uBD07 \uB300\uC804\uC740 \uB7AD\uD06C/\uC8FC\uAC04 \uBCF4\uC0C1 \uC81C\uC678.", lowEntryReward: "\uB0AE\uC740 \uCC38\uAC00\uBE44", ticketBattle: "\uC2A4\uBAB0 \uB9AC\uCE58", ticketBattleDesc: "\uC591\uCABD {fee} Pi \uC9C0\uBD88, \uC2B9\uC790 \uC608\uC0C1 {reward} Pi \uD68D\uB4DD, {cap}.", highPrizePool: "\uD070 \uC0C1\uAE08", richBattle: "\uBE45 \uB9AC\uCE58", richBattleDesc: "\uC591\uCABD {fee} Pi \uC9C0\uBD88, \uC2B9\uC790 \uC608\uC0C1 {reward} Pi \uD68D\uB4DD, {rank}\uBD80\uD130 \uC2A4\uD0C0\uB77C\uC774\uD2B8/\uD0B9 \uB3C4\uC804.", rankRoute: "\uB7AD\uD06C \uACBD\uB85C", quickShort: "\uBE60\uB978", ticketShort: "\uC2A4\uBAB0", richShort: "\uBE45", maintenanceTitle: "\uC810\uAC80 \uC548\uB0B4", maintenanceFallback: "\uD50C\uB7AB\uD3FC \uC810\uAC80 \uC911\uC785\uB2C8\uB2E4. \uC77C\uBD80 \uAE30\uB2A5\uC744 \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.", activityFallback: "\uC774\uBCA4\uD2B8", activityDescriptionFallback: "\uB300\uC804\uD558\uACE0 \uB7AD\uD06C\uB97C \uC62C\uB824 Pi \uBCF4\uC0C1\uC744 \uBC1B\uC73C\uC138\uC694.", ruleSwap: "\uC778\uC811 \uBE14\uB85D\uC744 \uBC14\uAFD4 3\uAC1C\uB97C \uB9DE\uCD94\uC138\uC694.", ruleCombo: "\uCF64\uBCF4\uAC00 \uB192\uC744\uC218\uB85D \uC0C1\uB300 \uC555\uBC15\uC774 \uCEE4\uC9D1\uB2C8\uB2E4.", ruleGoal: "90\uCD08 \uC548\uC5D0 \uB354 \uB192\uC740 \uC810\uC218\uB97C \uB0B4\uC138\uC694.", chooseBattleMode: "\uB300\uC804 \uBAA8\uB4DC \uC120\uD0DD", home: "\uD648", battle: "\uB300\uC804", mine: "\uB0B4 \uC815\uBCF4", battleMode: "\uB300\uC804 \uBAA8\uB4DC", chooseModeTitle: "\uB300\uC804 \uBAA8\uB4DC \uC120\uD0DD", quickModeDetail: "\uBB34\uB8CC \uC5F0\uC2B5. \uC2E4\uC81C \uC720\uC800 \uB300\uC804\uC740 {cap}; \uB300\uAE30 \uD6C4 \uBD07 \uB9E4\uCE6D \uAC00\uB2A5\uD558\uBA70 \uB7AD\uD06C/\uC8FC\uAC04 \uC81C\uC678.", ticketModeDetail: "\uC591\uCABD {fee} Pi \uC9C0\uBD88, \uC2B9\uC790 {reward} Pi \uD68D\uB4DD, {cap}, {weekly}", richModeDetail: "\uC591\uCABD {fee} Pi \uC9C0\uBD88, \uC2B9\uC790 {reward} Pi \uD68D\uB4DD, {rank}\uBD80\uD130 \uC2A4\uD0C0\uB77C\uC774\uD2B8/\uD0B9 \uB3C4\uC804, {weekly}", weeklyOn: "\uC8FC\uAC04 \uBCF4\uC0C1 \uBC18\uC601.", weeklyOff: "\uC8FC\uAC04 \uC81C\uC678.", richUnlock: " \xB7 {rank} \uD574\uC81C", balanceAndStars: "\uC794\uC561 {balance} Pi; \uC2B9\uB9AC +{win}\uC131, \uD328\uBC30 -{lose}\uC131, \uBE0C\uB860\uC988 {protection}.", protected: "\uBCF4\uD638", unprotected: "\uBCF4\uD638 \uC5C6\uC74C" }, ja: { languageTitle: "\u8A00\u8A9E\u3092\u9078\u629E", languageSummary: "\u5909\u66F4\u306F\u3059\u3050\u53CD\u6620\u3055\u308C\u3001\u3053\u306E\u7AEF\u672B\u306B\u4FDD\u5B58\u3055\u308C\u307E\u3059\u3002", languageCancel: "\u30AD\u30E3\u30F3\u30BB\u30EB", homeProjectNameFallback: "Blitz of Pi", homeEnglishNameFallback: "BLITZ OF PI", realtimePvp: "\u30EA\u30A2\u30EB\u30BF\u30A4\u30E0PVP", match3: "6x8\u30DE\u30C3\u30C13", piReward: "Pi\u5831\u916C", gameTips: "\u904A\u3073\u65B9", rankBoard: "\u30E9\u30F3\u30AF\u699C", totalPlayers: "\u7DCF\u30D7\u30EC\u30A4\u30E4\u30FC", totalBattles: "\u7D2F\u8A08\u5BFE\u6226", todayBattles: "\u672C\u65E5\u5BFE\u6226", totalRewards: "\u914D\u5E03\u5831\u916C", practiceMode: "\u7DF4\u7FD2\u30E2\u30FC\u30C9", quickBattle: "\u30AF\u30A4\u30C3\u30AF\u5BFE\u6226", quickBattleDesc: "\u7121\u6599\u53C2\u52A0\u3002\u771F\u4EBA\u6226\u306F{cap}\uFF1BBot\u6226\u306F\u30E9\u30F3\u30AF/\u9031\u9593\u5831\u916C\u5BFE\u8C61\u5916\u3002", lowEntryReward: "\u4F4E\u53C2\u52A0\u8CBB", ticketBattle: "\u5C0F\u5BCC\u8C6A\u5834", ticketBattleDesc: "\u53CC\u65B9 {fee} Pi\u3001\u52DD\u8005\u306F\u7D04 {reward} Pi\u3001{cap}\u3002", highPrizePool: "\u9AD8\u8CDE\u91D1", richBattle: "\u5927\u5BCC\u8C6A\u5834", richBattleDesc: "\u53CC\u65B9 {fee} Pi\u3001\u52DD\u8005\u306F\u7D04 {reward} Pi\u3001{rank}\u304B\u3089\u661F\u8000/\u738B\u8005\u3078\u6311\u6226\u3002", rankRoute: "\u30E9\u30F3\u30AF\u9053", quickShort: "\u5FEB\u901F", ticketShort: "\u5C0F\u5BCC\u8C6A", richShort: "\u5927\u5BCC\u8C6A", maintenanceTitle: "\u30E1\u30F3\u30C6\u30CA\u30F3\u30B9", maintenanceFallback: "\u30E1\u30F3\u30C6\u30CA\u30F3\u30B9\u4E2D\u3067\u3059\u3002\u4E00\u90E8\u6A5F\u80FD\u304C\u5229\u7528\u3067\u304D\u306A\u3044\u5834\u5408\u304C\u3042\u308A\u307E\u3059\u3002", activityFallback: "\u30A4\u30D9\u30F3\u30C8", activityDescriptionFallback: "\u5BFE\u6226\u3057\u3066\u30E9\u30F3\u30AF\u3092\u4E0A\u3052\u3001Pi\u5831\u916C\u3092\u7372\u5F97\u3057\u307E\u3057\u3087\u3046\u3002", ruleSwap: "\u96A3\u306E\u30D6\u30ED\u30C3\u30AF\u3092\u5165\u308C\u66FF\u3048\u30013\u3064\u63C3\u3048\u3066\u6D88\u3057\u307E\u3059\u3002", ruleCombo: "\u30B3\u30F3\u30DC\u304C\u9AD8\u3044\u307B\u3069\u76F8\u624B\u3078\u306E\u5727\u529B\u304C\u5897\u3048\u307E\u3059\u3002", ruleGoal: "90\u79D2\u4EE5\u5185\u306B\u3088\u308A\u9AD8\u3044\u30B9\u30B3\u30A2\u3092\u72D9\u3044\u307E\u3059\u3002", chooseBattleMode: "\u5BFE\u6226\u30E2\u30FC\u30C9\u9078\u629E", home: "\u30DB\u30FC\u30E0", battle: "\u5BFE\u6226", mine: "\u30DE\u30A4", battleMode: "\u5BFE\u6226\u30E2\u30FC\u30C9", chooseModeTitle: "\u5BFE\u6226\u30E2\u30FC\u30C9\u9078\u629E", quickModeDetail: "\u7121\u6599\u7DF4\u7FD2\u3002\u771F\u4EBA\u6226\u306F{cap}\uFF1B\u5F85\u6A5F\u5F8C\u306EBot\u6226\u306F\u30E9\u30F3\u30AF/\u9031\u9593\u5BFE\u8C61\u5916\u3002", ticketModeDetail: "\u53CC\u65B9 {fee} Pi\u3001\u52DD\u8005 {reward} Pi\u3001{cap}\u3001{weekly}", richModeDetail: "\u53CC\u65B9 {fee} Pi\u3001\u52DD\u8005 {reward} Pi\u3001{rank}\u304B\u3089\u661F\u8000/\u738B\u8005\u3078\u6311\u6226\u3001{weekly}", weeklyOn: "\u9031\u9593\u5831\u916C\u306B\u53CD\u6620\u3002", weeklyOff: "\u9031\u9593\u5BFE\u8C61\u5916\u3002", richUnlock: " \xB7 {rank}\u3067\u89E3\u653E", balanceAndStars: "\u6B8B\u9AD8 {balance} Pi\uFF1B\u52DD\u5229 +{win} \u661F\u3001\u6557\u5317 -{lose} \u661F\u3001\u30D6\u30ED\u30F3\u30BA\u306F{protection}\u3002", protected: "\u4FDD\u8B77\u3042\u308A", unprotected: "\u4FDD\u8B77\u306A\u3057" } };
 document.documentElement.lang = a.language;
 const DEFAULT_ANIMATION_DURATIONS = {
   localBurstSeconds: 0.56,
@@ -83,6 +83,40 @@ function yn(e) {
 function ve() {
   const e = (t) => t === "high" ? "high" : "balanced";
   return { defaultMode: e(a.gameConfig?.visualEffects?.defaultMode), piBrowserDefaultMode: e(a.gameConfig?.visualEffects?.piBrowserDefaultMode), allowUserChoice: a.gameConfig?.visualEffects?.allowUserChoice !== false, allowHighMode: true, autoDowngradeEnabled: a.gameConfig?.visualEffects?.autoDowngradeEnabled !== false, dragTrailEnabled: a.gameConfig?.visualEffects?.dragTrailEnabled !== false, hapticEnabled: a.gameConfig?.visualEffects?.hapticEnabled !== false, attackWarningEnabled: a.gameConfig?.visualEffects?.attackWarningEnabled !== false, attackWarningText: String(a.gameConfig?.visualEffects?.attackWarningText || DEFAULT_ATTACK_WARNING_TEXT).trim() || DEFAULT_ATTACK_WARNING_TEXT, animationDurations: normalizeAnimationDurations(a.gameConfig?.visualEffects?.animationDurations) };
+}
+function extremeRealtimeConfig() {
+  const e = a.gameConfig?.extremeRealtime || {};
+  return {
+    enabled: Boolean(e.enabled),
+    rollbackToLegacy: Boolean(e.rollbackToLegacy),
+    enabledModes: Array.isArray(e.enabledModes) && e.enabledModes.length ? e.enabledModes : ["quick_battle", "points_battle", "poc_battle", "pi_battle"],
+    grayPercent: Math.max(0, Math.min(100, Number(e.grayPercent || 0))),
+    grayUserPiUids: Array.isArray(e.grayUserPiUids) ? e.grayUserPiUids.map((t) => String(t || "").trim()).filter(Boolean) : [],
+    grayUserPiUsernames: Array.isArray(e.grayUserPiUsernames) ? e.grayUserPiUsernames.map((t) => String(t || "").trim().toLowerCase()).filter(Boolean) : [],
+    maxPendingSwaps: Math.max(1, Math.min(6, Number(e.maxPendingSwaps || 3))),
+    snapshotIntervalMs: Math.max(500, Math.min(1e4, Number(e.snapshotIntervalMs || 2e3))),
+    swapMinIntervalMs: Math.max(60, Math.min(500, Number(e.swapMinIntervalMs || 120))),
+    metricsSampleRate: Math.max(0, Math.min(1, Number(e.metricsSampleRate ?? 0.05)))
+  };
+}
+function clientHashPercent(e = "") {
+  let t = 0;
+  const r = String(e || "");
+  for (let o = 0; o < r.length; o += 1) t = (t * 31 + r.charCodeAt(o)) >>> 0;
+  return t % 100;
+}
+function isExtremeRealtimeActive(e = a.realtimeRoom) {
+  const t = extremeRealtimeConfig(), r = a.user;
+  if (!e || !r || !t.enabled || t.rollbackToLegacy || !t.enabledModes.includes(e.mode)) return false;
+  const o = String(r.uid || "").trim(), s = String(r.piUsername || r.pi_username || "").trim().toLowerCase();
+  if (o && t.grayUserPiUids.includes(o)) return true;
+  if (s && t.grayUserPiUsernames.includes(s)) return true;
+  if (t.grayPercent >= 100) return true;
+  if (t.grayPercent <= 0) return false;
+  return clientHashPercent(`${e.roomNo}:${o}`) < t.grayPercent;
+}
+function resetPredictionState() {
+  a.pendingSwapSeq = 0, a.pendingSwapPositions = [], a.pendingSwapQueue = [], a.clientPredictedBoard = null, a.clientRoomVersion = Number(a.realtimeRoom?.version || 0);
 }
 function Oa(e) {
   const t = ve(), r = Zt() ? t.piBrowserDefaultMode : t.defaultMode;
@@ -258,7 +292,7 @@ function lt(e) {
   }
   return true;
 }
-let Nt = "", j = null, V = null, Be = null, ee = null, y = null, x = null, k = null, Ne = null, Yt = 0, Et = 0, Lt = "", xt = 0, Ee = "", te = 0, pe = -1, Xe = "", le = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPerfLockedLow = false, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0;
+let Nt = "", j = null, V = null, Be = null, ee = null, y = null, x = null, k = null, Ne = null, Yt = 0, Et = 0, Lt = "", xt = 0, Ee = "", te = 0, pe = -1, Xe = "", le = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPerfLockedLow = false, clientPerfFrameCount = 0, clientPerfLongFrameCount = 0, clientPerfSampleStartedAt = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0;
 let cleanupBoardInputListeners = null;
 const Sa = /* @__PURE__ */ new Map();
 let z = null, W = null, At = 0, q = null;
@@ -279,7 +313,7 @@ function cleanupBoardInputs() {
   Ne = null;
 }
 function ce() {
-  be && (window.cancelAnimationFrame(be), be = null), ee && (window.clearTimeout(ee), ee = null), le && (window.cancelAnimationFrame(le), le = null), j && (window.cancelAnimationFrame(j), j = null), V && (window.cancelAnimationFrame(V), V = null), z = null, W = null, At = 0, q = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPerfLockedLow = false, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0, document.documentElement.classList.remove("low-performance"), we(), Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, Se = null, me.clear(), Nt = "", y = null, Et = 0, Lt = "", xt = 0, a.pendingSwapSeq = 0, a.pendingSwapPositions = [], cleanupBoardInputs(), x = null, k = null, Yt = 0, a.battleBursts = [], a.battleImpacts = [], a.localBattleEvents = [], a.localSwapFx = null;
+  be && (window.cancelAnimationFrame(be), be = null), ee && (window.clearTimeout(ee), ee = null), le && (window.cancelAnimationFrame(le), le = null), j && (window.cancelAnimationFrame(j), j = null), V && (window.cancelAnimationFrame(V), V = null), z = null, W = null, At = 0, q = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPerfLockedLow = false, clientPerfFrameCount = 0, clientPerfLongFrameCount = 0, clientPerfSampleStartedAt = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0, document.documentElement.classList.remove("low-performance"), we(), Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, Se = null, me.clear(), Nt = "", y = null, Et = 0, Lt = "", xt = 0, a.pendingSwapSeq = 0, a.pendingSwapPositions = [], cleanupBoardInputs(), x = null, k = null, Yt = 0, a.battleBursts = [], a.battleImpacts = [], a.localBattleEvents = [], a.localSwapFx = null;
 }
 function ge() {
   ze && (window.clearTimeout(ze), ze = null);
@@ -309,6 +343,14 @@ function Ln() {
       return;
     }
     const r = Ge ? t - Ge : 0, o = document.documentElement.classList.contains("low-performance");
+    if (isExtremeRealtimeActive() && r > 0) {
+      clientPerfSampleStartedAt || (clientPerfSampleStartedAt = Date.now());
+      clientPerfFrameCount += 1;
+      r > 52 && (clientPerfLongFrameCount += 1, a.clientPredictionStats.longFrames += 1);
+      const s = Date.now() - clientPerfSampleStartedAt, l = extremeRealtimeConfig().metricsSampleRate;
+      s >= 1e4 && l > 0 && Math.random() <= l && v("client_perf_sample", { roomNo: a.roomNo, mode: a.realtimeRoom?.mode || a.selectedMode, result: document.documentElement.classList.contains("low-performance") ? "low" : "normal", costMs: Math.round(s), fps: Math.round(clientPerfFrameCount * 1e3 / Math.max(1, s)), longFrames: clientPerfLongFrameCount, pending: (a.pendingSwapQueue || []).length, sent: a.clientPredictionStats.sent, ack: a.clientPredictionStats.ack, reject: a.clientPredictionStats.reject, rollback: a.clientPredictionStats.rollback, corrected: a.clientPredictionStats.corrected }, 9e3);
+      s >= 1e4 && (clientPerfSampleStartedAt = Date.now(), clientPerfFrameCount = 0, clientPerfLongFrameCount = 0);
+    }
     r > 52 ? (Me += 2, clientPerfStableFrames = 0) : r > 42 ? (Me += 1, clientPerfStableFrames = 0) : (Me = Math.max(0, Me - 1), clientPerfStableFrames += 1), Me >= 6 && !o && (document.documentElement.classList.add("low-performance"), clientPerfLowSince = Date.now(), clientPerfLockedLow = true), !clientPerfLockedLow && o && a.effectiveVisualEffectMode !== "low" && clientPerfStableFrames > 360 && Date.now() - clientPerfLowSince > 18e3 && (document.documentElement.classList.remove("low-performance"), Me = 0, clientPerfStableFrames = 0), Ge = t, le = window.requestAnimationFrame(e);
   };
   le = window.requestAnimationFrame(e);
@@ -477,6 +519,7 @@ function na(e) {
   return { colorClass: Z[e] || Z[0], specialClass: "", label: t.label || "", color: t.color || "#8a35ff", textColor: t.textColor || "#fff6bd", imageUrl: t.imageUrl || "" };
 }
 function clientTileColor(e) {
+  if (e === null || e === void 0) return null;
   return e >= ka ? e - ka : e >= ya ? e - ya : e >= wa ? e - wa : e;
 }
 function clientIsSpecialTile(e) {
@@ -484,6 +527,34 @@ function clientIsSpecialTile(e) {
 }
 function clientSpecialKind(e) {
   return e >= ka ? "bomb" : e >= ya ? "vertical" : e >= wa ? "horizontal" : "";
+}
+function clientMakeSpecialTile(e, t) {
+  return t === "bomb" ? ka + e : t === "vertical" ? ya + e : wa + e;
+}
+function clientIsSameMatchTile(e, t) {
+  const r = clientTileColor(e), o = clientTileColor(t);
+  return r !== null && r === o;
+}
+function clientCreateRandom(e = "") {
+  let t = 0;
+  const r = String(e || Date.now());
+  for (let o = 0; o < r.length; o += 1) t = (t * 31 + r.charCodeAt(o)) >>> 0;
+  t %= 2147483647, t <= 0 && (t += 2147483646);
+  return () => (t = t * 16807 % 2147483647, (t - 1) / 2147483646);
+}
+function clientRandomTile(e) {
+  return Math.floor(e() * 5);
+}
+function clientWouldCreateMatchAt(e, t, r, o) {
+  return r >= 2 && clientIsSameMatchTile(e[t]?.[r - 1], o) && clientIsSameMatchTile(e[t]?.[r - 2], o) || r + 2 < Pe && clientIsSameMatchTile(e[t]?.[r + 1], o) && clientIsSameMatchTile(e[t]?.[r + 2], o) || t >= 2 && clientIsSameMatchTile(e[t - 1]?.[r], o) && clientIsSameMatchTile(e[t - 2]?.[r], o) || t + 2 < $e && clientIsSameMatchTile(e[t + 1]?.[r], o) && clientIsSameMatchTile(e[t + 2]?.[r], o);
+}
+function clientSafeRandomTile(e, t, r, o) {
+  for (let s = 0; s < 15; s += 1) {
+    const l = clientRandomTile(o);
+    if (!clientWouldCreateMatchAt(e, t, r, l)) return l;
+  }
+  for (let s = 0; s < 5; s += 1) if (!clientWouldCreateMatchAt(e, t, r, s)) return s;
+  return clientRandomTile(o);
 }
 function clientCloneBoard(e) {
   return Array.isArray(e) ? e.map((t) => Array.isArray(t) ? [...t] : []) : [];
@@ -546,7 +617,8 @@ function clientSpecialCreation(e, t) {
   const r = (Array.isArray(e.runs) ? e.runs : []).filter((o) => o.length >= 4).sort((o, s) => s.length - o.length);
   if (!r.length) return null;
   const o = r[0], s = [t?.to, t?.from].find((l) => l && o.cells.some((c) => c.row === l.row && c.col === l.col));
-  return { kind: o.length >= 5 ? "bomb" : o.orientation === "horizontal" ? "horizontal" : "vertical", position: s || o.cells[Math.floor(o.cells.length / 2)] };
+  const l = o.length >= 5 ? "bomb" : o.orientation === "horizontal" ? "horizontal" : "vertical";
+  return { kind: l, position: s || o.cells[Math.floor(o.cells.length / 2)], tile: clientMakeSpecialTile(o.color, l) };
 }
 function clientDirectSpecialMatches(e, t, r) {
   const o = /* @__PURE__ */ new Set();
@@ -554,6 +626,74 @@ function clientDirectSpecialMatches(e, t, r) {
     clientIsInside(e, s) && clientIsSpecialTile(e[s.row][s.col]) && o.add(`${s.row}:${s.col}`);
   });
   return o.size && clientAddSpecialTargets(e, o), o;
+}
+function clientCollapseBoard(e, t) {
+  for (let r = 0; r < Pe; r += 1) {
+    const o = [];
+    for (let s = $e - 1; s >= 0; s -= 1) e[s]?.[r] !== null && e[s]?.[r] !== void 0 && o.push(e[s][r]);
+    for (let s = $e - 1; s >= 0; s -= 1) e[s][r] = o[$e - 1 - s] ?? clientSafeRandomTile(e, s, r, t);
+  }
+}
+function clientHasValidMove(e) {
+  for (let t = 0; t < $e; t += 1) for (let r = 0; r < Pe; r += 1) {
+    const o = [{ row: t, col: r + 1 }, { row: t + 1, col: r }];
+    for (const s of o) {
+      if (!clientIsInside(e, s)) continue;
+      const l = clientCloneBoard(e);
+      clientSwap(l, { row: t, col: r }, s);
+      if (clientIsSpecialTile(l[t]?.[r]) || clientIsSpecialTile(l[s.row]?.[s.col]) || clientFindMatches(l).size > 0) return true;
+    }
+  }
+  return false;
+}
+function clientCreateCandidateBoard(e) {
+  const t = Array.from({ length: $e }, () => Array.from({ length: Pe }, () => null));
+  for (let r = 0; r < $e; r += 1) for (let o = 0; o < Pe; o += 1) t[r][o] = clientSafeRandomTile(t, r, o, e);
+  let r = 0;
+  for (; clientFindMatches(t).size > 0 && r < 20; ) {
+    const o = clientFindMatches(t);
+    for (const s of o) {
+      const [l, c] = s.split(":").map(Number);
+      t[l][c] = clientSafeRandomTile(t, l, c, e);
+    }
+    r += 1;
+  }
+  return t;
+}
+function clientRefillBoardIfStuck(e, t) {
+  if (clientHasValidMove(e)) return;
+  const r = clientCreateCandidateBoard(clientCreateRandom(`${t?.roomNo || ""}:refill:${t?.version || 0}:${Date.now()}`));
+  for (let o = 0; o < $e; o += 1) for (let s = 0; s < Pe; s += 1) e[o][s] = r[o][s];
+}
+function clientResolveBoard(e, t, r = null) {
+  let o = 0, s = 0, l = 0, c = 0, d = 0, u = r ? clientDirectSpecialMatches(e, r.from, r.to) : /* @__PURE__ */ new Set();
+  for (; o < 4; ) {
+    const h = u.size > 0 ? u : clientFindMatches(e);
+    if (u = /* @__PURE__ */ new Set(), h.size === 0) break;
+    o += 1;
+    const p = clientAddSpecialTargets(e, h);
+    c += p > 0 ? 1 : 0;
+    const f = clientSpecialCreation(h, o === 1 ? r : null), m = Math.min(h.size, 18), g = Math.min(m, Math.max(0, 18 - s));
+    s += g, l += g * 10 + Math.min(o - 1, 3) * 8 + c * 8;
+    for (const P of h) {
+      const [C, T] = P.split(":").map(Number);
+      e[C][T] = null;
+    }
+    f && e[f.position.row]?.[f.position.col] === null && (e[f.position.row][f.position.col] = f.tile, d += 1);
+    clientCollapseBoard(e, t);
+    if (s >= 18) break;
+  }
+  return { chain: o, totalCleared: s, scoreGain: l, specialTriggered: c, specialCreated: d };
+}
+function clientSettleRemainingMatches(e, t) {
+  let r = 0;
+  for (; clientFindMatches(e).size > 0 && r < 8; ) {
+    for (const o of clientFindMatches(e)) {
+      const [s, l] = o.split(":").map(Number);
+      e[s][l] = null;
+    }
+    clientCollapseBoard(e, t), r += 1;
+  }
 }
 function waPreviewText(e) {
   return e.specialTriggered ? `\u7206\u53D1 +${e.scoreGain}` : e.specialCreated ? e.cleared >= 5 ? `\u70B8\u5F39 +${e.scoreGain}` : `\u95EA\u7535 +${e.scoreGain}` : e.attack > 0 ? `\u7535\u51FB +${e.attack}` : e.chain > 1 ? `\u8FDE\u51FB x${e.chain}` : e.cleared >= 4 ? `${e.cleared}\u6D88!` : `+${e.scoreGain}`;
@@ -569,10 +709,11 @@ function kaPreviewSwap(e, t, r) {
   if (!o?.board || !clientIsInside(o.board, e) || !clientIsInside(o.board, t)) return null;
   const s = clientCloneBoard(o.board);
   clientSwap(s, e, t);
-  let l = clientDirectSpecialMatches(s, e, t), c = l.size ? l : clientFindMatches(s);
-  if (!c.size) return null;
-  const d = clientAddSpecialTargets(s, c), u = clientSpecialCreation(c, { from: e, to: t }), h = Math.min(c.size, 18), p = h * 10 + (d > 0 ? 8 : 0), f = Math.min(4, Math.floor(Math.min(h, 16) / 8) + Math.min(1, d > 0 ? 1 : 0)), m = { uid: a.user?.uid || "local", type: "local_preview", seq: r, cleared: h, chain: 1, scoreGain: p, attack: f, specialTriggered: d > 0 ? 1 : 0, specialCreated: u ? 1 : 0, at: Date.now(), localPending: true };
-  return m.previewSemantic = yaPreviewSemantic(m), m.previewTone = clientPreviewTone(m), m.previewText = waPreviewText(m), m;
+  const l = clientCreateRandom(`${a.realtimeRoom?.roomNo || ""}:${a.clientRoomVersion || a.realtimeRoom?.version || 0}:${r}`), c = clientResolveBoard(s, l, { from: e, to: t });
+  if (!c.totalCleared) return null;
+  clientSettleRemainingMatches(s, l), clientRefillBoardIfStuck(s, a.realtimeRoom);
+  const d = Math.min(4, Math.max(0, c.chain - 1) + Math.floor(Math.min(c.totalCleared, 16) / 8) + Math.min(1, Number(c.specialTriggered || 0))), u = { uid: a.user?.uid || "local", type: "local_preview", seq: r, cleared: c.totalCleared, chain: c.chain, scoreGain: c.scoreGain, attack: d, specialTriggered: Number(c.specialTriggered || 0), specialCreated: Number(c.specialCreated || 0), at: Date.now(), localPending: true, board: s };
+  return u.previewSemantic = yaPreviewSemantic(u), u.previewTone = clientPreviewTone(u), u.previewText = waPreviewText(u), u;
 }
 function xaPreviewSwap(e, t, r) {
   try {
@@ -580,6 +721,18 @@ function xaPreviewSwap(e, t, r) {
     o && (clientPreviewBurstUid = o.uid || "", clientPreviewBurstSeq = Number(o.seq || 0), clientPreviewBurstAt = Date.now(), nn(o), Si(o));
   } catch (o) {
     console.warn("local swap preview failed", o);
+  }
+}
+function applyPredictedSwap(e, t, r) {
+  try {
+    const o = kaPreviewSwap(e, t, r), s = xa(a.realtimeRoom, a.user?.uid || "");
+    if (!o || !s?.board || !clientIsInside(s.board, e) || !clientIsInside(s.board, t)) return false;
+    const l = clientCloneBoard(o.board || s.board), c = a.realtimeRoom?.players?.find((d) => d.uid !== s.uid);
+    s.board = l, s.score = Number(s.score || 0) + Number(o.scoreGain || 0), s.combo = Number(o.chain || 1), s.lastGain = Number(o.scoreGain || 0), s.pressure = Math.max(0, Number(s.pressure || 0) - 1), c && (c.pressure = Number(c.pressure || 0) + Number(o.attack || 0)), a.clientPredictedBoard = clientCloneBoard(l), Re = "", renderCanvasBoard(oe(), s), clientPreviewBurstUid = o.uid || "", clientPreviewBurstSeq = Number(o.seq || 0), clientPreviewBurstAt = Date.now(), nn(o), Si(o);
+    return true;
+  } catch (o) {
+    console.warn("local predicted swap failed", o);
+    return false;
   }
 }
 function Ft(e) {
@@ -2717,6 +2870,40 @@ function tn(e, t, r) {
   const o = a.selectedTile?.row === t && a.selectedTile?.col === r, s = na(e), l = zn(t, r), c = jn(t, r), d = Un(t, r), u = Jn(t, r), h = Kn(t, r);
   return `tile ${s.colorClass}${s.specialClass}${aa() && s.imageUrl ? " tile-has-image" : ""}${o ? " selected" : ""}${d}${l}${c}${u}${h}`;
 }
+function getBoardGeometry(e) {
+  if (!e) return null;
+  const t = e.getBoundingClientRect();
+  if (t.width <= 0 || t.height <= 0) return null;
+  const r = window.getComputedStyle(e), o = Number.parseFloat(r.paddingLeft) || 0, s = Number.parseFloat(r.paddingRight) || o, l = Number.parseFloat(r.paddingTop) || o, c = Number.parseFloat(r.paddingBottom) || l, d = Number.parseFloat(r.gap) || 0, u = Math.max(1, t.width - o - s), h = Math.max(1, t.height - l - c), p = Math.max(1, (u - d * (Pe - 1)) / Pe), f = Math.max(1, (h - d * ($e - 1)) / $e);
+  return { rect: t, paddingLeft: o, paddingTop: l, gap: d, innerWidth: u, innerHeight: h, tileWidth: p, tileHeight: f, startX: t.left + o, startY: t.top + l };
+}
+function renderCanvasBoard(e, t) {
+  const r = e?.querySelector?.("#battle-board-canvas"), o = t?.board || [], s = getBoardGeometry(e);
+  if (!r || !o.length || !s) return false;
+  const l = Math.max(1, Math.min(2, window.devicePixelRatio || 1)), c = Math.max(1, Math.floor(s.rect.width * l)), d = Math.max(1, Math.floor(s.rect.height * l));
+  (r.width !== c || r.height !== d) && (r.width = c, r.height = d);
+  r.style.width = `${s.rect.width}px`, r.style.height = `${s.rect.height}px`;
+  const u = r.getContext("2d");
+  if (!u) return false;
+  u.setTransform(l, 0, 0, l, 0, 0), u.clearRect(0, 0, s.rect.width, s.rect.height);
+  const h = s.paddingLeft, p = s.paddingTop, f = s.gap, m = s.tileWidth, g = s.tileHeight, P = Math.max(8, Math.min(m, g) * 0.2);
+  for (let C = 0; C < $e; C += 1) {
+    for (let T = 0; T < Pe; T += 1) {
+      const U = o[C]?.[T], Te = na(U), qe = h + T * (m + f), gt = p + C * (g + f), ha = Math.max(2, m - 1), E = Math.max(2, g - 1);
+      u.save(), u.beginPath(), u.roundRect ? u.roundRect(qe, gt, ha, E, P) : (u.moveTo(qe + P, gt), u.lineTo(qe + ha - P, gt), u.quadraticCurveTo(qe + ha, gt, qe + ha, gt + P), u.lineTo(qe + ha, gt + E - P), u.quadraticCurveTo(qe + ha, gt + E, qe + ha - P, gt + E), u.lineTo(qe + P, gt + E), u.quadraticCurveTo(qe, gt + E, qe, gt + E - P), u.lineTo(qe, gt + P), u.quadraticCurveTo(qe, gt, qe + P, gt)), u.fillStyle = Te.color || "#8a35ff", u.shadowColor = "rgba(255, 228, 123, .22)", u.shadowBlur = a.effectiveVisualEffectMode === "high" ? 10 : 5, u.fill(), u.shadowBlur = 0;
+      const H = u.createLinearGradient(qe, gt, qe, gt + E);
+      H.addColorStop(0, "rgba(255,255,255,.28)"), H.addColorStop(0.45, "rgba(255,255,255,.04)"), H.addColorStop(1, "rgba(0,0,0,.22)"), u.fillStyle = H, u.fill(), u.lineWidth = 1, u.strokeStyle = "rgba(255, 236, 174, .2)", u.stroke();
+      if (a.selectedTile?.row === C && a.selectedTile?.col === T) u.lineWidth = 3, u.strokeStyle = "rgba(255,245,185,.78)", u.stroke();
+      if (U >= wa) {
+        u.fillStyle = "rgba(255, 244, 175, .95)", u.font = `${Math.max(13, Math.floor(Math.min(m, g) * 0.34))}px system-ui, sans-serif`, u.textAlign = "center", u.textBaseline = "middle", u.fillText(Te.label || (U >= ka ? "\u7206" : U >= ya ? "\u7EB5" : "\u6A2A"), qe + ha / 2, gt + E / 2);
+      } else if (Te.label) {
+        u.fillStyle = Te.textColor || "#fff6bd", u.font = `${Math.max(11, Math.floor(Math.min(m, g) * 0.28))}px system-ui, sans-serif`, u.textAlign = "center", u.textBaseline = "middle", u.fillText(Te.label, qe + ha / 2, gt + E / 2);
+      }
+      u.restore();
+    }
+  }
+  return true;
+}
 function ti(e) {
   return e ? `<span>${i(e)}</span>` : "";
 }
@@ -2771,6 +2958,10 @@ function ii(e, t, r, o = 1) {
   }, a.effectiveVisualEffectMode === "high" ? animationMs("tileFallHighSeconds", 80) : animationMs("tileFallSeconds", 80));
 }
 function oi(e, t, r = false) {
+  if (e.classList.contains("canvas-board")) {
+    renderCanvasBoard(e, t), se = Je(t.board || []);
+    return;
+  }
   const o = t.board || [], s = o.reduce((d, u) => d + u.length, 0);
   const l = e.querySelectorAll(".tile[data-row][data-col]");
   if (l.length !== s) {
@@ -2837,6 +3028,47 @@ function li(e, t, r) {
 }
 function zt() {
   a.pendingSwapSeq = 0, a.pendingSwapPositions = [];
+}
+function clearPendingSwapSeq(e) {
+  const t = Number(e || 0);
+  a.pendingSwapQueue = (a.pendingSwapQueue || []).filter((r) => Number(r.seq || 0) !== t);
+  a.pendingSwapSeq === t && (a.pendingSwapSeq = a.pendingSwapQueue[0]?.seq || 0, a.pendingSwapPositions = a.pendingSwapQueue[0]?.positions || []);
+}
+function syncAuthoritativeRoom(e, t = "state") {
+  if (!e) return;
+  const r = a.realtimeRoom, o = xa(r, a.user?.uid || ""), s = xa(e, a.user?.uid || "");
+  const l = o && s && jt(o) !== jt(s);
+  a.realtimeRoom = e, a.clientRoomVersion = Number(e.version || a.clientRoomVersion || 0), a.clientPredictedBoard = s?.board ? clientCloneBoard(s.board) : null, a.lastRoomStateAt = Date.now(), a.screen = "battle";
+  l && t !== "state" && (a.clientPredictionStats.corrected += 1, v("client_snapshot_corrected", { roomNo: e.roomNo, mode: e.mode, result: t, version: a.clientRoomVersion }, 5e3));
+  xi(e);
+}
+function mergeRoomDelta(e) {
+  const t = e?.delta || e;
+  if (!t || !a.realtimeRoom || t.roomNo !== a.realtimeRoom.roomNo) return;
+  const r = { ...a.realtimeRoom, version: Number(t.version || a.realtimeRoom.version || 1), status: t.status || a.realtimeRoom.status, remainSeconds: Number(t.remainSeconds ?? a.realtimeRoom.remainSeconds), serverNow: t.serverNow || Date.now(), winnerUid: t.winnerUid || a.realtimeRoom.winnerUid || "", finishReason: t.finishReason || a.realtimeRoom.finishReason || "", events: Array.isArray(t.events) && t.events.length ? t.events : a.realtimeRoom.events };
+  if (Array.isArray(t.players)) r.players = (a.realtimeRoom.players || []).map((o) => {
+    const s = t.players.find((l) => l.uid === o.uid);
+    return s ? { ...o, score: Number(s.score ?? o.score), pressure: Number(s.pressure ?? o.pressure), combo: Number(s.combo ?? o.combo), lastGain: Number(s.lastGain ?? o.lastGain), validMoveCount: Number(s.validMoveCount ?? o.validMoveCount) } : o;
+  });
+  a.realtimeRoom = r, a.clientRoomVersion = Number(r.version || a.clientRoomVersion || 0), a.lastRoomStateAt = Date.now(), a.networkStatus = "online", $();
+}
+function handleSwapAck(e) {
+  clearPendingSwapSeq(e.seq), a.clientPredictionStats.ack += 1, e.version && (a.clientRoomVersion = Number(e.version));
+  e.room && syncAuthoritativeRoom(e.room, "ack");
+  v("client_prediction_ack", { roomNo: a.roomNo, mode: a.realtimeRoom?.mode || a.selectedMode, seq: e.seq || 0, latencyMs: e.serverAt && e.clientAt ? Math.max(0, Number(e.serverAt) - Number(e.clientAt)) : a.networkLatencyMs }, 2e3);
+  $();
+}
+function handleSwapReject(e) {
+  clearPendingSwapSeq(e.seq), a.clientPredictionStats.reject += 1, a.clientPredictionStats.rollback += 1;
+  e.room && syncAuthoritativeRoom(e.room, "reject");
+  v("client_prediction_reject", { roomNo: a.roomNo, mode: a.realtimeRoom?.mode || a.selectedMode, seq: e.seq || 0, message: e.reason || "", result: e.reasonCode || "" }, 2e3);
+  $();
+}
+function handleRoomSnapshot(e) {
+  if (!e.room) return;
+  a.pendingSwapQueue = (a.pendingSwapQueue || []).filter((t) => Date.now() - Number(t.sentAt || 0) < 3500);
+  a.pendingSwapSeq = a.pendingSwapQueue[0]?.seq || 0, a.pendingSwapPositions = a.pendingSwapQueue[0]?.positions || [];
+  syncAuthoritativeRoom(e.room, "snapshot"), $();
 }
 function ci(e) {
   return ft(e).some((t) => !t.at || Date.now() - t.at <= Xt);
@@ -3211,14 +3443,12 @@ function Di(e) {
 function Ye(e, t) {
   const r = oe();
   if (!r) return He(e, t);
-  const o = r.getBoundingClientRect();
-  if (o.width <= 0 || o.height <= 0) return He(e, t);
-  const s = window.getComputedStyle(r), l = Number.parseFloat(s.paddingLeft) || 0, c = Number.parseFloat(s.paddingRight) || 0, d = Number.parseFloat(s.paddingTop) || 0, u = Number.parseFloat(s.paddingBottom) || 0, h = o.left + l, p = o.top + d, f = o.width - l - c, m = o.height - d - u;
-  if (f <= 0 || m <= 0) return He(e, t);
-  const g = f / Pe, P = m / $e, C = g * Pa, T = P * Pa;
-  if (e < h - C || e > h + f + C || t < p - T || t > p + m + T) return He(e, t);
-  const U = Math.min(Pe - 1, Math.max(0, Math.floor((e - h) / g)));
-  return { row: Math.min($e - 1, Math.max(0, Math.floor((t - p) / P))), col: U };
+  const o = getBoardGeometry(r);
+  if (!o) return He(e, t);
+  const s = o.tileWidth * Pa, l = o.tileHeight * Pa, c = o.startX, d = o.startY, u = o.innerWidth, h = o.innerHeight;
+  if (e < c - s || e > c + u + s || t < d - l || t > d + h + l) return He(e, t);
+  const p = o.tileWidth + o.gap, f = o.tileHeight + o.gap, m = Math.min(Pe - 1, Math.max(0, Math.floor((e - c) / p))), g = Math.min($e - 1, Math.max(0, Math.floor((t - d) / f)));
+  return { row: g, col: m };
 }
 function He(e, t) {
   const o = document.elementFromPoint(e, t)?.closest(".tile");
@@ -3326,7 +3556,7 @@ function Hi() {
     sn(n("staleRoomMatched"));
     return;
   }
-  const p = t.roomNo.replace(/^room_/, "").slice(-8).toUpperCase(), f = Pt !== t.roomNo;
+  const p = t.roomNo.replace(/^room_/, "").slice(-8).toUpperCase(), f = Pt !== t.roomNo, useCanvasBoard = isExtremeRealtimeActive(t);
   Ln(), (f || !document.querySelector("#game-board")) && (Pt = t.roomNo, Se = null, Re = "", je = "", se = Je(o.board || []), Ve = "", Ke = "", K = "", R.innerHTML = `
     <main class="battle-shell ${t.remainSeconds <= 10 && !l ? "battle-final-countdown" : ""}">
       <header class="battle-header">
@@ -3364,8 +3594,8 @@ function Hi() {
       </section>
 
       <section class="board-panel">
-        <div class="game-board${Ta()}" id="game-board">
-          ${Ut(o)}
+        <div class="game-board${Ta()}${useCanvasBoard ? " canvas-board" : ""}" id="game-board">
+          ${useCanvasBoard ? '<canvas id="battle-board-canvas" class="battle-board-canvas"></canvas>' : Ut(o)}
         </div>
       </section>
 
@@ -3389,7 +3619,7 @@ function Hi() {
   if (U !== Re) {
     const E = m.board, H = !!Re, ue = Te !== je;
     if (E) {
-      E.className = `game-board${Ta()}`, oi(E, o, H && ue && !l);
+      E.className = `game-board${Ta()}${useCanvasBoard ? " canvas-board" : ""}`, useCanvasBoard && !E.querySelector("#battle-board-canvas") && (E.innerHTML = '<canvas id="battle-board-canvas" class="battle-board-canvas"></canvas>'), !useCanvasBoard && E.querySelector("#battle-board-canvas") && (E.innerHTML = Ut(o)), oi(E, o, H && ue && !l);
       const ba = t.events.find((pn) => pn.uid === e.uid), mn = !!(ba?.at && Date.now() - ba.at < 1400);
       H && ue && !mn && !l && Date.now() - a.lastSwapSentAt < 1800 && Ti();
     }
@@ -3464,14 +3694,14 @@ function Ki(e = "") {
   return e.includes("\u623F\u95F4\u4E0D\u5B58\u5728") || e.includes("\u5DF2\u8FC7\u671F") || e.includes("\u73A9\u5BB6\u4E0D\u5C5E\u4E8E\u8BE5\u623F\u95F4");
 }
 function sn(e = n("roomGoneAlert")) {
-  Q(), O(), ce(), a.screen = "home", a.roomNo = "", a.roomJoinToken = "", a.room = null, a.realtimeRoom = null, a.selectedTile = null, a.tileEffect = null, a.networkStatus = "connecting", a.networkLatencyMs = 0, a.vsIntroUntil = 0, a.lastRoomStateAt = 0, a.lastSwapSentAt = 0, a.pendingSwapSeq = 0, a.pendingSwapPositions = [], a.lastSwapPositions = [], a.battleConnectingAt = 0, a.battleEnteredAt = 0, a.feedback = null, a.feedbackEventId = "", a.battleMessage = "", a.matchCancelMessage = "", _(), window.setTimeout(() => {
+  Q(), O(), ce(), a.screen = "home", a.roomNo = "", a.roomJoinToken = "", a.room = null, a.realtimeRoom = null, a.selectedTile = null, a.tileEffect = null, a.networkStatus = "connecting", a.networkLatencyMs = 0, a.vsIntroUntil = 0, a.lastRoomStateAt = 0, a.lastSwapSentAt = 0, resetPredictionState(), a.lastSwapPositions = [], a.battleConnectingAt = 0, a.battleEnteredAt = 0, a.feedback = null, a.feedbackEventId = "", a.battleMessage = "", a.matchCancelMessage = "", _(), window.setTimeout(() => {
     S(e, "error");
   }, 80);
 }
 function ln(e = true) {
   const t = a.user;
   if (!t || !a.roomNo) return;
-  Q(), e && (he = 0), a.battleConnectingAt = Date.now(), a.battleEnteredAt = 0, a.feedback = null, a.feedbackEventId = "", a.networkStatus = "connecting", a.networkLatencyMs = 0, a.lastRoomStateAt = 0, a.lastSwapSentAt = 0, a.pendingSwapSeq = 0, a.pendingSwapPositions = [], a.lastSwapPositions = [];
+  Q(), e && (he = 0), a.battleConnectingAt = Date.now(), a.battleEnteredAt = 0, a.feedback = null, a.feedbackEventId = "", a.networkStatus = "connecting", a.networkLatencyMs = 0, a.lastRoomStateAt = 0, a.lastSwapSentAt = 0, resetPredictionState(), a.lastSwapPositions = [];
   const r = new URL(Ia, window.location.href);
   r.searchParams.set("roomNo", a.roomNo), r.searchParams.set("uid", t.uid), M = new WebSocket(r.toString()), v("client_realtime_connect_start", { roomNo: a.roomNo, mode: a.selectedMode, result: e ? "fresh" : "retry" }, 0), ze = window.setTimeout(() => {
     (!a.realtimeRoom || a.realtimeRoom.roomNo !== a.roomNo) && (v("client_realtime_connect_slow", { roomNo: a.roomNo, mode: a.selectedMode, costMs: Date.now() - a.battleConnectingAt }, 0), kt(n("realtimeConnectingSlow")));
@@ -3482,13 +3712,29 @@ function ln(e = true) {
     if (s.type === "room_state" && s.room) {
       ge(), he = 0;
       const l = a.realtimeRoom, c = !l || l.roomNo !== s.room.roomNo, d = Date.now(), u = a.lastRoomStateAt, h = s.room.status === "playing" && (!l || l.roomNo !== s.room.roomNo || l.status !== "playing");
-      if (li(l || null, s.room, t.uid) && zt(), a.realtimeRoom = s.room, a.lastRoomStateAt = d, a.networkLatencyMs = u ? Math.max(0, d - u) : a.networkLatencyMs, a.networkStatus = a.networkLatencyMs > 1900 ? "slow" : "online", c ? v("client_realtime_first_state", { roomNo: s.room.roomNo, mode: s.room.mode, status: s.room.status, costMs: a.battleConnectingAt ? d - a.battleConnectingAt : 0 }, 0) : a.networkStatus === "slow" && v("client_realtime_slow", { roomNo: s.room.roomNo, mode: s.room.mode, status: s.room.status, latencyMs: a.networkLatencyMs }, 5e3), h) {
+      if (li(l || null, s.room, t.uid) && zt(), a.realtimeRoom = s.room, a.clientRoomVersion = Number(s.room.version || a.clientRoomVersion || 0), a.clientPredictedBoard = xa(s.room, t.uid)?.board ? clientCloneBoard(xa(s.room, t.uid).board) : null, a.lastRoomStateAt = d, a.networkLatencyMs = u ? Math.max(0, d - u) : a.networkLatencyMs, a.networkStatus = a.networkLatencyMs > 1900 ? "slow" : "online", c ? v("client_realtime_first_state", { roomNo: s.room.roomNo, mode: s.room.mode, status: s.room.status, costMs: a.battleConnectingAt ? d - a.battleConnectingAt : 0 }, 0) : a.networkStatus === "slow" && v("client_realtime_slow", { roomNo: s.room.roomNo, mode: s.room.mode, status: s.room.status, latencyMs: a.networkLatencyMs }, 5e3), h) {
         const p = Ei(s.room);
         a.vsIntroUntil = p > 0 ? d + p : 0, window.setTimeout(() => {
           a.screen === "battle" && a.roomNo === s.room?.roomNo && $();
         }, p + 80);
       }
       xi(s.room), a.battleMessage = s.message || a.battleMessage, a.battleEnteredAt === 0 && s.room.status !== "finished" && (a.battleEnteredAt = Date.now()), a.screen = "battle", $();
+      return;
+    }
+    if (s.type === "swap_ack") {
+      handleSwapAck(s);
+      return;
+    }
+    if (s.type === "swap_reject") {
+      handleSwapReject(s);
+      return;
+    }
+    if (s.type === "room_delta") {
+      mergeRoomDelta(s.delta || s);
+      return;
+    }
+    if (s.type === "room_snapshot") {
+      handleRoomSnapshot(s);
       return;
     }
     if (s.type === "error") {
@@ -3506,11 +3752,27 @@ function ln(e = true) {
   };
 }
 function cn() {
+  if (isExtremeRealtimeActive()) {
+    const e = extremeRealtimeConfig();
+    return (a.pendingSwapQueue || []).length >= e.maxPendingSwaps ? false : a.realtimeRoom?.status === "waiting_ready" ? (a.battleMessage = n("waitBothReady"), $(), false) : a.realtimeRoom && ht(a.realtimeRoom) > 0 ? (a.battleMessage = n("waitReady"), $(), false) : !M || M.readyState !== WebSocket.OPEN ? (a.battleMessage = n("socketNotReady"), $(), false) : true;
+  }
   return a.pendingSwapSeq && Date.now() - a.lastSwapSentAt < 2200 ? false : (a.pendingSwapSeq && zt(), a.realtimeRoom?.status === "waiting_ready" ? (a.battleMessage = n("waitBothReady"), $(), false) : a.realtimeRoom && ht(a.realtimeRoom) > 0 ? (a.battleMessage = n("waitReady"), $(), false) : !M || M.readyState !== WebSocket.OPEN ? (a.battleMessage = n("socketNotReady"), $(), false) : true);
 }
 function dn(e, t) {
   const r = Date.now(), o = `${e.row}:${e.col}:${t.row}:${t.col}`;
-  o === Lt && r - xt < 320 || (Lt = o, xt = r, ut(), a.selectedTile = null, a.lastSwapSentAt = r, a.lastSwapPositions = [e, t], a.lastSwapSeq += 1, a.pendingSwapSeq = a.lastSwapSeq, a.pendingSwapPositions = [e, t], a.battleMessage = "", v("client_swap_send", { roomNo: a.roomNo, mode: a.realtimeRoom?.mode || a.selectedMode, seq: a.lastSwapSeq, latencyMs: a.networkLatencyMs }, 1800), Yn(e, t), Bi(e, t), xaPreviewSwap(e, t, a.lastSwapSeq), M?.send(JSON.stringify({ type: "swap_tiles", from: e, to: t, seq: a.lastSwapSeq })), de(12));
+  if (o === Lt && r - xt < (isExtremeRealtimeActive() ? 120 : 320)) return;
+  const s = isExtremeRealtimeActive(), l = Number(a.clientRoomVersion || a.realtimeRoom?.version || 0), c = a.lastSwapSeq + 1;
+  if (s && !kaPreviewSwap(e, t, c)) {
+    Lt = o, xt = r, ut(), a.selectedTile = null, a.lastSwapPositions = [e, t], Mi([e, t]);
+    return;
+  }
+  Lt = o, xt = r, ut(), a.selectedTile = null, a.lastSwapSentAt = r, a.lastSwapPositions = [e, t], a.lastSwapSeq = c, a.pendingSwapSeq = c, a.pendingSwapPositions = [e, t], a.battleMessage = "", v("client_swap_send", { roomNo: a.roomNo, mode: a.realtimeRoom?.mode || a.selectedMode, seq: a.lastSwapSeq, latencyMs: a.networkLatencyMs, protocol: s ? "swap_cmd" : "swap_tiles" }, 1800), Yn(e, t), Bi(e, t);
+  if (s) {
+    a.pendingSwapQueue = [...(a.pendingSwapQueue || []), { seq: a.lastSwapSeq, positions: [e, t], sentAt: r, baseVersion: l }].slice(-extremeRealtimeConfig().maxPendingSwaps), a.clientPredictionStats.sent += 1, applyPredictedSwap(e, t, a.lastSwapSeq), M?.send(JSON.stringify({ type: "swap_cmd", roomNo: a.roomNo, seq: a.lastSwapSeq, baseVersion: l, from: e, to: t, clientAt: r }));
+  } else {
+    xaPreviewSwap(e, t, a.lastSwapSeq), M?.send(JSON.stringify({ type: "swap_tiles", from: e, to: t, seq: a.lastSwapSeq }));
+  }
+  de(12);
 }
 function Gi(e, t) {
   if (Yt = Date.now(), ut(), document.querySelectorAll(".tile.touching").forEach((r) => r.classList.remove("touching")), !!cn()) {
