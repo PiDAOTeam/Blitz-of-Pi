@@ -685,14 +685,31 @@ function clientSettleRemainingMatches(e, t) {
     clientCollapseBoard(e, t), r += 1;
   }
 }
+function battleClearCount(e) {
+  return Math.max(0, Number(e?.cleared ?? e?.totalCleared ?? 0));
+}
+function battleChainCount(e) {
+  return Math.max(1, Number(e?.chain || 1));
+}
+function battleFeedbackPower(e) {
+  const t = battleChainCount(e), r = battleClearCount(e);
+  return Math.min(6, Math.max(0, t - 1) + (r >= 8 ? 3 : r >= 6 ? 2 : r >= 4 ? 1 : 0) + (e?.specialTriggered ? 2 : 0) + (e?.specialCreated ? 1 : 0) + (Number(e?.attack || 0) > 0 ? 1 : 0));
+}
+function battleIsMegaFeedback(e) {
+  return battleChainCount(e) >= 3 || battleClearCount(e) >= 6 || !!e?.specialTriggered || Number(e?.specialCreated || 0) > 0 && battleClearCount(e) >= 5;
+}
+function battleBurstText(e) {
+  const t = battleChainCount(e), r = battleClearCount(e), o = Number(e?.scoreGain || 0), s = Number(e?.attack || 0);
+  return e?.specialTriggered && t >= 3 ? `\u8FDE\u7206x${t} +${o}` : e?.specialTriggered ? `\u95EA\u7535\u7206\u53D1 +${o}` : e?.specialCreated && r >= 5 ? `\u70B8\u5F39\u751F\u6210 +${o}` : e?.specialCreated ? `\u95EA\u7535\u751F\u6210 +${o}` : s > 0 && t >= 3 ? `\u8FDE\u51FB\u7535\u51FB +${s}` : s > 0 ? `\u7535\u51FB +${s}` : t >= 4 ? `\u6781\u9650\u8FDE\u51FBx${t}` : t >= 3 ? `\u95EA\u7535\u8FDE\u51FBx${t}` : t > 1 && r >= 6 ? `\u8FDE\u51FBx${t} \u5927\u6D88` : t > 1 ? `\u8FDE\u51FBx${t} +${o}` : r >= 8 ? `\u5168\u573A\u5927\u6D88 +${o}` : r >= 6 ? `\u5927\u6D88\u9664 +${o}` : r >= 4 ? `${r}\u6D88 +${o}` : `+${o}`;
+}
 function waPreviewText(e) {
-  return e.specialTriggered ? `\u7206\u53D1 +${e.scoreGain}` : e.specialCreated ? e.cleared >= 5 ? `\u70B8\u5F39 +${e.scoreGain}` : `\u95EA\u7535 +${e.scoreGain}` : e.attack > 0 ? `\u7535\u51FB +${e.attack}` : e.chain > 1 ? `\u8FDE\u51FB x${e.chain}` : e.cleared >= 4 ? `${e.cleared}\u6D88!` : `+${e.scoreGain}`;
+  return battleBurstText(e);
 }
 function yaPreviewSemantic(e) {
   return e.specialTriggered ? "special_triggered" : e.specialCreated ? e.cleared >= 5 ? "special_bomb" : "special_lightning" : e.attack > 0 ? "attack" : e.chain > 1 ? "combo" : e.cleared >= 4 ? "big_clear" : "score";
 }
 function clientPreviewTone(e) {
-  return e.specialTriggered ? "attack" : e.specialCreated ? "combo" : e.attack > 0 ? "attack" : e.chain > 1 ? "combo" : e.cleared >= 4 ? "clear" : "score";
+  return e.specialTriggered ? "attack" : battleIsMegaFeedback(e) ? "mega" : e.specialCreated ? "combo" : e.attack > 0 ? "attack" : e.chain > 1 ? "combo" : e.cleared >= 4 ? "clear" : "score";
 }
 function kaPreviewSwap(e, t, r) {
   const o = a.realtimeRoom?.players?.find((m) => m.uid === a.user?.uid);
@@ -2872,36 +2889,6 @@ function canvasShadeColor(e, t = 0) {
   };
   return `#${s(1)}${s(3)}${s(5)}`;
 }
-function canvasTileKey(e) {
-  const t = Number(e || 0);
-  return Z[((t % wa) + wa) % wa] || Z[0];
-}
-function drawCanvasTileMark(e, t, r, o) {
-  const s = canvasTileKey(r), l = Math.min(o.w, o.h), c = o.cx, d = o.cy;
-  e.save(), e.lineCap = "round", e.lineJoin = "round", e.globalAlpha = 0.5, e.strokeStyle = "rgba(255, 255, 255, .5)", e.fillStyle = "rgba(255, 255, 255, .24)", e.lineWidth = Math.max(1.2, l * 0.035);
-  if (s === "aqua") {
-    e.globalAlpha = 0.64, e.strokeStyle = "rgba(230, 252, 255, .72)";
-    for (let u = 0; u < 2; u += 1) e.beginPath(), e.arc(c - l * 0.08 + u * l * 0.13, d + l * 0.02, l * (0.16 + u * 0.055), Math.PI * 0.08, Math.PI * 0.92), e.stroke();
-  } else if (s === "slate") {
-    e.globalAlpha = 0.68, e.strokeStyle = "rgba(255, 238, 255, .7)", e.fillStyle = "rgba(255, 255, 255, .22)";
-    e.beginPath(), e.moveTo(c, d - l * 0.24), e.lineTo(c + l * 0.18, d), e.lineTo(c, d + l * 0.24), e.lineTo(c - l * 0.18, d), e.closePath(), e.fill(), e.stroke();
-    e.beginPath(), e.moveTo(c - l * 0.29, d), e.lineTo(c + l * 0.29, d), e.moveTo(c, d - l * 0.29), e.lineTo(c, d + l * 0.29), e.stroke();
-  } else if (s === "ruby") {
-    e.beginPath(), e.moveTo(c, d - l * 0.24), e.lineTo(c + l * 0.24, d - l * 0.04), e.lineTo(c + l * 0.14, d + l * 0.24), e.lineTo(c - l * 0.14, d + l * 0.24), e.lineTo(c - l * 0.24, d - l * 0.04), e.closePath(), e.stroke();
-  } else if (s === "amber") {
-    e.globalAlpha = 0.54, e.beginPath(), e.arc(c, d, l * 0.23, 0, Math.PI * 2), e.stroke(), e.beginPath(), e.arc(c, d, l * 0.12, 0, Math.PI * 2), e.stroke();
-  } else if (s === "jade") {
-    e.beginPath(), e.moveTo(c, d - l * 0.25), e.quadraticCurveTo(c + l * 0.26, d - l * 0.05, c + l * 0.06, d + l * 0.25), e.quadraticCurveTo(c - l * 0.24, d + l * 0.02, c, d - l * 0.25), e.stroke();
-  } else if (s === "gold") {
-    e.globalAlpha = 0.6;
-    for (let u = 0; u < 4; u += 1) {
-      const h = Math.PI * 0.5 * u + Math.PI * 0.22;
-      e.beginPath(), e.moveTo(c + Math.cos(h) * l * 0.08, d + Math.sin(h) * l * 0.08), e.lineTo(c + Math.cos(h) * l * 0.28, d + Math.sin(h) * l * 0.28), e.stroke();
-    }
-    e.beginPath(), e.arc(c, d, l * 0.1, 0, Math.PI * 2), e.fill();
-  }
-  e.restore();
-}
 function drawCanvasTileBody(e, t, r, o, s, l, c) {
   const d = t.color || "#8a35ff", u = Math.min(o.w, o.h), h = canvasShadeColor(d, 0.34), p = canvasShadeColor(d, -0.36);
   canvasRoundRect(e, o.x, o.y + Math.max(2, u * 0.055), o.w, o.h, s), e.fillStyle = "rgba(0, 0, 0, .34)", e.fill();
@@ -2913,7 +2900,6 @@ function drawCanvasTileBody(e, t, r, o, s, l, c) {
   m.addColorStop(0, "rgba(255,255,255,.52)"), m.addColorStop(0.2, "rgba(255,255,255,.16)"), m.addColorStop(0.56, "rgba(0,0,0,.04)"), m.addColorStop(1, "rgba(0,0,0,.36)"), e.fillStyle = m, e.fill();
   canvasRoundRect(e, o.x + u * 0.08, o.y + u * 0.07, o.w * 0.72, o.h * 0.32, Math.max(4, s * 0.58)), e.fillStyle = "rgba(255,255,255,.18)", e.fill();
   e.beginPath(), e.moveTo(o.x + o.w * 0.16, o.y + o.h * 0.16), e.lineTo(o.x + o.w * 0.44, o.y + o.h * 0.08), e.strokeStyle = "rgba(255, 255, 255, .46)", e.lineWidth = Math.max(1.2, u * 0.04), e.stroke();
-  drawCanvasTileMark(e, t, r, o);
   e.strokeStyle = r >= wa ? "rgba(255, 245, 174, .68)" : "rgba(255, 249, 218, .28)", e.lineWidth = r >= wa ? 1.9 : 1.1, canvasRoundRect(e, o.x + 0.5, o.y + 0.5, o.w - 1, o.h - 1, s), e.stroke();
 }
 function canvasHasActiveFx(e = Date.now()) {
@@ -2957,24 +2943,25 @@ function drawCanvasSpecialFx(e, t) {
   const r = Date.now();
   a.canvasSpecialFx = (a.canvasSpecialFx || []).filter((o) => r - o.at < o.durationMs);
   for (const o of a.canvasSpecialFx) {
-    const s = Math.min(1, Math.max(0, (r - o.at) / o.durationMs)), l = 1 - s, c = canvasCellRect(t, o.position.row, o.position.col), d = Math.min(c.w, c.h);
+    const s = Math.min(1, Math.max(0, (r - o.at) / o.durationMs)), l = 1 - s, c = canvasCellRect(t, o.position.row, o.position.col), d = Math.min(c.w, c.h), u = Math.max(0, Math.min(6, Number(o.power || 0))), h = 1 + u * 0.08;
     e.save(), e.globalCompositeOperation = "lighter", e.globalAlpha = Math.max(0, l);
     if (o.kind === "horizontal" || o.kind === "vertical") {
-      const u = o.kind === "vertical", h = u ? t.paddingTop : c.cy, p = u ? c.cx : t.paddingLeft, f = u ? t.innerHeight : c.w, m = u ? c.h : t.innerWidth, g = u ? c.cx : t.paddingLeft + t.innerWidth, P = u ? t.paddingTop + t.innerHeight : c.cy, C = u ? e.createLinearGradient(c.cx, h, c.cx, P) : e.createLinearGradient(p, c.cy, g, c.cy);
-      C.addColorStop(0, "rgba(255, 230, 102, 0)"), C.addColorStop(0.18, "rgba(255, 249, 181, .62)"), C.addColorStop(0.48, "rgba(255, 255, 255, 1)"), C.addColorStop(0.52, "rgba(255, 255, 255, .96)"), C.addColorStop(0.82, "rgba(82, 221, 255, .58)"), C.addColorStop(1, "rgba(132, 223, 255, 0)");
-      e.shadowColor = "rgba(255, 232, 109, .86)", e.shadowBlur = d * 0.28, e.strokeStyle = C, e.lineWidth = Math.max(7, d * (0.24 - s * 0.07)), e.beginPath(), e.moveTo(p, h), e.lineTo(g, P), e.stroke(), e.shadowBlur = 0, e.strokeStyle = "rgba(255, 255, 255, .82)", e.lineWidth = Math.max(1.8, d * 0.05), e.beginPath(), e.moveTo(p, h), e.lineTo(g, P), e.stroke();
-      for (let T = -1; T <= 1; T += 2) e.strokeStyle = `rgba(126, 236, 255, ${0.34 * l})`, e.lineWidth = Math.max(1, d * 0.026), e.beginPath(), u ? (e.moveTo(c.cx + T * d * 0.16, h), e.lineTo(c.cx + T * d * 0.16, P)) : (e.moveTo(p, c.cy + T * d * 0.16), e.lineTo(g, c.cy + T * d * 0.16)), e.stroke();
-      const T = u ? f : m, U = Math.max(5, Math.min(11, Math.round((o.cleared || 3) / 1.5)));
-      for (let Te = 0; Te < U; Te += 1) {
-        const qe = (Te + 0.5) / U, gt = (qe * T + s * d * 1.2) % T, ha = u ? c.cx + Math.sin(Te * 1.7) * d * 0.1 : t.paddingLeft + gt, fa = u ? t.paddingTop + gt : c.cy + Math.cos(Te * 1.5) * d * 0.1;
-        e.fillStyle = "rgba(255, 246, 176, .86)", e.beginPath(), e.arc(ha, fa, d * (0.04 + l * 0.035), 0, Math.PI * 2), e.fill();
+      const p = o.kind === "vertical", f = p ? t.paddingTop : c.cy, m = p ? c.cx : t.paddingLeft, g = p ? t.innerHeight : c.w, P = p ? c.h : t.innerWidth, C = p ? c.cx : t.paddingLeft + t.innerWidth, T = p ? t.paddingTop + t.innerHeight : c.cy, U = p ? e.createLinearGradient(c.cx, f, c.cx, T) : e.createLinearGradient(m, c.cy, C, c.cy);
+      U.addColorStop(0, "rgba(255, 230, 102, 0)"), U.addColorStop(0.18, "rgba(255, 249, 181, .62)"), U.addColorStop(0.48, "rgba(255, 255, 255, 1)"), U.addColorStop(0.52, "rgba(255, 255, 255, .96)"), U.addColorStop(0.82, "rgba(82, 221, 255, .58)"), U.addColorStop(1, "rgba(132, 223, 255, 0)");
+      e.shadowColor = "rgba(255, 232, 109, .9)", e.shadowBlur = d * 0.28 * h, e.strokeStyle = U, e.lineWidth = Math.max(7, d * (0.24 + u * 0.012 - s * 0.07)), e.beginPath(), e.moveTo(m, f), e.lineTo(C, T), e.stroke(), e.shadowBlur = 0, e.strokeStyle = "rgba(255, 255, 255, .86)", e.lineWidth = Math.max(1.8, d * (0.05 + u * 0.004)), e.beginPath(), e.moveTo(m, f), e.lineTo(C, T), e.stroke();
+      for (let Te = -1; Te <= 1; Te += 2) e.strokeStyle = `rgba(126, 236, 255, ${0.34 * l})`, e.lineWidth = Math.max(1, d * 0.026), e.beginPath(), p ? (e.moveTo(c.cx + Te * d * 0.16, f), e.lineTo(c.cx + Te * d * 0.16, T)) : (e.moveTo(m, c.cy + Te * d * 0.16), e.lineTo(C, c.cy + Te * d * 0.16)), e.stroke();
+      const Te = p ? g : P, qe = Math.max(5, Math.min(14, Math.round((o.cleared || 3) / 1.5 + u)));
+      for (let gt = 0; gt < qe; gt += 1) {
+        const ha = (gt + 0.5) / qe, fa = (ha * Te + s * d * 1.2) % Te, va = p ? c.cx + Math.sin(gt * 1.7) * d * 0.1 : t.paddingLeft + fa, ba = p ? t.paddingTop + fa : c.cy + Math.cos(gt * 1.5) * d * 0.1;
+        e.fillStyle = "rgba(255, 246, 176, .86)", e.beginPath(), e.arc(va, ba, d * (0.04 + l * 0.035 + u * 0.004), 0, Math.PI * 2), e.fill();
       }
     } else {
-      const u = d * (0.4 + s * 1.55), h = e.createRadialGradient(c.cx, c.cy, d * 0.12, c.cx, c.cy, u);
-      h.addColorStop(0, "rgba(255, 255, 255, 1)"), h.addColorStop(0.16, "rgba(255, 239, 124, .88)"), h.addColorStop(0.38, "rgba(255, 132, 77, .52)"), h.addColorStop(0.62, "rgba(255, 75, 108, .28)"), h.addColorStop(1, "rgba(255, 94, 94, 0)"), e.fillStyle = h, e.beginPath(), e.arc(c.cx, c.cy, u, 0, Math.PI * 2), e.fill(), e.strokeStyle = "rgba(255, 246, 185, .86)", e.lineWidth = Math.max(2.4, d * 0.068 * l), e.beginPath(), e.arc(c.cx, c.cy, d * (0.48 + s * 1.18), 0, Math.PI * 2), e.stroke();
-      for (let p = 0; p < 14; p += 1) {
-        const f = p / 14 * Math.PI * 2 + (o.seed || 0), m = d * (0.3 + s * 1.42), g = c.cx + Math.cos(f) * m, P = c.cy + Math.sin(f) * m;
-        e.strokeStyle = p % 2 ? "rgba(255, 232, 122, .72)" : "rgba(255, 119, 96, .62)", e.lineWidth = Math.max(1.1, d * 0.03 * l), e.beginPath(), e.moveTo(c.cx + Math.cos(f) * d * 0.18, c.cy + Math.sin(f) * d * 0.18), e.lineTo(g, P), e.stroke();
+      const p = d * (0.4 + s * (1.55 + u * 0.12)), f = e.createRadialGradient(c.cx, c.cy, d * 0.12, c.cx, c.cy, p);
+      f.addColorStop(0, "rgba(255, 255, 255, 1)"), f.addColorStop(0.16, "rgba(255, 239, 124, .9)"), f.addColorStop(0.38, "rgba(255, 132, 77, .56)"), f.addColorStop(0.62, "rgba(255, 75, 108, .32)"), f.addColorStop(1, "rgba(255, 94, 94, 0)"), e.fillStyle = f, e.beginPath(), e.arc(c.cx, c.cy, p, 0, Math.PI * 2), e.fill(), e.strokeStyle = "rgba(255, 246, 185, .9)", e.lineWidth = Math.max(2.4, d * (0.068 + u * 0.006) * l), e.beginPath(), e.arc(c.cx, c.cy, d * (0.48 + s * (1.18 + u * 0.09)), 0, Math.PI * 2), e.stroke();
+      const m = Math.min(20, 14 + Math.round(u));
+      for (let g = 0; g < m; g += 1) {
+        const P = g / m * Math.PI * 2 + (o.seed || 0), C = d * (0.3 + s * (1.42 + u * 0.1)), T = c.cx + Math.cos(P) * C, U = c.cy + Math.sin(P) * C;
+        e.strokeStyle = g % 2 ? "rgba(255, 232, 122, .76)" : "rgba(255, 119, 96, .66)", e.lineWidth = Math.max(1.1, d * 0.03 * l), e.beginPath(), e.moveTo(c.cx + Math.cos(P) * d * 0.18, c.cy + Math.sin(P) * d * 0.18), e.lineTo(T, U), e.stroke();
       }
     }
     e.restore();
@@ -2984,11 +2971,11 @@ function drawCanvasTileBursts(e, t) {
   const r = Date.now();
   a.canvasTileBursts = (a.canvasTileBursts || []).filter((o) => r - o.at < o.durationMs);
   for (const o of a.canvasTileBursts) for (const s of o.positions || []) {
-    const l = Math.min(1, Math.max(0, (r - o.at) / o.durationMs)), c = 1 - l, d = canvasCellRect(t, s.row, s.col), u = Math.min(d.w, d.h), h = o.strong ? 10 : 6;
-    e.save(), e.globalAlpha = Math.max(0, c), e.globalCompositeOperation = "lighter", e.strokeStyle = o.tone === "attack" ? "rgba(255, 109, 126, .96)" : "rgba(255, 235, 144, .96)", e.lineWidth = Math.max(1.4, u * 0.045), e.beginPath(), e.arc(d.cx, d.cy, u * (0.16 + l * 0.58), 0, Math.PI * 2), e.stroke(), e.fillStyle = o.tone === "attack" ? "rgba(255, 92, 112, .2)" : "rgba(255, 229, 108, .18)", e.beginPath(), e.arc(d.cx, d.cy, u * (0.08 + l * 0.26), 0, Math.PI * 2), e.fill();
-    for (let p = 0; p < h; p += 1) {
-      const f = Math.PI * 2 * p / h + (o.seed || 0), m = u * (0.14 + l * (o.strong ? 0.62 : 0.48)), g = d.cx + Math.cos(f) * m, P = d.cy + Math.sin(f) * m, C = u * (0.08 + l * 0.12);
-      e.beginPath(), e.moveTo(g, P), e.lineTo(g + Math.cos(f) * C, P + Math.sin(f) * C), e.stroke();
+    const l = Math.min(1, Math.max(0, (r - o.at) / o.durationMs)), c = 1 - l, d = canvasCellRect(t, s.row, s.col), u = Math.min(d.w, d.h), h = Math.max(0, Math.min(6, Number(o.power || 0))), p = o.strong ? 10 + Math.round(h * 1.5) : 6 + Math.round(h), f = o.tone === "attack", m = o.tone === "mega";
+    e.save(), e.globalAlpha = Math.max(0, c), e.globalCompositeOperation = "lighter", e.strokeStyle = f ? "rgba(255, 109, 126, .96)" : m ? "rgba(126, 236, 255, .96)" : "rgba(255, 235, 144, .96)", e.lineWidth = Math.max(1.4, u * (0.045 + h * 0.005)), e.beginPath(), e.arc(d.cx, d.cy, u * (0.16 + l * (0.58 + h * 0.045)), 0, Math.PI * 2), e.stroke(), e.fillStyle = f ? "rgba(255, 92, 112, .22)" : m ? "rgba(126, 236, 255, .2)" : "rgba(255, 229, 108, .18)", e.beginPath(), e.arc(d.cx, d.cy, u * (0.08 + l * (0.26 + h * 0.025)), 0, Math.PI * 2), e.fill();
+    for (let g = 0; g < p; g += 1) {
+      const P = Math.PI * 2 * g / p + (o.seed || 0), C = u * (0.14 + l * (o.strong ? 0.62 + h * 0.045 : 0.48 + h * 0.03)), T = d.cx + Math.cos(P) * C, U = d.cy + Math.sin(P) * C, Te = u * (0.08 + l * (0.12 + h * 0.012));
+      e.beginPath(), e.moveTo(T, U), e.lineTo(T + Math.cos(P) * Te, U + Math.sin(P) * Te), e.stroke();
     }
     e.restore();
   }
@@ -3128,8 +3115,8 @@ function ui(e, t) {
   if (!r) return null;
   const o = ne(r);
   if (o === a.feedbackEventId) return null;
-  let s = "score", l = `${n("cleared")}${r.cleared}  +${r.scoreGain}`;
-  return r.attack > 0 ? (s = "attack", l = `${n("attack")} +${r.attack}  /  +${r.scoreGain}`) : r.specialTriggered ? (s = "attack", l = `\u7279\u6B8A\u5757\u7206\u53D1  +${r.scoreGain}`) : r.specialCreated ? (s = "combo", l = r.cleared >= 5 ? `\u751F\u6210\u70B8\u5F39\u5757  +${r.scoreGain}` : `\u751F\u6210\u95EA\u7535\u5757  +${r.scoreGain}`) : r.chain > 1 && (s = "combo", l = n("comboFeedback", { chain: r.chain, score: r.scoreGain })), { id: o, feedback: { text: l, tone: s, at: Date.now(), scoreGain: r.scoreGain, attack: r.attack, chain: r.chain } };
+  let s = "score", l = battleBurstText(r);
+  return r.specialTriggered || r.attack > 0 ? s = "attack" : battleIsMegaFeedback(r) ? s = "mega" : r.specialCreated || r.chain > 1 ? s = "combo" : r.cleared >= 4 && (s = "clear"), { id: o, feedback: { text: l, tone: s, at: Date.now(), scoreGain: r.scoreGain, attack: r.attack, chain: r.chain } };
 }
 function mi() {
   const e = a.battleBursts.map(pi).join(""), t = a.battleImpacts.map(fi).join("");
@@ -3197,23 +3184,22 @@ function gi(e, t) {
   de(o ? vi(o) : 12);
 }
 function bi(e) {
-  if (e.localPending) return a.effectiveVisualEffectMode === "low" || document.documentElement.classList.contains("low-performance") ? 0 : a.effectiveVisualEffectMode === "high" ? 8 : 4;
   if (a.effectiveVisualEffectMode === "low" || document.documentElement.classList.contains("low-performance")) return 0;
-  const t = a.effectiveVisualEffectMode === "high" ? 6 : 3, r = Math.min(3, Math.max(0, Number(e.chain || 1) - 1) * 1.5), o = e.cleared >= 5 ? 3 : e.cleared >= 4 ? 1 : 0;
-  return Math.min(a.effectiveVisualEffectMode === "high" ? 10 : 5, Math.round(t + r + o));
+  const t = battleFeedbackPower(e), r = a.effectiveVisualEffectMode === "high", o = e.localPending ? r ? 8 : 5 : r ? 6 : 3, s = Math.round(o + t * (r ? 1.35 : 0.85));
+  return Math.min(r ? 16 : 9, Math.max(e.localPending ? r ? 8 : 5 : r ? 6 : 3, s));
 }
 function wi(e) {
-  return e.localPending && e.previewTone ? e.previewTone : e.localPending ? "local" : e.specialTriggered ? "attack" : e.specialCreated ? "combo" : e.attack > 0 ? "attack" : e.chain > 1 ? "combo" : e.cleared >= 4 ? "clear" : "score";
+  return e.localPending && e.previewTone ? e.previewTone : e.localPending ? "local" : e.specialTriggered ? "attack" : battleIsMegaFeedback(e) ? "mega" : e.specialCreated ? "combo" : e.attack > 0 ? "attack" : e.chain > 1 ? "combo" : e.cleared >= 4 ? "clear" : "score";
 }
 function yi(e, t) {
   const r = e.uid || "unknown", o = e.previewSemantic || (e.specialTriggered ? "special_triggered" : e.specialCreated ? e.cleared >= 5 ? "special_bomb" : "special_lightning" : e.attack > 0 ? "attack" : e.chain > 1 ? "combo" : e.cleared >= 4 ? "big_clear" : "score");
   return `${r}:${t}:${o}:${Number(e.scoreGain || 0)}:${Number(e.attack || 0)}:${Number(e.cleared || 0)}:${Number(e.chain || 1)}`;
 }
 function ki(e) {
-  return e.specialTriggered ? "board-clear-attack" : e.specialCreated && e.cleared >= 5 ? "board-clear-chain" : e.specialCreated ? "board-clear-combo" : e.attack > 0 ? "board-clear-attack" : e.chain >= 3 ? "board-clear-chain" : e.chain > 1 ? "board-clear-combo" : e.cleared >= 5 ? "board-clear-big" : e.cleared >= 4 ? "board-clear-good" : "board-clear-normal";
+  return e.specialTriggered ? "board-clear-attack" : battleIsMegaFeedback(e) ? "board-clear-mega" : e.specialCreated && e.cleared >= 5 ? "board-clear-chain" : e.specialCreated ? "board-clear-combo" : e.attack > 0 ? "board-clear-attack" : e.chain >= 3 ? "board-clear-chain" : e.chain > 1 ? "board-clear-combo" : e.cleared >= 5 ? "board-clear-big" : e.cleared >= 4 ? "board-clear-good" : "board-clear-normal";
 }
 function vi(e) {
-  return e.specialTriggered ? [42, 24, 54, 24, 38] : e.specialCreated ? [24, 18, 34] : e.attack > 0 ? [36, 24, 48, 24, 32] : e.chain >= 3 ? [24, 18, 34, 18, 42] : e.chain > 1 ? [18, 16, 30] : e.cleared >= 5 ? [20, 16, 28] : e.cleared >= 4 ? 20 : 12;
+  return e.specialTriggered ? [46, 24, 62, 28, 42] : battleIsMegaFeedback(e) ? [26, 18, 38, 20, 46] : e.specialCreated ? [24, 18, 34] : e.attack > 0 ? [36, 24, 48, 24, 32] : e.chain >= 3 ? [24, 18, 34, 18, 42] : e.chain > 1 ? [18, 16, 30] : e.cleared >= 5 ? [20, 16, 28] : e.cleared >= 4 ? 20 : 12;
 }
 function Si(e) {
   const t = `${ne(e)}:board`;
@@ -3222,7 +3208,7 @@ function Si(e) {
   const r = oe();
   if (!r) return;
   const o = ki(e);
-  r.classList.remove("board-clear-normal", "board-clear-good", "board-clear-big", "board-clear-combo", "board-clear-chain", "board-clear-attack"), r.offsetWidth, r.classList.add(o), window.setTimeout(() => {
+  r.classList.remove("board-clear-normal", "board-clear-good", "board-clear-big", "board-clear-combo", "board-clear-chain", "board-clear-mega", "board-clear-attack"), r.offsetWidth, r.classList.add(o), window.setTimeout(() => {
     r.classList.remove(o);
   }, a.effectiveVisualEffectMode === "high" ? animationMs("boardEffectHighSeconds", 120) : animationMs("boardEffectSeconds", 120)), Ci(e);
 }
@@ -3233,34 +3219,38 @@ function Pi(e) {
   const t = [], r = (s) => {
     s && (s.row < 0 || s.row >= $e || s.col < 0 || s.col >= Pe || t.some((l) => l.row === s.row && l.col === s.col) || t.push(s));
   };
-  if (a.lastSwapPositions.forEach(r), a.effectiveVisualEffectMode === "high") a.lastSwapPositions.forEach((s) => {
-    r({ row: s.row - 1, col: s.col }), r({ row: s.row + 1, col: s.col }), r({ row: s.row, col: s.col - 1 }), r({ row: s.row, col: s.col + 1 });
+  const o = battleFeedbackPower(e), s = battleIsMegaFeedback(e);
+  if (a.lastSwapPositions.forEach(r), a.effectiveVisualEffectMode === "high" || s) a.lastSwapPositions.forEach((l) => {
+    r({ row: l.row - 1, col: l.col }), r({ row: l.row + 1, col: l.col }), r({ row: l.row, col: l.col - 1 }), r({ row: l.row, col: l.col + 1 });
   });
-  else if (Number(e.cleared || 0) >= 4 || Number(e.chain || 1) > 1 || e.specialTriggered || e.specialCreated) {
-    const s = a.lastSwapPositions[0];
-    s && (r({ row: s.row, col: s.col + 1 }), r({ row: s.row + 1, col: s.col }));
+  if (s && a.lastSwapPositions[0]) {
+    const l = a.lastSwapPositions[0];
+    r({ row: l.row - 1, col: l.col - 1 }), r({ row: l.row - 1, col: l.col + 1 }), r({ row: l.row + 1, col: l.col - 1 }), r({ row: l.row + 1, col: l.col + 1 });
+  } else if (Number(e.cleared || 0) >= 4 || Number(e.chain || 1) > 1 || e.specialTriggered || e.specialCreated) {
+    const l = a.lastSwapPositions[0];
+    l && (r({ row: l.row, col: l.col + 1 }), r({ row: l.row + 1, col: l.col }));
   }
-  const o = a.effectiveVisualEffectMode === "high" ? 6 : 3;
-  return t.slice(0, Math.min(o, Math.max(2, Number(e.cleared || 3))));
+  const l = a.effectiveVisualEffectMode === "high" ? 8 : 5;
+  return t.slice(0, Math.min(l, Math.max(2, Math.min(8, Number(e.cleared || 3) + o))));
 }
 function triggerCanvasSpecialFx(e) {
   if (!$i()) return;
   const t = (Array.isArray(e.specialFx) ? e.specialFx : []).filter((r) => r?.position && r.kind);
   if (!t.length) return;
-  const r = a.effectiveVisualEffectMode === "high" ? animationMsAtLeast("boardEffectHighSeconds", 760, 180) : animationMsAtLeast("boardEffectSeconds", 580, 170), o = Date.now();
-  a.canvasSpecialFx = [...(a.canvasSpecialFx || []), ...t.slice(0, a.effectiveVisualEffectMode === "high" ? 3 : 2).map((s) => ({ kind: s.kind, position: s.position, at: o, durationMs: r, cleared: Number(e.cleared || 3), seed: Math.random() * Math.PI * 2 }))].slice(-4), renderCurrentCanvasBoard(), scheduleCanvasFxFrame(), window.setTimeout(() => {
-    a.canvasSpecialFx = (a.canvasSpecialFx || []).filter((s) => Date.now() - s.at < s.durationMs), renderCurrentCanvasBoard();
-  }, r + 40);
+  const r = battleFeedbackPower(e), o = a.effectiveVisualEffectMode === "high" ? animationMsAtLeast("boardEffectHighSeconds", 760 + r * 25, 180) : animationMsAtLeast("boardEffectSeconds", 580 + r * 18, 170), s = Date.now();
+  a.canvasSpecialFx = [...(a.canvasSpecialFx || []), ...t.slice(0, a.effectiveVisualEffectMode === "high" ? 3 : 2).map((l) => ({ kind: l.kind, position: l.position, at: s, durationMs: o, cleared: Number(e.cleared || 3), power: r, seed: Math.random() * Math.PI * 2 }))].slice(-4), renderCurrentCanvasBoard(), scheduleCanvasFxFrame(), window.setTimeout(() => {
+    a.canvasSpecialFx = (a.canvasSpecialFx || []).filter((l) => Date.now() - l.at < l.durationMs), renderCurrentCanvasBoard();
+  }, o + 40);
 }
 function Ci(e) {
   if (!$i()) return;
   triggerCanvasSpecialFx(e);
   const t = Pi(e);
   if (!t.length) return;
-  const r = a.effectiveVisualEffectMode === "high" && (Number(e.cleared || 0) >= 4 || Number(e.chain || 1) > 1 || e.specialTriggered || e.specialCreated), o = r ? animationMsAtLeast("tileBurstHighSeconds", 760, 80) : animationMsAtLeast("tileBurstSeconds", 560, 80);
-  a.canvasTileBursts = [...(a.canvasTileBursts || []), { positions: t, at: Date.now(), durationMs: o, strong: r, tone: e.attack > 0 || e.specialTriggered ? "attack" : "score", seed: Math.random() * Math.PI }].slice(-4), renderCurrentCanvasBoard(), scheduleCanvasFxFrame(), window.setTimeout(() => {
-    a.canvasTileBursts = (a.canvasTileBursts || []).filter((s) => Date.now() - s.at < s.durationMs), renderCurrentCanvasBoard();
-  }, o + 30);
+  const r = battleFeedbackPower(e), o = battleIsMegaFeedback(e), s = (a.effectiveVisualEffectMode === "high" || o) && (Number(e.cleared || 0) >= 4 || Number(e.chain || 1) > 1 || e.specialTriggered || e.specialCreated), l = s ? animationMsAtLeast("tileBurstHighSeconds", 760 + r * 22, 80) : animationMsAtLeast("tileBurstSeconds", 560, 80);
+  a.canvasTileBursts = [...(a.canvasTileBursts || []), { positions: t, at: Date.now(), durationMs: l, strong: s, power: r, tone: e.attack > 0 || e.specialTriggered ? "attack" : o ? "mega" : "score", seed: Math.random() * Math.PI }].slice(-4), renderCurrentCanvasBoard(), scheduleCanvasFxFrame(), window.setTimeout(() => {
+    a.canvasTileBursts = (a.canvasTileBursts || []).filter((c) => Date.now() - c.at < c.durationMs), renderCurrentCanvasBoard();
+  }, l + 30);
 }
 function Ti() {
   const e = oe();
