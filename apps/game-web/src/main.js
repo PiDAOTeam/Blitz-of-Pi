@@ -258,7 +258,7 @@ function lt(e) {
   }
   return true;
 }
-let Nt = "", j = null, V = null, Be = null, ee = null, y = null, x = null, k = null, Ne = null, Yt = 0, Et = 0, Lt = "", xt = 0, Ee = "", te = 0, pe = -1, Xe = "", le = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0;
+let Nt = "", j = null, V = null, Be = null, ee = null, y = null, x = null, k = null, Ne = null, Yt = 0, Et = 0, Lt = "", xt = 0, Ee = "", te = 0, pe = -1, Xe = "", le = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPerfLockedLow = false, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0;
 let cleanupBoardInputListeners = null;
 const Sa = /* @__PURE__ */ new Map();
 let z = null, W = null, At = 0, q = null;
@@ -279,7 +279,7 @@ function cleanupBoardInputs() {
   Ne = null;
 }
 function ce() {
-  be && (window.cancelAnimationFrame(be), be = null), ee && (window.clearTimeout(ee), ee = null), le && (window.cancelAnimationFrame(le), le = null), j && (window.cancelAnimationFrame(j), j = null), V && (window.cancelAnimationFrame(V), V = null), z = null, W = null, At = 0, q = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0, document.documentElement.classList.remove("low-performance"), we(), Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, Se = null, me.clear(), Nt = "", y = null, Et = 0, Lt = "", xt = 0, a.pendingSwapSeq = 0, a.pendingSwapPositions = [], cleanupBoardInputs(), x = null, k = null, Yt = 0, a.battleBursts = [], a.battleImpacts = [], a.localBattleEvents = [], a.localSwapFx = null;
+  be && (window.cancelAnimationFrame(be), be = null), ee && (window.clearTimeout(ee), ee = null), le && (window.cancelAnimationFrame(le), le = null), j && (window.cancelAnimationFrame(j), j = null), V && (window.cancelAnimationFrame(V), V = null), z = null, W = null, At = 0, q = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPerfLockedLow = false, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0, document.documentElement.classList.remove("low-performance"), we(), Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, Se = null, me.clear(), Nt = "", y = null, Et = 0, Lt = "", xt = 0, a.pendingSwapSeq = 0, a.pendingSwapPositions = [], cleanupBoardInputs(), x = null, k = null, Yt = 0, a.battleBursts = [], a.battleImpacts = [], a.localBattleEvents = [], a.localSwapFx = null;
 }
 function ge() {
   ze && (window.clearTimeout(ze), ze = null);
@@ -309,7 +309,7 @@ function Ln() {
       return;
     }
     const r = Ge ? t - Ge : 0, o = document.documentElement.classList.contains("low-performance");
-    r > 52 ? (Me += 2, clientPerfStableFrames = 0) : r > 42 ? (Me += 1, clientPerfStableFrames = 0) : (Me = Math.max(0, Me - 1), clientPerfStableFrames += 1), Me >= 6 && !o && (document.documentElement.classList.add("low-performance"), clientPerfLowSince = Date.now()), o && a.effectiveVisualEffectMode !== "low" && clientPerfStableFrames > 180 && Date.now() - clientPerfLowSince > 6e3 && (document.documentElement.classList.remove("low-performance"), Me = 0, clientPerfStableFrames = 0), Ge = t, le = window.requestAnimationFrame(e);
+    r > 52 ? (Me += 2, clientPerfStableFrames = 0) : r > 42 ? (Me += 1, clientPerfStableFrames = 0) : (Me = Math.max(0, Me - 1), clientPerfStableFrames += 1), Me >= 6 && !o && (document.documentElement.classList.add("low-performance"), clientPerfLowSince = Date.now(), clientPerfLockedLow = true), !clientPerfLockedLow && o && a.effectiveVisualEffectMode !== "low" && clientPerfStableFrames > 360 && Date.now() - clientPerfLowSince > 18e3 && (document.documentElement.classList.remove("low-performance"), Me = 0, clientPerfStableFrames = 0), Ge = t, le = window.requestAnimationFrame(e);
   };
   le = window.requestAnimationFrame(e);
 }
@@ -2772,31 +2772,34 @@ function ii(e, t, r, o = 1) {
 }
 function oi(e, t, r = false) {
   const o = t.board || [], s = o.reduce((d, u) => d + u.length, 0);
-  if (e.querySelectorAll(".tile[data-row][data-col]").length !== s) {
+  const l = e.querySelectorAll(".tile[data-row][data-col]");
+  if (l.length !== s) {
     e.innerHTML = Ut(t), se = Je(o), Ht(o);
     return;
   }
-  const l = r ? ni(se, o) : Ht(o), c = [];
-  for (let d = 0; d < o.length; d += 1) {
-    const u = o[d] || [];
-    for (let h = 0; h < u.length; h += 1) {
-      const p = u[h], f = e.querySelector(`.tile[data-row="${d}"][data-col="${h}"]`);
-      if (!f) {
+  const c = new Map();
+  l.forEach((T) => c.set(`${T.dataset.row}:${T.dataset.col}`, T));
+  const d = r ? ni(se, o) : Ht(o), u = [];
+  for (let h = 0; h < o.length; h += 1) {
+    const p = o[h] || [];
+    for (let f = 0; f < p.length; f += 1) {
+      const m = p[f], g = c.get(`${h}:${f}`);
+      if (!g) {
         e.innerHTML = Ut(t), se = Je(o);
         return;
       }
-      const m = se[d]?.[h];
-      r && m !== void 0 && m !== p && c.push({ tile: f, rowIndex: d, colIndex: h });
-      const g = tn(p, d, h);
-      f.className !== g && (f.className = g);
-      const P = na(p);
-      Dn(f, P), ai(f, P.label);
+      const P = se[h]?.[f];
+      r && P !== void 0 && P !== m && u.push({ tile: g, rowIndex: h, colIndex: f });
+      const C = tn(m, h, f);
+      g.className !== C && (g.className = C);
+      const T = na(m);
+      Dn(g, T), ai(g, T.label);
     }
   }
-  if (r && ri() && c.length) {
-    const d = a.effectiveVisualEffectMode === "high" ? 24 : 14;
-    c.slice(0, d).forEach(({ tile: u, rowIndex: h, colIndex: p }) => {
-      ii(u, h, p, l[h]?.[p] || 1);
+  if (r && ri() && u.length) {
+    const h = a.effectiveVisualEffectMode === "high" ? 24 : 14;
+    u.slice(0, h).forEach(({ tile: p, rowIndex: f, colIndex: m }) => {
+      ii(p, f, m, d[f]?.[m] || 1);
     });
   }
   se = Je(o);
