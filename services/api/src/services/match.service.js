@@ -16,7 +16,8 @@ const {
   findBattleRoomForUpdate,
   updateBattleRoomStatus,
   updateBattleAssetStatus,
-  countActiveBattleRooms
+  countActiveBattleRooms,
+  expireStaleFreeBotRooms
 } = require("../repositories/battle.repository");
 const { settleRankMatch } = require("../repositories/rank.repository");
 const { settleBattleInviteCommission } = require("./growth.service");
@@ -1561,5 +1562,6 @@ module.exports = {
   applyBattleAction,
   getBattleResult,
   getRoomsSnapshot,
-  settleFinishedRoom
+  settleFinishedRoom,
+  expireStaleFreeBotRooms
 };

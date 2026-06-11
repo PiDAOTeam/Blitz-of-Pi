@@ -221,7 +221,7 @@ async function listUserAssetBattleLedgerRows(uid, limit = 60) {
 async function expireStaleFreeBotRooms(minutes = 5) {
   const safeMinutes = Math.min(60, Math.max(2, Number.parseInt(String(minutes), 10) || 5));
 
-  await query(
+  const result = await query(
     `UPDATE battle_rooms
      SET status = 'expired',
          finished_at = COALESCE(finished_at, NOW())
@@ -230,6 +230,8 @@ async function expireStaleFreeBotRooms(minutes = 5) {
        AND is_bot_room = 1
        AND created_at < DATE_SUB(NOW(), INTERVAL ${safeMinutes} MINUTE)`
   );
+
+  return Number(result?.affectedRows || 0);
 }
 
 async function updateBattleRoomStatus(roomNo, status, connection = null) {
