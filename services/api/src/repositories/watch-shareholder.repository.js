@@ -22,6 +22,8 @@ async function ensureWatchShareholderSchema() {
       asset_type VARCHAR(16) NOT NULL DEFAULT 'POINTS',
       platform_fee_points BIGINT NOT NULL DEFAULT 0,
       share_rate DECIMAL(8,4) NOT NULL DEFAULT 0.5000,
+      subsidy_points_per_user BIGINT NOT NULL DEFAULT 0,
+      subsidy_points_total BIGINT NOT NULL DEFAULT 0,
       pool_points BIGINT NOT NULL DEFAULT 0,
       allocated_points BIGINT NOT NULL DEFAULT 0,
       paid_points BIGINT NOT NULL DEFAULT 0,
@@ -51,6 +53,8 @@ async function ensureWatchShareholderSchema() {
       uid VARCHAR(64) NOT NULL DEFAULT '',
       node_count INT NOT NULL DEFAULT 0,
       raw_amount DECIMAL(20,8) NOT NULL DEFAULT 0,
+      dividend_points BIGINT NOT NULL DEFAULT 0,
+      subsidy_points BIGINT NOT NULL DEFAULT 0,
       reward_points BIGINT NOT NULL DEFAULT 0,
       status VARCHAR(32) NOT NULL DEFAULT 'pending',
       external_order_no VARCHAR(128) NOT NULL DEFAULT '',
@@ -73,7 +77,32 @@ async function ensureWatchShareholderSchema() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci`
   );
 
+  await ensureColumn("watch_shareholder_periods", "subsidy_points_per_user", "BIGINT NOT NULL DEFAULT 0 AFTER share_rate");
+  await ensureColumn("watch_shareholder_periods", "subsidy_points_total", "BIGINT NOT NULL DEFAULT 0 AFTER subsidy_points_per_user");
+  await ensureColumn("watch_shareholder_rewards", "dividend_points", "BIGINT NOT NULL DEFAULT 0 AFTER raw_amount");
+  await ensureColumn("watch_shareholder_rewards", "subsidy_points", "BIGINT NOT NULL DEFAULT 0 AFTER dividend_points");
+  await query(
+    `UPDATE watch_shareholder_rewards
+     SET dividend_points = reward_points
+     WHERE dividend_points = 0
+       AND subsidy_points = 0
+       AND reward_points > 0`
+  );
+
   schemaEnsured = true;
+}
+
+async function ensureColumn(tableName, columnName, ddl) {
+  const rows = await query(
+    `SELECT COUNT(*) AS total
+     FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = ?
+       AND COLUMN_NAME = ?`,
+    [tableName, columnName]
+  );
+  if (Number(rows[0]?.total || 0) > 0) return;
+  await query(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${ddl}`);
 }
 
 async function getMysqlDateTime(connection = null) {
@@ -178,22 +207,28 @@ function normalizeSnapshotUsers(users = []) {
     .filter((user) => user.piUid && user.nodeCount > 0);
 }
 
-function allocateIntegerRewards({ poolPoints, users, minRewardPoints = 1 }) {
+function allocateIntegerRewards({ poolPoints, users, minRewardPoints = 1, subsidyPointsPerUser = 0 }) {
   const pool = Math.max(0, Math.floor(Number(poolPoints || 0)));
   const normalizedUsers = normalizeSnapshotUsers(users);
+  const subsidyPerUser = Math.max(0, Math.floor(Number(subsidyPointsPerUser || 0)));
   const totalNodeCount = normalizedUsers.reduce((sum, user) => sum + user.nodeCount, 0);
   if (pool <= 0 || totalNodeCount <= 0) {
+    const rewards = normalizedUsers.map((user) => ({
+      ...user,
+      rawAmount: 0,
+      dividendPoints: 0,
+      subsidyPoints: subsidyPerUser,
+      rewardPoints: subsidyPerUser,
+      status: subsidyPerUser > 0 ? "pending" : "zero"
+    }));
     return {
       totalNodeCount,
-      allocatedPoints: 0,
-      zeroRewardCount: normalizedUsers.length,
+      dividendAllocatedPoints: 0,
+      subsidyPointsTotal: rewards.reduce((sum, reward) => sum + reward.subsidyPoints, 0),
+      allocatedPoints: rewards.reduce((sum, reward) => sum + reward.rewardPoints, 0),
+      zeroRewardCount: rewards.filter((reward) => reward.rewardPoints <= 0).length,
       roundingDelta: pool,
-      rewards: normalizedUsers.map((user) => ({
-        ...user,
-        rawAmount: 0,
-        rewardPoints: 0,
-        status: "zero"
-      }))
+      rewards
     };
   }
 
@@ -201,27 +236,30 @@ function allocateIntegerRewards({ poolPoints, users, minRewardPoints = 1 }) {
   const rewards = normalizedUsers.map((user) => {
     const rawAmount = (pool * user.nodeCount) / totalNodeCount;
     const rounded = Math.round(rawAmount);
-    const rewardPoints = rounded >= minReward ? rounded : 0;
+    const dividendPoints = rounded >= minReward ? rounded : 0;
     return {
       ...user,
       rawAmount,
-      rewardPoints,
+      dividendPoints,
+      subsidyPoints: subsidyPerUser,
+      rewardPoints: dividendPoints + subsidyPerUser,
       fraction: rawAmount - Math.floor(rawAmount),
-      status: rewardPoints > 0 ? "pending" : "zero"
+      status: dividendPoints + subsidyPerUser > 0 ? "pending" : "zero"
     };
   });
 
-  let allocatedPoints = rewards.reduce((sum, reward) => sum + reward.rewardPoints, 0);
-  if (allocatedPoints > pool) {
+  let dividendAllocatedPoints = rewards.reduce((sum, reward) => sum + reward.dividendPoints, 0);
+  if (dividendAllocatedPoints > pool) {
     const candidates = rewards
-      .filter((reward) => reward.rewardPoints > 0)
+      .filter((reward) => reward.dividendPoints > 0)
       .sort((a, b) => a.fraction - b.fraction || a.nodeCount - b.nodeCount || a.piUid.localeCompare(b.piUid));
     let index = 0;
-    while (allocatedPoints > pool && candidates.length) {
+    while (dividendAllocatedPoints > pool && candidates.length) {
       const reward = candidates[index % candidates.length];
-      if (reward.rewardPoints > 0) {
+      if (reward.dividendPoints > 0) {
+        reward.dividendPoints -= 1;
         reward.rewardPoints -= 1;
-        allocatedPoints -= 1;
+        dividendAllocatedPoints -= 1;
         reward.status = reward.rewardPoints > 0 ? "pending" : "zero";
       }
       index += 1;
@@ -229,12 +267,16 @@ function allocateIntegerRewards({ poolPoints, users, minRewardPoints = 1 }) {
     }
   }
 
-  allocatedPoints = rewards.reduce((sum, reward) => sum + reward.rewardPoints, 0);
+  dividendAllocatedPoints = rewards.reduce((sum, reward) => sum + reward.dividendPoints, 0);
+  const subsidyPointsTotal = rewards.reduce((sum, reward) => sum + reward.subsidyPoints, 0);
+  const allocatedPoints = rewards.reduce((sum, reward) => sum + reward.rewardPoints, 0);
   return {
     totalNodeCount,
+    dividendAllocatedPoints,
+    subsidyPointsTotal,
     allocatedPoints,
     zeroRewardCount: rewards.filter((reward) => reward.rewardPoints <= 0).length,
-    roundingDelta: pool - allocatedPoints,
+    roundingDelta: pool - dividendAllocatedPoints,
     rewards: rewards.map(({ fraction, ...reward }) => reward)
   };
 }
@@ -255,6 +297,7 @@ async function createOrReplacePeriodWithRewards({
   sourceMode,
   platformFeePoints,
   shareRate,
+  subsidyPointsPerUser = 0,
   poolPoints,
   snapshot,
   allocation,
@@ -286,9 +329,9 @@ async function createOrReplacePeriodWithRewards({
     const [periodResult] = await executor(connection).execute(
       `INSERT INTO watch_shareholder_periods
          (season_no, start_at, end_at, status, source_mode, asset_type, platform_fee_points, share_rate,
-          pool_points, allocated_points, paid_points, unclaimed_points, zero_reward_count, rounding_delta,
+          subsidy_points_per_user, subsidy_points_total, pool_points, allocated_points, paid_points, unclaimed_points, zero_reward_count, rounding_delta,
           snapshot_user_count, snapshot_node_count, snapshot_at)
-       VALUES (?, ?, ?, 'settled', ?, 'POINTS', ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, 'settled', ?, 'POINTS', ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?)`,
       [
         seasonNo,
         startAt,
@@ -296,6 +339,8 @@ async function createOrReplacePeriodWithRewards({
         sourceMode,
         platformFeePoints,
         shareRate,
+        Math.max(0, Math.floor(Number(subsidyPointsPerUser || 0))),
+        Math.max(0, Math.floor(Number(allocation.subsidyPointsTotal || 0))),
         poolPoints,
         allocation.allocatedPoints,
         allocation.allocatedPoints,
@@ -320,8 +365,8 @@ async function createOrReplacePeriodWithRewards({
       await executor(connection).execute(
         `INSERT INTO watch_shareholder_rewards
            (period_id, season_no, hashpi_user_id, pi_uid, pi_username, uid, node_count, raw_amount,
-            reward_points, status, external_order_no, idempotency_key, next_retry_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+            dividend_points, subsidy_points, reward_points, status, external_order_no, idempotency_key, next_retry_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
         [
           periodId,
           seasonNo,
@@ -331,6 +376,8 @@ async function createOrReplacePeriodWithRewards({
           uid,
           reward.nodeCount,
           Number(reward.rawAmount || 0).toFixed(8),
+          Math.max(0, Math.floor(Number(reward.dividendPoints || 0))),
+          Math.max(0, Math.floor(Number(reward.subsidyPoints || 0))),
           reward.rewardPoints,
           reward.rewardPoints > 0 ? "pending" : "zero",
           orderNo,

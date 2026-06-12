@@ -21,6 +21,8 @@ const DEFAULT_WATCH_SHAREHOLDER_CONFIG = {
   frontendEntryEnabled: true,
   autoSettleEnabled: true,
   shareRate: 0.5,
+  subsidyEnabled: false,
+  subsidyPointsPerUser: 0,
   minRewardPoints: 1,
   sourceMode: "points_battle",
   settlementText: "每周一结算上周",
@@ -32,6 +34,7 @@ function normalizeShareholderConfig(config = {}) {
   const incoming = config.watchShareholder || {};
   const rate = Number(incoming.shareRate);
   const minRewardPoints = Math.floor(Number(incoming.minRewardPoints || DEFAULT_WATCH_SHAREHOLDER_CONFIG.minRewardPoints));
+  const subsidyPointsPerUser = Math.floor(Number(incoming.subsidyPointsPerUser || 0));
   return {
     ...DEFAULT_WATCH_SHAREHOLDER_CONFIG,
     ...incoming,
@@ -39,6 +42,8 @@ function normalizeShareholderConfig(config = {}) {
     frontendEntryEnabled: incoming.frontendEntryEnabled !== false,
     autoSettleEnabled: incoming.autoSettleEnabled !== false,
     shareRate: Number.isFinite(rate) && rate >= 0 && rate <= 1 ? Number(rate.toFixed(4)) : 0.5,
+    subsidyEnabled: incoming.subsidyEnabled === true,
+    subsidyPointsPerUser: Math.max(0, subsidyPointsPerUser || 0),
     minRewardPoints: Math.max(1, minRewardPoints || 1),
     sourceMode: "points_battle",
     title: String(incoming.title || DEFAULT_WATCH_SHAREHOLDER_CONFIG.title).trim().slice(0, 32),
@@ -59,6 +64,8 @@ function toPeriodDto(row = {}) {
     assetType: row.asset_type || "POINTS",
     platformFeePoints: Number(row.platform_fee_points || 0),
     shareRate: Number(row.share_rate || 0),
+    subsidyPointsPerUser: Number(row.subsidy_points_per_user || 0),
+    subsidyPointsTotal: Number(row.subsidy_points_total || 0),
     poolPoints: Number(row.pool_points || 0),
     allocatedPoints: Number(row.allocated_points || 0),
     paidPoints: Number(row.paid_points || 0),
@@ -87,6 +94,8 @@ function toRewardDto(row = {}) {
     avatarKey: row.avatar_key || "avatar_1",
     nodeCount: Number(row.node_count || 0),
     rawAmount: Number(row.raw_amount || 0),
+    dividendPoints: Number(row.dividend_points || 0),
+    subsidyPoints: Number(row.subsidy_points || 0),
     rewardPoints: Number(row.reward_points || 0),
     status: row.status || "",
     attempts: Number(row.attempts || 0),
@@ -127,10 +136,12 @@ async function settlePreviousWeek({ force = false } = {}) {
   });
   const poolPoints = Math.floor(platformFeePoints * config.shareRate);
   const snapshot = await fetchWatchNodeSnapshot();
+  const subsidyPointsPerUser = config.subsidyEnabled ? config.subsidyPointsPerUser : 0;
   const allocation = allocateIntegerRewards({
     poolPoints,
     users: snapshot.users,
-    minRewardPoints: config.minRewardPoints
+    minRewardPoints: config.minRewardPoints,
+    subsidyPointsPerUser
   });
   const result = await createOrReplacePeriodWithRewards({
     seasonNo: range.seasonNo,
@@ -139,6 +150,7 @@ async function settlePreviousWeek({ force = false } = {}) {
     sourceMode: config.sourceMode,
     platformFeePoints,
     shareRate: config.shareRate,
+    subsidyPointsPerUser,
     poolPoints,
     snapshot,
     allocation,
@@ -156,6 +168,8 @@ async function settlePreviousWeek({ force = false } = {}) {
     },
     allocation: {
       allocatedPoints: allocation.allocatedPoints,
+      dividendAllocatedPoints: allocation.dividendAllocatedPoints,
+      subsidyPointsTotal: allocation.subsidyPointsTotal,
       zeroRewardCount: allocation.zeroRewardCount,
       roundingDelta: allocation.roundingDelta
     }

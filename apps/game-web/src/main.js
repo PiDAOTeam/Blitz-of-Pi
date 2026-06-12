@@ -844,6 +844,10 @@ function formatAssetReward(e, t) {
   const r = String(e || "PI").toUpperCase(), o = Number(t || 0);
   return r === "POINTS" ? `${Math.floor(o)} ${n("pointsAsset")}` : r === "POC" ? `${o.toFixed(2).replace(/\.?0+$/, "")} POC` : b(o);
 }
+function formatSeasonNo(e = "") {
+  const t = String(e || "").match(/^(\d{4})(\d{2})(\d{2})_(\d{4})(\d{2})(\d{2})$/);
+  return t ? n("watchShareholderPeriodRange", { y1: t[1], m1: t[2], d1: t[3], y2: t[4], m2: t[5], d2: t[6] }) : e || "-";
+}
 function formatRewardList(e = [], t = 0) {
   const r = (Array.isArray(e) ? e : []).filter((o) => Number(o.amount || 0) > 0).map((o) => formatAssetReward(o.assetType, o.amount));
   if (!r.length && Number(t || 0) > 0) r.push(b(t));
@@ -1526,17 +1530,17 @@ function renderWatchShareholderEntry() {
   `;
 }
 function renderWatchRewardRow(e = {}) {
-  const t = Math.floor(Number(e.rewardPoints || 0)), r = Math.floor(Number(e.nodeCount || 0));
-  const o = e.status === "paid" ? n("watchShareholderPaid") : t > 0 ? n("watchShareholderPending") : n("watchShareholderZero");
+  const t = Math.floor(Number(e.rewardPoints || 0)), r = Math.floor(Number(e.nodeCount || 0)), o = Math.floor(Number(e.dividendPoints || 0)), s = Math.floor(Number(e.subsidyPoints || 0));
+  const l = e.status === "paid" ? n("watchShareholderPaid") : t > 0 ? n("watchShareholderPending") : n("watchShareholderZero");
   return `
     <article class="watch-shareholder-row ${i(e.status || "")}">
       <div>
-        <strong>${i(e.seasonNo || "-")}</strong>
+        <strong>${i(formatSeasonNo(e.seasonNo))}</strong>
         <small>${i(n("watchShareholderNodes", { count: r }))}</small>
       </div>
       <div>
         <b>${i(`${t} ${n("pointsAsset")}`)}</b>
-        <small>${i(o)}</small>
+        <small>${i(s > 0 ? n("watchShareholderRewardBreakdown", { dividend: o, subsidy: s }) : l)}</small>
       </div>
     </article>
   `;
@@ -1561,8 +1565,8 @@ function openWatchShareholderSheet() {
         <article class="daily-sign-card watch-shareholder-period">
           <div>
             <span>${i(n("watchShareholderLatestPeriod"))}</span>
-            <strong>${i(l?.seasonNo || n("watchShareholderNoPeriod"))}</strong>
-            <small>${i(l ? n("watchShareholderPool", { pool: Math.floor(Number(l.poolPoints || 0)), nodes: Math.floor(Number(l.snapshotNodeCount || 0)) }) : n("watchShareholderWaiting"))}</small>
+            <strong>${i(l?.seasonNo ? formatSeasonNo(l.seasonNo) : n("watchShareholderNoPeriod"))}</strong>
+            <small>${i(l ? n("watchShareholderPool", { pool: Math.floor(Number(l.poolPoints || 0)), subsidy: Math.floor(Number(l.subsidyPointsTotal || 0)), nodes: Math.floor(Number(l.snapshotNodeCount || 0)) }) : n("watchShareholderWaiting"))}</small>
           </div>
           <button type="button" id="claim-watch-shareholder" ${u ? "" : "disabled"}>${i(d)}</button>
         </article>

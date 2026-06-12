@@ -81,6 +81,10 @@ function O(e) {
   const t = new Date(e);
   return Number.isNaN(t.getTime()) ? e : t.toLocaleString("zh-CN", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
 }
+function formatSeasonNo(e = "") {
+  const t = String(e || "").match(/^(\d{4})(\d{2})(\d{2})_(\d{4})(\d{2})(\d{2})$/);
+  return t ? `${t[1]}年${t[2]}月${t[3]}日 - ${t[4]}年${t[5]}月${t[6]}日` : e || "-";
+}
 function ce(e) {
   return e.status !== "playing" || !e.createdAt ? false : Date.now() - new Date(e.createdAt).getTime() > 300 * 1e3;
 }
@@ -1712,9 +1716,9 @@ function watchRewardStatusLabel(e = "") {
 function renderWatchPeriodRow(e = {}) {
   return `
     <article class="row-card watch-period-row">
-      <strong>${i(e.seasonNo || "-")}</strong>
+      <strong>${i(formatSeasonNo(e.seasonNo))}</strong>
       <span>${i(O(e.startAt))} - ${i(O(e.endAt))}</span>
-      <span>奖池 ${Math.floor(Number(e.poolPoints || 0))} 积分 · 已发 ${Math.floor(Number(e.paidPoints || 0))}</span>
+      <span>奖池 ${Math.floor(Number(e.poolPoints || 0))} · 补贴 ${Math.floor(Number(e.subsidyPointsTotal || 0))} · 已发 ${Math.floor(Number(e.paidPoints || 0))}</span>
       <span>节点 ${Number(e.snapshotNodeCount || 0)} · 用户 ${Number(e.snapshotUserCount || 0)} · ${i(H(e.status))}</span>
     </article>
   `;
@@ -1724,8 +1728,8 @@ function renderWatchRewardRow(e = {}) {
   return `
     <article class="row-card watch-reward-row">
       <strong>${i(e.piUsername || e.nickname || h(e.piUid))}</strong>
-      <span>节点 ${Number(e.nodeCount || 0)} · ${i(h(e.piUid || e.uid))}</span>
-      <span>${Math.floor(Number(e.rewardPoints || 0))} 积分 · ${i(watchRewardStatusLabel(e.status))}</span>
+      <span>${i(formatSeasonNo(e.seasonNo))} · 节点 ${Number(e.nodeCount || 0)}</span>
+      <span>${Math.floor(Number(e.rewardPoints || 0))} 积分 · 分红 ${Math.floor(Number(e.dividendPoints || 0))} + 补贴 ${Math.floor(Number(e.subsidyPoints || 0))}</span>
       <span>${i(e.lastError || O(e.claimedAt || e.createdAt))}</span>
       ${needsRetry ? `<button type="button" data-watch-shareholder-retry="${e.id}">重试</button>` : ""}
     </article>
@@ -1745,14 +1749,14 @@ function renderWatchShareholderAdmin(e = {}, t = {}) {
         <span class="pill ${n.enabled ? "ok" : "warning"}">${n.enabled ? "分红已开启" : "分红未开启"}</span>
       </div>
       <div class="mini-grid">
-        ${f("最近期次", r?.seasonNo || "-", r ? `${i(O(r.startAt))} 至 ${i(O(r.endAt))}` : "暂无结算")}
+        ${f("最近期次", formatSeasonNo(r?.seasonNo), r ? `${i(O(r.startAt))} 至 ${i(O(r.endAt))}` : "暂无结算")}
         ${f("本期奖池", `${Math.floor(Number(r?.poolPoints || 0))} 积分`, `抽成 ${Math.floor(Number(r?.platformFeePoints || 0))} · 比例 ${Math.round(Number(r?.shareRate ?? n.shareRate ?? 0) * 100)}%`)}
         ${f("节点快照", `${Number(r?.snapshotUserCount || 0)} 人`, `${Number(r?.snapshotNodeCount || 0)} 个有效节点`)}
-        ${f("发放队列", `${Number(s.failedCount || 0)} 个异常`, `待领取 ${Math.floor(Number(s.pendingPoints || 0))} · 已发 ${Math.floor(Number(s.paidPoints || 0))}`)}
+        ${f("平台补贴", `${Math.floor(Number(r?.subsidyPointsTotal || 0))} 积分`, `${n.subsidyEnabled ? `每人 ${Math.floor(Number(n.subsidyPointsPerUser || 0))} 积分` : "未开启"}`)}
       </div>
       <div class="watch-action-row">
         <button type="button" id="watch-shareholder-sync">同步节点名单</button>
-        <button type="button" id="watch-shareholder-settle">生成上周分红</button>
+        <button type="button" id="watch-shareholder-settle">生成/更新上周分红</button>
         <button type="button" id="watch-shareholder-process">处理发放队列</button>
         <p id="watch-shareholder-action-status" class="status"></p>
       </div>
@@ -1779,11 +1783,16 @@ function renderWatchShareholderAdmin(e = {}, t = {}) {
           </select></label>
           <label><span>抽成分红比例</span><input name="watchShareholderShareRate" type="number" inputmode="decimal" min="0" max="1" step="0.01" value="${n.shareRate ?? 0.5}" /></label>
           <label><span>最低发放积分</span><input name="watchShareholderMinRewardPoints" type="number" inputmode="numeric" min="1" max="100000" step="1" value="${n.minRewardPoints ?? 1}" /></label>
+          <label><span>平台补贴</span><select name="watchShareholderSubsidyEnabled">
+            <option value="false" ${n.subsidyEnabled ? "" : "selected"}>关闭</option>
+            <option value="true" ${n.subsidyEnabled ? "selected" : ""}>开启</option>
+          </select></label>
+          <label><span>每人每周补贴积分</span><input name="watchShareholderSubsidyPointsPerUser" type="number" inputmode="numeric" min="0" max="100000" step="1" value="${Math.floor(Number(n.subsidyPointsPerUser || 0))}" /></label>
           <label><span>前台标题</span><input name="watchShareholderTitle" maxlength="32" value="${i(n.title || "腕表节点股东分红")}" /></label>
           <label><span>前台说明</span><input name="watchShareholderSubtitle" maxlength="80" value="${i(n.subtitle || "腕表节点用户可领每周分红")}" /></label>
           <label><span>结算文案</span><input name="watchShareholderSettlementText" maxlength="60" value="${i(n.settlementText || "每周一结算上周")}" /></label>
         </div>
-        <p class="meta">建议保持默认 50%。生成期次后，已领取的期次不能重新生成，避免重复发放。</p>
+        <p class="meta">平台补贴按腕表节点用户“每人”增加，不按节点数倍增。生成期次后，已领取的期次不能重新生成。</p>
         <button type="submit">保存腕表分红配置</button>
         <p id="watch-shareholder-config-status" class="status"></p>
       </form>
@@ -2479,13 +2488,17 @@ function Ut(e, t, a) {
     }
   }), watchForm?.addEventListener("submit", async (c) => {
     c.preventDefault();
-    const l = new FormData(watchForm), p = Number(l.get("watchShareholderShareRate") || 0), u = Math.floor(Number(l.get("watchShareholderMinRewardPoints") || 1));
+    const l = new FormData(watchForm), p = Number(l.get("watchShareholderShareRate") || 0), u = Math.floor(Number(l.get("watchShareholderMinRewardPoints") || 1)), subsidyPoints = Math.floor(Number(l.get("watchShareholderSubsidyPointsPerUser") || 0));
     if (!Number.isFinite(p) || p < 0 || p > 1) {
       watchStatus && (watchStatus.textContent = "分红比例必须在 0 到 1 之间");
       return;
     }
     if (!Number.isInteger(u) || u < 1) {
       watchStatus && (watchStatus.textContent = "最低发放积分必须是正整数");
+      return;
+    }
+    if (!Number.isInteger(subsidyPoints) || subsidyPoints < 0) {
+      watchStatus && (watchStatus.textContent = "平台补贴积分必须是整数，不能填小数");
       return;
     }
     watchStatus && (watchStatus.textContent = "保存中...");
@@ -2497,6 +2510,8 @@ function Ut(e, t, a) {
         sourceMode: "points_battle",
         shareRate: p,
         minRewardPoints: u,
+        subsidyEnabled: String(l.get("watchShareholderSubsidyEnabled")) === "true",
+        subsidyPointsPerUser: subsidyPoints,
         title: String(l.get("watchShareholderTitle") || "腕表节点股东分红").trim(),
         subtitle: String(l.get("watchShareholderSubtitle") || "腕表节点用户可领每周分红").trim(),
         settlementText: String(l.get("watchShareholderSettlementText") || "每周一结算上周").trim()
@@ -2507,19 +2522,19 @@ function Ut(e, t, a) {
   });
 }
 function bindWatchShareholderActions() {
-  const e = document.querySelector("#watch-shareholder-action-status"), t = async (a, n, s = "") => {
+  const e = document.querySelector("#watch-shareholder-action-status"), t = async (a, n, s = "", body = {}) => {
     if (s && !window.confirm(s)) return;
     const r = document.querySelector(a);
     r && (r.disabled = true), e && (e.textContent = "处理中...");
     try {
-      const o = await d(n, { method: "POST", body: JSON.stringify({}), timeoutMs: 25000 });
+      const o = await d(n, { method: "POST", body: JSON.stringify(body || {}), timeoutMs: 25000 });
       e && (e.textContent = o?.message || "处理完成，正在刷新..."), await q();
     } catch (o) {
       e && (e.textContent = g(o)), r && (r.disabled = false);
     }
   };
   document.querySelector("#watch-shareholder-sync")?.addEventListener("click", () => t("#watch-shareholder-sync", "/admin-api/watch-shareholder/sync-snapshot"));
-  document.querySelector("#watch-shareholder-settle")?.addEventListener("click", () => t("#watch-shareholder-settle", "/admin-api/watch-shareholder/settle-previous-week", "确认生成上周腕表股东分红？生成后如已有领取记录不能重算。"));
+  document.querySelector("#watch-shareholder-settle")?.addEventListener("click", () => t("#watch-shareholder-settle", "/admin-api/watch-shareholder/settle-previous-week", "确认按当前配置生成/更新上周腕表股东分红？如果本期已有用户领取，系统会拒绝重算。", { force: true }));
   document.querySelector("#watch-shareholder-process")?.addEventListener("click", () => t("#watch-shareholder-process", "/admin-api/watch-shareholder/rewards/process"));
   document.querySelectorAll("[data-watch-shareholder-retry]").forEach((a) => {
     a.addEventListener("click", async () => {
