@@ -85,7 +85,11 @@ function yn(e) {
 }
 function ve() {
   const e = (t) => t === "high" ? "high" : "balanced";
-  return { defaultMode: e(a.gameConfig?.visualEffects?.defaultMode), piBrowserDefaultMode: e(a.gameConfig?.visualEffects?.piBrowserDefaultMode), allowUserChoice: a.gameConfig?.visualEffects?.allowUserChoice !== false, allowHighMode: true, autoDowngradeEnabled: a.gameConfig?.visualEffects?.autoDowngradeEnabled !== false, dragTrailEnabled: a.gameConfig?.visualEffects?.dragTrailEnabled !== false, hapticEnabled: a.gameConfig?.visualEffects?.hapticEnabled !== false, soundEnabled: a.gameConfig?.visualEffects?.soundEnabled !== false, attackWarningEnabled: a.gameConfig?.visualEffects?.attackWarningEnabled !== false, attackWarningText: String(a.gameConfig?.visualEffects?.attackWarningText || DEFAULT_ATTACK_WARNING_TEXT).trim() || DEFAULT_ATTACK_WARNING_TEXT, animationDurations: normalizeAnimationDurations(a.gameConfig?.visualEffects?.animationDurations) };
+  const t = (r, o, s = 1) => {
+    const l = Number(r);
+    return Number.isFinite(l) ? Math.max(0, Math.min(s, l)) : o;
+  };
+  return { defaultMode: e(a.gameConfig?.visualEffects?.defaultMode), piBrowserDefaultMode: e(a.gameConfig?.visualEffects?.piBrowserDefaultMode), allowUserChoice: a.gameConfig?.visualEffects?.allowUserChoice !== false, allowHighMode: true, autoDowngradeEnabled: a.gameConfig?.visualEffects?.autoDowngradeEnabled !== false, dragTrailEnabled: a.gameConfig?.visualEffects?.dragTrailEnabled !== false, hapticEnabled: a.gameConfig?.visualEffects?.hapticEnabled !== false, soundEnabled: a.gameConfig?.visualEffects?.soundEnabled !== false, soundVolume: t(a.gameConfig?.visualEffects?.soundVolume, 0.85, 1), bgmEnabled: a.gameConfig?.visualEffects?.bgmEnabled !== false, bgmVolume: t(a.gameConfig?.visualEffects?.bgmVolume, 0.12, 0.5), attackWarningEnabled: a.gameConfig?.visualEffects?.attackWarningEnabled !== false, attackWarningText: String(a.gameConfig?.visualEffects?.attackWarningText || DEFAULT_ATTACK_WARNING_TEXT).trim() || DEFAULT_ATTACK_WARNING_TEXT, animationDurations: normalizeAnimationDurations(a.gameConfig?.visualEffects?.animationDurations) };
 }
 function extremeRealtimeConfig() {
   const e = a.gameConfig?.extremeRealtime || {};
@@ -259,7 +263,7 @@ Object.assign($t.en, {
 });
 let M = null, A = null, be = null, ze = null, he = 0, Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, finishFeedbackKey = "";
 const vn = 1100, va = 2600, Sn = 80, me = /* @__PURE__ */ new Set();
-let Se = null, battleAudioContext = null, battleAudioUnlocked = false;
+let Se = null, battleAudioContext = null, battleAudioUnlocked = false, battleBgmGain = null, battleBgmTimer = null, battleBgmPlaying = false;
 const battleSfxLastPlayed = /* @__PURE__ */ new Map();
 function Ua() {
   return Se = { board: document.querySelector("#game-board"), overlay: document.querySelector("#battle-overlay"), feedbackLayer: document.querySelector("#battle-feedback-layer"), shell: document.querySelector(".battle-shell"), roomLabel: document.querySelector("#battle-room-label"), title: document.querySelector("#battle-title"), modeLabel: document.querySelector("#battle-mode-label"), timerWrap: document.querySelector("#battle-timer-wrap"), timer: document.querySelector("#battle-timer"), timerBar: document.querySelector("#battle-timer-bar"), selfCard: document.querySelector("#battle-self-card"), opponentCard: document.querySelector("#battle-opponent-card"), selfName: document.querySelector("#battle-self-name"), opponentName: document.querySelector("#battle-opponent-name"), selfScore: document.querySelector("#battle-self-score"), opponentScore: document.querySelector("#battle-opponent-score"), selfPressureMeter: document.querySelector("#battle-self-pressure-meter"), opponentPressureMeter: document.querySelector("#battle-opponent-pressure-meter"), selfPressure: document.querySelector("#battle-self-pressure"), opponentPressure: document.querySelector("#battle-opponent-pressure"), networkPill: document.querySelector("#network-pill") }, Se;
@@ -303,7 +307,7 @@ function cleanupBoardInputs() {
   Ne = null;
 }
 function ce() {
-  be && (window.cancelAnimationFrame(be), be = null), ee && (window.clearTimeout(ee), ee = null), le && (window.cancelAnimationFrame(le), le = null), j && (window.cancelAnimationFrame(j), j = null), V && (window.cancelAnimationFrame(V), V = null), z = null, W = null, At = 0, q = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPerfLockedLow = false, clientPerfFrameCount = 0, clientPerfLongFrameCount = 0, clientPerfSampleStartedAt = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0, document.documentElement.classList.remove("low-performance"), we(), Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, finishFeedbackKey = "", Se = null, me.clear(), Nt = "", y = null, Et = 0, Lt = "", xt = 0, a.pendingSwapSeq = 0, a.pendingSwapPositions = [], cleanupBoardInputs(), x = null, k = null, Yt = 0, a.battleBursts = [], a.battleImpacts = [], a.localBattleEvents = [], a.localSwapFx = null, a.canvasSpecialFx = [], a.canvasSpecialBirths = [];
+  stopBattleBgm(), be && (window.cancelAnimationFrame(be), be = null), ee && (window.clearTimeout(ee), ee = null), le && (window.cancelAnimationFrame(le), le = null), j && (window.cancelAnimationFrame(j), j = null), V && (window.cancelAnimationFrame(V), V = null), z = null, W = null, At = 0, q = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPerfLockedLow = false, clientPerfFrameCount = 0, clientPerfLongFrameCount = 0, clientPerfSampleStartedAt = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0, document.documentElement.classList.remove("low-performance"), we(), Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, finishFeedbackKey = "", Se = null, me.clear(), Nt = "", y = null, Et = 0, Lt = "", xt = 0, a.pendingSwapSeq = 0, a.pendingSwapPositions = [], cleanupBoardInputs(), x = null, k = null, Yt = 0, a.battleBursts = [], a.battleImpacts = [], a.localBattleEvents = [], a.localSwapFx = null, a.canvasSpecialFx = [], a.canvasSpecialBirths = [];
 }
 function ge() {
   ze && (window.clearTimeout(ze), ze = null);
@@ -768,6 +772,15 @@ function de(e) {
 function battleSoundEnabled() {
   return a.gameConfig?.visualEffects?.soundEnabled !== false && !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 }
+function battleSfxVolume() {
+  return ve().soundVolume;
+}
+function battleBgmEnabled() {
+  return battleSoundEnabled() && ve().bgmEnabled !== false && battleBgmVolume() > 0 && a.screen === "battle" && a.realtimeRoom?.status === "playing";
+}
+function battleBgmVolume() {
+  return ve().bgmVolume;
+}
 function ensureBattleAudioContext() {
   if (!battleSoundEnabled()) return null;
   try {
@@ -784,10 +797,65 @@ function ensureBattleAudioContext() {
 function unlockBattleAudio() {
   if (battleAudioUnlocked) return;
   const e = ensureBattleAudioContext();
-  e && (battleAudioUnlocked = true);
+  e && (battleAudioUnlocked = true, updateBattleBgm());
 }
 function setupBattleAudioUnlock() {
   ["pointerdown", "touchstart", "click"].forEach((e) => document.addEventListener(e, unlockBattleAudio, { passive: true, capture: true }));
+}
+function stopBattleBgm() {
+  battleBgmTimer && (window.clearTimeout(battleBgmTimer), battleBgmTimer = null), battleBgmPlaying = false;
+  if (battleBgmGain) try {
+    const e = battleAudioContext?.currentTime || 0, t = battleBgmGain;
+    t.gain.cancelScheduledValues(e), t.gain.setTargetAtTime(0.0001, e, 0.08), battleBgmGain = null, window.setTimeout(() => {
+      try {
+        t.disconnect();
+      } catch {
+      }
+    }, 260);
+  } catch {
+    battleBgmGain = null;
+  }
+}
+function playBgmTone(e, t, r = 0, o = 0.12, s = "sine") {
+  const l = battleAudioContext;
+  if (!l || !battleBgmGain) return;
+  try {
+    const c = l.currentTime + r, d = l.createOscillator(), u = l.createGain();
+    d.type = s, d.frequency.setValueAtTime(e, c), u.gain.setValueAtTime(0.0001, c), u.gain.exponentialRampToValueAtTime(o, c + 0.035), u.gain.exponentialRampToValueAtTime(0.0001, c + t), d.connect(u), u.connect(battleBgmGain), d.start(c), d.stop(c + t + 0.04), window.setTimeout(() => {
+      try {
+        d.disconnect(), u.disconnect();
+      } catch {
+      }
+    }, Math.ceil((r + t + 0.12) * 1e3));
+  } catch {
+  }
+}
+function scheduleBattleBgmLoop() {
+  if (!battleBgmPlaying || !battleBgmEnabled()) {
+    stopBattleBgm();
+    return;
+  }
+  const e = battleBgmVolume();
+  if (battleBgmGain && battleAudioContext) {
+    const t = battleAudioContext.currentTime;
+    battleBgmGain.gain.cancelScheduledValues(t), battleBgmGain.gain.setTargetAtTime(e, t, 0.18);
+  }
+  playBgmTone(110, 0.44, 0, 0.18, "triangle"), playBgmTone(165, 0.28, 0.12, 0.07, "sine"), playBgmTone(220, 0.34, 0.48, 0.08, "sine"), playBgmTone(146.83, 0.34, 0.84, 0.075, "triangle"), playBgmTone(82.41, 0.52, 1.18, 0.12, "sine");
+  battleBgmTimer = window.setTimeout(scheduleBattleBgmLoop, 1600);
+}
+function updateBattleBgm() {
+  if (!battleAudioUnlocked || !battleBgmEnabled()) {
+    stopBattleBgm();
+    return;
+  }
+  const e = ensureBattleAudioContext();
+  if (!e) return;
+  if (!battleBgmGain) {
+    battleBgmGain = e.createGain(), battleBgmGain.gain.value = 0.0001, battleBgmGain.connect(e.destination);
+  }
+  if (!battleBgmPlaying) {
+    battleBgmPlaying = true, scheduleBattleBgmLoop();
+  }
 }
 function playBattleSfx(e, t = 0) {
   if (!battleSoundEnabled()) return;
@@ -797,7 +865,7 @@ function playBattleSfx(e, t = 0) {
   const l = ensureBattleAudioContext();
   if (!l || l.state === "closed") return;
   try {
-    const c = Math.max(0, Math.min(6, Number(t || 0))), d = l.currentTime + 0.002, u = l.createGain(), h = Math.min(0.07, 0.026 + c * 0.004);
+    const c = Math.max(0, Math.min(6, Number(t || 0))), d = l.currentTime + 0.002, u = l.createGain(), h = Math.min(0.16, (0.045 + c * 0.01) * battleSfxVolume());
     u.gain.setValueAtTime(0.0001, d), u.gain.exponentialRampToValueAtTime(h, d + 0.012), u.gain.exponentialRampToValueAtTime(0.0001, d + 0.24 + c * 0.018), u.connect(l.destination);
     const p = (m, g, P = 0, C = "triangle", T = 0) => {
       const U = l.createOscillator(), Te = l.createGain(), qe = Math.max(0.025, Number(g || 0.06));
@@ -811,9 +879,10 @@ function playBattleSfx(e, t = 0) {
     if (e === "swap") p(360, 0.045, 0, "triangle", 120);
     else if (e === "clear") p(520, 0.06, 0, "sine", 180), p(780, 0.07, 0.045, "triangle", -90);
     else if (e === "combo") p(520, 0.052, 0, "triangle", 160), p(720, 0.056, 0.05, "triangle", 210), p(1040, 0.08, 0.105, "sine", -110);
-    else if (e === "special") p(410, 0.055, 0, "sawtooth", 360), p(920, 0.09, 0.055, "triangle", 260), p(1280, 0.08, 0.13, "sine", -240);
+    else if (e === "specialCreate") p(330, 0.09, 0, "triangle", 260), p(660, 0.12, 0.06, "sine", 330), p(990, 0.16, 0.14, "triangle", -180);
+    else if (e === "specialTrigger" || e === "special") p(240, 0.08, 0, "sawtooth", 520), p(620, 0.09, 0.045, "triangle", 420), p(1160, 0.12, 0.12, "sine", -260), p(1480, 0.09, 0.2, "triangle", -360);
     else if (e === "attack") p(260, 0.06, 0, "sawtooth", 420), p(760, 0.08, 0.04, "triangle", 280);
-    else if (e === "hit") p(190, 0.09, 0, "sawtooth", -55), p(120, 0.12, 0.045, "triangle", -25);
+    else if (e === "hit") p(92, 0.18, 0, "sawtooth", -26), p(54, 0.22, 0.028, "sine", -12), p(260, 0.08, 0.055, "square", -80), p(980, 0.07, 0.11, "triangle", -220);
     else if (e === "finishWin") p(520, 0.09, 0, "triangle", 180), p(760, 0.1, 0.08, "triangle", 250), p(1120, 0.14, 0.18, "sine", -80);
     else if (e === "finishLose") p(360, 0.11, 0, "triangle", -90), p(220, 0.16, 0.08, "sine", -35);
     else p(420, 0.08, 0, "triangle", 0);
@@ -829,7 +898,7 @@ function playBattleSfx(e, t = 0) {
 function playBattleEventFeedback(e, t = false) {
   if (!e) return;
   const r = battleFeedbackPower(e);
-  e.specialTriggered || e.specialCreated ? playBattleSfx("special", r) : Number(e.attack || 0) > 0 ? playBattleSfx("attack", r) : Number(e.chain || 1) >= 2 || battleIsMegaFeedback(e) ? playBattleSfx("combo", r) : playBattleSfx("clear", r), t && de(vi(e));
+  e.specialTriggered ? playBattleSfx("specialTrigger", r) : e.specialCreated ? playBattleSfx("specialCreate", r) : Number(e.chain || 1) >= 2 || battleIsMegaFeedback(e) ? playBattleSfx("combo", r) : Number(e.attack || 0) > 0 ? playBattleSfx("attack", r) : playBattleSfx("clear", r), t && de(vi(e));
 }
 function playFinishFeedback(e, t) {
   if (!e || e.status !== "finished" || !t) return;
@@ -3182,6 +3251,7 @@ function syncAuthoritativeRoom(e, t = "state") {
   const r = a.realtimeRoom, o = xa(r, a.user?.uid || ""), s = xa(e, a.user?.uid || "");
   const l = o && s && jt(o) !== jt(s);
   a.realtimeRoom = e, a.clientRoomVersion = Number(e.version || a.clientRoomVersion || 0), a.clientPredictedBoard = s?.board ? clientCloneBoard(s.board) : null, a.lastRoomStateAt = Date.now(), a.screen = "battle";
+  updateBattleBgm();
   l && t !== "state" && (a.clientPredictionStats.corrected += 1, v("client_snapshot_corrected", { roomNo: e.roomNo, mode: e.mode, result: t, version: a.clientRoomVersion }, 5e3));
   xi(e);
 }
@@ -3193,7 +3263,7 @@ function mergeRoomDelta(e) {
     const s = t.players.find((l) => l.uid === o.uid);
     return s ? { ...o, score: Number(s.score ?? o.score), pressure: Number(s.pressure ?? o.pressure), combo: Number(s.combo ?? o.combo), lastGain: Number(s.lastGain ?? o.lastGain), validMoveCount: Number(s.validMoveCount ?? o.validMoveCount) } : o;
   });
-  a.realtimeRoom = r, a.clientRoomVersion = Number(r.version || a.clientRoomVersion || 0), a.lastRoomStateAt = Date.now(), a.networkStatus = "online", $();
+  a.realtimeRoom = r, a.clientRoomVersion = Number(r.version || a.clientRoomVersion || 0), a.lastRoomStateAt = Date.now(), a.networkStatus = "online", updateBattleBgm(), $();
 }
 function handleSwapAck(e) {
   clearPendingSwapSeq(e.seq), a.clientPredictionStats.ack += 1, e.version && (a.clientRoomVersion = Number(e.version));
@@ -3908,7 +3978,7 @@ function ln(e = true) {
           a.screen === "battle" && a.roomNo === s.room?.roomNo && $();
         }, p + 80);
       }
-      xi(s.room), a.battleMessage = s.message || a.battleMessage, a.battleEnteredAt === 0 && s.room.status !== "finished" && (a.battleEnteredAt = Date.now()), a.screen = "battle", $();
+      xi(s.room), a.battleMessage = s.message || a.battleMessage, a.battleEnteredAt === 0 && s.room.status !== "finished" && (a.battleEnteredAt = Date.now()), a.screen = "battle", updateBattleBgm(), $();
       return;
     }
     if (s.type === "swap_ack") {
