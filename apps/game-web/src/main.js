@@ -4,7 +4,7 @@ const BRAND_MARK_HTML = '<img class="brand-logo" src="/assets/brand/blitz-logo-1
 const Da = "blitz_language", Wa = "blitz_visual_effect_mode", INVITE_CODE_STORAGE_KEY = "blitz_pending_invite_code", Jt = ["zh-CN", "en", "vi", "ko", "ja"], ot = ["balanced", "high"];
 const BATTLE_SFX_OUTPUT_GAIN = 8, BATTLE_BGM_OUTPUT_GAIN = 6;
 const BATTLE_PRAISE_CUES = ["Good", "Great", "Amazing", "Excellent", "Unbelievable", "Crazy", "Wonderful"];
-const BATTLE_VOICE_ASSET_VERSION = "20260612-clear2";
+const BATTLE_VOICE_ASSET_VERSION = "20260612-warm-slow";
 const BATTLE_PRAISE_AUDIO_SRC = Object.fromEntries(BATTLE_PRAISE_CUES.map((e) => [e, `/assets/audio/praise/${e.toLowerCase()}.wav?v=${BATTLE_VOICE_ASSET_VERSION}`]));
 const BATTLE_ATTACK_VOICE_SRC = `/assets/audio/voice/oh-my-god.wav?v=${BATTLE_VOICE_ASSET_VERSION}`;
 const INVITE_LIST_PAGE_SIZE = 6;
