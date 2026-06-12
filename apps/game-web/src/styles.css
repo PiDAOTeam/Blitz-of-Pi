@@ -2792,6 +2792,19 @@ button:disabled {
 .matching-card .actions {
   margin-top: 14px;
 }
+.matching-card .actions.recover-actions {
+  display: grid;
+  gap: 10px;
+}
+.matching-card .actions.recover-actions .primary-action,
+.matching-card .actions.recover-actions .secondary {
+  width: 100%;
+}
+.matching-card.matching-error .spinner,
+.matching-card.matching-error .match-radar {
+  opacity: .44;
+  animation-play-state: paused;
+}
 .match-status-text {
   min-height: 28px;
   margin-top: 14px;

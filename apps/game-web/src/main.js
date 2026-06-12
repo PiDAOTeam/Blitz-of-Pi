@@ -21,7 +21,7 @@ function bn() {
   const e = localStorage.getItem(Wa);
   return ot.includes(e) ? e : "balanced";
 }
-const Z = ["ruby", "amber", "jade", "aqua", "slate", "gold"], wa = 10, ya = 20, ka = 30, a = { user: null, home: null, wallet: null, rankStatus: null, rankLeaderboard: null, piConfig: null, gameConfig: null, inviteInfo: null, engagement: null, battleHistory: [], battleHistoryPage: 1, battleHistoryTotal: 0, battleHistoryTotalPages: 1, battleHistoryFilter: "all", walletLedgerExpanded: false, walletLedgerPage: 1, walletLedgerFilter: "all", screen: "loading", activePanel: "home", selectedMode: "quick_battle", roomNo: "", roomJoinToken: "", room: null, realtimeRoom: null, result: null, selectedTile: null, tileEffect: null, battleMessage: "", networkStatus: "connecting", networkLatencyMs: 0, vsIntroUntil: 0, lastRoomStateAt: 0, lastSwapSentAt: 0, lastSwapSeq: 0, pendingSwapSeq: 0, pendingSwapPositions: [], pendingSwapQueue: [], clientRoomVersion: 0, clientPredictedBoard: null, clientPredictionStats: { sent: 0, ack: 0, reject: 0, rollback: 0, corrected: 0, longFrames: 0 }, lastSwapPositions: [], battleConnectingAt: 0, battleEnteredAt: 0, feedbackEventId: "", feedback: null, battleBursts: [], battleImpacts: [], localBattleEvents: [], localSwapFx: null, canvasTileBursts: [], matchPollTimer: null, matchUiTimer: null, matchStartedAt: 0, matchWaitingSeconds: 0, matchCanCancel: false, matchCancelMessage: "", matchCancelling: false, matchSessionId: 0, matchPollFailedCount: 0, language: gn(), visualEffectMode: bn(), effectiveVisualEffectMode: "balanced", profileOptions: null, withdrawWallets: [] };
+const Z = ["ruby", "amber", "jade", "aqua", "slate", "gold"], wa = 10, ya = 20, ka = 30, a = { user: null, home: null, wallet: null, rankStatus: null, rankLeaderboard: null, piConfig: null, gameConfig: null, inviteInfo: null, engagement: null, battleHistory: [], battleHistoryPage: 1, battleHistoryTotal: 0, battleHistoryTotalPages: 1, battleHistoryFilter: "all", walletLedgerExpanded: false, walletLedgerPage: 1, walletLedgerFilter: "all", screen: "loading", activePanel: "home", selectedMode: "quick_battle", roomNo: "", roomJoinToken: "", room: null, realtimeRoom: null, result: null, selectedTile: null, tileEffect: null, battleMessage: "", networkStatus: "connecting", networkLatencyMs: 0, vsIntroUntil: 0, lastRoomStateAt: 0, lastSwapSentAt: 0, lastSwapSeq: 0, pendingSwapSeq: 0, pendingSwapPositions: [], pendingSwapQueue: [], clientRoomVersion: 0, clientPredictedBoard: null, clientPredictionStats: { sent: 0, ack: 0, reject: 0, rollback: 0, corrected: 0, longFrames: 0 }, lastSwapPositions: [], battleConnectingAt: 0, battleEnteredAt: 0, feedbackEventId: "", feedback: null, battleBursts: [], battleImpacts: [], localBattleEvents: [], localSwapFx: null, canvasTileBursts: [], matchPollTimer: null, matchUiTimer: null, matchStartedAt: 0, matchWaitingSeconds: 0, matchCanCancel: false, matchCancelMessage: "", matchCancelling: false, matchRecoverable: false, matchSessionId: 0, matchPollFailedCount: 0, language: gn(), visualEffectMode: bn(), effectiveVisualEffectMode: "balanced", profileOptions: null, withdrawWallets: [] };
 a.matchedHapticRoomNo = "";
 document.documentElement.lang = a.language;
 function animationSeconds(e) {
@@ -97,7 +97,7 @@ function kn(e) {
 }
 let M = null, A = null, be = null, ze = null, he = 0, Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, finishFeedbackKey = "", finishActionLockUntil = 0;
 const vn = 1100, va = 2600, Sn = 80, me = /* @__PURE__ */ new Set();
-let Se = null, battleAudioContext = null, battleAudioUnlocked = false, battleBgmGain = null, battleBgmTimer = null, battleBgmPlaying = false, battleBgmStep = 0, battlePraiseLastAt = 0, battleSpeechLastAt = 0, battleAttackSpeechLastAt = 0;
+let Se = null, battleAudioContext = null, battleAudioUnlocked = false, battleBgmGain = null, battleBgmTimer = null, battleBgmPlaying = false, battleBgmStep = 0, battlePraiseLastAt = 0, battleSpeechLastAt = 0, battleAttackSpeechLastAt = 0, battleShakeLastAt = 0;
 const battleSfxLastPlayed = /* @__PURE__ */ new Map();
 const battlePraiseBuffers = /* @__PURE__ */ new Map(), battlePraiseLoading = /* @__PURE__ */ new Map(), battleVoiceBuffers = /* @__PURE__ */ new Map(), battleVoiceLoading = /* @__PURE__ */ new Map();
 function Ua() {
@@ -124,7 +124,7 @@ a.canvasSpecialBirths = [];
 let cleanupBoardInputListeners = null;
 const Sa = /* @__PURE__ */ new Map();
 let z = null, W = null, At = 0, q = null;
-const $n = 8e3, Pn = 3, Cn = 9e3, Ha = 1200, Tn = 1800, Ie = 8, Rn = 5e3, Mn = 6, Xt = 8e3, fe = 3, Bn = 16, Nn = 8, $a = 30, $e = 8, Pe = 6, Pa = 0.18, En = 1200;
+const $n = 8e3, Pn = 3, Cn = 9e3, Ha = 1200, Tn = 1800, Ie = 8, Rn = 5e3, Mn = 6, Xt = 8e3, fe = 3, Bn = 12, Nn = 6, $a = 30, $e = 8, Pe = 6, Pa = 0.18, En = 1200;
 function we() {
   Be && (window.clearInterval(Be), Be = null), Ee = "", te = 0, pe = -1;
   canvasFxFrame && (window.cancelAnimationFrame(canvasFxFrame), canvasFxFrame = null), canvasBreathTimer && (window.clearTimeout(canvasBreathTimer), canvasBreathTimer = null), a.canvasSpecialFx = [], a.canvasSpecialBirths = [], a.canvasTileBursts = [];
@@ -197,6 +197,24 @@ function Ce() {
 function Qt() {
   const e = ct(), t = Ce();
   return a.matchWaitingSeconds = Math.max(a.matchWaitingSeconds, e), a.matchCanCancel = a.matchCanCancel || a.matchWaitingSeconds >= t, a.matchWaitingSeconds;
+}
+function matchIsRecoverable() {
+  return !!a.matchRecoverable;
+}
+function matchFailureStatusText() {
+  return n("matchTimeoutRetry");
+}
+function markMatchRecoverable(e = "") {
+  a.matchRecoverable = true, a.matchCanCancel = true, a.matchCancelling = false, a.matchCancelMessage = e || a.matchCancelMessage || n("requestTimeout"), O(), J(matchFailureStatusText());
+}
+function resetMatchState() {
+  a.matchStartedAt = 0, a.matchWaitingSeconds = 0, a.matchCanCancel = false, a.matchCancelling = false, a.matchRecoverable = false, a.matchPollFailedCount = 0, a.matchCancelMessage = "";
+}
+async function cleanupMatchQueueSilently() {
+  try {
+    await w("/api/match/cancel-queue", { method: "POST", body: JSON.stringify({}) });
+  } catch {
+  }
 }
 function dt() {
   return localStorage.getItem("blitz_user_token") || "";
@@ -366,15 +384,15 @@ function xaPreviewSwap(e, t, r) {
     console.warn("local swap preview failed", o);
   }
 }
-function applyPredictedSwap(e, t, r) {
+function applyPredictedSwap(e, t, r, o = null) {
   try {
-    const o = kaPreviewSwap(e, t, r), s = xa(a.realtimeRoom, a.user?.uid || "");
-    if (!o || !s?.board || !clientIsInside(s.board, e) || !clientIsInside(s.board, t)) return false;
-    const l = clientCloneBoard(o.board || s.board), c = a.realtimeRoom?.players?.find((d) => d.uid !== s.uid);
-    s.board = l, s.score = Number(s.score || 0) + Number(o.scoreGain || 0), s.combo = Number(o.chain || 1), s.lastGain = Number(o.scoreGain || 0), s.pressure = Math.max(0, Number(s.pressure || 0) - 1), c && (c.pressure = Number(c.pressure || 0) + Number(o.attack || 0)), a.clientPredictedBoard = clientCloneBoard(l), Re = "", renderCanvasBoard(oe(), s), clientPreviewBurstUid = o.uid || "", clientPreviewBurstSeq = Number(o.seq || 0), clientPreviewBurstAt = Date.now(), nn(o), Si(o), Number(o.attack || 0) > 0 && Ni({ id: `${ne(o)}:attack-line`, type: "attack-line", from: "self", attack: Number(o.attack || 0) }), playBattleEventFeedback(o, true);
-    return o;
-  } catch (o) {
-    console.warn("local predicted swap failed", o);
+    const s = o || kaPreviewSwap(e, t, r), l = xa(a.realtimeRoom, a.user?.uid || "");
+    if (!s || !l?.board || !clientIsInside(l.board, e) || !clientIsInside(l.board, t)) return false;
+    const c = clientCloneBoard(s.board || l.board), d = a.realtimeRoom?.players?.find((u) => u.uid !== l.uid);
+    l.board = c, l.score = Number(l.score || 0) + Number(s.scoreGain || 0), l.combo = Number(s.chain || 1), l.lastGain = Number(s.scoreGain || 0), l.pressure = Math.max(0, Number(l.pressure || 0) - 1), d && (d.pressure = Number(d.pressure || 0) + Number(s.attack || 0)), a.clientPredictedBoard = clientCloneBoard(c), Re = "", renderCanvasBoard(oe(), l), clientPreviewBurstUid = s.uid || "", clientPreviewBurstSeq = Number(s.seq || 0), clientPreviewBurstAt = Date.now(), nn(s), Si(s), Number(s.attack || 0) > 0 && Ni({ id: `${ne(s)}:attack-line`, type: "attack-line", from: "self", attack: Number(s.attack || 0) }), playBattleEventFeedback(s, true);
+    return s;
+  } catch (s) {
+    console.warn("local predicted swap failed", s);
     return false;
   }
 }
@@ -401,11 +419,14 @@ function de(e) {
 }
 function triggerBattleShake(e) {
   if (!e || a.effectiveVisualEffectMode === "low" || document.documentElement.classList.contains("low-performance")) return;
-  const t = st().shell;
-  if (!t) return;
-  const r = `battle-shake-${e}`;
-  t.classList.remove("battle-shake-light", "battle-shake-strong", "battle-shake-mega"), t.offsetWidth, t.classList.add(r), window.setTimeout(() => {
-    t.classList.remove(r);
+  const t = Date.now(), r = e === "mega" ? 620 : e === "strong" ? 780 : 1e3;
+  if (t - battleShakeLastAt < r) return;
+  const o = st().shell;
+  if (!o) return;
+  battleShakeLastAt = Date.now();
+  const s = `battle-shake-${e}`;
+  o.classList.remove("battle-shake-light", "battle-shake-strong", "battle-shake-mega"), o.offsetWidth, o.classList.add(s), window.setTimeout(() => {
+    o.classList.remove(s);
   }, e === "mega" ? 360 : e === "strong" ? 280 : 200);
 }
 function playMatchReadyHaptic(e) {
@@ -2754,32 +2775,36 @@ async function Yr(e, t) {
   } });
 }
 function nt(e = n("matchingDefault")) {
-  const t = Qt(), r = Ce(), o = a.matchCanCancel || t >= r, s = Math.max(0, r - t), l = a.matchCancelling ? n("canceling") : o ? n("cancelMatch") : n("cancelAfter", { seconds: s }), c = o ? n("canCancelHint") : n("cancelAfter", { seconds: s });
+  const t = Qt(), r = Ce(), o = a.matchCanCancel || t >= r, s = Math.max(0, r - t), l = a.matchCancelling ? n("canceling") : o ? n("cancelMatch") : n("cancelAfter", { seconds: s }), c = matchIsRecoverable(), d = c ? n("matchRecoverHint") : o ? n("canCancelHint") : n("cancelAfter", { seconds: s }), u = c ? `
+          <button type="button" class="primary-action" id="retry-match" ${a.matchCancelling ? "disabled" : ""}>${i(n("retryMatching"))}</button>
+          <button type="button" class="secondary" id="match-back-home" ${a.matchCancelling ? "disabled" : ""}>${i(n("matchBackHome"))}</button>
+        ` : `<button type="button" class="secondary" id="cancel-match" ${o && !a.matchCancelling ? "" : "disabled"}>${i(l)}</button>`;
   R.innerHTML = `
     <main class="shell">
-      <section class="hero matching-card">
+      <section class="hero matching-card ${c ? "matching-error" : ""}">
         <div class="brand-mark" aria-hidden="true">${BRAND_MARK_HTML}</div>
         <p class="eyebrow">${i(n("lightningMatching"))}</p>
         <h1>${i(n("matching"))}</h1>
         <div class="spinner" aria-hidden="true"></div>
         <div class="match-radar" aria-hidden="true"><span></span><span></span><span></span></div>
         <p class="summary match-status-text" id="match-status-text">${i(e)}</p>
-        <p class="summary match-help-text" id="match-help-text">${i(c)}</p>
-        <div class="actions">
-          <button type="button" class="secondary" id="cancel-match" ${o && !a.matchCancelling ? "" : "disabled"}>${i(l)}</button>
+        <p class="summary match-help-text" id="match-help-text">${i(d)}</p>
+        <div class="actions ${c ? "recover-actions" : ""}" id="match-actions">
+          ${u}
         </div>
         <p id="match-cancel-status" class="summary danger-text">${i(a.matchCancelMessage)}</p>
       </section>
     </main>
-  `, document.querySelector("#cancel-match")?.addEventListener("click", Qi);
+  `, document.querySelector("#cancel-match")?.addEventListener("click", Qi), document.querySelector("#retry-match")?.addEventListener("click", retryMatchAfterFailure), document.querySelector("#match-back-home")?.addEventListener("click", backHomeAfterMatchFailure);
 }
 function J(e = n("matchingDefault")) {
-  if (!document.querySelector("#cancel-match")) {
+  const t = matchIsRecoverable();
+  if (t || !document.querySelector("#cancel-match")) {
     nt(e);
     return;
   }
-  const t = Qt(), r = Ce(), o = a.matchCanCancel || t >= r, s = Math.max(0, r - t), l = a.matchCancelling ? n("canceling") : o ? n("cancelMatch") : n("cancelAfter", { seconds: s }), c = o ? n("canCancelHint") : n("cancelAfter", { seconds: s }), d = document.querySelector("#match-status-text"), u = document.querySelector("#match-help-text"), h = document.querySelector("#match-cancel-status"), p = document.querySelector("#cancel-match");
-  d && (d.textContent = e), u && (u.textContent = c), h && (h.textContent = a.matchCancelMessage), p && (p.textContent = l, p.disabled = !o || a.matchCancelling);
+  const r = Qt(), o = Ce(), s = a.matchCanCancel || r >= o, l = Math.max(0, o - r), c = a.matchCancelling ? n("canceling") : s ? n("cancelMatch") : n("cancelAfter", { seconds: l }), d = s ? n("canCancelHint") : n("cancelAfter", { seconds: l }), u = document.querySelector("#match-status-text"), h = document.querySelector("#match-help-text"), p = document.querySelector("#match-cancel-status"), f = document.querySelector("#cancel-match");
+  u && (u.textContent = e), h && (h.textContent = d), p && (p.textContent = a.matchCancelMessage), f && (f.textContent = c, f.disabled = !s || a.matchCancelling);
 }
 function Za() {
   if (a.screen !== "matching" || !a.matchStartedAt) return;
@@ -2857,9 +2882,19 @@ function scheduleCanvasBreathFrame() {
     canvasBreathTimer = null, renderCurrentCanvasBoard(), scheduleCanvasBreathFrame();
   }, a.effectiveVisualEffectMode === "high" ? 120 : 180);
 }
-function canvasEffectForCell(e, t, r, o) {
+function canvasEffectForCell(e, t, r, o, m = null) {
   const s = { scale: 1, dx: 0, dy: 0, glow: 0, tone: "normal" };
   const l = Math.max(180, animationMs("localSwapSeconds", 80));
+  if (a.localSwapFx && o - a.localSwapFx.at < l) {
+    const c = Math.min(1, Math.max(0, (o - a.localSwapFx.at) / l)), d = Math.sin(c * Math.PI), u = 1 - c, h = a.localSwapFx.from, p = a.localSwapFx.to;
+    if (h?.row === e && h.col === t || p?.row === e && p.col === t) {
+      const f = m || getBoardGeometry(oe());
+      if (f) {
+        const m = (p.col - h.col) * (f.tileWidth + f.gap) * u, g = (p.row - h.row) * (f.tileHeight + f.gap) * u;
+        h.row === e && h.col === t ? (s.dx += m, s.dy += g) : (s.dx -= m, s.dy -= g), s.scale += d * 0.04, s.glow = Math.max(s.glow, 0.5 * u), s.tone = "success";
+      }
+    }
+  }
   if (a.tileEffect && o - a.tileEffect.at < l && a.tileEffect.positions?.some((c) => c.row === e && c.col === t)) {
     const c = Math.min(1, (o - a.tileEffect.at) / l);
     s.tone = a.tileEffect.type, s.glow = 1 - c, a.tileEffect.type === "success" ? s.scale += Math.sin(c * Math.PI) * 0.075 : s.dx += Math.sin(c * Math.PI * 6) * 4 * (1 - c);
@@ -2963,7 +2998,7 @@ function renderCanvasBoard(e, t) {
   }
   for (let g = 0; g < $e; g += 1) {
     for (let P = 0; P < Pe; P += 1) {
-      const C = o[g]?.[P], T = na(C), U = canvasCellRect(s, g, P), Te = Math.min(U.w, U.h), qe = canvasEffectForCell(g, P, C, p), gt = a.selectedTile?.row === g && a.selectedTile?.col === P, ha = a.selectedTile && !gt && _e(a.selectedTile, { row: g, col: P });
+      const C = o[g]?.[P], T = na(C), U = canvasCellRect(s, g, P), Te = Math.min(U.w, U.h), qe = canvasEffectForCell(g, P, C, p, s), gt = a.selectedTile?.row === g && a.selectedTile?.col === P, ha = a.selectedTile && !gt && _e(a.selectedTile, { row: g, col: P });
       u.save(), u.translate(U.cx + qe.dx, U.cy + qe.dy), u.scale(qe.scale, qe.scale), u.translate(-U.cx, -U.cy), drawCanvasTileBody(u, T, C, U, h, f, qe);
       if (ha) u.strokeStyle = "rgba(255, 239, 159, .28)", u.lineWidth = 2, u.stroke();
       if (gt) {
@@ -3119,21 +3154,25 @@ function hi(e, t) {
   const o = ne(r);
   if (!lt(`${o}:impact-root`) || o === Ct) return;
   Ct = o;
-  const s = r.uid === t.uid, l = st(), c = l.selfCard, d = l.opponentCard, u = r.attack > 0 ? s ? d : c : s ? c : d, h = r.attack > 0 ? "impact-attacked" : r.chain > 1 ? "impact-combo" : "impact-score";
+  const s = r.uid === t.uid;
+  if (shouldSilenceOwnServerEvent(r, t)) return;
+  const l = st(), c = l.selfCard, d = l.opponentCard, u = r.attack > 0 ? s ? d : c : s ? c : d, h = r.attack > 0 ? "impact-attacked" : r.chain > 1 ? "impact-combo" : "impact-score";
   if (flashOneOf(u, ["impact-score", "impact-combo", "impact-attacked"], h, a.effectiveVisualEffectMode === "high" ? animationMs("impactHighSeconds") : animationMs("impactSeconds")), r.attack > 0) {
     const p = s ? l.opponentPressureMeter : l.selfPressureMeter;
     flashClass(p, "pressure-hit", animationMs("pressureHitSeconds"));
   }
   if (s) {
-    const p = clientShouldSkipServerBurst(r);
-    p || (nn(r), Number(r.attack || 0) > 0 && Ni({ id: `${o}:attack-line`, type: "attack-line", from: "self", attack: Number(r.attack || 0) }), playBattleEventFeedback(r, false)), Si(r);
+    shouldSilenceOwnServerEvent(r, t) || Si(r);
   } else
     r.attack > 0 && (showAttackWarning(r), Ni({ id: `${o}:self-hit`, type: "self-hit", from: "opponent", attack: Number(r.attack || 0) }), playBattleSfx("hit", battleFeedbackPower(r)), playBattleAttackSpeech(), de(vi(r)));
 }
 function clientShouldSkipServerBurst(e) {
   const t = Number(e.seq || 0);
   if (t <= 0 || (e.uid || "") !== (a.user?.uid || "")) return false;
-  return t === clientPreviewBurstSeq && Date.now() - clientPreviewBurstAt < 3e3 || t === a.pendingSwapSeq || t === a.lastSwapSeq && Date.now() - a.lastSwapSentAt < 4e3;
+  return t === clientPreviewBurstSeq && Date.now() - clientPreviewBurstAt < 8e3 || t === a.pendingSwapSeq || t === a.lastSwapSeq && Date.now() - a.lastSwapSentAt < 8e3;
+}
+function shouldSilenceOwnServerEvent(e, t) {
+  return !!e && e.uid === t.uid;
 }
 function attackWarningText(e) {
   const t = Math.max(0, Number(e?.attack || 0));
@@ -3705,7 +3744,7 @@ function Hi() {
 }
 async function zi() {
   const e = a.realtimeRoom?.mode || a.room?.mode || a.selectedMode || "quick_battle", t = a.realtimeRoom?.roomNo || a.roomNo;
-  Q(), O(), ce(), a.screen = "matching", a.selectedMode = e, a.roomNo = "", a.roomJoinToken = "", a.room = null, a.realtimeRoom = null, a.result = null, a.selectedTile = null, a.battleConnectingAt = 0, a.battleEnteredAt = 0, a.feedback = null, a.feedbackEventId = "", a.battleMessage = "", a.matchCancelMessage = "", nt(n("restartingMode", { mode: I(e) }));
+  Q(), O(), ce(), a.screen = "matching", a.selectedMode = e, a.roomNo = "", a.roomJoinToken = "", a.room = null, a.realtimeRoom = null, a.result = null, a.selectedTile = null, a.battleConnectingAt = 0, a.battleEnteredAt = 0, a.feedback = null, a.feedbackEventId = "", a.battleMessage = "", resetMatchState(), nt(n("restartingMode", { mode: I(e) }));
   try {
     await ji(t), await D(), await un(e);
   } catch (r) {
@@ -3765,7 +3804,7 @@ function Ki(e = "") {
   return e.includes("\u623F\u95F4\u4E0D\u5B58\u5728") || e.includes("\u5DF2\u8FC7\u671F") || e.includes("\u73A9\u5BB6\u4E0D\u5C5E\u4E8E\u8BE5\u623F\u95F4");
 }
 function sn(e = n("roomGoneAlert")) {
-  Q(), O(), ce(), a.screen = "home", a.roomNo = "", a.roomJoinToken = "", a.room = null, a.realtimeRoom = null, a.selectedTile = null, a.tileEffect = null, a.networkStatus = "connecting", a.networkLatencyMs = 0, a.vsIntroUntil = 0, a.lastRoomStateAt = 0, a.lastSwapSentAt = 0, a.matchedHapticRoomNo = "", resetPredictionState(), a.lastSwapPositions = [], a.battleConnectingAt = 0, a.battleEnteredAt = 0, a.feedback = null, a.feedbackEventId = "", a.battleMessage = "", a.matchCancelMessage = "", _(), window.setTimeout(() => {
+  Q(), O(), ce(), a.screen = "home", a.roomNo = "", a.roomJoinToken = "", a.room = null, a.realtimeRoom = null, a.selectedTile = null, a.tileEffect = null, a.networkStatus = "connecting", a.networkLatencyMs = 0, a.vsIntroUntil = 0, a.lastRoomStateAt = 0, a.lastSwapSentAt = 0, a.matchedHapticRoomNo = "", resetPredictionState(), a.lastSwapPositions = [], a.battleConnectingAt = 0, a.battleEnteredAt = 0, a.feedback = null, a.feedbackEventId = "", a.battleMessage = "", resetMatchState(), _(), window.setTimeout(() => {
     S(e, "error");
   }, 80);
 }
@@ -3830,13 +3869,16 @@ function dn(e, t) {
   const r = Date.now(), o = `${e.row}:${e.col}:${t.row}:${t.col}`;
   if (o === Lt && r - xt < 120) return;
   const s = Number(a.clientRoomVersion || a.realtimeRoom?.version || 0), l = a.lastSwapSeq + 1;
-  if (!kaPreviewSwap(e, t, l)) {
+  const c = kaPreviewSwap(e, t, l);
+  if (!c) {
     Lt = o, xt = r, ut(), a.selectedTile = null, a.lastSwapPositions = [e, t], Mi([e, t]);
     return;
   }
   Lt = o, xt = r, ut(), a.selectedTile = null, a.lastSwapSentAt = r, a.lastSwapPositions = [e, t], a.lastSwapSeq = l, a.pendingSwapSeq = l, a.pendingSwapPositions = [e, t], a.battleMessage = "", v("client_swap_send", { roomNo: a.roomNo, mode: a.realtimeRoom?.mode || a.selectedMode, seq: a.lastSwapSeq, latencyMs: a.networkLatencyMs, protocol: "swap_cmd" }, 1800), Yn(e, t), Bi(e, t);
   a.pendingSwapQueue = [...(a.pendingSwapQueue || []), { seq: a.lastSwapSeq, positions: [e, t], sentAt: r, baseVersion: s }].slice(-extremeRealtimeConfig().maxPendingSwaps), a.clientPredictionStats.sent += 1;
-  applyPredictedSwap(e, t, a.lastSwapSeq), M?.send(JSON.stringify({ type: "swap_cmd", roomNo: a.roomNo, seq: a.lastSwapSeq, baseVersion: s, from: e, to: t, clientAt: r }));
+  applyPredictedSwap(e, t, a.lastSwapSeq, c), window.setTimeout(() => {
+    M?.readyState === WebSocket.OPEN && M.send(JSON.stringify({ type: "swap_cmd", roomNo: a.roomNo, seq: l, baseVersion: s, from: e, to: t, clientAt: r }));
+  }, 0);
 }
 function Gi(e, t) {
   if (Yt = Date.now(), ut(), !!cn()) {
@@ -3910,7 +3952,7 @@ async function it() {
   } catch (o) {
     if (a.screen !== "matching" || e !== a.matchSessionId || a.matchCancelling) return;
     if (a.matchPollFailedCount += 1, a.matchCanCancel = true, a.matchCancelMessage = a.matchPollFailedCount >= Ie ? N(o) : a.matchPollFailedCount >= 2 ? n("matchNetworkRetrying") : "", a.matchPollFailedCount >= 2 && v("client_match_poll_failed", { mode: a.selectedMode, message: N(o), result: String(a.matchPollFailedCount), waitingSeconds: a.matchWaitingSeconds }, a.matchPollFailedCount >= Ie ? 0 : 5e3), J(a.matchPollFailedCount >= Ie ? n("matchFailed") : n("waitedSeconds", { seconds: a.matchWaitingSeconds })), a.matchPollFailedCount >= Ie) {
-      O(), await to(e, N(o));
+      await to(e, N(o));
       return;
     }
     a.matchPollTimer = window.setTimeout(it, Math.min(Tn + a.matchPollFailedCount * 400, 3200));
@@ -3932,7 +3974,7 @@ async function un(e = "quick_battle") {
   }
   Q(), O(), ce();
   const o = a.matchSessionId + 1;
-  a.screen = "matching", a.matchSessionId = o, a.selectedMode = e, a.roomNo = "", a.roomJoinToken = "", a.room = null, a.realtimeRoom = null, a.result = null, a.selectedTile = null, a.battleConnectingAt = 0, a.battleEnteredAt = 0, a.matchedHapticRoomNo = "", a.feedback = null, a.feedbackEventId = "", a.battleMessage = "", a.matchCancelMessage = "", a.matchStartedAt = Date.now(), a.matchWaitingSeconds = 0, a.matchCanCancel = false, a.matchCancelling = false, a.matchPollFailedCount = 0, nt(), a.matchUiTimer = window.setInterval(Za, 250), v("client_match_start", { mode: e, result: String(o) }, 0);
+  a.screen = "matching", a.matchSessionId = o, a.selectedMode = e, a.roomNo = "", a.roomJoinToken = "", a.room = null, a.realtimeRoom = null, a.result = null, a.selectedTile = null, a.battleConnectingAt = 0, a.battleEnteredAt = 0, a.matchedHapticRoomNo = "", a.feedback = null, a.feedbackEventId = "", a.battleMessage = "", resetMatchState(), a.matchStartedAt = Date.now(), nt(), a.matchUiTimer = window.setInterval(Za, 250), v("client_match_start", { mode: e, result: String(o) }, 0);
   try {
     const s = await w("/api/match/join-queue", { method: "POST", body: JSON.stringify({ mode: e }) });
     if (a.screen !== "matching" || o !== a.matchSessionId || a.matchCancelling) return;
@@ -3945,17 +3987,17 @@ async function un(e = "quick_battle") {
     if (a.screen !== "matching" || o !== a.matchSessionId) return;
     const l = N(s);
     if (s?.code === 1601 || /绑定邀请人|邀请人/.test(l)) {
-      a.matchSessionId += 1, a.screen = "home", a.matchStartedAt = 0, a.matchWaitingSeconds = 0, a.matchCanCancel = false, a.matchCancelling = false, a.matchPollFailedCount = 0, a.matchCancelMessage = "", O(), await D().catch(() => {
+      a.matchSessionId += 1, a.screen = "home", resetMatchState(), O(), await D().catch(() => {
       }), at(), S(l, "error");
       return;
     }
-    a.matchCancelMessage = l, v("client_match_start_failed", { mode: e, message: a.matchCancelMessage, costMs: Date.now() - a.matchStartedAt }, 0), J(n("matchFailed")), O();
+    a.matchCancelMessage = l, v("client_match_start_failed", { mode: e, message: a.matchCancelMessage, costMs: Date.now() - a.matchStartedAt }, 0), markMatchRecoverable(l);
   }
 }
 async function Qi() {
   if (a.matchCancelling) return;
   const e = Ce();
-  if (!a.matchCanCancel && a.matchWaitingSeconds < e) {
+  if (!matchIsRecoverable() && !a.matchCanCancel && a.matchWaitingSeconds < e) {
     a.matchCancelMessage = n("waitBeforeCancel", { seconds: Math.max(1, e - a.matchWaitingSeconds) }), J(n("waitedSeconds", { seconds: a.matchWaitingSeconds }));
     return;
   }
@@ -3963,11 +4005,32 @@ async function Qi() {
   a.matchCancelling = true, a.matchCancelMessage = n("cancelingStatus"), J(n("waitedSeconds", { seconds: a.matchWaitingSeconds })), O();
   try {
     if (await w("/api/match/cancel-queue", { method: "POST", body: JSON.stringify({}) }), v("client_match_cancel", { mode: a.selectedMode, waitingSeconds: a.matchWaitingSeconds }, 0), t !== a.matchSessionId) return;
-    a.matchSessionId += 1, a.screen = "home", a.matchStartedAt = 0, a.matchWaitingSeconds = 0, a.matchCanCancel = false, a.matchCancelling = false, a.matchPollFailedCount = 0, a.matchCancelMessage = "", await D(), _();
+    a.matchSessionId += 1, a.screen = "home", resetMatchState(), await D(), _();
   } catch (r) {
     if (t !== a.matchSessionId) return;
+    if (matchIsRecoverable()) {
+      a.matchSessionId += 1, a.screen = "home", resetMatchState(), await D().catch(() => {
+      }), _();
+      return;
+    }
     a.matchCancelling = false, a.matchCancelMessage = N(r), v("client_match_cancel_failed", { mode: a.selectedMode, message: a.matchCancelMessage, waitingSeconds: a.matchWaitingSeconds }, 0), a.screen = "matching", J(n("waitedSeconds", { seconds: a.matchWaitingSeconds })), a.matchUiTimer = window.setInterval(Za, 250), a.matchPollTimer = window.setTimeout(it, Ha);
   }
+}
+async function backHomeAfterMatchFailure() {
+  if (a.matchCancelling) return;
+  const e = a.matchSessionId;
+  a.matchCancelling = true, a.matchCancelMessage = n("matchCleanupLeaving"), J(matchFailureStatusText()), O(), cleanupMatchQueueSilently();
+  if (e !== a.matchSessionId) return;
+  a.matchSessionId += 1, a.screen = "home", resetMatchState(), await D().catch(() => {
+  }), _();
+}
+async function retryMatchAfterFailure() {
+  if (a.matchCancelling) return;
+  const e = a.selectedMode || "quick_battle", t = a.matchSessionId;
+  a.matchCancelling = true, a.matchCancelMessage = n("matchCleanupRetrying"), J(matchFailureStatusText()), O(), await cleanupMatchQueueSilently();
+  if (t !== a.matchSessionId) return;
+  a.matchSessionId += 1, resetMatchState(), await D().catch(() => {
+  }), await un(e);
 }
 async function Zi() {
   a.room = await w(`/api/battle/room/${encodeURIComponent(a.roomNo)}`);
@@ -3986,12 +4049,7 @@ async function eo() {
 }
 async function to(e, t) {
   if (!(a.screen !== "matching" || e !== a.matchSessionId || a.matchCancelling)) {
-    a.matchCancelling = true, a.matchCancelMessage = t, J(n("matchFailed"));
-    try {
-      await w("/api/match/cancel-queue", { method: "POST", body: JSON.stringify({}) });
-    } catch {
-    }
-    a.screen !== "matching" || e !== a.matchSessionId || (a.matchCancelling = false, a.matchCanCancel = true);
+    markMatchRecoverable(t), cleanupMatchQueueSilently();
   }
 }
 async function ao() {

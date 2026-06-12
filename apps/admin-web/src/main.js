@@ -1062,12 +1062,12 @@ function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, roo
           <p class="meta">\u5EFA\u8BAE\uFF1APi Browser \u4FDD\u6301\u5747\u8861\u6A21\u5F0F\uFF0C\u5E76\u5F00\u542F\u201C\u5361\u987F\u65F6\u81EA\u52A8\u964D\u4F4E\u7279\u6548\u201D\u3002\u5F31\u673A\u4F18\u5148\u6D41\u7545\uFF0C\u597D\u673A\u624D\u770B\u66F4\u591A\u7279\u6548\u3002</p>
           <div class="avatar-config">
             <strong>\u52A8\u753B\u65F6\u957F\uFF08\u79D2\uFF09</strong>
-            <p class="meta">\u8C03\u5C0F\u66F4\u5FEB\uFF0C\u8C03\u5927\u66F4\u660E\u663E\u3002\u5EFA\u8BAE\u4E0D\u8981\u8D85\u8FC7 2 \u79D2\u3002</p>
+            <p class="meta">\u672C\u5730\u5927\u5B57\u63D0\u793A\u7528\u4E8E\u73A9\u5BB6\u5373\u65F6\u53CD\u9988\uFF1B\u670D\u52A1\u7AEF\u53EA\u505A\u5206\u6570\u548C\u68CB\u76D8\u6821\u5BF9\uFF0C\u4E0D\u518D\u91CD\u590D\u5F39\u5927\u5B57\u3002\u8C03\u5C0F\u66F4\u5FEB\uFF0C\u5EFA\u8BAE\u4E0D\u8981\u8D85\u8FC7 2 \u79D2\u3002</p>
             <div class="rank-row">
-              <label><span>\u672C\u5730\u5927\u63D0\u793A</span><input name="effectLocalBurstSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.localBurstSeconds ?? 1.08}" /></label>
-              <label><span>\u70AB\u5F69\u672C\u5730\u63D0\u793A</span><input name="effectLocalBurstHighSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.localBurstHighSeconds ?? 1.26}" /></label>
-              <label><span>\u670D\u52A1\u7AEF\u63D0\u793A</span><input name="effectServerBurstSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.serverBurstSeconds ?? 1.18}" /></label>
-              <label><span>\u70AB\u5F69\u670D\u52A1\u7AEF\u63D0\u793A</span><input name="effectServerBurstHighSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.serverBurstHighSeconds ?? 1.28}" /></label>
+              <label><span>\u672C\u5730\u5927\u5B57\u63D0\u793A</span><input name="effectLocalBurstSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.localBurstSeconds ?? 1.08}" /></label>
+              <label><span>\u70AB\u5F69\u5927\u5B57\u63D0\u793A</span><input name="effectLocalBurstHighSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.localBurstHighSeconds ?? 1.26}" /></label>
+              <label><span>\u6821\u5BF9\u5907\u7528\u63D0\u793A</span><input name="effectServerBurstSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.serverBurstSeconds ?? 1.18}" /></label>
+              <label><span>\u70AB\u5F69\u6821\u5BF9\u5907\u7528</span><input name="effectServerBurstHighSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.serverBurstHighSeconds ?? 1.28}" /></label>
             </div>
             <div class="rank-row">
               <label><span>\u4F4E\u6027\u80FD\u63D0\u793A</span><input name="effectLowPerformanceBurstSeconds" type="number" inputmode="decimal" min="0.05" max="3" step="0.01" value="${n.visualEffects?.animationDurations?.lowPerformanceBurstSeconds ?? 0.9}" /></label>

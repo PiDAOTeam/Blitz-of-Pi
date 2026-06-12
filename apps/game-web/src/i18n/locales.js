@@ -80,7 +80,13 @@ Object.assign($t["zh-CN"], {
   ledgerExpense: "支出",
   ledgerLock: "冻结",
   ledgerUnlock: "解冻",
-  ledgerDefault: "流水"
+  ledgerDefault: "流水",
+  matchTimeoutRetry: "网络超时，请重试",
+  matchRecoverHint: "没有进入房间，不会继续匹配。",
+  retryMatching: "重新匹配",
+  matchBackHome: "返回大厅",
+  matchCleanupLeaving: "正在返回大厅...",
+  matchCleanupRetrying: "正在重新匹配..."
 });
 Object.assign($t.en, {
   myInviteLink: "My Invite Link",
@@ -149,7 +155,13 @@ Object.assign($t.en, {
   ledgerExpense: "Expense",
   ledgerLock: "Locked",
   ledgerUnlock: "Unlocked",
-  ledgerDefault: "Ledger"
+  ledgerDefault: "Ledger",
+  matchTimeoutRetry: "Network timeout. Try again.",
+  matchRecoverHint: "No room entered. Matching has stopped.",
+  retryMatching: "Retry Match",
+  matchBackHome: "Back to Lobby",
+  matchCleanupLeaving: "Returning...",
+  matchCleanupRetrying: "Retrying..."
 });
 
 export const translations = $t;
