@@ -1,7 +1,11 @@
+import { translations as $t, languageMeta as St, languageCodes as Jt, LANGUAGE_STORAGE_KEY as Da } from "./i18n/locales.js";
+import { DEFAULT_ANIMATION_DURATIONS, DEFAULT_ATTACK_WARNING_TEXT, normalizeAnimationDurations } from "./config/animation.js";
+import { canvasRoundRect, canvasHexToRgba, canvasShadeColor, drawCanvasTileBody } from "./canvas/draw-utils.js";
+import { clientTileColor, clientIsSpecialTile, clientSpecialKind, clientMakeSpecialTile, clientIsSameMatchTile, clientCreateRandom, clientRandomTile, clientWouldCreateMatchAt, clientSafeRandomTile, clientCloneBoard, clientIsInside, clientSwap, clientFindMatches, clientAddSpecialTargets, clientSpecialCreation, clientDirectSpecialMatches, clientCollapseBoard, clientHasValidMove, clientCreateCandidateBoard, clientRefillBoardIfStuck, clientResolveBoard, clientSettleRemainingMatches, battleClearCount, battleChainCount, battleFeedbackPower, battleIsMegaFeedback, battleBurstText, battlePraiseCue, waPreviewText, yaPreviewSemantic, clientPreviewTone } from "./game/match3-engine.js";
 const qa = ["localhost", "127.0.0.1"].includes(window.location.hostname), fn = qa ? "http://localhost:3000" : "https://blitzapi.hashpi.app", Gt = fn, Ia = qa ? Gt.replace(/^http/, "ws").replace(/\/$/, "") + "/ws/" : "wss://blitzapi.hashpi.app/ws/", hn = window.location.hostname === "sandbox.minepi.com", R = document.querySelector("#app");
 if (!R) throw new Error("\u672A\u627E\u5230\u5E94\u7528\u6302\u8F7D\u8282\u70B9");
 const BRAND_MARK_HTML = '<img class="brand-logo" src="/assets/brand/blitz-logo-128.jpg" alt="" loading="eager" decoding="async" />';
-const Da = "blitz_language", Wa = "blitz_visual_effect_mode", INVITE_CODE_STORAGE_KEY = "blitz_pending_invite_code", Jt = ["zh-CN", "en", "vi", "ko", "ja"], ot = ["balanced", "high"];
+const Wa = "blitz_visual_effect_mode", INVITE_CODE_STORAGE_KEY = "blitz_pending_invite_code", ot = ["balanced", "high"];
 const BATTLE_SFX_OUTPUT_GAIN = 10, BATTLE_BGM_OUTPUT_GAIN = 10;
 const BATTLE_PRAISE_CUES = ["Good", "Great", "Amazing", "Excellent", "Unbelievable", "Crazy", "Wonderful"];
 const BATTLE_VOICE_ASSET_VERSION = "20260612-warm-loud";
@@ -17,39 +21,9 @@ function bn() {
   const e = localStorage.getItem(Wa);
   return ot.includes(e) ? e : "balanced";
 }
-const Z = ["ruby", "amber", "jade", "aqua", "slate", "gold"], wa = 10, ya = 20, ka = 30, a = { user: null, home: null, wallet: null, rankStatus: null, rankLeaderboard: null, piConfig: null, gameConfig: null, inviteInfo: null, engagement: null, battleHistory: [], battleHistoryPage: 1, battleHistoryTotal: 0, battleHistoryTotalPages: 1, battleHistoryFilter: "all", walletLedgerExpanded: false, walletLedgerPage: 1, walletLedgerFilter: "all", screen: "loading", activePanel: "home", selectedMode: "quick_battle", roomNo: "", roomJoinToken: "", room: null, realtimeRoom: null, result: null, selectedTile: null, tileEffect: null, battleMessage: "", networkStatus: "connecting", networkLatencyMs: 0, vsIntroUntil: 0, lastRoomStateAt: 0, lastSwapSentAt: 0, lastSwapSeq: 0, pendingSwapSeq: 0, pendingSwapPositions: [], pendingSwapQueue: [], clientRoomVersion: 0, clientPredictedBoard: null, clientPredictionStats: { sent: 0, ack: 0, reject: 0, rollback: 0, corrected: 0, longFrames: 0 }, lastSwapPositions: [], battleConnectingAt: 0, battleEnteredAt: 0, feedbackEventId: "", feedback: null, battleBursts: [], battleImpacts: [], localBattleEvents: [], localSwapFx: null, canvasTileBursts: [], matchPollTimer: null, matchUiTimer: null, matchStartedAt: 0, matchWaitingSeconds: 0, matchCanCancel: false, matchCancelMessage: "", matchCancelling: false, matchSessionId: 0, matchPollFailedCount: 0, language: gn(), visualEffectMode: bn(), effectiveVisualEffectMode: "balanced", profileOptions: null, withdrawWallets: [] }, St = [{ code: "zh-CN", flag: "\u{1F1E8}\u{1F1F3}", nativeName: "\u4E2D\u6587", displayName: "\u7B80\u4F53\u4E2D\u6587" }, { code: "en", flag: "\u{1F1FA}\u{1F1F8}", nativeName: "English", displayName: "English" }, { code: "vi", flag: "\u{1F1FB}\u{1F1F3}", nativeName: "Ti\u1EBFng Vi\u1EC7t", displayName: "\u8D8A\u5357\u8BED" }, { code: "ko", flag: "\u{1F1F0}\u{1F1F7}", nativeName: "\uD55C\uAD6D\uC5B4", displayName: "\u97E9\u8BED" }, { code: "ja", flag: "\u{1F1EF}\u{1F1F5}", nativeName: "\u65E5\u672C\u8A9E", displayName: "\u65E5\u8BED" }], $t = { "zh-CN": { languageTitle: "\u9009\u62E9\u8BED\u8A00", languageSummary: "\u5207\u6362\u540E\u4F1A\u7ACB\u5373\u751F\u6548\uFF0C\u5E76\u81EA\u52A8\u8BB0\u4F4F\u4F60\u7684\u9009\u62E9\u3002", languageCancel: "\u53D6\u6D88", homeProjectNameFallback: "Pi\u95EA\u7535\u6218", homeEnglishNameFallback: "BLITZ OF PI", realtimePvp: "\u5B9E\u65F6PVP", match3: "6x8\u4E09\u6D88", piReward: "Pi\u5956\u52B1", gameTips: "\u73A9\u6CD5\u6280\u5DE7", rankBoard: "\u6BB5\u4F4D\u699C", totalPlayers: "\u603B\u73A9\u5BB6", totalBattles: "\u7D2F\u8BA1\u5BF9\u5C40", todayBattles: "\u4ECA\u65E5\u5BF9\u5C40", totalRewards: "\u5DF2\u53D1\u5956\u52B1", practiceMode: "\u7EC3\u624B\u6A21\u5F0F", quickBattle: "\u5FEB\u901F\u5F00\u6218", quickBattleDesc: "\u514D\u8D39\u7EC3\u624B\uFF0C\u4E45\u7B49\u8865\u673A\u5668\u4EBA\u3002", lowEntryReward: "\u4F4E\u95E8\u69DB\u5956\u52B1", ticketBattle: "\u5C0F\u5BCC\u8C6A\u573A", ticketBattleDesc: "\u4F4E\u95E8\u69DB\u771F\u4EBA\u573A\uFF0C\u8BA1\u5165\u5468\u699C\u3002", highPrizePool: "\u9AD8\u5956\u6C60\u523A\u6FC0", richBattle: "\u5927\u5BCC\u8C6A\u573A", richBattleDesc: "\u9AD8\u5956\u6C60\u771F\u4EBA\u573A\uFF0C{rank}\u89E3\u9501\u3002", rankRoute: "\u51B2\u6BB5\u8DEF\u7EBF", quickShort: "\u5FEB\u901F", ticketShort: "\u5C0F\u5BCC\u8C6A", richShort: "\u5927\u5BCC\u8C6A", maintenanceTitle: "\u7EF4\u62A4\u516C\u544A", maintenanceFallback: "\u5E73\u53F0\u7EF4\u62A4\u4E2D\uFF0C\u90E8\u5206\u529F\u80FD\u53EF\u80FD\u6682\u4E0D\u53EF\u7528\u3002", activityFallback: "\u6D3B\u52A8\u516C\u544A", activityDescriptionFallback: "\u5B8C\u6210\u5BF9\u5C40\u3001\u63D0\u5347\u6BB5\u4F4D\uFF0C\u8D62\u53D6 Pi \u5956\u52B1\u3002", ruleSwap: "\u73A9\u6CD5\uFF1A\u4EA4\u6362\u76F8\u90BB\u65B9\u5757\uFF0C\u4E09\u8FDE\u5373\u53EF\u6D88\u9664", ruleCombo: "\u6280\u5DE7\uFF1A\u8FDE\u51FB\u8D8A\u9AD8\uFF0C\u5BF9\u624B\u538B\u529B\u8D8A\u5927", ruleGoal: "\u76EE\u6807\uFF1A90\u79D2\u5185\u6253\u51FA\u66F4\u9AD8\u5206\u6570", chooseBattleMode: "\u9009\u62E9\u5BF9\u6218\u6A21\u5F0F", home: "\u9996\u9875", battle: "\u5F00\u6218", mine: "\u6211\u7684", battleMode: "\u5BF9\u6218\u6A21\u5F0F", chooseModeTitle: "\u9009\u62E9\u5BF9\u6218\u6A21\u5F0F", quickModeDetail: "\u514D\u8D39\u7EC3\u624B\uFF0C\u4E45\u7B49\u8865\u673A\u5668\u4EBA\u3002", ticketModeDetail: "\u4F4E\u95E8\u69DB\u771F\u4EBA\u573A\uFF0C{weekly}", richModeDetail: "\u9AD8\u5956\u6C60\u771F\u4EBA\u573A\uFF0C{rank}\u89E3\u9501\u3002", weeklyOn: "\u8BA1\u5165\u5468\u699C\u5956\u52B1\u3002", weeklyOff: "\u4E0D\u8BA1\u5468\u699C\u3002", richUnlock: " \xB7 {rank}\u89E3\u9501", balanceAndStars: "\u4F59\u989D {balance} Pi \xB7 \u80DC+{win}/\u8D1F-{lose} \xB7 \u9752\u94DC{protection}", protected: "\u6709\u4FDD\u62A4", unprotected: "\u65E0\u4FDD\u62A4" }, en: { languageTitle: "Choose Language", languageSummary: "Changes apply instantly and will be remembered on this device.", languageCancel: "Cancel", homeProjectNameFallback: "Blitz of Pi", homeEnglishNameFallback: "BLITZ OF PI", realtimePvp: "Real-time PVP", match3: "6x8 Match-3", piReward: "Pi Rewards", gameTips: "How to Play", rankBoard: "Rank Board", totalPlayers: "Players", totalBattles: "Battles", todayBattles: "Today", totalRewards: "Rewards Paid", practiceMode: "Practice", quickBattle: "Quick Battle", quickBattleDesc: "Free practice. Bots fill long waits.", lowEntryReward: "Low Entry", ticketBattle: "Small Rich Room", ticketBattleDesc: "Low-entry real-player room.", highPrizePool: "High Prize", richBattle: "Big Rich Room", richBattleDesc: "High-prize room. Unlocks at {rank}.", rankRoute: "Rank Path", quickShort: "Quick", ticketShort: "Small", richShort: "Big", maintenanceTitle: "Maintenance", maintenanceFallback: "The platform is under maintenance. Some features may be unavailable.", activityFallback: "Event", activityDescriptionFallback: "Play battles, climb ranks, and win Pi rewards.", ruleSwap: "Swap adjacent tiles and match 3 to clear.", ruleCombo: "Higher combos create more pressure.", ruleGoal: "Score higher within 90 seconds.", chooseBattleMode: "Choose Battle Mode", home: "Home", battle: "Battle", mine: "Mine", battleMode: "Battle Mode", chooseModeTitle: "Choose Battle Mode", quickModeDetail: "Free practice. Bots fill long waits.", ticketModeDetail: "Low-entry real-player room. {weekly}", richModeDetail: "High-prize room. Unlocks at {rank}.", weeklyOn: "Counts for weekly rewards.", weeklyOff: "Not counted weekly.", richUnlock: " \xB7 {rank} unlock", balanceAndStars: "Bal {balance} Pi \xB7 W+{win}/L-{lose} \xB7 Bronze {protection}", protected: "protected", unprotected: "not protected" }, vi: { languageTitle: "Ch\u1ECDn ng\xF4n ng\u1EEF", languageSummary: "Thay \u0111\u1ED5i c\xF3 hi\u1EC7u l\u1EF1c ngay v\xE0 s\u1EBD \u0111\u01B0\u1EE3c ghi nh\u1EDB.", languageCancel: "H\u1EE7y", homeProjectNameFallback: "Blitz of Pi", homeEnglishNameFallback: "BLITZ OF PI", realtimePvp: "PVP th\u1EDDi gian th\u1EF1c", match3: "6x8 gh\xE9p 3", piReward: "Th\u01B0\u1EDFng Pi", gameTips: "M\u1EB9o ch\u01A1i", rankBoard: "B\u1EA3ng h\u1EA1ng", totalPlayers: "Ng\u01B0\u1EDDi ch\u01A1i", totalBattles: "Tr\u1EADn \u0111\xE3 ch\u01A1i", todayBattles: "H\xF4m nay", totalRewards: "Pi \u0111\xE3 th\u01B0\u1EDFng", practiceMode: "Luy\u1EC7n t\u1EADp", quickBattle: "\u0110\u1EA5u nhanh", quickBattleDesc: "Mi\u1EC5n ph\xED. Tr\u1EADn ng\u01B0\u1EDDi th\u1EADt {cap}; tr\u1EADn bot kh\xF4ng t\xEDnh h\u1EA1ng ho\u1EB7c th\u01B0\u1EDFng tu\u1EA7n.", lowEntryReward: "Ph\xED th\u1EA5p", ticketBattle: "Ph\xF2ng Ti\u1EC3u ph\xFA", ticketBattleDesc: "M\u1ED7i b\xEAn tr\u1EA3 {fee} Pi, ng\u01B0\u1EDDi th\u1EAFng d\u1EF1 ki\u1EBFn nh\u1EADn {reward} Pi, {cap}.", highPrizePool: "Gi\u1EA3i l\u1EDBn", richBattle: "Ph\xF2ng \u0110\u1EA1i ph\xFA", richBattleDesc: "M\u1ED7i b\xEAn tr\u1EA3 {fee} Pi, th\u1EAFng d\u1EF1 ki\u1EBFn nh\u1EADn {reward} Pi, {rank} m\u1EDF kh\xF3a Tinh di\u1EC7u/Vua.", rankRoute: "L\u1ED9 tr\xECnh h\u1EA1ng", quickShort: "Nhanh", ticketShort: "Ti\u1EC3u ph\xFA", richShort: "\u0110\u1EA1i ph\xFA", maintenanceTitle: "B\u1EA3o tr\xEC", maintenanceFallback: "N\u1EC1n t\u1EA3ng \u0111ang b\u1EA3o tr\xEC, m\u1ED9t s\u1ED1 t\xEDnh n\u0103ng c\xF3 th\u1EC3 t\u1EA1m d\u1EEBng.", activityFallback: "S\u1EF1 ki\u1EC7n", activityDescriptionFallback: "Thi \u0111\u1EA5u, leo h\u1EA1ng v\xE0 nh\u1EADn th\u01B0\u1EDFng Pi.", ruleSwap: "\u0110\u1ED5i \xF4 li\u1EC1n k\u1EC1, gh\xE9p 3 \u0111\u1EC3 x\xF3a.", ruleCombo: "Combo c\xE0ng cao, \xE1p l\u1EF1c c\xE0ng l\u1EDBn.", ruleGoal: "Ghi \u0111i\u1EC3m cao h\u01A1n trong 90 gi\xE2y.", chooseBattleMode: "Ch\u1ECDn ch\u1EBF \u0111\u1ED9", home: "Trang ch\u1EE7", battle: "\u0110\u1EA5u", mine: "C\u1EE7a t\xF4i", battleMode: "Ch\u1EBF \u0111\u1ED9 \u0111\u1EA5u", chooseModeTitle: "Ch\u1ECDn ch\u1EBF \u0111\u1ED9", quickModeDetail: "Luy\u1EC7n mi\u1EC5n ph\xED. Tr\u1EADn ng\u01B0\u1EDDi th\u1EADt {cap}; ch\u1EDD l\xE2u c\xF3 th\u1EC3 g\u1EB7p bot v\xE0 kh\xF4ng t\xEDnh h\u1EA1ng/tu\u1EA7n.", ticketModeDetail: "M\u1ED7i b\xEAn tr\u1EA3 {fee} Pi, th\u1EAFng nh\u1EADn {reward} Pi, {cap}, {weekly}", richModeDetail: "M\u1ED7i b\xEAn tr\u1EA3 {fee} Pi, th\u1EAFng nh\u1EADn {reward} Pi, {rank} m\u1EDF kh\xF3a Tinh di\u1EC7u/Vua, {weekly}", weeklyOn: "T\xEDnh th\u01B0\u1EDFng tu\u1EA7n.", weeklyOff: "Kh\xF4ng t\xEDnh tu\u1EA7n.", richUnlock: " \xB7 m\u1EDF \u1EDF {rank}", balanceAndStars: "S\u1ED1 d\u01B0 {balance} Pi; th\u1EAFng +{win} sao, thua -{lose} sao, \u0110\u1ED3ng {protection}.", protected: "\u0111\u01B0\u1EE3c b\u1EA3o v\u1EC7", unprotected: "kh\xF4ng b\u1EA3o v\u1EC7" }, ko: { languageTitle: "\uC5B8\uC5B4 \uC120\uD0DD", languageSummary: "\uBCC0\uACBD \uC989\uC2DC \uC801\uC6A9\uB418\uBA70 \uC774 \uAE30\uAE30\uC5D0 \uC800\uC7A5\uB429\uB2C8\uB2E4.", languageCancel: "\uCDE8\uC18C", homeProjectNameFallback: "Blitz of Pi", homeEnglishNameFallback: "BLITZ OF PI", realtimePvp: "\uC2E4\uC2DC\uAC04 PVP", match3: "6x8 \uB9E4\uCE583", piReward: "Pi \uBCF4\uC0C1", gameTips: "\uD50C\uB808\uC774 \uD301", rankBoard: "\uB7AD\uD0B9", totalPlayers: "\uCD1D \uC720\uC800", totalBattles: "\uB204\uC801 \uB300\uC804", todayBattles: "\uC624\uB298 \uB300\uC804", totalRewards: "\uC9C0\uAE09 \uBCF4\uC0C1", practiceMode: "\uC5F0\uC2B5 \uBAA8\uB4DC", quickBattle: "\uBE60\uB978 \uB300\uC804", quickBattleDesc: "\uBB34\uB8CC \uC785\uC7A5. \uC2E4\uC81C \uC720\uC800 \uB300\uC804\uC740 {cap}; \uBD07 \uB300\uC804\uC740 \uB7AD\uD06C/\uC8FC\uAC04 \uBCF4\uC0C1 \uC81C\uC678.", lowEntryReward: "\uB0AE\uC740 \uCC38\uAC00\uBE44", ticketBattle: "\uC2A4\uBAB0 \uB9AC\uCE58", ticketBattleDesc: "\uC591\uCABD {fee} Pi \uC9C0\uBD88, \uC2B9\uC790 \uC608\uC0C1 {reward} Pi \uD68D\uB4DD, {cap}.", highPrizePool: "\uD070 \uC0C1\uAE08", richBattle: "\uBE45 \uB9AC\uCE58", richBattleDesc: "\uC591\uCABD {fee} Pi \uC9C0\uBD88, \uC2B9\uC790 \uC608\uC0C1 {reward} Pi \uD68D\uB4DD, {rank}\uBD80\uD130 \uC2A4\uD0C0\uB77C\uC774\uD2B8/\uD0B9 \uB3C4\uC804.", rankRoute: "\uB7AD\uD06C \uACBD\uB85C", quickShort: "\uBE60\uB978", ticketShort: "\uC2A4\uBAB0", richShort: "\uBE45", maintenanceTitle: "\uC810\uAC80 \uC548\uB0B4", maintenanceFallback: "\uD50C\uB7AB\uD3FC \uC810\uAC80 \uC911\uC785\uB2C8\uB2E4. \uC77C\uBD80 \uAE30\uB2A5\uC744 \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.", activityFallback: "\uC774\uBCA4\uD2B8", activityDescriptionFallback: "\uB300\uC804\uD558\uACE0 \uB7AD\uD06C\uB97C \uC62C\uB824 Pi \uBCF4\uC0C1\uC744 \uBC1B\uC73C\uC138\uC694.", ruleSwap: "\uC778\uC811 \uBE14\uB85D\uC744 \uBC14\uAFD4 3\uAC1C\uB97C \uB9DE\uCD94\uC138\uC694.", ruleCombo: "\uCF64\uBCF4\uAC00 \uB192\uC744\uC218\uB85D \uC0C1\uB300 \uC555\uBC15\uC774 \uCEE4\uC9D1\uB2C8\uB2E4.", ruleGoal: "90\uCD08 \uC548\uC5D0 \uB354 \uB192\uC740 \uC810\uC218\uB97C \uB0B4\uC138\uC694.", chooseBattleMode: "\uB300\uC804 \uBAA8\uB4DC \uC120\uD0DD", home: "\uD648", battle: "\uB300\uC804", mine: "\uB0B4 \uC815\uBCF4", battleMode: "\uB300\uC804 \uBAA8\uB4DC", chooseModeTitle: "\uB300\uC804 \uBAA8\uB4DC \uC120\uD0BD", quickModeDetail: "\uBB34\uB8CC \uC5F0\uC2B5. \uC2E4\uC81C \uC720\uC800 \uB300\uC804\uC740 {cap}; \uB300\uAE30 \uD6C4 \uBD07 \uB9E4\uCE6D \uAC00\uB2A5\uD558\uBA70 \uB7AD\uD06C/\uC8FC\uAC04 \uC81C\uC678.", ticketModeDetail: "\uC591\uCABD {fee} Pi \uC9C0\uBD88, \uC2B9\uC790 {reward} Pi \uD68D\uB4DD, {cap}, {weekly}", richModeDetail: "\uC591\uCABD {fee} Pi \uC9C0\uBD88, \uC2B9\uC790 {reward} Pi \uD68D\uB4DD, {rank}\uBD80\uD130 \uC2A4\uD0C0\uB77C\uC774\uD2B8/\uD0B9 \uB3C4\uC804, {weekly}", weeklyOn: "\uC8FC\uAC04 \uBCF4\uC0C1 \uBC18\uC601.", weeklyOff: "\uC8FC\uAC04 \uC81C\uC678.", richUnlock: " \xB7 {rank} \uD574\uC81C", balanceAndStars: "\uC794\uC561 {balance} Pi; \uC2B9\uB9AC +{win}\uC131, \uD328\uBC30 -{lose}\uC131, \uBE0C\uB860\uC988 {protection}.", protected: "\uBCF4\uD638", unprotected: "\uBCF4\uD638 \uC5C6\uC74C" }, ja: { languageTitle: "\u8A00\u8A9E\u3092\u9078\u629E", languageSummary: "\u5909\u66F4\u306F\u3059\u3050\u53CD\u6620\u3055\u308C\u3001\u3053\u306E\u7AEF\u672B\u306B\u4FDD\u5B58\u3055\u308C\u307E\u3059\u3002", languageCancel: "\u30AD\u30E3\u30F3\u30BB\u30EB", homeProjectNameFallback: "Blitz of Pi", homeEnglishNameFallback: "BLITZ OF PI", realtimePvp: "\u30EA\u30A2\u30EB\u30BF\u30A4\u30E0PVP", match3: "6x8\u30DE\u30C3\u30C13", piReward: "Pi\u5831\u916C", gameTips: "\u904A\u3073\u65B9", rankBoard: "\u30E9\u30F3\u30AF\u699C", totalPlayers: "\u7DCF\u30D7\u30EC\u30A4\u30E4\u30FC", totalBattles: "\u7D2F\u8A08\u5BFE\u6226", todayBattles: "\u672C\u65E5\u5BFE\u6226", totalRewards: "\u914D\u5E03\u5831\u916C", practiceMode: "\u7DF4\u7FD2\u30E2\u30FC\u30C9", quickBattle: "\u30AF\u30A4\u30C3\u30AF\u5BFE\u6226", quickBattleDesc: "\u7121\u6599\u53C2\u52A0\u3002\u771F\u4EBA\u6226\u306F{cap}\uFF1BBot\u6226\u306F\u30E9\u30F3\u30AF/\u9031\u9593\u5831\u916C\u5BFE\u8C61\u5916\u3002", lowEntryReward: "\u4F4E\u53C2\u52A0\u8CBB", ticketBattle: "\u5C0F\u5BCC\u8C6A\u5834", ticketBattleDesc: "\u53CC\u65B9 {fee} Pi\u3001\u52DD\u8005\u306F\u7D04 {reward} Pi\u3001{cap}\u3002", highPrizePool: "\u9AD8\u8CDE\u91D1", richBattle: "\u5927\u5BCC\u8C6A\u5834", richBattleDesc: "\u53CC\u65B9 {fee} Pi\u3001\u52DD\u8005\u306F\u7D04 {reward} Pi\u3001{rank}\u304B\u3089\u661F\u8000/\u738B\u8005\u3078\u6311\u6226\u3002", rankRoute: "\u30E9\u30F3\u30AF\u9053", quickShort: "\u5FEB\u901F", ticketShort: "\u5C0F\u5BCC\u8C6A", richShort: "\u5927\u5BCC\u8C6A", maintenanceTitle: "\u30E1\u30F3\u30C6\u30CA\u30F3\u30B9", maintenanceFallback: "\u30E1\u30F3\u30C6\u30CA\u30F3\u30B9\u4E2D\u3067\u3059\u3002\u4E00\u90E8\u6A5F\u80FD\u304C\u5229\u7528\u3067\u304D\u306A\u3044\u5834\u5408\u304C\u3042\u308A\u307E\u3059\u3002", activityFallback: "\u30A4\u30D9\u30F3\u30C8", activityDescriptionFallback: "\u5BFE\u6226\u3057\u3066\u30E9\u30F3\u30AF\u3092\u4E0A\u3052\u3001Pi\u5831\u916C\u3092\u7372\u5F97\u3057\u307E\u3057\u3087\u3046\u3002", ruleSwap: "\u96A3\u306E\u30D6\u30ED\u30C3\u30AF\u3092\u5165\u308C\u66FF\u3048\u30013\u3064\u63C3\u3048\u3066\u6D88\u3057\u307E\u3059\u3002", ruleCombo: "\u30B3\u30F3\u30DC\u304C\u9AD8\u3044\u307B\u3069\u76F8\u624B\u3078\u306E\u5727\u529B\u304C\u5897\u3048\u307E\u3059\u3002", ruleGoal: "90\u79D2\u4EE5\u5185\u306B\u3088\u308A\u9AD8\u3044\u30B9\u30B3\u30A2\u3092\u72D9\u3044\u307E\u3059\u3002", chooseBattleMode: "\u5BFE\u6226\u30E2\u30FC\u30C9\u9078\u629E", home: "\u30DB\u30FC\u30E0", battle: "\u5BFE\u6226", mine: "\u30DE\u30A4", battleMode: "\u5BFE\u6226\u30E2\u30FC\u30C9", chooseModeTitle: "\u5BFE\u6226\u30E2\u30FC\u30C9\u9078\u629E", quickModeDetail: "\u7121\u6599\u7DF4\u7FD2\u3002\u771F\u4EBA\u6226\u306F{cap}\uFF1B\u5F85\u6A5F\u5F8C\u306EBot\u6226\u306F\u30E9\u30F3\u30AF/\u9031\u9593\u5BFE\u8C61\u5916\u3002", ticketModeDetail: "\u53CC\u65B9 {fee} Pi\u3001\u52DD\u8005 {reward} Pi\u3001{cap}\u3001{weekly}", richModeDetail: "\u53CC\u65B9 {fee} Pi\u3001\u52DD\u8005 {reward} Pi\u3001{rank}\u304B\u3089\u661F\u8000/\u738B\u8005\u3078\u6311\u6226\u3001{weekly}", weeklyOn: "\u9031\u9593\u5831\u916C\u306B\u53CD\u6620\u3002", weeklyOff: "\u9031\u9593\u5BFE\u8C61\u5916\u3002", richUnlock: " \xB7 {rank}\u3067\u89E3\u653E", balanceAndStars: "\u6B8B\u9AD8 {balance} Pi\uFF1B\u52DD\u5229 +{win} \u661F\u3001\u6557\u5317 -{lose} \u661F\u3001\u30D6\u30ED\u30F3\u30BA\u306F{protection}\u3002", protected: "\u4FDD\u8B77\u3042\u308A", unprotected: "\u4FDD\u8B77\u306A\u3057" } };
+const Z = ["ruby", "amber", "jade", "aqua", "slate", "gold"], wa = 10, ya = 20, ka = 30, a = { user: null, home: null, wallet: null, rankStatus: null, rankLeaderboard: null, piConfig: null, gameConfig: null, inviteInfo: null, engagement: null, battleHistory: [], battleHistoryPage: 1, battleHistoryTotal: 0, battleHistoryTotalPages: 1, battleHistoryFilter: "all", walletLedgerExpanded: false, walletLedgerPage: 1, walletLedgerFilter: "all", screen: "loading", activePanel: "home", selectedMode: "quick_battle", roomNo: "", roomJoinToken: "", room: null, realtimeRoom: null, result: null, selectedTile: null, tileEffect: null, battleMessage: "", networkStatus: "connecting", networkLatencyMs: 0, vsIntroUntil: 0, lastRoomStateAt: 0, lastSwapSentAt: 0, lastSwapSeq: 0, pendingSwapSeq: 0, pendingSwapPositions: [], pendingSwapQueue: [], clientRoomVersion: 0, clientPredictedBoard: null, clientPredictionStats: { sent: 0, ack: 0, reject: 0, rollback: 0, corrected: 0, longFrames: 0 }, lastSwapPositions: [], battleConnectingAt: 0, battleEnteredAt: 0, feedbackEventId: "", feedback: null, battleBursts: [], battleImpacts: [], localBattleEvents: [], localSwapFx: null, canvasTileBursts: [], matchPollTimer: null, matchUiTimer: null, matchStartedAt: 0, matchWaitingSeconds: 0, matchCanCancel: false, matchCancelMessage: "", matchCancelling: false, matchSessionId: 0, matchPollFailedCount: 0, language: gn(), visualEffectMode: bn(), effectiveVisualEffectMode: "balanced", profileOptions: null, withdrawWallets: [] };
 a.matchedHapticRoomNo = "";
 document.documentElement.lang = a.language;
-const DEFAULT_ANIMATION_DURATIONS = {
-  localBurstSeconds: 1.08,
-  localBurstHighSeconds: 1.26,
-  serverBurstSeconds: 1.18,
-  serverBurstHighSeconds: 1.28,
-  lowPerformanceBurstSeconds: 0.9,
-  boardEffectSeconds: 0.24,
-  boardEffectHighSeconds: 0.34,
-  tileBurstSeconds: 0.28,
-  tileBurstHighSeconds: 0.38,
-  tileFallSeconds: 0.22,
-  tileFallHighSeconds: 0.28,
-  localSwapSeconds: 0.15,
-  invalidSwapSeconds: 0.2,
-  serverSettleSeconds: 0.16,
-  impactSeconds: 0.72,
-  impactHighSeconds: 0.92,
-  pressureHitSeconds: 0.72,
-  boardUnderAttackSeconds: 0.58,
-  attackLineSeconds: 0.78,
-  hitWarningSeconds: 0.92
-};
-const DEFAULT_ATTACK_WARNING_TEXT = "\u88AB\u653B\u51FB \u538B\u529B+{attack}";
-function normalizeAnimationDurations(e = {}) {
-  const t = (r, o = DEFAULT_ANIMATION_DURATIONS[r]) => {
-    const s = Number(e?.[r]);
-    return Number.isFinite(s) && s >= 0.05 && s <= 3 ? s : o;
-  };
-  return Object.fromEntries(Object.keys(DEFAULT_ANIMATION_DURATIONS).map((r) => [r, t(r)]));
-}
 function animationSeconds(e) {
   return ve().animationDurations?.[e] ?? DEFAULT_ANIMATION_DURATIONS[e] ?? 0.3;
 }
@@ -121,152 +95,6 @@ function Oa(e) {
 function kn(e) {
   a.visualEffectMode = ot.includes(e) ? e : "balanced", localStorage.setItem(Wa, a.visualEffectMode), Qe();
 }
-const Y = { "zh-CN": { unknownError: "\u672A\u77E5\u9519\u8BEF", requestFailed: "\u8BF7\u6C42\u5931\u8D25", requestTimeout: "\u7F51\u7EDC\u8D85\u65F6\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5", networkRequestFailed: "\u7F51\u7EDC\u8FDE\u63A5\u5931\u8D25\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5", inProgress: "\u8FDB\u884C\u4E2D", all: "\u5168\u90E8", historyEyebrow: "\u5BF9\u6218\u8BB0\u5F55", battleHistory: "\u5386\u53F2\u5BF9\u6218", totalMatches: "\u5171{total}\u573A", historyPageInfo: "\u7B2C{page}/{totalPages}\u9875 \xB7 \u5171{total}\u573A", emptyHistory: "\u6682\u65E0\u5BF9\u6218\u8BB0\u5F55\uFF0C\u5148\u53BB\u5F00\u4E00\u5C40\u5427\u3002", unknownPlayer: "\u672A\u77E5\u73A9\u5BB6", bot: "\u673A\u5668\u4EBA", opponent: "\u5BF9\u624B", rewardPlus: "\u5956\u52B1 +{amount}", drawRefund: "\u5E73\u5C40\u9000\u56DE {amount}", ticketFee: "\u95E8\u7968 {amount}", freeMatch: "\u514D\u8D39\u5BF9\u5C40", score: "\u6BD4\u5206", prevPage: "\u4E0A\u4E00\u9875", nextPage: "\u4E0B\u4E00\u9875", totalBattleCount: "\u603B\u5BF9\u5C40", pageWins: "\u672C\u9875\u80DC\u573A", pageWinRate: "\u672C\u9875\u80DC\u7387", pageReward: "\u672C\u9875\u5956\u52B1", dailyChest: "\u6BCF\u65E5\u5B9D\u7BB1", rankChest: "\u6BB5\u4F4D\u5B9D\u7BB1", claimedToday: "\u4ECA\u65E5\u5DF2\u9886\u53D6", claimPi: "\u9886\u53D6 {amount} Pi", notReached: "\u672A\u8FBE\u6210", goPlay: "\u53BB\u5B8C\u6210\u5BF9\u5C40", currentRank: "\u5F53\u524D\u6BB5\u4F4D", rankRuleHint: "\u67E5\u770B\u5347\u661F\u3001\u5C01\u9876\u548C\u5956\u52B1\u3002", starProgress: "{stars}/{starsPerRank} \u661F \xB7 \u518D\u8D62 {left} \u661F\u51B2\u4E0B\u4E00\u6BB5", todayChestProgress: "\u5B9D\u7BB1 {done}/{required} \xB7 \u5956 {amount} Pi", chestRuleText: "\u5B8C\u6210 {required} \u573A\u53EF\u9886 {amount} Pi", rules: "\u89C4\u5219", futureRewards: "\u540E\u7EED\u5956\u52B1", rankRewardWall: "\u6BB5\u4F4D\u5956\u52B1\u5899", rankRewardHint: "\u5347\u5230\u66F4\u9AD8\u6BB5\u4F4D\uFF0C\u6BCF\u65E5\u5B9D\u7BB1\u5956\u52B1\u540C\u6B65\u63D0\u5347", expandAll: "\u5168\u90E8\u5C55\u5F00", collapse: "\u6536\u8D77", recentRecords: "\u6700\u8FD1{count}\u6761", walletLedgerPager: "{page}/{totalPages}", playerRank: "\u73A9\u5BB6\u6BB5\u4F4D", loadingDefault: "\u6B63\u5728\u52A0\u8F7D...", errorDefault: "\u9875\u9762\u52A0\u8F7D\u5931\u8D25\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5\u3002", reloadPage: "\u91CD\u65B0\u8FDB\u5165", missingHome: "\u9996\u9875\u6570\u636E\u7F3A\u5931", heroFallback: "\u79FB\u52A8\u7AEF\u5B9E\u65F6\u6D88\u9664\u5BF9\u6218\u6E38\u620F", weeklyReward: "\u5468\u699C\u5956\u52B1", weeklyTitle: "\u672C\u5468\u51B2\u699C", weeklySummary: "\u7EDF\u8BA1 {modes}\uFF0C\u6BCF\u5468\u4E00\u53D1\u5956\u3002", myWeeklyRank: "\u6211\u7684\u5468\u699C\u6392\u540D", weeklyRecord: "\u672C\u5468\u6218\u7EE9", expectedReward: "\u9884\u8BA1\u5956\u52B1", notRanked: "\u672A\u4E0A\u699C", rankHow: "\u4E0A\u699C\u65B9\u5F0F", winPaidMatch: "\u8D62\u4ED8\u8D39\u5C40", emptyLeaderboard: "\u672C\u5468\u6682\u65E0\u4ED8\u8D39\u51B2\u699C\u8BB0\u5F55\uFF0C\u8D62\u4E00\u573A\u5C0F\u5BCC\u8C6A/\u5927\u5BCC\u8C6A\u5373\u53EF\u4E0A\u699C\u3002", leaderboardPager: "{page} / {totalPages} \xB7 \u5171{total}\u4EBA", gotIt: "\u6211\u77E5\u9053\u4E86", rewardNotConfigured: "\u540E\u53F0\u6682\u672A\u914D\u7F6E\u5468\u699C\u5956\u52B1", rewardTiersAria: "\u5468\u699C\u5956\u52B1\u6863\u4F4D", rankSingle: "\u7B2C{rank}\u540D", rankRange: "\u7B2C{from}-{to}\u540D", championPool: "\u51A0\u519B\u5956\u6C60", leaderboardReward: "\u51B2\u699C\u5956\u52B1", listedReward: "\u5165\u699C\u5956\u52B1", champion: "\u51A0\u519B", runnerUp: "\u4E9A\u519B", thirdPlace: "\u5B63\u519B", rankNo: "\u7B2C{rank}\u540D", weeklyMetaReward: "{stars}\u661F \xB7 {wins}\u80DC \xB7 \u5956{amount}", rankMeta: "{stars}\u661F \xB7 {wins}\u80DC", matchCount: "{count}\u573A", winStreakCount: "{count}\u8FDE\u80DC", beginnerTitle: "\u65B0\u624B 15 \u79D2\u770B\u61C2", guideStep1: "\u6ED1\u52A8\u6216\u70B9\u51FB\u4E24\u4E2A\u76F8\u90BB\u65B9\u5757\u4EA4\u6362\u3002", guideStep2: "\u51D1 3 \u4E2A\u540C\u8272\u5C31\u6D88\u9664\u3002", guideStep3: "\u8FDE\u7EED\u6D88\u9664\u4F1A\u6253\u538B\u5BF9\u624B\u3002", guideStep4: "90 \u79D2\u9AD8\u5206\u8D62\uFF0C\u538B\u529B\u6EE1\u4F1A\u8F93\u3002", highScoreTitle: "\u600E\u6837\u6253\u51FA\u9AD8\u5206\uFF1F", basicRules: "\u57FA\u7840\u89C4\u5219", basicRulesText: "\u53EA\u4EA4\u6362\u4E0A\u4E0B\u5DE6\u53F3\u76F8\u90BB\u65B9\u5757\u3002", scoreRules: "\u5F97\u5206\u89C4\u5219", scoreRulesText: "\u6D88\u5F97\u8D8A\u591A\u3001\u8FDE\u9501\u8D8A\u591A\uFF0C\u5206\u8D8A\u9AD8\u3002", attackPressure: "\u653B\u51FB\u538B\u529B", attackPressureText: "\u8FDE\u51FB\u548C\u5927\u6D88\u9664\u4F1A\u7ED9\u5BF9\u624B\u52A0\u538B\u3002", winRule: "\u80DC\u8D1F\u5224\u5B9A", winRuleText: "\u65F6\u95F4\u5230\u6BD4\u5206\u9AD8\u8005\u80DC\uFF1B\u538B\u529B\u6EE1\u63D0\u524D\u8D25\u3002", battleTipsTitle: "\u5B9E\u6218\u6280\u5DE7", battleTipsText: "\u591A\u627E 4 \u8FDE\u548C\u5E95\u90E8\u4EA4\u6362\u3002", battleTypes: "\u5BF9\u5C40\u7C7B\u578B", battleTypesText: "\u5FEB\u901F\u514D\u8D39\u7EC3\uFF1B\u5BCC\u8C6A\u573A\u8D62 Pi\u3002", rankRules: "\u6BB5\u4F4D\u89C4\u5219", starUp: "\u5347\u661F", protection: "\u4FDD\u62A4", winStreak: "\u8FDE\u80DC", validModes: "\u6709\u6548\u573A", quickCap: "\u5FEB\u901F\u5C01\u9876", richCap: "\u5BCC\u8C6A\u5C01\u9876", weeklyBonus: "\u5468\u5956\u52B1", richEntry: "\u5927\u5BCC\u8C6A", note: "\u8BF4\u660E", starRuleText: "\u80DC\u5229 +{win} \u661F\uFF0C\u5931\u8D25 -{lose} \u661F\u3002", bronzeProtectText: "\u9752\u94DC\u6BB5\u5931\u8D25\u4E0D\u6263\u661F\uFF0C\u65B0\u624B\u66F4\u5BB9\u6613\u4E0A\u624B\u3002", noProtectText: "\u6240\u6709\u6BB5\u4F4D\u5931\u8D25\u90FD\u4F1A\u6309\u89C4\u5219\u6263\u661F\u3002", streakEnabledText: "\u8FDE\u7EED\u80DC\u5229 {required} \u573A\uFF0C\u989D\u5916 +{bonus} \u661F\u3002", streakDisabledText: "\u5F53\u524D\u672A\u5F00\u542F\u8FDE\u80DC\u989D\u5916\u52A0\u661F\u3002", validModesText: "{modes} \u8BA1\u6BB5\u4F4D\uFF1B\u6BCF\u65E5 {count} \u573A\u9886\u5B9D\u7BB1\u3002", quickCapText: "\u5FEB\u901F\u573A\u6700\u9AD8\u5230 {rank}\u3002", ticketCapText: "\u5C0F\u5BCC\u8C6A\u6700\u9AD8\u5230 {rank}\uFF1B\u66F4\u9AD8\u8FDB\u5927\u5BCC\u8C6A\u3002", weeklyBonusText: "\u6BCF\u5468\u4E00\u6309 {modes} \u53D1\u5956\u3002", richEntryText: "\u6700\u4F4E {rank} \u6BB5\u4F4D\u53EF\u8FDB\u5165\u3002", ruleSummaryFallback: "\u5FEB\u901F\u7EC3\u624B\uFF0C\u4ED8\u8D39\u573A\u51B2\u6BB5\u3002", rankCurrentTitle: "\u5F53\u524D\u6BB5\u4F4D\uFF1A{rank}", missingUser: "\u7528\u6237\u8D44\u6599\u7F3A\u5931", myRecord: "\u6211\u7684\u6218\u7EE9", playerProfile: "\u73A9\u5BB6\u8D44\u6599", piUsername: "Pi\u7528\u6237\u540D", edit: "\u7F16\u8F91", availableBalance: "\u53EF\u7528\u4F59\u989D", lockedBalance: "\u51BB\u7ED3\u4F59\u989D", totalRecharge: "\u7D2F\u8BA1\u5145\u503C", totalWithdraw: "\u7D2F\u8BA1\u63D0\u73B0", walletLedger: "\u94B1\u5305\u660E\u7EC6", emptyWalletLedger: "\u6682\u65E0\u94B1\u5305\u6D41\u6C34", ledgerBalanceAfter: "\u4F59\u989D", rechargeWallet: "\u5145\u503C\u94B1\u5305", applyWithdraw: "\u7533\u8BF7\u63D0\u73B0", transferBalance: "\u8F6C\u7ED9\u597D\u53CB", inviteFriends: "\u9080\u8BF7\u597D\u53CB", profileSetupTitle: "\u8BBE\u7F6E\u4F60\u7684\u6218\u6597\u540D\u7247", profileEditTitle: "\u7F16\u8F91\u8D44\u6599", profileSetupSummary: "\u9009\u5934\u50CF\u548C\u6635\u79F0\uFF0C\u9A6C\u4E0A\u5F00\u6218\u3002", profileEditSummary: "\u6635\u79F0\u548C\u5934\u50CF\u4F1A\u663E\u793A\u5728\u5BF9\u5C40\u91CC\u3002", walletOverview: "\u94B1\u5305\u603B\u89C8", nicknameLabel: "\u6E38\u620F\u6635\u79F0", nicknameRule: "{min}-{max} \u4E2A\u5B57\u7B26\uFF0C{pattern}\u3002", nicknamePatternFallback: "\u4E2D\u6587\u3001\u82F1\u6587\u3001\u6570\u5B57\u5747\u53EF\uFF0C\u7981\u6B62\u7279\u6B8A\u7B26\u53F7\u548C\u654F\u611F\u8BCD", chooseAvatar: "\u9009\u62E9\u5934\u50CF", saveEnterLobby: "\u4FDD\u5B58\u5E76\u8FDB\u5165\u5927\u5385", saveProfile: "\u4FDD\u5B58\u8D44\u6599", backLobby: "\u8FD4\u56DE\u5927\u5385", savingProfile: "\u6B63\u5728\u4FDD\u5B58\u8D44\u6599...", saveSuccess: "\u4FDD\u5B58\u6210\u529F", sandboxDebug: "\u6C99\u76D2\u8C03\u8BD5", mainnet: "\u6B63\u5F0F\u4E3B\u7F51", wallet: "\u94B1\u5305", rechargeSummary: "{mode} \xB7 \u8F93\u5165 Pi \u6570\u91CF\uFF0C\u652F\u4ED8\u540E\u5165\u8D26\u3002", rechargeAmount: "\u5145\u503C\u6570\u91CF", createRechargeOrder: "\u521B\u5EFA\u5145\u503C\u8BA2\u5355", creatingOrder: "\u6B63\u5728\u521B\u5EFA\u8BA2\u5355...", createOrderFailed: "\u521B\u5EFA\u8BA2\u5355\u5931\u8D25", paymentOrderConflict: "\u5145\u503C\u8BA2\u5355\u5F02\u5E38\u5DF2\u81EA\u52A8\u4FEE\u590D\uFF0C\u8BF7\u91CD\u65B0\u521B\u5EFA\u8BA2\u5355\u3002", rechargeBonusPreview: "\u8D60\u9001 {bonus}\uFF0C\u5230\u8D26 {total}", rechargeNoBonusPreview: "\u5230\u8D26 {total}", rechargePresetTitle: "\u63A8\u8350\u6863\u4F4D", rechargePresetCharge: "\u5145 {amount}", rechargePresetBonus: "\u8D60 {bonus}", rechargePresetCredit: "\u5230\u8D26 {total}", withdrawTitle: "\u7533\u8BF7\u63D0\u73B0", withdrawSummary: "\u53EF\u7528 {balance} Pi \xB7 \u5230\u8D26 {payout} Pi", withdrawAmount: "\u63D0\u73B0\u6570\u91CF", walletAddress: "\u6536\u6B3E\u94B1\u5305\u5730\u5740", walletAddressPlaceholder: "\u7C98\u8D34 G \u5F00\u5934\u4E3B\u7F51\u94B1\u5305\u5730\u5740", walletCheckOk: "\u94B1\u5305\u5730\u5740\u6B63\u5E38", walletCheckInvalid: "\u8BF7\u586B\u5199\u6B63\u786E\u7684 Pi \u4E3B\u7F51\u94B1\u5305\u5730\u5740", withdrawFeePreview: "\u624B\u7EED\u8D39 {fee} Pi\uFF0C\u5230\u8D26 {payout} Pi", savedWallets: "\u5E38\u7528\u5730\u5740", useSavedWallet: "\u4F7F\u7528", savedWalletHint: "\u63D0\u4EA4\u6210\u529F\u540E\u81EA\u52A8\u4FDD\u5B58", submitWithdraw: "\u63D0\u4EA4\u63D0\u73B0\u7533\u8BF7", submittingWithdraw: "\u6B63\u5728\u63D0\u4EA4\u63D0\u73B0\u7533\u8BF7...", withdrawSubmitted: "\u63D0\u73B0\u7533\u8BF7\u5DF2\u63D0\u4EA4\u3002", withdrawPaidSuccess: "\u63D0\u73B0\u5DF2\u81EA\u52A8\u6253\u6B3E\uFF0C\u5230\u8D26 {payout} Pi\u3002", withdrawQueuedSuccess: "\u81EA\u52A8\u63D0\u73B0\u4E2D\uFF0C\u8BF7\u7B49\u5F85\u3002", withdrawReviewSuccess: "\u63D0\u73B0\u5DF2\u63D0\u4EA4\uFF0C\u7B49\u5F85\u590D\u6838\u3002", withdrawAutoFailed: "\u81EA\u52A8\u63D0\u73B0\u4E2D\uFF0C\u8BF7\u7B49\u5F85\u3002", withdrawFailed: "\u63D0\u73B0\u7533\u8BF7\u5931\u8D25", transferTitle: "\u8F6C\u7ED9\u597D\u53CB", transferSummary: "\u8F93\u5165\u5BF9\u65B9 Pi \u7528\u6237\u540D\uFF0C\u4F59\u989D\u5B9E\u65F6\u5230\u8D26\u3002", receiverPiUsername: "\u6536\u6B3E Pi \u7528\u6237\u540D", searchReceiver: "\u641C\u7D22\u7528\u6237", transferAmount: "\u8F6C\u8D26\u6570\u91CF", transferFeePreview: "\u624B\u7EED\u8D39 {fee}\uFF0C\u5230\u8D26 {receive}", confirmTransfer: "\u786E\u8BA4\u8F6C\u8D26", searchingUser: "\u6B63\u5728\u641C\u7D22...", userNotFound: "\u672A\u627E\u5230\u7528\u6237", transferSuccess: "\u8F6C\u8D26\u6210\u529F\uFF0C\u5DF2\u5230\u8D26\u3002", transferFailed: "\u8F6C\u8D26\u5931\u8D25", processing: "\u5904\u7406\u4E2D...", searchInviter: "\u641C\u7D22\u9080\u8BF7\u4EBA", inviterNotFound: "\u672A\u627E\u5230\u9080\u8BF7\u4EBA\uFF0C\u8BF7\u786E\u8BA4 Pi \u7528\u6237\u540D\u3002", inviteBindFailed: "\u7ED1\u5B9A\u5931\u8D25", confirmUserFirst: "\u8BF7\u5148\u641C\u7D22\u5E76\u786E\u8BA4\u7528\u6237\u4FE1\u606F\u3002", confirmInviterFirst: "\u8BF7\u5148\u641C\u7D22\u5E76\u786E\u8BA4\u9080\u8BF7\u4EBA\u3002", selectedUserChanged: "\u7528\u6237\u540D\u5DF2\u53D8\u5316\uFF0C\u8BF7\u91CD\u65B0\u641C\u7D22\u786E\u8BA4\u3002", inviteTitle: "\u9080\u8BF7\u597D\u53CB", bindInviter: "\u7ED1\u5B9A\u9080\u8BF7\u4EBA", inviterPiUsername: "\u9080\u8BF7\u4EBA Pi \u7528\u6237\u540D", bindNow: "\u7ACB\u5373\u7ED1\u5B9A", myInviteLevel: "\u6211\u7684\u7B49\u7EA7", inviteNoLevel: "\u6682\u672A\u8FBE\u6807", inviteCount: "\u5DF2\u9080\u8BF7 {count} \u4EBA", paidCommission: "\u4ED8\u8D39\u63D0\u6210", inviteCommissionRate: "\u63D0\u6210 {rate}%", inviteCtaTitle: "\u9080\u8BF7\u8D5APi", inviteCtaSubtitle: "\u597D\u53CB\u4ED8\u8D39\u5BF9\u6218\uFF0C\u4F60\u62FF\u63D0\u6210", inviteCtaRate: "\u6700\u9AD8 {rate}%", inviteCtaExample: "\u6BCF\u5C40\u53EF\u8D5A {amount}", inviteIncomeTitle: "\u597D\u53CB\u6253\u4ED8\u8D39\u573A\uFF0C\u4F60\u62FF\u63D0\u6210", inviteIncomeSummary: "\u597D\u53CB\u4ED8\u8D39\u5BF9\u6218\uFF0C\u4F60\u6309\u7B49\u7EA7\u62FF\u63D0\u6210\uFF0C\u81EA\u52A8\u8FDB\u4F59\u989D\u3002", inviteIncomeFormula: "\u7B97\u6CD5\uFF1A\u597D\u53CB\u5165\u573A\u8D39 \xD7 \u7B49\u7EA7\u6BD4\u4F8B = \u4F60\u7684\u63D0\u6210", inviteLevelRatesTitle: "\u8D21\u732E\u7B49\u7EA7", inviteExamplesTitle: "\u6536\u76CA\u6848\u4F8B", inviteExampleSmall: "\u6BCF\u5C40 {amount}", inviteExampleRich: "\u6BCF\u5C40 {amount}", inviteTwoFriendsExample: "\u5982\u679C 2 \u4F4D\u597D\u53CB\u6BCF\u5929\u5404\u73A9 5 \u5C40\u5927\u5BCC\u8C6A\uFF0C\u6309\u5F53\u524D\u7B49\u7EA7\u9884\u8BA1 {amount}/\u5929", inviteOnceReward: "\u597D\u53CB\u5B8C\u6210 {battles} \u573A\uFF0C\u518D\u9886 {amount}", inviteUpgradeHint: "\u4F59\u989D\u6216\u9080\u8BF7\u4EBA\u6570\u8FBE\u6807\uFF0C\u81EA\u52A8\u5347\u7EA7\u66F4\u9AD8\u63D0\u6210\u3002", inviteLevelCondition: "\u4F59\u989D\u6EE1\u8DB3{balance} \u6216 \u9080\u8BF7{count}\u4EBA", inviteRelationEyebrow: "\u5173\u7CFB", inviteRelationTitle: "\u6211\u7684\u9080\u8BF7\u5173\u7CFB", inviteParent: "\u6211\u7684\u4E0A\u7EA7", inviteUnbound: "\u6682\u672A\u7ED1\u5B9A", inviteUnboundHint: "\u53EF\u586B\u5199\u9080\u8BF7\u4EBA Pi \u7528\u6237\u540D\u3002", inviteNoChildren: "\u8FD8\u6CA1\u6709\u4E0B\u7EA7\u597D\u53CB\uFF0C\u5148\u9080\u8BF7 1 \u4F4D\u597D\u53CB\u6765\u73A9\u4ED8\u8D39\u573A\u3002", inviteIncomeEyebrow: "\u6536\u76CA", inviteRewardHistoryTitle: "\u9080\u8BF7\u6536\u76CA\u660E\u7EC6", inviteNoIncomeHistory: "\u6682\u65E0\u6536\u76CA\u8BB0\u5F55\u3002\u597D\u53CB\u5B8C\u6210\u4EFB\u52A1\u6216\u53C2\u4E0E\u4ED8\u8D39\u5BF9\u6218\u540E\u4F1A\u663E\u793A\u5728\u8FD9\u91CC\u3002", inviteTotalIncome: "\u7D2F\u8BA1\u6536\u76CA", claimInviteReward: "\u9886\u53D6\u5956\u52B1", noClaimableInviteReward: "\u6682\u65E0\u53EF\u9886\u5956\u52B1", inviteRewardReady: "\u53EF\u9886\u53D6 {amount}", inviteBindSuccess: "\u7ED1\u5B9A\u6210\u529F", inviteClaimSuccess: "\u9886\u53D6\u6210\u529F\uFF0C\u5956\u52B1\u5DF2\u5165\u8D26\u3002", invitedUsers: "\u6211\u7684\u9080\u8BF7", inviteRuleBrief: "\u597D\u53CB\u5B8C\u6210 {battles} \u573A\uFF0C\u4F60\u53EF\u9886 {amount}\u3002", invalidRechargeAmount: "\u8BF7\u8F93\u5165\u6B63\u786E\u7684\u5145\u503C\u6570\u91CF", piPaymentInBrowser: "\u8BF7\u5728 Pi Browser \u4E2D\u5B8C\u6210 Pi \u652F\u4ED8", orderCreated: "\u8BA2\u5355 {orderNo} \u5DF2\u521B\u5EFA\uFF0C\u6B63\u5728\u6253\u5F00 Pi \u652F\u4ED8...", approvingPayment: "\u6B63\u5728\u786E\u8BA4\u652F\u4ED8\u8BA2\u5355...", completingPayment: "\u6B63\u5728\u5B8C\u6210\u94FE\u4E0A\u652F\u4ED8\u5E76\u5165\u8D26...", rechargeSuccess: "\u5145\u503C\u6210\u529F\uFF0C\u94B1\u5305\u4F59\u989D\u5DF2\u66F4\u65B0\u3002", paymentCanceled: "\u4F60\u5DF2\u53D6\u6D88\u672C\u6B21\u652F\u4ED8\uFF0C\u94B1\u5305\u4F59\u989D\u672A\u53D8\u5316\u3002", piPaymentFailed: "Pi \u652F\u4ED8\u5931\u8D25\uFF1A{message}", matchingDefault: "\u6B63\u5728\u5339\u914D\u5BF9\u624B...", canceling: "\u53D6\u6D88\u4E2D...", cancelMatch: "\u53D6\u6D88\u5339\u914D", cancelAfter: "{seconds}s \u540E\u53EF\u53D6\u6D88", canCancelHint: "\u53EF\u53D6\u6D88\uFF0C\u5339\u914D\u6210\u529F\u540E\u4E0D\u53EF\u53D6\u6D88\u3002", lightningMatching: "\u95EA\u7535\u5339\u914D", matching: "\u5339\u914D\u4E2D", waitedSeconds: "\u5DF2\u7B49\u5F85 {seconds} \u79D2", matchingShort: "\u6B63\u5728\u5339\u914D", matchFailed: "\u5339\u914D\u5931\u8D25\uFF0C\u8BF7\u8FD4\u56DE\u540E\u91CD\u8BD5", matchNetworkRetrying: "\u7F51\u7EDC\u6CE2\u52A8\uFF0C\u6B63\u5728\u6062\u590D\u5339\u914D...", waitBeforeCancel: "\u8BF7\u518D\u7B49 {seconds} \u79D2\u540E\u53D6\u6D88", cancelingStatus: "\u6B63\u5728\u53D6\u6D88...", self: "\u4F60", pressureFinish: "{player}\u7684\u538B\u529B\u6761\u5DF2\u6EE1\uFF0C\u672C\u5C40\u63D0\u524D\u7ED3\u675F", timeoutFinish: "\u5BF9\u6218\u65F6\u95F4\u7ED3\u675F\uFF0C\u6309\u5206\u6570\u5224\u5B9A\u80DC\u8D1F", readyTimeoutFinish: "\u5BF9\u624B\u672A\u786E\u8BA4\uFF0C\u5DF2\u81EA\u52A8\u9000\u56DE\u5165\u573A\u8D39", settledFinish: "\u672C\u5C40\u5DF2\u5B8C\u6210\u7ED3\u7B97", emptyLog: "\u6682\u65E0\u6218\u62A5", cleared: "\u6D88\u9664", chain: "\u8FDE\u9501", attack: "\u653B\u51FB", comboFeedback: "{chain}\u8FDE\u51FB +{score}", readyStart: "\u51C6\u5907\u5F00\u6218", startAfterCountdown: "\u5012\u8BA1\u65F6\u7ED3\u675F\u540E\u5F00\u6218", observeBoard: "\u73B0\u5728\u5148\u89C2\u5BDF\u68CB\u76D8\uFF0C\u6682\u65F6\u4E0D\u80FD\u4EA4\u6362", draw: "\u5E73\u5C40", win: "\u80DC\u5229", lose: "\u5931\u8D25", battleSettlement: "\u5BF9\u5C40\u7ED3\u7B97", yourScore: "\u4F60\u7684\u5206\u6570", opponentScore: "\u5BF9\u624B\u5206\u6570", playAgain: "\u518D\u6765\u4E00\u5C40", drawNoStar: "\u5E73\u5C40\u4E0D\u5347\u661F\u4E0D\u6263\u661F", notRankedBattle: "\u672C\u5C40\u4E0D\u8BA1\u5165\u6B63\u5F0F\u6BB5\u4F4D", botPracticeNotRanked: "\u673A\u5668\u4EBA\u5C40\u4E0D\u8BA1\u6BB5\uFF1B\u771F\u4EBA\u5FEB\u901F\u6700\u9AD8 {rank}", modeAtCap: "{mode}\u5DF2\u5C01\u9876\uFF0C\u8BF7\u6362\u66F4\u9AD8\u573A", rankUpEstimate: "\u6BB5\u4F4D\u9884\u8BA1 +{stars} \u661F", bronzeNoLose: "\u9752\u94DC\u4FDD\u62A4\uFF0C\u672C\u5C40\u4E0D\u6263\u661F", rankDownEstimate: "\u6BB5\u4F4D\u9884\u8BA1 -{stars} \u661F", enteringRoom: "\u6B63\u5728\u8FDB\u5165\u5B9E\u65F6\u623F\u95F4...", missingBattlePlayers: "\u5BF9\u5C40\u73A9\u5BB6\u4FE1\u606F\u7F3A\u5931", staleRoomMatched: "\u623F\u95F4\u5DF2\u7ED3\u675F\uFF0C\u8BF7\u91CD\u65B0\u5339\u914D\u3002", room: "\u623F\u95F4", pressureCombo: "\u538B {pressure} / \u8FDE {combo}", pressureComboStatus: "{status} \xB7 \u538B\u529B {pressure}/30 \xB7 \u8FDE\u51FB {combo}", pressureSafe: "\u5F88\u7A33", pressureWarning: "\u6CE8\u610F", pressureDanger: "\u5371\u9669", pressureCritical: "\u5FEB\u6EE1\u4E86", battleEnded: "\u672C\u5C40\u5DF2\u7ED3\u675F", tapToSwap: "\u6ED1\u52A8\u65B9\u5757\u4E09\u6D88\u5F97\u5206", battleHint: "\u4E09\u6D88\u5F97\u5206\uFF0C\u8FDE\u51FB\u538B\u5236\u5BF9\u624B\u3002", battleLog: "\u6218\u62A5", recentSteps: "\u6700\u8FD12\u6B65", restartingMode: "\u6B63\u5728\u91CD\u65B0\u8FDB\u5165{mode}...", resultMissing: "\u7ED3\u7B97\u6570\u636E\u7F3A\u5931", winnerLine: "\u80DC\u8005\uFF1A{name} \uFF5C \u5206\u6570\uFF1A{score}", loserLine: "\u8D25\u8005\uFF1A{name} \uFF5C \u5206\u6570\uFF1A{score}", backHome: "\u8FD4\u56DE\u9996\u9875", roomGoneAlert: "\u623F\u95F4\u5DF2\u7ED3\u675F\uFF0C\u8BF7\u91CD\u65B0\u5339\u914D\u3002", operationFailed: "\u64CD\u4F5C\u5931\u8D25", realtimeError: "\u8FDE\u63A5\u5F02\u5E38\uFF0C\u8BF7\u91CD\u8BD5", reconnecting: "\u5DF2\u65AD\u5F00\uFF0C\u6B63\u5728\u91CD\u8FDE...", realtimeConnectingSlow: "\u8FDE\u63A5\u8F83\u6162\uFF0C\u6B63\u5728\u91CD\u8BD5...", realtimeRetryFailed: "\u8FDE\u63A5\u5931\u8D25\uFF0C\u8BF7\u56DE\u5927\u5385\u91CD\u8BD5\u3002", networkOnline: "\u6D41\u7545", networkSlow: "\u7F51\u7EDC\u504F\u6162", networkReconnecting: "\u91CD\u8FDE\u4E2D", networkOffline: "\u5DF2\u65AD\u5F00", networkConnecting: "\u8FDE\u63A5\u4E2D", matchedVsTitle: "\u5339\u914D\u6210\u529F", matchedVsSubtitle: "\u53CC\u65B9\u5C31\u4F4D\uFF0C\u51C6\u5907\u5F00\u6218", settlementRewardTitle: "\u672C\u5C40\u6536\u76CA", settlementRankTitle: "\u6BB5\u4F4D\u53D8\u5316", settlementWinnerReward: "\u80DC\u65B9\u5956\u52B1 {amount} Pi", settlementEntryFee: "\u5165\u573A\u8D39 {amount} Pi", settlementNoReward: "\u672C\u5C40\u65E0 Pi \u5956\u52B1", settlementScoreGapTitle: "\u5206\u5DEE", settlementScoreGap: "{gap} \u5206", settlementSafeTitle: "\u7ED3\u7B97\u65B9\u5F0F", settlementSafeLabel: "\u81EA\u52A8\u5165\u8D26", newbieTipTitle: "\u65B0\u624B\u653E\u5FC3\u73A9", newbieTipText: "\u5148\u7EC3\u5FEB\u901F\u573A\uFF0C\u987A\u624B\u540E\u518D\u8FDB\u5C0F\u5BCC\u8C6A\u573A\u3002", paidTrustTitle: "\u8D39\u7528\u660E\u7EC6", paidEntryLabel: "\u5165\u573A", paidRewardLabel: "\u80DC\u5956", platformFeeLabel: "\u670D\u52A1\u8D39", realPlayerOnly: "\u771F\u4EBA\u5339\u914D", paidModeRecommend: "\u63A8\u8350", modeEconomyFree: "\u514D\u8D39", modeEconomyTicket: "{fee} \u5165\u573A \xB7 \u80DC\u5956 {reward}", modeEconomyRich: "{fee} \u5165\u573A \xB7 \u80DC\u5956 {reward}", winUpsell: "\u624B\u611F\u6B63\u70ED\uFF0C\u53EF\u4EE5\u53BB\u5C0F\u5BCC\u8C6A\u573A\u51B2\u4E00\u628A\u5956\u52B1\u3002", loseRetryHint: "\u8FD9\u5C40\u5148\u7EC3\u624B\u611F\uFF0C\u4E0B\u4E00\u5C40\u591A\u627E\u5E95\u90E8\u8FDE\u9501\u3002", closeLossHint: "\u53EA\u5DEE {gap} \u5206\uFF0C\u5DF2\u7ECF\u5F88\u63A5\u8FD1\u4E86\u3002", tryPaidMode: "\u6311\u6218\u5C0F\u5BCC\u8C6A\u573A", practiceAgain: "\u7EE7\u7EED\u7EC3\u624B", performanceWarning: "\u8BBE\u5907\u8D1F\u8F7D\u504F\u9AD8\uFF0C\u5DF2\u81EA\u52A8\u964D\u4F4E\u52A8\u753B\u5F3A\u5EA6", visualEffectTitle: "\u753B\u9762\u6548\u679C", visualEffectSummary: "\u5747\u8861\u7A33\u5B9A\uFF0C\u70AB\u5F69\u66F4\u723D\u3002", visualEffectBalanced: "\u5747\u8861", visualEffectHigh: "\u70AB\u5F69", visualEffectLocked: "\u5F53\u524D\u7531\u540E\u53F0\u7EDF\u4E00\u63A7\u5236", visualEffectSaved: "\u5DF2\u5207\u6362\u753B\u9762\u6548\u679C", visualEffectOpen: "\u753B\u9762", visualEffectSheetTitle: "\u753B\u9762\u6548\u679C", waitingBothReady: "\u7B49\u5F85\u53CC\u65B9\u786E\u8BA4", readyConfirmTitle: "\u786E\u8BA4\u51C6\u5907", readyConfirmSubtitle: "\u53CC\u65B9\u51C6\u5907\u540E\u5F00\u59CB\u5012\u8BA1\u65F6\u3002", readySelf: "\u4F60\u5DF2\u51C6\u5907", readyOpponent: "\u5BF9\u624B\u5DF2\u51C6\u5907", readySelfPending: "\u4F60\u672A\u51C6\u5907", readyOpponentPending: "\u7B49\u5F85\u5BF9\u624B", readyButton: "\u6211\u5DF2\u51C6\u5907", readyWaitingOpponent: "\u5DF2\u51C6\u5907\uFF0C\u7B49\u5BF9\u624B...", readyAutoStartHint: "{seconds}s \u540E\u81EA\u52A8\u5F00\u6218", readyTimeoutHint: "{seconds}s \u540E\u672A\u786E\u8BA4\u81EA\u52A8\u9000\u56DE", waitReady: "\u5012\u8BA1\u65F6\u4E2D\uFF0C\u5F00\u6218\u540E\u518D\u4EA4\u6362", waitBothReady: "\u5148\u70B9\u51C6\u5907\uFF0C\u53CC\u65B9\u5C31\u7EEA\u540E\u5F00\u6218", socketNotReady: "\u5B9E\u65F6\u8FDE\u63A5\u672A\u5C31\u7EEA\uFF0C\u8BF7\u7A0D\u540E\u518D\u8BD5", selectNeighbor: "\u8BF7\u9009\u62E9\u76F8\u90BB\u65B9\u5757\u5B8C\u6210\u4EA4\u6362", selectionCanceled: "\u5DF2\u53D6\u6D88\u9009\u62E9", onlyAdjacent: "\u53EA\u80FD\u4EA4\u6362\u4E0A\u4E0B\u5DE6\u53F3\u76F8\u90BB\u65B9\u5757", piSdkMissing: "\u8BF7\u7528 Pi Browser \u6253\u5F00\u3002", piPlayer: "Pi\u73A9\u5BB6", connectingRealtime: "\u6B63\u5728\u5EFA\u7ACB\u5B9E\u65F6\u5BF9\u6218\u8FDE\u63A5...", loginLoading: "\u6B63\u5728\u767B\u5F55 Pi\u95EA\u7535\u6218...", initFailed: "\u521D\u59CB\u5316\u5931\u8D25\uFF1A{message}", roomUnlockHint: "\u8FBE\u5230 {rank} \u89E3\u9501\u5927\u5BCC\u8C6A\u573A\u3002", confirmPaidMode: "\u786E\u8BA4\u8FDB\u5165{mode}\uFF1F", confirmQuickMode: "\u786E\u8BA4\u5FEB\u901F\u5F00\u6218\uFF1F", paidConfirmSummary: "\u5165\u573A {fee} Pi \xB7 \u4F59\u989D {balance} Pi \xB7 \u80DC\u5956 {reward} Pi", quickConfirmSummary: "\u514D\u8D39\u7EC3\u624B\uFF0C\u4E45\u7B49\u8865\u673A\u5668\u4EBA\u3002", ruleSwapShort: "\u771F\u4EBA\u5339\u914D", ruleComboShort: "\u4E09\u6D88\u8FDE\u51FB\u538B\u5236\u5BF9\u624B", rankedModeText: "\u8BA1\u6BB5\u4F4D\uFF0C{cap}", unrankedModeText: "{mode}\u4E0D\u8BA1\u5165\u6B63\u5F0F\u6BB5\u4F4D", weeklyBattleOn: "\u8BA1\u5165\u5468\u699C", weeklyBattleOff: "\u4E0D\u8BA1\u5468\u699C", winLoseStars: "\u80DC\u5229 +{win} \u661F\uFF0C\u5931\u8D25 -{lose} \u661F", insufficientBalance: "\u4F59\u989D\u4E0D\u8DB3\uFF0C\u8BF7\u5148\u5145\u503C\u3002", richRankLocked: "\u8FBE\u5230 {rank} \u540E\u89E3\u9501\u5927\u5BCC\u8C6A\u573A\u3002", confirmPaidStart: "\u786E\u8BA4\u5E76\u5339\u914D", startMatching: "\u5F00\u59CB\u5339\u914D" }, en: {}, vi: {}, ko: {}, ja: {} };
-Y.en = { ...Y["zh-CN"], unknownError: "Unknown error", requestFailed: "Request failed", requestTimeout: "Network timeout. Please retry later.", networkRequestFailed: "Network failed. Please retry later.", inProgress: "In progress", all: "All", historyEyebrow: "Battle Records", battleHistory: "Battle History", totalMatches: "{total} matches", historyPageInfo: "Page {page}/{totalPages} \xB7 {total} matches", emptyHistory: "No battles yet. Start one first.", unknownPlayer: "Unknown player", bot: "Bot", opponent: "Opponent", rewardPlus: "Reward +{amount}", drawRefund: "Draw refund {amount}", ticketFee: "Ticket {amount}", freeMatch: "Free battle", score: "Score", prevPage: "Prev", nextPage: "Next", totalBattleCount: "Battles", pageWins: "Page Wins", pageWinRate: "Win Rate", pageReward: "Page Rewards", dailyChest: "Daily Chest", rankChest: "Rank Chest", claimedToday: "Claimed", claimPi: "Claim {amount} Pi", notReached: "Not ready", goPlay: "Play now", inviteTitle: "Invite Friends", bindInviter: "Bind Inviter", inviterPiUsername: "Inviter Pi username", bindNow: "Bind Now", myInviteLevel: "My Level", inviteNoLevel: "Not qualified", inviteCount: "{count} invited", paidCommission: "Paid Commission", inviteCommissionRate: "{rate}% commission", inviteCtaTitle: "Invite & Earn", inviteCtaSubtitle: "Friends play paid battles, you earn", inviteCtaRate: "Up to {rate}%", inviteCtaExample: "Earn {amount}/battle", inviteIncomeTitle: "Earn when friends play", inviteIncomeSummary: "Friends play paid battles. You earn by level, paid into balance.", inviteIncomeFormula: "Formula: friend entry fee x level rate = your commission", inviteLevelRatesTitle: "Levels", inviteExamplesTitle: "Examples", inviteExampleSmall: "{amount}/battle", inviteExampleRich: "{amount}/battle", inviteTwoFriendsExample: "If 2 friends each play 5 Big Rich battles daily, estimated {amount}/day.", inviteOnceReward: "Friend completes {battles} battles, claim {amount}", inviteUpgradeHint: "Balance or invite count unlocks higher commission.", inviteLevelCondition: "Balance {balance}+ or invite {count}", inviteRelationEyebrow: "Relation", inviteRelationTitle: "Invite Relations", inviteParent: "My Inviter", inviteUnbound: "Not bound", inviteUnboundHint: "Enter inviter Pi username.", inviteNoChildren: "No invited friends yet. Invite one to play paid battles.", inviteIncomeEyebrow: "Income", inviteRewardHistoryTitle: "Invite Income", inviteNoIncomeHistory: "No income yet. It appears after friends complete tasks or paid battles.", inviteTotalIncome: "Total Income", claimInviteReward: "Claim Reward", noClaimableInviteReward: "No reward yet", inviteRewardReady: "Claim {amount}", inviteBindSuccess: "Bound successfully", inviteClaimSuccess: "Claimed. Reward added to balance.", invitedUsers: "My Invites", inviteRuleBrief: "Friend completes {battles} battles, you claim {amount}.", searchInviter: "Search Inviter", inviterNotFound: "Inviter not found. Check the Pi username.", inviteBindFailed: "Bind failed", confirmUserFirst: "Search and confirm the user first.", confirmInviterFirst: "Search and confirm the inviter first.", selectedUserChanged: "Username changed. Search again to confirm.", currentRank: "Current Rank", rankRuleHint: "View stars, caps, and rewards.", starProgress: "{stars}/{starsPerRank} stars \xB7 win {left} more to rank up", todayChestProgress: "Chest {done}/{required} \xB7 {amount} Pi", chestRuleText: "Play {required} battles to claim {amount} Pi.", rules: "Rules", futureRewards: "Next Rewards", rankRewardWall: "Rank Reward Wall", rankRewardHint: "Higher ranks unlock higher daily chest rewards.", expandAll: "Expand all", collapse: "Collapse", recentRecords: "Recent {count}", walletLedgerPager: "{page}/{totalPages}", playerRank: "Player Rank", loadingDefault: "Loading...", errorDefault: "Page failed to load. Please try again.", reloadPage: "Reload", missingHome: "Home data missing", heroFallback: "Real-time mobile match-3 battle game", weeklyReward: "Weekly Rewards", weeklyTitle: "Weekly Push", weeklySummary: "{modes} count. Paid every Monday.", myWeeklyRank: "My Weekly Rank", weeklyRecord: "Weekly Record", expectedReward: "Estimated Reward", notRanked: "Not ranked", rankHow: "How to Rank", winPaidMatch: "Win paid battles", emptyLeaderboard: "No paid ranked records this week. Win one Small/Big Rich battle to rank.", leaderboardPager: "{page} / {totalPages} \xB7 {total} players", gotIt: "Got it", rewardNotConfigured: "Weekly rewards are not configured yet", rewardTiersAria: "Weekly reward tiers", rankSingle: "No.{rank}", rankRange: "No.{from}-{to}", championPool: "Champion Pool", leaderboardReward: "Rank Reward", listedReward: "Listed Reward", champion: "Champion", runnerUp: "Runner-up", thirdPlace: "Third", rankNo: "No.{rank}", weeklyMetaReward: "{stars} stars \xB7 {wins} wins \xB7 {amount}", rankMeta: "{stars} stars \xB7 {wins} wins", matchCount: "{count} battles", winStreakCount: "{count} streak", beginnerTitle: "Learn in 15 Seconds", guideStep1: "Tap two adjacent tiles.", guideStep2: "Match 3 same colors.", guideStep3: "Combos pressure opponents.", guideStep4: "High score wins in 90s.", highScoreTitle: "How to Score Higher", basicRules: "Basic Rules", basicRulesText: "Only adjacent tiles can swap.", scoreRules: "Scoring", scoreRulesText: "More clears and chains mean more score.", attackPressure: "Attack Pressure", attackPressureText: "Combos and big clears add pressure.", winRule: "Win Rules", winRuleText: "High score wins; full pressure loses early.", battleTipsTitle: "Battle Tips", battleTipsText: "Look for 4-matches and bottom swaps.", battleTypes: "Battle Types", battleTypesText: "Quick is free. Rich rooms win Pi.", rankRules: "Rank Rules", starUp: "Stars", protection: "Protection", winStreak: "Streak", validModes: "Valid Modes", quickCap: "Quick Cap", richCap: "Rich Cap", weeklyBonus: "Weekly Bonus", richEntry: "Big Rich", note: "Note", starRuleText: "Win +{win} stars, lose -{lose} stars.", bronzeProtectText: "Bronze losses do not deduct stars.", noProtectText: "All ranks lose stars by rules.", streakEnabledText: "Win {required} in a row to gain +{bonus} extra stars.", streakDisabledText: "Win-streak bonus is disabled.", validModesText: "{modes} count. {count} daily battles for chest.", quickCapText: "Quick caps at {rank}.", ticketCapText: "Small Rich caps at {rank}; higher needs Big Rich.", weeklyBonusText: "{modes} rewards every Monday.", richEntryText: "Minimum rank required: {rank}.", ruleSummaryFallback: "Quick for practice. Paid rooms for rank.", rankCurrentTitle: "Current Rank: {rank}", missingUser: "User profile missing", myRecord: "My Record", playerProfile: "Player Profile", piUsername: "Pi Username", edit: "Edit", availableBalance: "Available", lockedBalance: "Locked", totalRecharge: "Recharged", totalWithdraw: "Withdrawn", walletLedger: "Wallet Details", emptyWalletLedger: "No wallet records", ledgerBalanceAfter: "Balance", rechargeWallet: "Recharge", applyWithdraw: "Withdraw", profileSetupTitle: "Set Your Battle Card", profileEditTitle: "Edit Profile", profileSetupSummary: "Pick avatar and nickname, then battle.", profileEditSummary: "Nickname and avatar show in battle.", walletOverview: "Wallet Overview", nicknameLabel: "Nickname", nicknameRule: "{min}-{max} chars. {pattern}.", nicknamePatternFallback: "Letters, numbers, and Chinese are allowed. No sensitive words.", chooseAvatar: "Choose Avatar", saveEnterLobby: "Save and Enter", saveProfile: "Save Profile", backLobby: "Back to Lobby", savingProfile: "Saving profile...", saveSuccess: "Saved", sandboxDebug: "Sandbox", mainnet: "Mainnet", wallet: "Wallet", rechargeSummary: "{mode} \xB7 Enter Pi amount. Auto credited.", rechargeAmount: "Amount", createRechargeOrder: "Create Order", creatingOrder: "Creating order...", createOrderFailed: "Failed to create order", paymentOrderConflict: "Payment order was refreshed. Please create a new order.", rechargeBonusPreview: "Bonus {bonus}. Credit {total}.", rechargeNoBonusPreview: "Credit {total}.", rechargePresetTitle: "Recommended", rechargePresetCharge: "Pay {amount}", rechargePresetBonus: "Bonus {bonus}", rechargePresetCredit: "Credit {total}", withdrawTitle: "Withdraw", withdrawSummary: "Available {balance} Pi. Receive {payout} Pi.", withdrawAmount: "Amount", walletAddress: "Wallet Address", walletAddressPlaceholder: "Mainnet address starting with G", walletCheckOk: "Wallet address looks good", walletCheckInvalid: "Enter a valid Pi mainnet wallet address", withdrawFeePreview: "Fee {fee} Pi. Receive {payout} Pi.", savedWallets: "Saved wallets", useSavedWallet: "Use", savedWalletHint: "Saved after successful submission", submitWithdraw: "Submit Withdrawal", submittingWithdraw: "Submitting withdrawal...", withdrawSubmitted: "Withdrawal submitted.", withdrawPaidSuccess: "Withdrawal paid. Received {payout} Pi.", withdrawQueuedSuccess: "Auto withdrawal is processing. Please wait.", withdrawReviewSuccess: "Withdrawal submitted for review.", withdrawAutoFailed: "Auto withdrawal is processing. Please wait.", withdrawFailed: "Withdrawal failed", invalidRechargeAmount: "Please enter a valid recharge amount", piPaymentInBrowser: "Please complete Pi payment in Pi Browser", orderCreated: "Order {orderNo} created. Opening Pi payment...", approvingPayment: "Approving payment...", completingPayment: "Completing on-chain payment...", rechargeSuccess: "Recharge successful. Wallet updated.", paymentCanceled: "Payment canceled. Wallet unchanged.", piPaymentFailed: "Pi payment failed: {message}", matchingDefault: "Matching opponent...", canceling: "Canceling...", cancelMatch: "Cancel Match", cancelAfter: "Cancel in {seconds}s", canCancelHint: "Cancelable now. Cannot cancel after matched.", lightningMatching: "Blitz Matching", matching: "Matching", waitedSeconds: "Waited {seconds}s", matchingShort: "Matching", matchFailed: "Match failed. Please go back and retry.", matchNetworkRetrying: "Network is unstable. Restoring match...", waitBeforeCancel: "Please wait {seconds}s before canceling", cancelingStatus: "Canceling...", self: "You", pressureFinish: "{player}'s pressure is full. Battle ended early.", timeoutFinish: "Time is up. Winner decided by score.", readyTimeoutFinish: "Opponent was not ready. Entry refunded.", settledFinish: "Battle settled.", emptyLog: "No battle log", cleared: "Clear", chain: "Chain", attack: "Attack", comboFeedback: "{chain} Combo +{score}", readyStart: "Ready", startAfterCountdown: "Battle starts after countdown", observeBoard: "Observe the board. Swaps are locked now.", draw: "Draw", win: "Victory", lose: "Defeat", battleSettlement: "Battle Result", yourScore: "Your Score", opponentScore: "Opponent Score", playAgain: "Play Again", drawNoStar: "Draw: no star changes", notRankedBattle: "This battle does not affect rank", botPracticeNotRanked: "Bots do not rank. Real Quick caps at {rank}.", modeAtCap: "{mode} capped. Switch higher.", rankUpEstimate: "Rank estimate +{stars} stars", bronzeNoLose: "Bronze protection: no star loss", rankDownEstimate: "Rank estimate -{stars} stars", enteringRoom: "Entering realtime room...", missingBattlePlayers: "Battle players missing", staleRoomMatched: "Room ended. Match again.", room: "Room", pressureCombo: "P {pressure} / C {combo}", pressureComboStatus: "{status} \xB7 Pressure {pressure}/30 \xB7 Combo {combo}", pressureSafe: "Stable", pressureWarning: "Watch it", pressureDanger: "Danger", pressureCritical: "Almost full", battleEnded: "Battle Ended", tapToSwap: "Swipe/tap to swap", battleHint: "Match 3 to score. Chains pressure your opponent.", battleLog: "Log", recentSteps: "Last 2", restartingMode: "Re-entering {mode}...", resultMissing: "Result data missing", winnerLine: "Winner: {name} | Score: {score}", loserLine: "Loser: {name} | Score: {score}", backHome: "Back Home", roomGoneAlert: "Room ended. Match again.", operationFailed: "Operation failed", realtimeError: "Connection error. Retry.", reconnecting: "Disconnected. Reconnecting...", realtimeConnectingSlow: "Slow connection. Retrying...", realtimeRetryFailed: "Connection failed. Return and retry.", networkOnline: "Realtime OK", networkSlow: "Network slow", networkReconnecting: "Reconnecting", networkOffline: "Offline", networkConnecting: "Connecting", matchedVsTitle: "Matched", matchedVsSubtitle: "Both players ready", settlementRewardTitle: "Reward", settlementRankTitle: "Rank Change", settlementWinnerReward: "Winner reward {amount} Pi", settlementEntryFee: "Entry fee {amount} Pi", settlementNoReward: "No Pi reward", settlementScoreGapTitle: "Score Gap", settlementScoreGap: "{gap} pts", settlementSafeTitle: "Settlement", settlementSafeLabel: "Auto wallet", newbieTipTitle: "New player friendly", newbieTipText: "Practice first. Enter paid mode when ready.", paidTrustTitle: "Fee Details", paidEntryLabel: "Entry", paidRewardLabel: "Win", platformFeeLabel: "Fee", realPlayerOnly: "Real-player priority", paidModeRecommend: "Recommended", modeEconomyFree: "Free", modeEconomyTicket: "{fee} entry \xB7 Win {reward}", modeEconomyRich: "{fee} entry \xB7 Win {reward}", winUpsell: "You are hot. Try a paid battle for rewards.", loseRetryHint: "Practice one more and look for bottom combos.", closeLossHint: "Only {gap} pts away. Very close.", tryPaidMode: "Try Ticket Battle", practiceAgain: "Practice Again", performanceWarning: "Device load is high. Effects reduced.", visualEffectTitle: "Visual Effects", visualEffectSummary: "Balanced is stable. High feels richer.", visualEffectBalanced: "Balanced", visualEffectHigh: "High", visualEffectLocked: "Controlled by platform", visualEffectSaved: "Effects updated", visualEffectOpen: "Effects", visualEffectSheetTitle: "Visual Effects", waitingBothReady: "Waiting for both players", readyConfirmTitle: "Ready Check", readyConfirmSubtitle: "Countdown starts when both are ready.", readySelf: "You ready", readyOpponent: "Opponent ready", readySelfPending: "You not ready", readyOpponentPending: "Waiting opponent", readyButton: "Ready", readyWaitingOpponent: "Ready. Waiting...", readyAutoStartHint: "Auto starts in {seconds}s", readyTimeoutHint: "Refunds in {seconds}s", waitReady: "Countdown. Swap after start.", waitBothReady: "Tap ready first.", socketNotReady: "Realtime connection not ready. Try later.", selectNeighbor: "Select a neighboring tile to swap.", selectionCanceled: "Selection canceled", onlyAdjacent: "Only up/down/left/right adjacent tiles can swap.", piSdkMissing: "Open with Pi Browser.", piPlayer: "Pi Player", connectingRealtime: "Connecting realtime battle...", loginLoading: "Logging in to Blitz of Pi...", initFailed: "Initialization failed: {message}", roomUnlockHint: "Big Rich unlocks at {rank}.", confirmPaidMode: "Enter {mode}?", confirmQuickMode: "Start Quick Battle?", paidConfirmSummary: "Entry {fee} Pi \xB7 Balance {balance} Pi \xB7 Win {reward} Pi", quickConfirmSummary: "Free practice. Bots fill long waits.", ruleSwapShort: "Real-player priority", ruleComboShort: "Combos pressure opponent", rankedModeText: "Ranked, {cap}", unrankedModeText: "{mode} does not affect rank", weeklyBattleOn: "Weekly counted", weeklyBattleOff: "No weekly", winLoseStars: "Win +{win} stars, lose -{lose} stars", insufficientBalance: "Insufficient balance. Recharge first.", richRankLocked: "Big Rich unlocks at {rank}.", confirmPaidStart: "Confirm Match", startMatching: "Start Matching" };
-Y.vi = { ...Y.en, languageTitle: "Ch\u1ECDn ng\xF4n ng\u1EEF", home: "Trang ch\u1EE7", battle: "\u0110\u1EA5u", mine: "C\u1EE7a t\xF4i", quickBattle: "\u0110\u1EA5u nhanh", ticketBattle: "Ph\xF2ng Ti\u1EC3u ph\xFA", richBattle: "Ph\xF2ng \u0110\u1EA1i ph\xFA", gameTips: "M\u1EB9o ch\u01A1i", rankBoard: "B\u1EA3ng h\u1EA1ng", wallet: "V\xED", rechargeWallet: "N\u1EA1p v\xED", applyWithdraw: "R\xFAt Pi", matching: "\u0110ang gh\xE9p", win: "Th\u1EAFng", lose: "Thua", draw: "H\xF2a", backLobby: "V\u1EC1 s\u1EA3nh", backHome: "V\u1EC1 trang ch\u1EE7", gotIt: "\u0110\xE3 hi\u1EC3u", cancelMatch: "H\u1EE7y gh\xE9p", playAgain: "Ch\u01A1i l\u1EA1i", playerProfile: "H\u1ED3 s\u01A1", battleHistory: "L\u1ECBch s\u1EED \u0111\u1EA5u", rankRules: "Lu\u1EADt h\u1EA1ng", score: "T\u1EF7 s\u1ED1", readyStart: "S\u1EB5n s\xE0ng", waitingBothReady: "Ch\u1EDD hai b\xEAn s\u1EB5n s\xE0ng", readyConfirmTitle: "X\xE1c nh\u1EADn s\u1EB5n s\xE0ng", readyConfirmSubtitle: "\u0110\u1EBFm ng\u01B0\u1EE3c b\u1EAFt \u0111\u1EA7u khi c\u1EA3 hai ng\u01B0\u1EDDi ch\u01A1i x\xE1c nh\u1EADn.", readySelf: "B\u1EA1n \u0111\xE3 s\u1EB5n s\xE0ng", readyOpponent: "\u0110\u1ED1i th\u1EE7 \u0111\xE3 s\u1EB5n s\xE0ng", readySelfPending: "B\u1EA1n ch\u01B0a s\u1EB5n s\xE0ng", readyOpponentPending: "Ch\u1EDD \u0111\u1ED1i th\u1EE7", readyButton: "T\xF4i s\u1EB5n s\xE0ng", readyWaitingOpponent: "\u0110\xE3 s\u1EB5n s\xE0ng, \u0111ang ch\u1EDD \u0111\u1ED1i th\u1EE7...", waitBothReady: "H\xE3y x\xE1c nh\u1EADn s\u1EB5n s\xE0ng tr\u01B0\u1EDBc.", startAfterCountdown: "B\u1EAFt \u0111\u1EA7u sau \u0111\u1EBFm ng\u01B0\u1EE3c", notRankedBattle: "Tr\u1EADn n\xE0y kh\xF4ng \u1EA3nh h\u01B0\u1EDFng h\u1EA1ng", botPracticeNotRanked: "Tr\u1EADn bot kh\xF4ng t\xEDnh h\u1EA1ng. \u0110\u1EA5u nhanh ng\u01B0\u1EDDi th\u1EADt c\xF3 th\u1EC3 l\xEAn t\u1EDBi {rank}.", validModesText: "{modes} t\xEDnh h\u1EA1ng. M\u1ED7i ng\xE0y \u0111\u1EE7 {count} tr\u1EADn h\u1EE3p l\u1EC7 c\xF3 th\u1EC3 nh\u1EADn r\u01B0\u01A1ng.", quickCapText: "N\u1EBFu \u0110\u1EA5u nhanh \u0111\u01B0\u1EE3c b\u1EADt t\xEDnh h\u1EA1ng, ch\u1EC9 c\xF3 th\u1EC3 l\xEAn t\u1EDBi {rank}; sau \u0111\xF3 c\u1EA7n v\xE0o ph\xF2ng tr\u1EA3 ph\xED.", ticketCapText: "Ph\xF2ng Ti\u1EC3u ph\xFA c\xF3 th\u1EC3 l\xEAn t\u1EDBi {rank}; h\u1EA1ng cao h\u01A1n c\u1EA7n Ph\xF2ng \u0110\u1EA1i ph\xFA.", weeklyBonusText: "Th\u1EE9 Hai h\xE0ng tu\u1EA7n, h\u1EC7 th\u1ED1ng ph\xE1t th\u01B0\u1EDFng theo sao r\xF2ng, th\u1EAFng v\xE0 h\u1EA1ng c\u1EE7a {modes}.", richEntryText: "Y\xEAu c\u1EA7u h\u1EA1ng t\u1ED1i thi\u1EC3u: {rank}.", ruleSummaryFallback: "\u0110\u1EA5u nhanh ng\u01B0\u1EDDi th\u1EADt c\xF3 th\u1EC3 l\xEAn B\u1EA1c; ph\xF2ng tr\u1EA3 ph\xED d\xF9ng \u0111\u1EC3 leo h\u1EA1ng cao h\u01A1n.", expandAll: "M\u1EDF t\u1EA5t c\u1EA3", collapse: "Thu g\u1ECDn", recentRecords: "{count} m\u1EE5c g\u1EA7n nh\u1EA5t", walletLedgerPager: "{page}/{totalPages}", playerRank: "H\u1EA1ng ng\u01B0\u1EDDi ch\u01A1i", paymentOrderConflict: "\u0110\u01A1n n\u1EA1p \u0111\xE3 \u0111\u01B0\u1EE3c l\xE0m m\u1EDBi. Vui l\xF2ng t\u1EA1o \u0111\u01A1n m\u1EDBi." };
-Y.ko = { ...Y.en, languageTitle: "\uC5B8\uC5B4 \uC120\uD0DD", home: "\uD648", battle: "\uB300\uC804", mine: "\uB0B4 \uC815\uBCF4", quickBattle: "\uBE60\uB978 \uB300\uC804", ticketBattle: "\uC2A4\uBAB0 \uB9AC\uCE58", richBattle: "\uBE45 \uB9AC\uCE58", gameTips: "\uD50C\uB808\uC774 \uD301", rankBoard: "\uB7AD\uD0B9", wallet: "\uC9C0\uAC11", rechargeWallet: "\uCDA9\uC804", applyWithdraw: "\uCD9C\uAE08", matching: "\uB9E4\uCE6D \uC911", win: "\uC2B9\uB9AC", lose: "\uD328\uBC30", draw: "\uBB34\uC2B9\uBD80", backLobby: "\uB85C\uBE44\uB85C", backHome: "\uD648\uC73C\uB85C", gotIt: "\uD655\uC778", cancelMatch: "\uB9E4\uCE6D \uCDE8\uC18C", playAgain: "\uB2E4\uC2DC \uD558\uAE30", playerProfile: "\uD504\uB85C\uD544", battleHistory: "\uB300\uC804 \uAE30\uB85D", rankRules: "\uB7AD\uD06C \uADDC\uCE59", score: "\uC2A4\uCF54\uC5B4", readyStart: "\uC900\uBE44", waitingBothReady: "\uC591\uCABD \uC900\uBE44 \uB300\uAE30", readyConfirmTitle: "\uC900\uBE44 \uD655\uC778", readyConfirmSubtitle: "\uB450 \uD50C\uB808\uC774\uC5B4\uAC00 \uBAA8\uB450 \uD655\uC778\uD558\uBA74 \uCE74\uC6B4\uD2B8\uB2E4\uC6B4\uC774 \uC2DC\uC791\uB429\uB2C8\uB2E4.", readySelf: "\uB0B4 \uC900\uBE44 \uC644\uB8CC", readyOpponent: "\uC0C1\uB300 \uC900\uBE44 \uC644\uB8CC", readySelfPending: "\uB0B4 \uC900\uBE44 \uC804", readyOpponentPending: "\uC0C1\uB300 \uB300\uAE30", readyButton: "\uC900\uBE44 \uC644\uB8CC", readyWaitingOpponent: "\uC900\uBE44 \uC644\uB8CC, \uC0C1\uB300\uB97C \uAE30\uB2E4\uB9AC\uB294 \uC911...", waitBothReady: "\uBA3C\uC800 \uC900\uBE44\uB97C \uD655\uC778\uD574 \uC8FC\uC138\uC694.", startAfterCountdown: "\uCE74\uC6B4\uD2B8\uB2E4\uC6B4 \uD6C4 \uC2DC\uC791", notRankedBattle: "\uC774\uBC88 \uB300\uC804\uC740 \uB7AD\uD06C\uC5D0 \uBC18\uC601\uB418\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4", botPracticeNotRanked: "\uBD07 \uC5F0\uC2B5\uC804\uC740 \uB7AD\uD06C \uC81C\uC678. \uC2E4\uC81C \uBE60\uB978 \uB300\uC804\uC740 {rank}\uAE4C\uC9C0 \uAC00\uB2A5.", validModesText: "{modes}\uB294 \uB7AD\uD06C\uC5D0 \uBC18\uC601\uB429\uB2C8\uB2E4. \uB9E4\uC77C \uC720\uD6A8 \uB300\uC804 {count}\uD68C \uD6C4 \uBCF4\uC0C1 \uC0C1\uC790\uB97C \uBC1B\uC744 \uC218 \uC788\uC2B5\uB2C8\uB2E4.", quickCapText: "\uBE60\uB978 \uB300\uC804 \uB7AD\uD06C\uAC00 \uCF1C\uC838 \uC788\uC73C\uBA74 {rank}\uAE4C\uC9C0\uB9CC \uC624\uB97C \uC218 \uC788\uC73C\uBA70, \uC774\uD6C4 \uC720\uB8CC \uBC29\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.", ticketCapText: "\uC2A4\uBAB0 \uB9AC\uCE58\uB294 {rank}\uAE4C\uC9C0 \uAC00\uB2A5\uD558\uBA70 \uB354 \uB192\uC740 \uB7AD\uD06C\uB294 \uBE45 \uB9AC\uCE58\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.", weeklyBonusText: "\uB9E4\uC8FC \uC6D4\uC694\uC77C {modes}\uC758 \uC21C \uBCC4, \uC2B9\uC218, \uB7AD\uD06C \uAE30\uC900\uC73C\uB85C \uBCF4\uC0C1\uC774 \uC9C0\uAE09\uB429\uB2C8\uB2E4.", richEntryText: "\uCD5C\uC18C \uD544\uC694 \uB7AD\uD06C: {rank}.", ruleSummaryFallback: "\uC2E4\uC81C \uBE60\uB978 \uB300\uC804\uC740 \uC2E4\uBC84\uAE4C\uC9C0 \uAC00\uB2A5\uD558\uBA70, \uC720\uB8CC \uBC29\uC5D0\uC11C \uB354 \uB192\uC740 \uB7AD\uD06C\uC5D0 \uB3C4\uC804\uD569\uB2C8\uB2E4.", expandAll: "\uC804\uCCB4 \uBCF4\uAE30", collapse: "\uC811\uAE30", recentRecords: "\uCD5C\uADFC {count}\uAC74", walletLedgerPager: "{page}/{totalPages}", playerRank: "\uD50C\uB808\uC774\uC5B4 \uB7AD\uD06C", paymentOrderConflict: "\uCDA9\uC804 \uC8FC\uBB38\uC774 \uC0C8\uB85C\uACE0\uCE68\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uC8FC\uBB38\uC744 \uC0DD\uC131\uD574 \uC8FC\uC138\uC694." };
-Y.ja = { ...Y.en, languageTitle: "\u8A00\u8A9E\u3092\u9078\u629E", home: "\u30DB\u30FC\u30E0", battle: "\u5BFE\u6226", mine: "\u30DE\u30A4", quickBattle: "\u30AF\u30A4\u30C3\u30AF\u5BFE\u6226", ticketBattle: "\u5C0F\u5BCC\u8C6A\u5834", richBattle: "\u5927\u5BCC\u8C6A\u5834", gameTips: "\u904A\u3073\u65B9", rankBoard: "\u30E9\u30F3\u30AF\u699C", wallet: "\u30A6\u30A9\u30EC\u30C3\u30C8", rechargeWallet: "\u30C1\u30E3\u30FC\u30B8", applyWithdraw: "\u51FA\u91D1", matching: "\u30DE\u30C3\u30C1\u4E2D", win: "\u52DD\u5229", lose: "\u6557\u5317", draw: "\u5F15\u304D\u5206\u3051", backLobby: "\u30ED\u30D3\u30FC\u3078", backHome: "\u30DB\u30FC\u30E0\u3078", gotIt: "\u4E86\u89E3", cancelMatch: "\u30AD\u30E3\u30F3\u30BB\u30EB", playAgain: "\u3082\u3046\u4E00\u6226", playerProfile: "\u30D7\u30ED\u30D5\u30A3\u30FC\u30EB", battleHistory: "\u5BFE\u6226\u5C65\u6B74", rankRules: "\u30E9\u30F3\u30AF\u898F\u5247", score: "\u30B9\u30B3\u30A2", readyStart: "\u6E96\u5099", waitingBothReady: "\u4E21\u8005\u306E\u6E96\u5099\u5F85\u3061", readyConfirmTitle: "\u6E96\u5099\u78BA\u8A8D", readyConfirmSubtitle: "\u4E21\u8005\u304C\u78BA\u8A8D\u3059\u308B\u3068\u30AB\u30A6\u30F3\u30C8\u30C0\u30A6\u30F3\u304C\u59CB\u307E\u308A\u307E\u3059\u3002", readySelf: "\u81EA\u5206\u306F\u6E96\u5099\u5B8C\u4E86", readyOpponent: "\u76F8\u624B\u306F\u6E96\u5099\u5B8C\u4E86", readySelfPending: "\u81EA\u5206\u306F\u672A\u6E96\u5099", readyOpponentPending: "\u76F8\u624B\u5F85\u3061", readyButton: "\u6E96\u5099\u5B8C\u4E86", readyWaitingOpponent: "\u6E96\u5099\u5B8C\u4E86\u3001\u76F8\u624B\u3092\u5F85\u3063\u3066\u3044\u307E\u3059...", waitBothReady: "\u5148\u306B\u6E96\u5099\u3092\u78BA\u8A8D\u3057\u3066\u304F\u3060\u3055\u3044\u3002", startAfterCountdown: "\u30AB\u30A6\u30F3\u30C8\u30C0\u30A6\u30F3\u5F8C\u306B\u958B\u59CB", notRankedBattle: "\u3053\u306E\u5BFE\u6226\u306F\u30E9\u30F3\u30AF\u306B\u53CD\u6620\u3055\u308C\u307E\u305B\u3093", botPracticeNotRanked: "Bot\u7DF4\u7FD2\u6226\u306F\u30E9\u30F3\u30AF\u5BFE\u8C61\u5916\u3002\u771F\u4EBA\u30AF\u30A4\u30C3\u30AF\u6226\u306F{rank}\u307E\u3067\u6607\u683C\u3067\u304D\u307E\u3059\u3002", validModesText: "{modes}\u304C\u30E9\u30F3\u30AF\u5BFE\u8C61\u3067\u3059\u3002\u6BCE\u65E5{count}\u56DE\u306E\u6709\u52B9\u5BFE\u6226\u3067\u5B9D\u7BB1\u3092\u53D7\u3051\u53D6\u308C\u307E\u3059\u3002", quickCapText: "\u30AF\u30A4\u30C3\u30AF\u6226\u306E\u30E9\u30F3\u30AF\u53CD\u6620\u304C\u6709\u52B9\u306A\u5834\u5408\u3001{rank}\u307E\u3067\u6607\u683C\u3067\u304D\u307E\u3059\u3002\u305D\u306E\u5F8C\u306F\u6709\u6599\u5834\u304C\u5FC5\u8981\u3067\u3059\u3002", ticketCapText: "\u5C0F\u5BCC\u8C6A\u5834\u306F{rank}\u307E\u3067\u6607\u683C\u3067\u304D\u307E\u3059\u3002\u3055\u3089\u306B\u4E0A\u306F\u5927\u5BCC\u8C6A\u5834\u304C\u5FC5\u8981\u3067\u3059\u3002", weeklyBonusText: "\u6BCE\u9031\u6708\u66DC\u306B\u3001{modes}\u306E\u7D14\u661F\u6570\u3001\u52DD\u5229\u6570\u3001\u30E9\u30F3\u30AF\u3067\u5831\u916C\u3092\u914D\u5E03\u3057\u307E\u3059\u3002", richEntryText: "\u5FC5\u8981\u6700\u4F4E\u30E9\u30F3\u30AF\uFF1A{rank}\u3002", ruleSummaryFallback: "\u771F\u4EBA\u30AF\u30A4\u30C3\u30AF\u6226\u306F\u767D\u9280\u307E\u3067\u6607\u683C\u53EF\u80FD\u3002\u6709\u6599\u5834\u3067\u3055\u3089\u306B\u4E0A\u3092\u76EE\u6307\u3057\u307E\u3059\u3002", expandAll: "\u3059\u3079\u3066\u8868\u793A", collapse: "\u9589\u3058\u308B", recentRecords: "\u6700\u8FD1{count}\u4EF6", walletLedgerPager: "{page}/{totalPages}", playerRank: "\u30D7\u30EC\u30A4\u30E4\u30FC\u30E9\u30F3\u30AF", paymentOrderConflict: "\u30C1\u30E3\u30FC\u30B8\u6CE8\u6587\u3092\u66F4\u65B0\u3057\u307E\u3057\u305F\u3002\u3082\u3046\u4E00\u5EA6\u4F5C\u6210\u3057\u3066\u304F\u3060\u3055\u3044\u3002" };
-Jt.forEach((e) => {
-  Object.assign($t[e], Y[e]);
-});
-Object.assign($t["zh-CN"], {
-  myInviteLink: "我的邀请链接",
-  inviteLinkHint: "好友用 Pi 浏览器打开，会自动绑定你",
-  copyInviteLink: "复制链接",
-  inviteLinkCopied: "邀请链接已复制",
-  inviteLinkUnavailable: "登录后生成邀请链接",
-  inviteAutoBindSuccess: "已绑定邀请人",
-  inviteAutoBindFailed: "邀请链接无效，请手动绑定",
-  pointsAsset: "积分",
-  publicRewardPi: "Pi奖励",
-  publicRewardPoints: "积分奖励",
-  publicRewardPoc: "POC奖励",
-  dailySignInTitle: "每日签到",
-  dailyRewardAvailable: "有 {count} 个奖励可领",
-  dailyRewardFallback: "做任务，领每日奖励",
-  dailyRewardGo: "去看看",
-  dailyRewardShort: "每日奖励",
-  piRewardShort: "Pi 奖励",
-  modePointsTag: "积分对战",
-  modePocTag: "POC对战",
-  modePiTag: "Pi对战",
-  modeEntryRewardText: "{entry}入场，胜者预计{reward}，{cap}",
-  modePiEntryRewardText: "{entry}入场，胜者预计{reward}，{rank}解锁",
-  dailyTaskModePrefix: "仅限：{modes}",
-  dailyTaskModeFallback: "仅限：小富豪 / 大富豪 / 超级富豪",
-  dailyTaskDefaultTitle: "每日任务",
-  dailyTaskWinCount: "胜利对局",
-  dailyTaskPaidBattleCount: "付费对局",
-  dailyTaskBattleCount: "完成对局",
-  dailyTaskClaimed: "已领取",
-  dailyTaskClaim: "领 {amount}",
-  dailyActiveEyebrow: "每日活跃",
-  dailySheetTitle: "签到和任务",
-  dailySheetSummary: "每天来玩几局，把可领奖励拿走。",
-  todaySignIn: "今日签到",
-  signInClaim: "签到领 {amount}",
-  signInUnavailable: "暂不可领",
-  signInTomorrow: "明天再来领",
-  signInReadyHint: "打开就能领",
-  noDailyTasks: "暂无任务",
-  dailyTasksReady: "{count} 个任务可领",
-  dailyTasksKeepGoing: "今日任务继续加油",
-  claiming: "领取中...",
-  claimSuccess: "领取成功",
-  copyPiUsername: "复制",
-  noPiUsername: "暂无Pi用户名",
-  copyPiUsernameSuccess: "Pi用户名已复制",
-  copyPiUsernameFailed: "复制失败，请长按用户名复制",
-  ledgerRecharge: "充值",
-  ledgerReward: "获奖",
-  ledgerBattleEntry: "入场费",
-  ledgerBattleRefund: "退回",
-  ledgerWithdrawLock: "提现冻结",
-  ledgerWithdrawUnlock: "提现退回",
-  ledgerWithdrawComplete: "提现完成",
-  ledgerWithdrawReject: "提现驳回",
-  ledgerTransferOut: "转账支出",
-  ledgerTransferIn: "转账收入",
-  ledgerTransferFee: "转账手续费",
-  ledgerInviteReward: "邀请奖励",
-  ledgerInviteCommission: "邀请提成",
-  ledgerDailySigninReward: "签到奖励",
-  ledgerDailyTaskReward: "任务奖励",
-  ledgerIncome: "收入",
-  ledgerExpense: "支出",
-  ledgerLock: "冻结",
-  ledgerUnlock: "解冻",
-  ledgerDefault: "流水"
-});
-Object.assign($t.en, {
-  myInviteLink: "My Invite Link",
-  inviteLinkHint: "Open in Pi Browser to bind automatically",
-  copyInviteLink: "Copy Link",
-  inviteLinkCopied: "Invite link copied",
-  inviteLinkUnavailable: "Login to create link",
-  inviteAutoBindSuccess: "Inviter bound",
-  inviteAutoBindFailed: "Invite link invalid. Bind manually.",
-  pointsAsset: "Points",
-  publicRewardPi: "Pi Paid",
-  publicRewardPoints: "Points Paid",
-  publicRewardPoc: "POC Paid",
-  dailySignInTitle: "Daily Check-in",
-  dailyRewardAvailable: "{count} reward ready",
-  dailyRewardFallback: "Do tasks, earn daily rewards",
-  dailyRewardGo: "View",
-  dailyRewardShort: "Daily Reward",
-  piRewardShort: "Pi Reward",
-  modePointsTag: "Points Battle",
-  modePocTag: "POC Battle",
-  modePiTag: "Pi Battle",
-  modeEntryRewardText: "Entry {entry}, win {reward}, {cap}",
-  modePiEntryRewardText: "Entry {entry}, win {reward}, unlock at {rank}",
-  dailyTaskModePrefix: "Modes: {modes}",
-  dailyTaskModeFallback: "Modes: Small Rich / Big Rich / Super Rich",
-  dailyTaskDefaultTitle: "Daily Task",
-  dailyTaskWinCount: "Win battles",
-  dailyTaskPaidBattleCount: "Paid battles",
-  dailyTaskBattleCount: "Complete battles",
-  dailyTaskClaimed: "Claimed",
-  dailyTaskClaim: "Claim {amount}",
-  dailyActiveEyebrow: "Daily",
-  dailySheetTitle: "Check-in & Tasks",
-  dailySheetSummary: "Play a few battles daily and claim rewards.",
-  todaySignIn: "Today",
-  signInClaim: "Claim {amount}",
-  signInUnavailable: "Unavailable",
-  signInTomorrow: "Come back tomorrow",
-  signInReadyHint: "Open to claim",
-  noDailyTasks: "No tasks",
-  dailyTasksReady: "{count} task ready",
-  dailyTasksKeepGoing: "Keep going today",
-  claiming: "Claiming...",
-  claimSuccess: "Claimed",
-  copyPiUsername: "Copy",
-  noPiUsername: "No Pi username",
-  copyPiUsernameSuccess: "Pi username copied",
-  copyPiUsernameFailed: "Copy failed. Long press to copy.",
-  ledgerRecharge: "Recharge",
-  ledgerReward: "Reward",
-  ledgerBattleEntry: "Entry Fee",
-  ledgerBattleRefund: "Refund",
-  ledgerWithdrawLock: "Withdraw Lock",
-  ledgerWithdrawUnlock: "Withdraw Return",
-  ledgerWithdrawComplete: "Withdraw Paid",
-  ledgerWithdrawReject: "Withdraw Rejected",
-  ledgerTransferOut: "Transfer Out",
-  ledgerTransferIn: "Transfer In",
-  ledgerTransferFee: "Transfer Fee",
-  ledgerInviteReward: "Invite Reward",
-  ledgerInviteCommission: "Invite Commission",
-  ledgerDailySigninReward: "Check-in Reward",
-  ledgerDailyTaskReward: "Task Reward",
-  ledgerIncome: "Income",
-  ledgerExpense: "Expense",
-  ledgerLock: "Locked",
-  ledgerUnlock: "Unlocked",
-  ledgerDefault: "Ledger"
-});
 let M = null, A = null, be = null, ze = null, he = 0, Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, finishFeedbackKey = "", finishActionLockUntil = 0;
 const vn = 1100, va = 2600, Sn = 80, me = /* @__PURE__ */ new Set();
 let Se = null, battleAudioContext = null, battleAudioUnlocked = false, battleBgmGain = null, battleBgmTimer = null, battleBgmPlaying = false, battleBgmStep = 0, battlePraiseLastAt = 0, battleSpeechLastAt = 0, battleAttackSpeechLastAt = 0;
@@ -519,216 +347,6 @@ function na(e) {
   const t = De(e);
   return { colorClass: Z[e] || Z[0], specialClass: "", label: t.label || "", color: t.color || "#8a35ff", textColor: t.textColor || "#fff6bd", imageUrl: t.imageUrl || "" };
 }
-function clientTileColor(e) {
-  if (e === null || e === void 0) return null;
-  return e >= ka ? e - ka : e >= ya ? e - ya : e >= wa ? e - wa : e;
-}
-function clientIsSpecialTile(e) {
-  return e >= wa;
-}
-function clientSpecialKind(e) {
-  return e >= ka ? "bomb" : e >= ya ? "vertical" : e >= wa ? "horizontal" : "";
-}
-function clientMakeSpecialTile(e, t) {
-  return t === "bomb" ? ka + e : t === "vertical" ? ya + e : wa + e;
-}
-function clientIsSameMatchTile(e, t) {
-  const r = clientTileColor(e), o = clientTileColor(t);
-  return r !== null && r === o;
-}
-function clientCreateRandom(e = "") {
-  let t = 0;
-  const r = String(e || Date.now());
-  for (let o = 0; o < r.length; o += 1) t = (t * 31 + r.charCodeAt(o)) >>> 0;
-  t %= 2147483647, t <= 0 && (t += 2147483646);
-  return () => (t = t * 16807 % 2147483647, (t - 1) / 2147483646);
-}
-function clientRandomTile(e) {
-  return Math.floor(e() * 5);
-}
-function clientWouldCreateMatchAt(e, t, r, o) {
-  return r >= 2 && clientIsSameMatchTile(e[t]?.[r - 1], o) && clientIsSameMatchTile(e[t]?.[r - 2], o) || r + 2 < Pe && clientIsSameMatchTile(e[t]?.[r + 1], o) && clientIsSameMatchTile(e[t]?.[r + 2], o) || t >= 2 && clientIsSameMatchTile(e[t - 1]?.[r], o) && clientIsSameMatchTile(e[t - 2]?.[r], o) || t + 2 < $e && clientIsSameMatchTile(e[t + 1]?.[r], o) && clientIsSameMatchTile(e[t + 2]?.[r], o);
-}
-function clientSafeRandomTile(e, t, r, o) {
-  for (let s = 0; s < 15; s += 1) {
-    const l = clientRandomTile(o);
-    if (!clientWouldCreateMatchAt(e, t, r, l)) return l;
-  }
-  for (let s = 0; s < 5; s += 1) if (!clientWouldCreateMatchAt(e, t, r, s)) return s;
-  return clientRandomTile(o);
-}
-function clientCloneBoard(e) {
-  return Array.isArray(e) ? e.map((t) => Array.isArray(t) ? [...t] : []) : [];
-}
-function clientIsInside(e, t) {
-  return t && t.row >= 0 && t.row < e.length && Array.isArray(e[t.row]) && t.col >= 0 && t.col < e[t.row].length;
-}
-function clientSwap(e, t, r) {
-  const o = e[t.row][t.col];
-  e[t.row][t.col] = e[r.row][r.col], e[r.row][r.col] = o;
-}
-function clientFindMatches(e) {
-  const t = /* @__PURE__ */ new Set(), r = [];
-  for (let o = 0; o < e.length; o += 1) {
-    let s = 0, l = clientTileColor(e[o]?.[0]);
-    for (let c = 1; c <= (e[o]?.length || 0); c += 1) {
-      const d = c < e[o].length ? clientTileColor(e[o][c]) : null;
-      if (d !== l || l === null) {
-        const u = c - s;
-        if (l !== null && u >= 3) {
-          const h = [];
-          for (let p = s; p < c; p += 1) t.add(`${o}:${p}`), h.push({ row: o, col: p });
-          r.push({ orientation: "horizontal", length: u, color: l, cells: h });
-        }
-        s = c, l = d;
-      }
-    }
-  }
-  for (let o = 0; o < Pe; o += 1) {
-    let s = 0, l = clientTileColor(e[0]?.[o]);
-    for (let c = 1; c <= e.length; c += 1) {
-      const d = c < e.length ? clientTileColor(e[c]?.[o]) : null;
-      if (d !== l || l === null) {
-        const u = c - s;
-        if (l !== null && u >= 3) {
-          const h = [];
-          for (let p = s; p < c; p += 1) t.add(`${p}:${o}`), h.push({ row: p, col: o });
-          r.push({ orientation: "vertical", length: u, color: l, cells: h });
-        }
-        s = c, l = d;
-      }
-    }
-  }
-  return t.runs = r, t;
-}
-function clientAddSpecialTargets(e, t, r = null) {
-  const o = /* @__PURE__ */ new Set();
-  for (const s of t) {
-    const [l, c] = s.split(":").map(Number), d = e[l]?.[c];
-    if (!clientIsSpecialTile(d)) continue;
-    const u = clientSpecialKind(d);
-    r && !r.some((h) => h.kind === u && h.position?.row === l && h.position?.col === c) && r.push({ kind: u, position: { row: l, col: c }, tile: d });
-    if (u === "horizontal") for (let h = 0; h < Pe; h += 1) o.add(`${l}:${h}`);
-    else if (u === "vertical") for (let h = 0; h < e.length; h += 1) o.add(`${h}:${c}`);
-    else if (u === "bomb") for (let h = l - 1; h <= l + 1; h += 1) for (let p = c - 1; p <= c + 1; p += 1) h >= 0 && h < e.length && p >= 0 && p < Pe && o.add(`${h}:${p}`);
-  }
-  for (const s of o) t.add(s);
-  return o.size;
-}
-function clientSpecialCreation(e, t) {
-  const r = (Array.isArray(e.runs) ? e.runs : []).filter((o) => o.length >= 4).sort((o, s) => s.length - o.length);
-  if (!r.length) return null;
-  const o = r[0], s = [t?.to, t?.from].find((l) => l && o.cells.some((c) => c.row === l.row && c.col === l.col));
-  const l = o.length >= 5 ? "bomb" : o.orientation === "horizontal" ? "horizontal" : "vertical";
-  return { kind: l, position: s || o.cells[Math.floor(o.cells.length / 2)], tile: clientMakeSpecialTile(o.color, l) };
-}
-function clientDirectSpecialMatches(e, t, r, o = null) {
-  const s = /* @__PURE__ */ new Set();
-  [t, r].forEach((l) => {
-    clientIsInside(e, l) && clientIsSpecialTile(e[l.row][l.col]) && s.add(`${l.row}:${l.col}`);
-  });
-  return s.size && clientAddSpecialTargets(e, s, o), s;
-}
-function clientCollapseBoard(e, t) {
-  for (let r = 0; r < Pe; r += 1) {
-    const o = [];
-    for (let s = $e - 1; s >= 0; s -= 1) e[s]?.[r] !== null && e[s]?.[r] !== void 0 && o.push(e[s][r]);
-    for (let s = $e - 1; s >= 0; s -= 1) e[s][r] = o[$e - 1 - s] ?? clientSafeRandomTile(e, s, r, t);
-  }
-}
-function clientHasValidMove(e) {
-  for (let t = 0; t < $e; t += 1) for (let r = 0; r < Pe; r += 1) {
-    const o = [{ row: t, col: r + 1 }, { row: t + 1, col: r }];
-    for (const s of o) {
-      if (!clientIsInside(e, s)) continue;
-      const l = clientCloneBoard(e);
-      clientSwap(l, { row: t, col: r }, s);
-      if (clientIsSpecialTile(l[t]?.[r]) || clientIsSpecialTile(l[s.row]?.[s.col]) || clientFindMatches(l).size > 0) return true;
-    }
-  }
-  return false;
-}
-function clientCreateCandidateBoard(e) {
-  const t = Array.from({ length: $e }, () => Array.from({ length: Pe }, () => null));
-  for (let r = 0; r < $e; r += 1) for (let o = 0; o < Pe; o += 1) t[r][o] = clientSafeRandomTile(t, r, o, e);
-  let r = 0;
-  for (; clientFindMatches(t).size > 0 && r < 20; ) {
-    const o = clientFindMatches(t);
-    for (const s of o) {
-      const [l, c] = s.split(":").map(Number);
-      t[l][c] = clientSafeRandomTile(t, l, c, e);
-    }
-    r += 1;
-  }
-  return t;
-}
-function clientRefillBoardIfStuck(e, t) {
-  if (clientHasValidMove(e)) return;
-  const r = clientCreateCandidateBoard(clientCreateRandom(`${t?.roomNo || ""}:refill:${t?.version || 0}:${Date.now()}`));
-  for (let o = 0; o < $e; o += 1) for (let s = 0; s < Pe; s += 1) e[o][s] = r[o][s];
-}
-function clientResolveBoard(e, t, r = null) {
-  const n = [], y = [];
-  let o = 0, s = 0, l = 0, c = 0, d = 0, u = r ? clientDirectSpecialMatches(e, r.from, r.to, n) : /* @__PURE__ */ new Set();
-  for (; o < 4; ) {
-    const h = u.size > 0 ? u : clientFindMatches(e);
-    if (u = /* @__PURE__ */ new Set(), h.size === 0) break;
-    o += 1;
-    const p = clientAddSpecialTargets(e, h, n);
-    c += p > 0 ? 1 : 0;
-    const f = clientSpecialCreation(h, o === 1 ? r : null), m = Math.min(h.size, 18), g = Math.min(m, Math.max(0, 18 - s));
-    s += g, l += g * 10 + Math.min(o - 1, 3) * 8 + c * 8;
-    for (const P of h) {
-      const [C, T] = P.split(":").map(Number);
-      e[C][T] = null;
-    }
-    f && e[f.position.row]?.[f.position.col] === null && (e[f.position.row][f.position.col] = f.tile, y.push({ kind: f.kind, position: f.position, tile: f.tile }), d += 1);
-    clientCollapseBoard(e, t);
-    if (s >= 18) break;
-  }
-  return { chain: o, totalCleared: s, scoreGain: l, specialTriggered: c, specialCreated: d, specialFx: n, specialBirths: y };
-}
-function clientSettleRemainingMatches(e, t) {
-  let r = 0;
-  for (; clientFindMatches(e).size > 0 && r < 8; ) {
-    for (const o of clientFindMatches(e)) {
-      const [s, l] = o.split(":").map(Number);
-      e[s][l] = null;
-    }
-    clientCollapseBoard(e, t), r += 1;
-  }
-}
-function battleClearCount(e) {
-  return Math.max(0, Number(e?.cleared ?? e?.totalCleared ?? 0));
-}
-function battleChainCount(e) {
-  return Math.max(1, Number(e?.chain || 1));
-}
-function battleFeedbackPower(e) {
-  const t = battleChainCount(e), r = battleClearCount(e);
-  return Math.min(6, Math.max(0, t - 1) + (r >= 8 ? 3 : r >= 6 ? 2 : r >= 4 ? 1 : 0) + (e?.specialTriggered ? 2 : 0) + (e?.specialCreated ? 1 : 0) + (Number(e?.attack || 0) > 0 ? 1 : 0));
-}
-function battleIsMegaFeedback(e) {
-  return battleChainCount(e) >= 3 || battleClearCount(e) >= 6 || !!e?.specialTriggered || Number(e?.specialCreated || 0) > 0 && battleClearCount(e) >= 5;
-}
-function battleBurstText(e) {
-  const t = battleChainCount(e), r = battleClearCount(e), o = Number(e?.scoreGain || 0), s = Number(e?.attack || 0);
-  return e?.specialTriggered && t >= 3 ? `\u8FDE\u7206x${t} +${o}` : e?.specialTriggered ? `\u95EA\u7535\u7206\u53D1 +${o}` : e?.specialCreated && r >= 5 ? `\u70B8\u5F39\u751F\u6210 +${o}` : e?.specialCreated ? `\u95EA\u7535\u751F\u6210 +${o}` : s > 0 && t >= 3 ? `\u8FDE\u51FB\u7535\u51FB +${s}` : s > 0 ? `\u7535\u51FB +${s}` : t >= 4 ? `\u6781\u9650\u8FDE\u51FBx${t}` : t >= 3 ? `\u95EA\u7535\u8FDE\u51FBx${t}` : t > 1 && r >= 6 ? `\u8FDE\u51FBx${t} \u5927\u6D88` : t > 1 ? `\u8FDE\u51FBx${t} +${o}` : r >= 8 ? `\u5168\u573A\u5927\u6D88 +${o}` : r >= 6 ? `\u5927\u6D88\u9664 +${o}` : r >= 4 ? `${r}\u6D88 +${o}` : `+${o}`;
-}
-function battlePraiseCue(e) {
-  if (!e) return "";
-  const t = battleChainCount(e), r = battleClearCount(e), o = Number(e?.specialTriggered || 0), s = Number(e?.specialCreated || 0);
-  return o && t >= 4 || t >= 6 || r >= 12 ? "Wonderful" : o || t >= 5 || r >= 10 ? "Crazy" : t >= 4 || r >= 8 ? "Unbelievable" : s && r >= 5 || t >= 3 || r >= 6 ? "Excellent" : s || t >= 2 || r >= 5 ? "Amazing" : r >= 4 ? "Great" : r >= 3 ? "Good" : "";
-}
-function waPreviewText(e) {
-  return battleBurstText(e);
-}
-function yaPreviewSemantic(e) {
-  return e.specialTriggered ? "special_triggered" : e.specialCreated ? e.cleared >= 5 ? "special_bomb" : "special_lightning" : e.attack > 0 ? "attack" : e.chain > 1 ? "combo" : e.cleared >= 4 ? "big_clear" : "score";
-}
-function clientPreviewTone(e) {
-  return e.specialTriggered ? "attack" : battleIsMegaFeedback(e) ? "mega" : e.specialCreated ? "combo" : e.attack > 0 ? "attack" : e.chain > 1 ? "combo" : e.cleared >= 4 ? "clear" : "score";
-}
 function kaPreviewSwap(e, t, r) {
   const o = a.realtimeRoom?.players?.find((m) => m.uid === a.user?.uid);
   if (!o?.board || !clientIsInside(o.board, e) || !clientIsInside(o.board, t)) return null;
@@ -780,6 +398,15 @@ function de(e) {
     navigator.vibrate(e);
   } catch {
   }
+}
+function triggerBattleShake(e) {
+  if (!e || a.effectiveVisualEffectMode === "low" || document.documentElement.classList.contains("low-performance")) return;
+  const t = st().shell;
+  if (!t) return;
+  const r = `battle-shake-${e}`;
+  t.classList.remove("battle-shake-light", "battle-shake-strong", "battle-shake-mega"), t.offsetWidth, t.classList.add(r), window.setTimeout(() => {
+    t.classList.remove(r);
+  }, e === "mega" ? 360 : e === "strong" ? 280 : 200);
 }
 function playMatchReadyHaptic(e) {
   const t = e?.roomNo || a.roomNo;
@@ -1073,7 +700,11 @@ function playBattlePraiseCue(e) {
 function playBattleEventFeedback(e, t = false) {
   if (!e) return;
   const r = battleFeedbackPower(e);
-  e.specialTriggered ? playBattleSfx("specialTrigger", r) : e.specialCreated ? playBattleSfx("specialCreate", r) : Number(e.chain || 1) >= 2 || battleIsMegaFeedback(e) ? playBattleSfx("combo", r) : Number(e.attack || 0) > 0 ? playBattleSfx("attack", r) : playBattleSfx("clear", r), t && (de(vi(e)), playBattlePraiseCue(e));
+  e.specialTriggered ? playBattleSfx("specialTrigger", r) : e.specialCreated ? playBattleSfx("specialCreate", r) : Number(e.chain || 1) >= 2 || battleIsMegaFeedback(e) ? playBattleSfx("combo", r) : Number(e.attack || 0) > 0 ? playBattleSfx("attack", r) : playBattleSfx("clear", r), t && (de(vi(e)), playBattlePraiseCue(e), triggerBattleShake(battleShakeLevel(e)));
+}
+function battleShakeLevel(e) {
+  const t = Number(e.chain || 1), r = battleClearCount(e);
+  return Number(e.chain || 0) >= 4 || e.specialTriggered ? "mega" : Number(e.attack || 0) > 0 ? "strong" : t >= 3 || r >= 6 ? "light" : "";
 }
 function playFinishFeedback(e, t) {
   if (!e || e.status !== "finished" || !t) return;
@@ -3200,38 +2831,6 @@ function canvasCellRect(e, t, r) {
   const o = e.paddingLeft + r * (e.tileWidth + e.gap), s = e.paddingTop + t * (e.tileHeight + e.gap);
   return { x: o, y: s, w: Math.max(2, e.tileWidth - 1), h: Math.max(2, e.tileHeight - 1), cx: o + e.tileWidth / 2, cy: s + e.tileHeight / 2, row: t, col: r };
 }
-function canvasRoundRect(e, t, r, o, s, l) {
-  e.beginPath(), e.roundRect ? e.roundRect(t, r, o, s, l) : (e.moveTo(t + l, r), e.lineTo(t + o - l, r), e.quadraticCurveTo(t + o, r, t + o, r + l), e.lineTo(t + o, r + s - l), e.quadraticCurveTo(t + o, r + s, t + o - l, r + s), e.lineTo(t + l, r + s), e.quadraticCurveTo(t, r + s, t, r + s - l), e.lineTo(t, r + l), e.quadraticCurveTo(t, r, t + l, r));
-}
-function canvasHexToRgba(e, t = 1) {
-  const r = String(e || "").trim();
-  if (!/^#[0-9a-f]{6}$/i.test(r)) return `rgba(255, 226, 120, ${t})`;
-  const o = Number.parseInt(r.slice(1, 3), 16), s = Number.parseInt(r.slice(3, 5), 16), l = Number.parseInt(r.slice(5, 7), 16);
-  return `rgba(${o}, ${s}, ${l}, ${t})`;
-}
-function canvasShadeColor(e, t = 0) {
-  const r = String(e || "").trim();
-  if (!/^#[0-9a-f]{6}$/i.test(r)) return e || "#8a35ff";
-  const o = Math.max(-1, Math.min(1, Number(t) || 0));
-  const s = (l) => {
-    const c = Number.parseInt(r.slice(l, l + 2), 16), d = o >= 0 ? 255 : 0;
-    return Math.max(0, Math.min(255, Math.round(c + (d - c) * Math.abs(o)))).toString(16).padStart(2, "0");
-  };
-  return `#${s(1)}${s(3)}${s(5)}`;
-}
-function drawCanvasTileBody(e, t, r, o, s, l, c) {
-  const d = t.color || "#8a35ff", u = Math.min(o.w, o.h), h = canvasShadeColor(d, 0.34), p = canvasShadeColor(d, -0.36);
-  canvasRoundRect(e, o.x, o.y + Math.max(2, u * 0.055), o.w, o.h, s), e.fillStyle = "rgba(0, 0, 0, .34)", e.fill();
-  canvasRoundRect(e, o.x + 0.5, o.y + 0.5, o.w - 1, o.h - 1, s);
-  const f = e.createLinearGradient(o.x, o.y, o.x + o.w, o.y + o.h);
-  f.addColorStop(0, h), f.addColorStop(0.18, d), f.addColorStop(0.68, d), f.addColorStop(1, p);
-  e.shadowColor = r >= wa || c.glow > 0 ? canvasHexToRgba(d, l ? 0.72 : 0.48) : "rgba(255, 228, 123, .18)", e.shadowBlur = l ? 16 : 9, e.fillStyle = f, e.fill(), e.shadowBlur = 0;
-  const m = e.createLinearGradient(o.x, o.y, o.x, o.y + o.h);
-  m.addColorStop(0, "rgba(255,255,255,.52)"), m.addColorStop(0.2, "rgba(255,255,255,.16)"), m.addColorStop(0.56, "rgba(0,0,0,.04)"), m.addColorStop(1, "rgba(0,0,0,.36)"), e.fillStyle = m, e.fill();
-  canvasRoundRect(e, o.x + u * 0.08, o.y + u * 0.07, o.w * 0.72, o.h * 0.32, Math.max(4, s * 0.58)), e.fillStyle = "rgba(255,255,255,.18)", e.fill();
-  e.beginPath(), e.moveTo(o.x + o.w * 0.16, o.y + o.h * 0.16), e.lineTo(o.x + o.w * 0.44, o.y + o.h * 0.08), e.strokeStyle = "rgba(255, 255, 255, .46)", e.lineWidth = Math.max(1.2, u * 0.04), e.stroke();
-  e.strokeStyle = r >= wa ? "rgba(255, 245, 174, .68)" : "rgba(255, 249, 218, .28)", e.lineWidth = r >= wa ? 1.9 : 1.1, canvasRoundRect(e, o.x + 0.5, o.y + 0.5, o.w - 1, o.h - 1, s), e.stroke();
-}
 function canvasHasActiveFx(e = Date.now()) {
   return !!(a.tileEffect && e - a.tileEffect.at < Math.max(180, animationMs("localSwapSeconds", 80)) || a.localSwapFx && e - a.localSwapFx.at < animationMs("localSwapSeconds", 60) || x && e - x.at < 220 || k && e - k.at < 320 || (a.canvasTileBursts || []).some((t) => e - t.at < t.durationMs) || (a.canvasSpecialFx || []).some((t) => e - t.at < t.durationMs) || (a.canvasSpecialBirths || []).some((t) => e - t.at < t.durationMs));
 }
@@ -3495,10 +3094,12 @@ function pi(e) {
     return `<i style="--dx:${c}px;--dy:${d}px;--delay:${o * 18}ms"></i>`;
   }).join("");
   const r = Number(e.durationSeconds || 0), o = r > 0 ? `;--battle-burst-duration:${r}s;--battle-burst-score-duration:${Math.max(0.12, r - 0.14)}s;--battle-burst-ring-duration:${Math.min(r, 0.72)}s` : "";
+  const c = Number(e.bigChain || 0), u = c >= 5 ? " burst-chain-super" : c >= 4 ? " burst-chain-high" : c >= 3 ? " burst-chain-mid" : "";
   return `<div
-    class="battle-burst ${e.tone} cleared-${Math.min(6, Math.max(3, e.cleared))}"
+    class="battle-burst ${e.tone} cleared-${Math.min(6, Math.max(3, e.cleared))}${u}"
     style="left:${e.x}%;top:${e.y}%${o}"
   >
+    ${c >= 3 ? `<b class="burst-chain-number">x${i(String(c))}</b>` : ""}
     ${e.text ? `<span>${i(e.text)}</span>` : ""}
     ${t ? `<div>${t}</div>` : ""}
   </div>`;
@@ -3680,7 +3281,7 @@ function nn(e) {
     return;
   }
   l && (Rt = c, Mt = d, Bt = Date.now(), (e.specialTriggered || e.specialCreated || e.attack > 0) && v("client_burst_show", { roomNo: a.roomNo, mode: a.realtimeRoom?.mode || a.selectedMode, message: l, seq: e.seq || 0, result: ne(e), specialTriggered: e.specialTriggered || 0, specialCreated: e.specialCreated || 0, attack: e.attack || 0 }, 0));
-  const m = { id: t, text: l, tone: s, at: Date.now(), x: e.attack > 0 ? 63 : r ? 48 + Math.random() * 12 : 50, y: e.localPending ? 48 : e.attack > 0 ? 38 : r ? 46 + Math.random() * 10 : 50, cleared: Number(e.cleared || 3), chain: Number(e.chain || 1), attack: Number(e.attack || 0), particles: bi(e) };
+  const m = { id: t, text: l, tone: s, at: Date.now(), x: e.attack > 0 ? 63 : r ? 48 + Math.random() * 12 : 50, y: e.localPending ? 48 : e.attack > 0 ? 38 : r ? 46 + Math.random() * 10 : 50, cleared: Number(e.cleared || 3), chain: Number(e.chain || 1), attack: Number(e.attack || 0), bigChain: Number(e.chain || 1) >= 3 && !(Number(e.attack || 0) > 0) ? Number(e.chain || 1) : 0, particles: bi(e) };
   a.battleBursts = l ? [m] : [...a.battleBursts, m].slice(-2), K = "", window.setTimeout(() => {
     a.battleBursts = a.battleBursts.filter((g) => g.id !== t), K = "", $();
   }, e.localPending ? r ? animationMsAtLeast("localBurstHighSeconds", 1080) : animationMsAtLeast("localBurstSeconds", 940) : o ? animationMs("lowPerformanceBurstSeconds") : r ? animationMs("serverBurstHighSeconds") : animationMs("serverBurstSeconds"));
