@@ -1,6 +1,6 @@
 const { getUserFromRequest } = require("./wallet.controller");
 const { addAdminAuditLog } = require("../repositories/admin-audit.repository");
-const { retryReward } = require("../repositories/watch-shareholder.repository");
+const { queueRewardForClaim, retryReward } = require("../repositories/watch-shareholder.repository");
 const {
   fetchWatchNodeSnapshot,
   getAdminShareholderOverview,
@@ -30,6 +30,9 @@ async function claimMyWatchShareholder(req) {
 
   const results = [];
   for (const reward of pending.slice(0, 10)) {
+    if (reward.status === "pending") {
+      await queueRewardForClaim(reward.id, user.uid);
+    }
     results.push(await processShareholderRewardJob(reward.id));
   }
 

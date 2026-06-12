@@ -846,7 +846,9 @@ function formatAssetReward(e, t) {
 }
 function formatSeasonNo(e = "") {
   const t = String(e || "").match(/^(\d{4})(\d{2})(\d{2})_(\d{4})(\d{2})(\d{2})$/);
-  return t ? n("watchShareholderPeriodRange", { y1: t[1], m1: t[2], d1: t[3], y2: t[4], m2: t[5], d2: t[6] }) : e || "-";
+  if (!t) return e || "-";
+  const r = Number(t[2]), o = Number(t[3]), s = Number(t[5]), l = Number(t[6]);
+  return t[1] === t[4] ? `${r}.${o}-${s}.${l}` : `${t[1]}.${r}.${o}-${t[4]}.${s}.${l}`;
 }
 function formatRewardList(e = [], t = 0) {
   const r = (Array.isArray(e) ? e : []).filter((o) => Number(o.amount || 0) > 0).map((o) => formatAssetReward(o.assetType, o.amount));

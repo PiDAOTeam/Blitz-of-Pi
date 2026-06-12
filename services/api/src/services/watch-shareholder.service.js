@@ -18,7 +18,7 @@ const {
   sumPointsPlatformFee
 } = require("../repositories/watch-shareholder.repository");
 
-const ESTIMATE_CACHE_TTL_MS = 60 * 60 * 1000;
+const ESTIMATE_CACHE_TTL_MS = 3 * 60 * 60 * 1000;
 let weeklyEstimateCache = null;
 
 const DEFAULT_WATCH_SHAREHOLDER_CONFIG = {
@@ -30,9 +30,14 @@ const DEFAULT_WATCH_SHAREHOLDER_CONFIG = {
   subsidyPointsPerUser: 0,
   minRewardPoints: 1,
   sourceMode: "points_battle",
-  settlementText: "每周一结算上周",
+  settlementText: "周一结算",
   title: "腕表节点股东分红",
-  subtitle: "腕表节点用户可领每周分红"
+  subtitle: "每周可领分红"
+};
+
+const LEGACY_WATCH_SHAREHOLDER_TEXT = {
+  subtitle: new Set(["腕表节点用户可领每周分红"]),
+  settlementText: new Set(["每周一结算上周"])
 };
 
 function normalizeShareholderConfig(config = {}) {
@@ -40,6 +45,9 @@ function normalizeShareholderConfig(config = {}) {
   const rate = Number(incoming.shareRate);
   const minRewardPoints = Math.floor(Number(incoming.minRewardPoints || DEFAULT_WATCH_SHAREHOLDER_CONFIG.minRewardPoints));
   const subsidyPointsPerUser = Math.floor(Number(incoming.subsidyPointsPerUser || 0));
+  const title = String(incoming.title || DEFAULT_WATCH_SHAREHOLDER_CONFIG.title).trim();
+  const subtitle = String(incoming.subtitle || "").trim();
+  const settlementText = String(incoming.settlementText || "").trim();
   return {
     ...DEFAULT_WATCH_SHAREHOLDER_CONFIG,
     ...incoming,
@@ -51,9 +59,9 @@ function normalizeShareholderConfig(config = {}) {
     subsidyPointsPerUser: Math.max(0, subsidyPointsPerUser || 0),
     minRewardPoints: Math.max(1, minRewardPoints || 1),
     sourceMode: "points_battle",
-    title: String(incoming.title || DEFAULT_WATCH_SHAREHOLDER_CONFIG.title).trim().slice(0, 32),
-    subtitle: String(incoming.subtitle || DEFAULT_WATCH_SHAREHOLDER_CONFIG.subtitle).trim().slice(0, 80),
-    settlementText: String(incoming.settlementText || DEFAULT_WATCH_SHAREHOLDER_CONFIG.settlementText).trim().slice(0, 60)
+    title: title.slice(0, 32),
+    subtitle: (!subtitle || LEGACY_WATCH_SHAREHOLDER_TEXT.subtitle.has(subtitle) ? DEFAULT_WATCH_SHAREHOLDER_CONFIG.subtitle : subtitle).slice(0, 80),
+    settlementText: (!settlementText || LEGACY_WATCH_SHAREHOLDER_TEXT.settlementText.has(settlementText) ? DEFAULT_WATCH_SHAREHOLDER_CONFIG.settlementText : settlementText).slice(0, 60)
   };
 }
 
@@ -158,7 +166,7 @@ function getEstimatedRewardForUser(bundle, user = {}) {
   };
 }
 
-async function getWeeklyEstimateBundle(config) {
+async function getWeeklyEstimateBundle(config, { force = false } = {}) {
   const normalizedConfig = normalizeShareholderConfig({ watchShareholder: config });
   const subsidyPointsPerUser = normalizedConfig.subsidyEnabled ? normalizedConfig.subsidyPointsPerUser : 0;
   const range = await getCurrentWeekRangeFromDb();
@@ -169,7 +177,7 @@ async function getWeeklyEstimateBundle(config) {
     subsidyPointsPerUser,
     minRewardPoints: normalizedConfig.minRewardPoints
   });
-  if (weeklyEstimateCache && weeklyEstimateCache.key === cacheKey && Date.now() - weeklyEstimateCache.createdAt < ESTIMATE_CACHE_TTL_MS) {
+  if (!force && weeklyEstimateCache && weeklyEstimateCache.key === cacheKey && Date.now() - weeklyEstimateCache.createdAt < ESTIMATE_CACHE_TTL_MS) {
     return weeklyEstimateCache.value;
   }
 
@@ -216,8 +224,8 @@ async function getWeeklyEstimateBundle(config) {
   return value;
 }
 
-async function getWeeklyEstimate(config) {
-  return toPublicWeeklyEstimate(await getWeeklyEstimateBundle(config));
+async function getWeeklyEstimate(config, options = {}) {
+  return toPublicWeeklyEstimate(await getWeeklyEstimateBundle(config, options));
 }
 
 async function settlePreviousWeek({ force = false } = {}) {
@@ -353,6 +361,7 @@ module.exports = {
   getAdminShareholderOverview,
   getMyShareholderStatus,
   getWeeklyEstimate,
+  getWeeklyEstimateBundle,
   normalizeShareholderConfig,
   settlePreviousWeek,
   toPeriodDto,

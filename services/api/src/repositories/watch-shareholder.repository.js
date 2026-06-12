@@ -622,6 +622,22 @@ async function retryReward(id) {
   return Number(result?.affectedRows || 0) > 0;
 }
 
+async function queueRewardForClaim(id, uid = "") {
+  await ensureWatchShareholderSchema();
+  const result = await query(
+    `UPDATE watch_shareholder_rewards
+     SET status = 'queued',
+         next_retry_at = NOW(),
+         last_error = ''
+     WHERE id = ?
+       AND uid = ?
+       AND reward_points > 0
+       AND status = 'pending'`,
+    [id, String(uid || "")]
+  );
+  return Number(result?.affectedRows || 0) > 0;
+}
+
 async function listRewardCandidates(limit = 20) {
   await ensureWatchShareholderSchema();
   const safeLimit = Math.min(50, Math.max(1, Number.parseInt(String(limit), 10) || 20));
@@ -630,7 +646,7 @@ async function listRewardCandidates(limit = 20) {
      FROM watch_shareholder_rewards r
      LEFT JOIN users u ON u.uid = r.uid
      WHERE r.reward_points > 0
-       AND r.status IN ('pending', 'queued', 'failed')
+       AND r.status IN ('queued', 'failed')
        AND r.attempts < r.max_attempts
        AND (r.next_retry_at IS NULL OR r.next_retry_at <= NOW())
      ORDER BY r.id ASC
@@ -690,6 +706,7 @@ module.exports = {
   markRewardFailed,
   markRewardPaid,
   markRewardProcessing,
+  queueRewardForClaim,
   resetStaleProcessing,
   retryReward,
   sumPointsPlatformFee
