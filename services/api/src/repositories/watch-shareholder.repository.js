@@ -540,6 +540,22 @@ async function listUserRewards(uid, limit = 20) {
   return listRewards({ uid, limit });
 }
 
+async function listUserClaimableRewards(uid, limit = 200) {
+  await ensureWatchShareholderSchema();
+  const safeLimit = Math.min(500, Math.max(1, Number.parseInt(String(limit), 10) || 200));
+  return query(
+    `SELECT r.*, u.nickname, u.avatar_key
+     FROM watch_shareholder_rewards r
+     LEFT JOIN users u ON u.uid = r.uid
+     WHERE r.uid = ?
+       AND r.reward_points > 0
+       AND r.status IN ('pending', 'queued', 'failed')
+     ORDER BY r.period_id ASC, r.id ASC
+     LIMIT ${safeLimit}`,
+    [uid]
+  );
+}
+
 async function markRewardProcessing(id) {
   await ensureWatchShareholderSchema();
   const result = await query(
@@ -722,6 +738,7 @@ module.exports = {
   listPeriods,
   listRewardCandidates,
   listRewards,
+  listUserClaimableRewards,
   listUserRewards,
   markRewardFailed,
   markRewardPaid,

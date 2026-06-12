@@ -2340,6 +2340,36 @@ button:disabled {
     radial-gradient(circle at 18% 0%, rgba(255, 223, 112, .16), transparent 32%),
     linear-gradient(180deg, rgba(56, 0, 103, .98), rgba(28, 0, 64, .98));
 }
+.watch-shareholder-sheet {
+  position: relative;
+  padding: 24px 20px calc(22px + env(safe-area-inset-bottom));
+  border-color: rgba(255, 223, 105, .64);
+  background:
+    radial-gradient(circle at 20% -6%, rgba(255, 226, 112, .24), transparent 30%),
+    radial-gradient(circle at 96% 8%, rgba(255, 176, 47, .18), transparent 28%),
+    linear-gradient(180deg, #6b19c6 0%, #4d05aa 44%, #2b006c 100%);
+  box-shadow: 0 24px 70px rgba(19, 0, 49, .7), inset 0 1px rgba(255, 255, 255, .18);
+}
+.watch-shareholder-sheet:before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, .12), transparent 28%),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, .035) 0 1px, transparent 1px 10px);
+  mask-image: linear-gradient(#000, transparent 78%);
+}
+.watch-shareholder-sheet > * {
+  position: relative;
+  z-index: 1;
+}
+.watch-shareholder-sheet h2 {
+  margin-bottom: 12px;
+  color: #fff9d8;
+  text-shadow: 0 4px 22px rgba(255, 197, 48, .3);
+}
 .daily-reward-sheet h2 {
   margin-bottom: 8px;
   font-size: clamp(24px, 7vw, 34px);
@@ -2463,40 +2493,43 @@ button:disabled {
 .watch-shareholder-summary {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 7px;
-  margin: 10px 0;
+  gap: 9px;
+  margin: 12px 0;
 }
 .watch-shareholder-topline {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
   align-items: center;
-  margin: 8px 0 10px;
+  justify-content: space-between;
+  margin: 6px 0 12px;
 }
 .watch-shareholder-rate-badge {
   display: inline-flex;
   align-items: center;
-  min-height: 32px;
-  padding: 0 13px;
-  border: 1px solid rgba(255, 244, 151, .72);
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 16px;
+  border: 1px solid rgba(255, 250, 184, .88);
   border-radius: 999px;
-  background: linear-gradient(135deg, #fff6a8, #ffbf25 45%, #e18a00);
+  background: linear-gradient(135deg, #fff8af, #ffcf33 42%, #ff9b11 100%);
   color: #4b2500;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 1000;
-  box-shadow: 0 8px 20px rgba(255, 174, 31, .28), inset 0 1px 0 rgba(255, 255, 255, .6);
+  box-shadow: 0 10px 24px rgba(255, 183, 35, .38), 0 0 18px rgba(255, 224, 102, .24), inset 0 1px 0 rgba(255, 255, 255, .64);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .55);
 }
 .watch-shareholder-rules {
-  margin: 8px 0 10px;
-  padding: 9px 11px;
-  border: 1px solid rgba(255, 221, 98, .2);
-  border-radius: 15px;
-  background: rgba(255, 255, 255, .06);
+  margin: 8px 0 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 230, 113, .3);
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(255, 222, 90, .12), rgba(255, 255, 255, .055));
 }
 .watch-shareholder-rules summary {
   color: #fff176;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 1000;
 }
 .watch-shareholder-rules p {
@@ -2507,20 +2540,36 @@ button:disabled {
   line-height: 1.35;
 }
 .watch-shareholder-summary article {
-  min-height: 72px;
-  padding: 9px 10px;
-  border: 1px solid rgba(255, 221, 98, .24);
-  border-radius: 16px;
-  background: rgba(255, 236, 158, .08);
+  min-height: 78px;
+  padding: 11px 12px;
+  border: 1px solid rgba(255, 226, 105, .3);
+  border-radius: 18px;
+  background: linear-gradient(150deg, rgba(255, 255, 255, .1), rgba(255, 214, 74, .055));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1);
 }
 .watch-shareholder-summary .watch-shareholder-my-estimate {
   grid-column: 1 / -1;
-  min-height: 78px;
+  min-height: 94px;
   background:
-    radial-gradient(circle at 12% 10%, rgba(255, 255, 186, .26), transparent 36%),
-    linear-gradient(135deg, rgba(255, 210, 72, .22), rgba(255, 255, 255, .08));
-  border-color: rgba(255, 236, 137, .42);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), 0 10px 22px rgba(247, 183, 51, .12);
+    radial-gradient(circle at 12% 12%, rgba(255, 249, 172, .36), transparent 34%),
+    linear-gradient(135deg, rgba(255, 184, 31, .42), rgba(255, 255, 255, .12));
+  border-color: rgba(255, 240, 126, .68);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2), 0 14px 28px rgba(247, 183, 51, .18);
+}
+.watch-shareholder-claim-card {
+  background: linear-gradient(145deg, rgba(255, 224, 88, .2), rgba(255, 255, 255, .08)) !important;
+  border-color: rgba(255, 236, 121, .5) !important;
+}
+.watch-shareholder-claim-card button {
+  min-height: 30px;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-color: rgba(255, 247, 174, .9);
+  border-radius: 999px;
+  background: linear-gradient(135deg, #fff7a8, #ffb11f);
+  color: #4d2100;
+  font-size: 12px;
+  font-weight: 1000;
 }
 .watch-shareholder-summary span,
 .watch-shareholder-summary strong {
@@ -2534,12 +2583,12 @@ button:disabled {
 .watch-shareholder-summary strong {
   margin-top: 3px;
   color: #fff176;
-  font-size: 19px;
+  font-size: 21px;
   line-height: 1;
 }
 .watch-shareholder-summary .watch-shareholder-my-estimate strong {
-  font-size: 26px;
-  text-shadow: 0 0 14px rgba(255, 234, 104, .42);
+  font-size: 32px;
+  text-shadow: 0 0 18px rgba(255, 234, 104, .55);
 }
 .watch-shareholder-summary small {
   display: block;
@@ -2551,18 +2600,34 @@ button:disabled {
 }
 .watch-shareholder-list {
   display: grid;
-  gap: 7px;
-  margin-top: 9px;
+  gap: 9px;
+  margin-top: 12px;
 }
 .watch-shareholder-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
-  padding: 9px 10px;
-  border: 1px solid rgba(255, 221, 98, .18);
-  border-radius: 15px;
-  background: rgba(255, 255, 255, .06);
+  min-height: 80px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 221, 98, .24);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(255, 220, 83, .16), transparent 36%),
+    rgba(255, 255, 255, .065);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08);
+}
+.watch-shareholder-row.paid {
+  border-color: rgba(110, 255, 183, .38);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(117, 255, 186, .16), transparent 36%),
+    rgba(255, 255, 255, .065);
+}
+.watch-shareholder-row.estimate {
+  border-color: rgba(255, 232, 116, .42);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(255, 221, 84, .2), transparent 40%),
+    rgba(255, 214, 73, .08);
 }
 .watch-shareholder-row strong,
 .watch-shareholder-row small,
@@ -2571,7 +2636,7 @@ button:disabled {
 }
 .watch-shareholder-row strong {
   color: #fff8cf;
-  font-size: 13px;
+  font-size: 15px;
 }
 .watch-shareholder-row small {
   color: rgba(231, 205, 255, .72);
@@ -2583,7 +2648,43 @@ button:disabled {
 }
 .watch-shareholder-row b {
   color: #fff176;
-  font-size: 14px;
+  font-size: 17px;
+}
+.watch-shareholder-row-status {
+  display: inline-flex !important;
+  justify-content: center;
+  min-width: 72px;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .12);
+  color: rgba(255, 241, 203, .8) !important;
+  font-size: 12px !important;
+  font-weight: 1000 !important;
+}
+.watch-shareholder-row-status.paid {
+  background: linear-gradient(135deg, #b8ffd8, #36d680);
+  color: #06351c !important;
+  box-shadow: 0 8px 18px rgba(41, 216, 125, .24);
+}
+.watch-shareholder-row-status.pending,
+.watch-shareholder-row-status.queued,
+.watch-shareholder-row-status.failed,
+.watch-shareholder-row-status.manual_review {
+  background: linear-gradient(135deg, #fff4a5, #ffad20);
+  color: #4d2100 !important;
+  box-shadow: 0 8px 18px rgba(255, 178, 34, .26);
+}
+.watch-shareholder-sheet .daily-reward-footer {
+  margin-top: 14px;
+  padding-bottom: 4px;
+}
+.watch-shareholder-sheet .daily-reward-footer .secondary {
+  min-height: 48px;
+  min-width: 120px;
+  border-color: rgba(255, 230, 130, .38);
+  background: linear-gradient(135deg, rgba(255, 255, 255, .18), rgba(255, 255, 255, .08));
+  color: #fff6bf;
 }
 .language-sheet {
   max-height: min(82dvh, 650px);

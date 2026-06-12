@@ -1,6 +1,6 @@
 const { getUserFromRequest } = require("./wallet.controller");
 const { addAdminAuditLog } = require("../repositories/admin-audit.repository");
-const { queueRewardForClaim, retryReward } = require("../repositories/watch-shareholder.repository");
+const { listUserClaimableRewards, queueRewardForClaim, retryReward } = require("../repositories/watch-shareholder.repository");
 const {
   fetchWatchNodeSnapshot,
   getAdminShareholderOverview,
@@ -19,10 +19,7 @@ async function getMyWatchShareholder(req) {
 
 async function claimMyWatchShareholder(req) {
   const user = await getUserFromRequest(req);
-  const status = await getMyShareholderStatus(user);
-  const pending = (status.rewards || []).filter(
-    (reward) => ["pending", "queued", "failed"].includes(reward.status) && Number(reward.rewardPoints || 0) > 0
-  );
+  const pending = await listUserClaimableRewards(user.uid, 500);
 
   if (!pending.length) {
     throw new Error("暂无可领取腕表分红");
