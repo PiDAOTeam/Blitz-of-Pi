@@ -1,6 +1,6 @@
 import { translations as $t, languageMeta as St, languageCodes as Jt, LANGUAGE_STORAGE_KEY as Da } from "./i18n/locales.js";
 import { DEFAULT_ANIMATION_DURATIONS, DEFAULT_ATTACK_WARNING_TEXT, normalizeAnimationDurations } from "./config/animation.js";
-import { canvasRoundRect, canvasHexToRgba, canvasShadeColor } from "./canvas/draw-utils.js";
+import { canvasRoundRect, canvasHexToRgba, canvasShadeColor, drawCanvasTileBody } from "./canvas/draw-utils.js";
 import { clientTileColor, clientIsSpecialTile, clientSpecialKind, clientMakeSpecialTile, clientIsSameMatchTile, clientCreateRandom, clientRandomTile, clientWouldCreateMatchAt, clientSafeRandomTile, clientCloneBoard, clientIsInside, clientSwap, clientFindMatches, clientAddSpecialTargets, clientSpecialCreation, clientDirectSpecialMatches, clientCollapseBoard, clientHasValidMove, clientCreateCandidateBoard, clientRefillBoardIfStuck, clientResolveBoard, clientSettleRemainingMatches, battleClearCount, battleChainCount, battleFeedbackPower, battleIsMegaFeedback, battleBurstText, battlePraiseCue, waPreviewText, yaPreviewSemantic, clientPreviewTone } from "./game/match3-engine.js";
 const qa = ["localhost", "127.0.0.1"].includes(window.location.hostname), fn = qa ? "http://localhost:3000" : "https://blitzapi.hashpi.app", Gt = fn, Ia = qa ? Gt.replace(/^http/, "ws").replace(/\/$/, "") + "/ws/" : "wss://blitzapi.hashpi.app/ws/", hn = window.location.hostname === "sandbox.minepi.com", R = document.querySelector("#app");
 if (!R) throw new Error("\u672A\u627E\u5230\u5E94\u7528\u6302\u8F7D\u8282\u70B9");
@@ -2817,19 +2817,6 @@ function getBoardGeometry(e) {
 function canvasCellRect(e, t, r) {
   const o = e.paddingLeft + r * (e.tileWidth + e.gap), s = e.paddingTop + t * (e.tileHeight + e.gap);
   return { x: o, y: s, w: Math.max(2, e.tileWidth - 1), h: Math.max(2, e.tileHeight - 1), cx: o + e.tileWidth / 2, cy: s + e.tileHeight / 2, row: t, col: r };
-}
-function drawCanvasTileBody(e, t, r, o, s, l, c) {
-  const d = t.color || "#8a35ff", u = Math.min(o.w, o.h), h = canvasShadeColor(d, 0.34), p = canvasShadeColor(d, -0.36);
-  canvasRoundRect(e, o.x, o.y + Math.max(2, u * 0.055), o.w, o.h, s), e.fillStyle = "rgba(0, 0, 0, .34)", e.fill();
-  canvasRoundRect(e, o.x + 0.5, o.y + 0.5, o.w - 1, o.h - 1, s);
-  const f = e.createLinearGradient(o.x, o.y, o.x + o.w, o.y + o.h);
-  f.addColorStop(0, h), f.addColorStop(0.18, d), f.addColorStop(0.68, d), f.addColorStop(1, p);
-  e.shadowColor = r >= wa || c.glow > 0 ? canvasHexToRgba(d, l ? 0.72 : 0.48) : "rgba(255, 228, 123, .18)", e.shadowBlur = l ? 16 : 9, e.fillStyle = f, e.fill(), e.shadowBlur = 0;
-  const m = e.createLinearGradient(o.x, o.y, o.x, o.y + o.h);
-  m.addColorStop(0, "rgba(255,255,255,.52)"), m.addColorStop(0.2, "rgba(255,255,255,.16)"), m.addColorStop(0.56, "rgba(0,0,0,.04)"), m.addColorStop(1, "rgba(0,0,0,.36)"), e.fillStyle = m, e.fill();
-  canvasRoundRect(e, o.x + u * 0.08, o.y + u * 0.07, o.w * 0.72, o.h * 0.32, Math.max(4, s * 0.58)), e.fillStyle = "rgba(255,255,255,.18)", e.fill();
-  e.beginPath(), e.moveTo(o.x + o.w * 0.16, o.y + o.h * 0.16), e.lineTo(o.x + o.w * 0.44, o.y + o.h * 0.08), e.strokeStyle = "rgba(255, 255, 255, .46)", e.lineWidth = Math.max(1.2, u * 0.04), e.stroke();
-  e.strokeStyle = r >= wa ? "rgba(255, 245, 174, .68)" : "rgba(255, 249, 218, .28)", e.lineWidth = r >= wa ? 1.9 : 1.1, canvasRoundRect(e, o.x + 0.5, o.y + 0.5, o.w - 1, o.h - 1, s), e.stroke();
 }
 function canvasHasActiveFx(e = Date.now()) {
   return !!(a.tileEffect && e - a.tileEffect.at < Math.max(180, animationMs("localSwapSeconds", 80)) || a.localSwapFx && e - a.localSwapFx.at < animationMs("localSwapSeconds", 60) || x && e - x.at < 220 || k && e - k.at < 320 || (a.canvasTileBursts || []).some((t) => e - t.at < t.durationMs) || (a.canvasSpecialFx || []).some((t) => e - t.at < t.durationMs) || (a.canvasSpecialBirths || []).some((t) => e - t.at < t.durationMs));
