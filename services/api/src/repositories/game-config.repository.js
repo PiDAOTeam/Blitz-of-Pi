@@ -245,9 +245,9 @@ const DEFAULT_GAME_CONFIG = {
     dragTrailEnabled: true,
     hapticEnabled: true,
     soundEnabled: true,
-    soundVolume: 0.9,
+    soundVolume: 1,
     bgmEnabled: true,
-    bgmVolume: 0.28,
+    bgmVolume: 0.45,
     attackWarningEnabled: true,
     attackWarningText: "被攻击 压力+{attack}",
     animationDurations: {
@@ -927,9 +927,9 @@ function normalizeVisualEffectsConfig(visualEffects = {}) {
     dragTrailEnabled: visualEffects.dragTrailEnabled !== false,
     hapticEnabled: visualEffects.hapticEnabled !== false,
     soundEnabled: visualEffects.soundEnabled !== false,
-    soundVolume: normalizeNumberInRange(visualEffects.soundVolume, defaults.soundVolume, 0, 1, 2),
+    soundVolume: normalizeNumberInRange(visualEffects.soundVolume, defaults.soundVolume, 0, 1.5, 2),
     bgmEnabled: visualEffects.bgmEnabled !== false,
-    bgmVolume: normalizeNumberInRange(visualEffects.bgmVolume, defaults.bgmVolume, 0, 0.5, 2),
+    bgmVolume: normalizeNumberInRange(visualEffects.bgmVolume, defaults.bgmVolume, 0, 1, 2),
     attackWarningEnabled: visualEffects.attackWarningEnabled !== false,
     attackWarningText:
       normalizeTextValue(visualEffects.attackWarningText, defaults.attackWarningText)

@@ -2,9 +2,9 @@ const qa = ["localhost", "127.0.0.1"].includes(window.location.hostname), fn = q
 if (!R) throw new Error("\u672A\u627E\u5230\u5E94\u7528\u6302\u8F7D\u8282\u70B9");
 const BRAND_MARK_HTML = '<img class="brand-logo" src="/assets/brand/blitz-logo-128.jpg" alt="" loading="eager" decoding="async" />';
 const Da = "blitz_language", Wa = "blitz_visual_effect_mode", INVITE_CODE_STORAGE_KEY = "blitz_pending_invite_code", Jt = ["zh-CN", "en", "vi", "ko", "ja"], ot = ["balanced", "high"];
-const BATTLE_SFX_OUTPUT_GAIN = 8, BATTLE_BGM_OUTPUT_GAIN = 6;
+const BATTLE_SFX_OUTPUT_GAIN = 10, BATTLE_BGM_OUTPUT_GAIN = 10;
 const BATTLE_PRAISE_CUES = ["Good", "Great", "Amazing", "Excellent", "Unbelievable", "Crazy", "Wonderful"];
-const BATTLE_VOICE_ASSET_VERSION = "20260612-warm-slow";
+const BATTLE_VOICE_ASSET_VERSION = "20260612-warm-loud";
 const BATTLE_PRAISE_AUDIO_SRC = Object.fromEntries(BATTLE_PRAISE_CUES.map((e) => [e, `/assets/audio/praise/${e.toLowerCase()}.wav?v=${BATTLE_VOICE_ASSET_VERSION}`]));
 const BATTLE_ATTACK_VOICE_SRC = `/assets/audio/voice/oh-my-god.wav?v=${BATTLE_VOICE_ASSET_VERSION}`;
 const INVITE_LIST_PAGE_SIZE = 6;
@@ -94,7 +94,7 @@ function ve() {
     const l = Number(r);
     return Number.isFinite(l) ? Math.max(0, Math.min(s, l)) : o;
   };
-  return { defaultMode: e(a.gameConfig?.visualEffects?.defaultMode), piBrowserDefaultMode: e(a.gameConfig?.visualEffects?.piBrowserDefaultMode), allowUserChoice: a.gameConfig?.visualEffects?.allowUserChoice !== false, allowHighMode: true, autoDowngradeEnabled: a.gameConfig?.visualEffects?.autoDowngradeEnabled !== false, dragTrailEnabled: a.gameConfig?.visualEffects?.dragTrailEnabled !== false, hapticEnabled: a.gameConfig?.visualEffects?.hapticEnabled !== false, soundEnabled: a.gameConfig?.visualEffects?.soundEnabled !== false, soundVolume: t(a.gameConfig?.visualEffects?.soundVolume, 0.9, 1), bgmEnabled: a.gameConfig?.visualEffects?.bgmEnabled !== false, bgmVolume: t(a.gameConfig?.visualEffects?.bgmVolume, 0.28, 0.5), attackWarningEnabled: a.gameConfig?.visualEffects?.attackWarningEnabled !== false, attackWarningText: String(a.gameConfig?.visualEffects?.attackWarningText || DEFAULT_ATTACK_WARNING_TEXT).trim() || DEFAULT_ATTACK_WARNING_TEXT, animationDurations: normalizeAnimationDurations(a.gameConfig?.visualEffects?.animationDurations) };
+  return { defaultMode: e(a.gameConfig?.visualEffects?.defaultMode), piBrowserDefaultMode: e(a.gameConfig?.visualEffects?.piBrowserDefaultMode), allowUserChoice: a.gameConfig?.visualEffects?.allowUserChoice !== false, allowHighMode: true, autoDowngradeEnabled: a.gameConfig?.visualEffects?.autoDowngradeEnabled !== false, dragTrailEnabled: a.gameConfig?.visualEffects?.dragTrailEnabled !== false, hapticEnabled: a.gameConfig?.visualEffects?.hapticEnabled !== false, soundEnabled: a.gameConfig?.visualEffects?.soundEnabled !== false, soundVolume: t(a.gameConfig?.visualEffects?.soundVolume, 1, 1.5), bgmEnabled: a.gameConfig?.visualEffects?.bgmEnabled !== false, bgmVolume: t(a.gameConfig?.visualEffects?.bgmVolume, 0.45, 1), attackWarningEnabled: a.gameConfig?.visualEffects?.attackWarningEnabled !== false, attackWarningText: String(a.gameConfig?.visualEffects?.attackWarningText || DEFAULT_ATTACK_WARNING_TEXT).trim() || DEFAULT_ATTACK_WARNING_TEXT, animationDurations: normalizeAnimationDurations(a.gameConfig?.visualEffects?.animationDurations) };
 }
 function extremeRealtimeConfig() {
   const e = a.gameConfig?.extremeRealtime || {};
@@ -785,18 +785,18 @@ function battleSoundEnabled() {
 }
 function battleSfxVolume() {
   const e = Number(ve().soundVolume);
-  return Math.min(8, Math.max(0, Number.isFinite(e) ? e : 0) * BATTLE_SFX_OUTPUT_GAIN);
+  return Math.min(15, Math.max(0, Number.isFinite(e) ? e : 0) * BATTLE_SFX_OUTPUT_GAIN);
 }
 function battleBgmEnabled() {
   return battleSoundEnabled() && ve().bgmEnabled !== false && battleBgmVolume() > 0 && a.screen === "battle" && a.realtimeRoom?.status === "playing";
 }
 function battleBgmVolume() {
   const e = Number(ve().bgmVolume);
-  return Math.min(3, Math.max(0, Number.isFinite(e) ? e : 0) * BATTLE_BGM_OUTPUT_GAIN);
+  return Math.min(8, Math.max(0, Number.isFinite(e) ? e : 0) * BATTLE_BGM_OUTPUT_GAIN);
 }
 function battleVoiceVolume() {
   const e = Number(ve().soundVolume);
-  return Math.min(0.98, Math.max(0.68, Number.isFinite(e) ? e * 1.02 : 0.92));
+  return Math.min(1.35, Math.max(0.82, Number.isFinite(e) ? e * 1.15 : 1.05));
 }
 function ensureBattleAudioContext() {
   if (!battleSoundEnabled()) return null;

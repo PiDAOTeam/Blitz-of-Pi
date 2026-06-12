@@ -135,9 +135,9 @@ async function getPublicGameConfig() {
       dragTrailEnabled: config.visualEffects?.dragTrailEnabled !== false,
       hapticEnabled: config.visualEffects?.hapticEnabled !== false,
       soundEnabled: config.visualEffects?.soundEnabled !== false,
-      soundVolume: Number(config.visualEffects?.soundVolume ?? 0.85),
+      soundVolume: Number(config.visualEffects?.soundVolume ?? 1),
       bgmEnabled: config.visualEffects?.bgmEnabled !== false,
-      bgmVolume: Number(config.visualEffects?.bgmVolume ?? 0.12),
+      bgmVolume: Number(config.visualEffects?.bgmVolume ?? 0.45),
       attackWarningEnabled: config.visualEffects?.attackWarningEnabled !== false,
       attackWarningText: config.visualEffects?.attackWarningText || "被攻击 压力+{attack}",
       animationDurations: config.visualEffects?.animationDurations || {}

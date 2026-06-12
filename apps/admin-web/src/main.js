@@ -1041,7 +1041,7 @@ function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, roo
               <option value="false" ${n.visualEffects?.soundEnabled === false ? "selected" : ""}>\u5173\u95ED</option>
             </select>
           </label>
-          <label><span>\u97F3\u6548\u97F3\u91CF</span><input name="effectSoundVolume" type="number" inputmode="decimal" min="0" max="1" step="0.05" value="${n.visualEffects?.soundVolume ?? 0.9}" /></label>
+          <label><span>\u97F3\u6548\u97F3\u91CF</span><input name="effectSoundVolume" type="number" inputmode="decimal" min="0" max="1.5" step="0.05" value="${n.visualEffects?.soundVolume ?? 1}" /></label>
           <label>
             <span>\u5BF9\u6218\u80CC\u666F\u97F3\u4E50</span>
             <select name="effectBgmEnabled">
@@ -1049,7 +1049,7 @@ function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, roo
               <option value="false" ${n.visualEffects?.bgmEnabled === false ? "selected" : ""}>\u5173\u95ED</option>
             </select>
           </label>
-          <label><span>\u80CC\u666F\u97F3\u4E50\u97F3\u91CF</span><input name="effectBgmVolume" type="number" inputmode="decimal" min="0" max="0.5" step="0.01" value="${n.visualEffects?.bgmVolume ?? 0.28}" /></label>
+          <label><span>\u80CC\u666F\u97F3\u4E50\u97F3\u91CF</span><input name="effectBgmVolume" type="number" inputmode="decimal" min="0" max="1" step="0.01" value="${n.visualEffects?.bgmVolume ?? 0.45}" /></label>
           <label>
             <span>\u88AB\u653B\u51FB\u6587\u5B57\u63D0\u793A</span>
             <select name="effectAttackWarningEnabled">
