@@ -432,7 +432,7 @@ function triggerBattleShake(e) {
 function playMatchReadyHaptic(e) {
   const t = e?.roomNo || a.roomNo;
   if (!t || a.matchedHapticRoomNo === t || e?.status !== "waiting_ready") return;
-  a.matchedHapticRoomNo = t, de([140, 50, 180, 60, 260]);
+  a.matchedHapticRoomNo = t, de([300, 120, 420, 120, 520, 160, 620, 160, 600]);
 }
 function battleSoundEnabled() {
   return a.gameConfig?.visualEffects?.soundEnabled !== false && !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
