@@ -3057,13 +3057,22 @@ function clearPendingSwapSeq(e) {
   a.pendingSwapQueue = (a.pendingSwapQueue || []).filter((r) => Number(r.seq || 0) !== t);
   a.pendingSwapSeq === t && (a.pendingSwapSeq = a.pendingSwapQueue[0]?.seq || 0, a.pendingSwapPositions = a.pendingSwapQueue[0]?.positions || []);
 }
+function roomPlayerCorrectionReason(e, t) {
+  if (!e || !t) return "";
+  if (jt(e) !== jt(t)) return "board";
+  if (Number(e.score || 0) !== Number(t.score || 0)) return "score";
+  if (Number(e.pressure || 0) !== Number(t.pressure || 0)) return "pressure";
+  if (Number(e.combo || 0) !== Number(t.combo || 0)) return "combo";
+  if (Number(e.lastGain || 0) !== Number(t.lastGain || 0)) return "last_gain";
+  return "";
+}
 function syncAuthoritativeRoom(e, t = "state") {
   if (!e) return;
   const r = a.realtimeRoom, o = xa(r, a.user?.uid || ""), s = xa(e, a.user?.uid || "");
-  const l = o && s && jt(o) !== jt(s);
+  const l = roomPlayerCorrectionReason(o, s);
   a.realtimeRoom = e, a.clientRoomVersion = Number(e.version || a.clientRoomVersion || 0), a.clientPredictedBoard = s?.board ? clientCloneBoard(s.board) : null, a.lastRoomStateAt = Date.now(), a.screen = "battle";
   updateBattleBgm();
-  l && t !== "state" && (a.clientPredictionStats.corrected += 1, v("client_snapshot_corrected", { roomNo: e.roomNo, mode: e.mode, result: t, version: a.clientRoomVersion }, 5e3));
+  l && t !== "state" && (a.clientPredictionStats.corrected += 1, v("client_snapshot_corrected", { roomNo: e.roomNo, mode: e.mode, result: l, message: t, version: a.clientRoomVersion }, 5e3));
   xi(e);
 }
 function mergeRoomDelta(e) {
@@ -3719,12 +3728,12 @@ function Hi() {
         </div>
       </section>
 
-      <div id="battle-feedback-layer">
-        <div id="battle-burst-layer"></div>
-        <div id="battle-impact-layer"></div>
-      </div>
       <div id="battle-overlay"></div>
     </main>
+    <div id="battle-feedback-layer">
+      <div id="battle-burst-layer"></div>
+      <div id="battle-impact-layer"></div>
+    </div>
   `, Ui(), Ua()), l || gi(t, e);
   const m = st(), g = (E, H) => {
     E && E.textContent !== H && (E.textContent = H);
