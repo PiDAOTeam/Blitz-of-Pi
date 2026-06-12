@@ -2861,6 +2861,16 @@ button:disabled {
   overflow: hidden;
   touch-action: manipulation;
 }
+/* ===== 战斗震屏:强反馈时整个战斗区抖动 ===== */
+.battle-shell.battle-shake-light {
+  animation: battle-shake-light .18s ease-out both;
+}
+.battle-shell.battle-shake-strong {
+  animation: battle-shake-strong .26s ease-out both;
+}
+.battle-shell.battle-shake-mega {
+  animation: battle-shake-mega .34s cubic-bezier(.36, .07, .19, .97) both;
+}
 .battle-header {
   display: grid;
   grid-template-columns: minmax(0, .95fr) minmax(0, 1.35fr) minmax(0, .95fr);
@@ -4282,6 +4292,75 @@ button:disabled {
   color: #240448;
   text-shadow: none;
 }
+
+/* ===== 连击突破档:让"连很多"逐级炸裂 ===== */
+.battle-burst.burst-chain-mid:before {
+  width: 178px;
+  height: 178px;
+  animation-duration: var(--battle-burst-ring-duration, .72s);
+}
+.battle-burst.burst-chain-high:before {
+  width: 204px;
+  height: 204px;
+  filter: blur(.2px) brightness(1.12);
+}
+.battle-burst.burst-chain-super:before {
+  width: 236px;
+  height: 236px;
+  filter: blur(.2px) brightness(1.24) saturate(1.2);
+}
+/* super 档额外冲击波第二环 */
+.battle-burst.burst-chain-super:after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 236px;
+  height: 236px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 246, 184, .82);
+  box-shadow: 0 0 38px rgba(255, 224, 109, .7), inset 0 0 28px rgba(112, 236, 255, .5);
+  transform: translate(-50%, -50%);
+  animation: burst-shockwave var(--battle-burst-ring-duration, .72s) ease-out both;
+  pointer-events: none;
+}
+
+/* ===== 连击大数字:猛地砸出来 ===== */
+.burst-chain-number {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 3;
+  transform: translate(-50%, -50%);
+  font-size: clamp(48px, 14vw, 88px);
+  font-weight: 1000;
+  font-style: normal;
+  line-height: .9;
+  letter-spacing: -.02em;
+  color: #fff6bd;
+  text-shadow:
+    0 2px 0 rgba(60, 12, 100, .55),
+    0 0 18px rgba(255, 214, 91, .85),
+    0 0 38px rgba(255, 184, 60, .55);
+  -webkit-text-stroke: 2px rgba(78, 23, 0, .42);
+  animation: burst-chain-pop var(--battle-burst-score-duration, 1.38s) cubic-bezier(.18, .9, .26, 1.4) both;
+  pointer-events: none;
+}
+.battle-burst.burst-chain-high .burst-chain-number {
+  font-size: clamp(56px, 16vw, 100px);
+  color: #fff9d6;
+}
+.battle-burst.burst-chain-super .burst-chain-number {
+  font-size: clamp(64px, 18vw, 116px);
+  background: linear-gradient(135deg, #fff06d 0%, #ffffff 38%, #7becff 72%, #ff8fd0 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: 2px rgba(120, 40, 0, .3);
+  text-shadow: 0 0 30px rgba(255, 224, 109, .8);
+  filter: drop-shadow(0 3px 0 rgba(60, 12, 100, .5));
+}
+
 .battle-attack-line {
   position: absolute;
   left: 24%;
@@ -6319,6 +6398,60 @@ button:disabled {
     transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1);
   }
 }
+@keyframes burst-shockwave {
+  0% {
+    opacity: .95;
+    transform: translate(-50%, -50%) scale(.28);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.5);
+  }
+}
+@keyframes burst-chain-pop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(.32) rotate(-6deg);
+  }
+  22% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.26) rotate(2deg);
+  }
+  38% {
+    transform: translate(-50%, -50%) scale(.96) rotate(0);
+  }
+  52%, 80% {
+    opacity: 1;
+    transform: translate(-50%, -54%) scale(1.04);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -72%) scale(.9);
+  }
+}
+@keyframes battle-shake-light {
+  0%, to { transform: translate(0, 0); }
+  25% { transform: translate(-2px, 1px); }
+  50% { transform: translate(2px, -2px); }
+  75% { transform: translate(-1px, 2px); }
+}
+@keyframes battle-shake-strong {
+  0%, to { transform: translate(0, 0); }
+  15% { transform: translate(-5px, 1px); }
+  30% { transform: translate(5px, -2px); }
+  45% { transform: translate(-4px, 2px); }
+  60% { transform: translate(4px, -1px); }
+  80% { transform: translate(-2px, 1px); }
+}
+@keyframes battle-shake-mega {
+  0%, to { transform: translate(0, 0) rotate(0); }
+  12% { transform: translate(-7px, -3px) rotate(-.6deg); }
+  26% { transform: translate(8px, 4px) rotate(.7deg); }
+  40% { transform: translate(-6px, 4px) rotate(-.5deg); }
+  54% { transform: translate(6px, -3px) rotate(.4deg); }
+  70% { transform: translate(-4px, 2px) rotate(-.2deg); }
+  86% { transform: translate(2px, -1px) rotate(0); }
+}
 @keyframes attack-line-flight {
   0% {
     opacity: 0;
@@ -6951,6 +7084,11 @@ button:disabled {
   .game-board.board-clear-chain,
   .game-board.board-clear-mega,
   .game-board.board-clear-attack,
+  .battle-burst.burst-chain-super:after,
+  .burst-chain-number,
+  .battle-shell.battle-shake-light,
+  .battle-shell.battle-shake-strong,
+  .battle-shell.battle-shake-mega,
   .ready-mask:before,
   .vs-intro-mask {
     animation: none !important;

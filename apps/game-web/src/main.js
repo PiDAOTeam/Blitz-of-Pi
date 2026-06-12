@@ -399,6 +399,15 @@ function de(e) {
   } catch {
   }
 }
+function triggerBattleShake(e) {
+  if (!e || a.effectiveVisualEffectMode === "low" || document.documentElement.classList.contains("low-performance")) return;
+  const t = st().shell;
+  if (!t) return;
+  const r = `battle-shake-${e}`;
+  t.classList.remove("battle-shake-light", "battle-shake-strong", "battle-shake-mega"), t.offsetWidth, t.classList.add(r), window.setTimeout(() => {
+    t.classList.remove(r);
+  }, e === "mega" ? 360 : e === "strong" ? 280 : 200);
+}
 function playMatchReadyHaptic(e) {
   const t = e?.roomNo || a.roomNo;
   if (!t || a.matchedHapticRoomNo === t || e?.status !== "waiting_ready") return;
@@ -691,7 +700,11 @@ function playBattlePraiseCue(e) {
 function playBattleEventFeedback(e, t = false) {
   if (!e) return;
   const r = battleFeedbackPower(e);
-  e.specialTriggered ? playBattleSfx("specialTrigger", r) : e.specialCreated ? playBattleSfx("specialCreate", r) : Number(e.chain || 1) >= 2 || battleIsMegaFeedback(e) ? playBattleSfx("combo", r) : Number(e.attack || 0) > 0 ? playBattleSfx("attack", r) : playBattleSfx("clear", r), t && (de(vi(e)), playBattlePraiseCue(e));
+  e.specialTriggered ? playBattleSfx("specialTrigger", r) : e.specialCreated ? playBattleSfx("specialCreate", r) : Number(e.chain || 1) >= 2 || battleIsMegaFeedback(e) ? playBattleSfx("combo", r) : Number(e.attack || 0) > 0 ? playBattleSfx("attack", r) : playBattleSfx("clear", r), t && (de(vi(e)), playBattlePraiseCue(e), triggerBattleShake(battleShakeLevel(e)));
+}
+function battleShakeLevel(e) {
+  const t = Number(e.chain || 1), r = battleClearCount(e);
+  return Number(e.chain || 0) >= 4 || e.specialTriggered ? "mega" : Number(e.attack || 0) > 0 ? "strong" : t >= 3 || r >= 6 ? "light" : "";
 }
 function playFinishFeedback(e, t) {
   if (!e || e.status !== "finished" || !t) return;
@@ -3081,10 +3094,12 @@ function pi(e) {
     return `<i style="--dx:${c}px;--dy:${d}px;--delay:${o * 18}ms"></i>`;
   }).join("");
   const r = Number(e.durationSeconds || 0), o = r > 0 ? `;--battle-burst-duration:${r}s;--battle-burst-score-duration:${Math.max(0.12, r - 0.14)}s;--battle-burst-ring-duration:${Math.min(r, 0.72)}s` : "";
+  const c = Number(e.bigChain || 0), u = c >= 5 ? " burst-chain-super" : c >= 4 ? " burst-chain-high" : c >= 3 ? " burst-chain-mid" : "";
   return `<div
-    class="battle-burst ${e.tone} cleared-${Math.min(6, Math.max(3, e.cleared))}"
+    class="battle-burst ${e.tone} cleared-${Math.min(6, Math.max(3, e.cleared))}${u}"
     style="left:${e.x}%;top:${e.y}%${o}"
   >
+    ${c >= 3 ? `<b class="burst-chain-number">x${i(String(c))}</b>` : ""}
     ${e.text ? `<span>${i(e.text)}</span>` : ""}
     ${t ? `<div>${t}</div>` : ""}
   </div>`;
@@ -3266,7 +3281,7 @@ function nn(e) {
     return;
   }
   l && (Rt = c, Mt = d, Bt = Date.now(), (e.specialTriggered || e.specialCreated || e.attack > 0) && v("client_burst_show", { roomNo: a.roomNo, mode: a.realtimeRoom?.mode || a.selectedMode, message: l, seq: e.seq || 0, result: ne(e), specialTriggered: e.specialTriggered || 0, specialCreated: e.specialCreated || 0, attack: e.attack || 0 }, 0));
-  const m = { id: t, text: l, tone: s, at: Date.now(), x: e.attack > 0 ? 63 : r ? 48 + Math.random() * 12 : 50, y: e.localPending ? 48 : e.attack > 0 ? 38 : r ? 46 + Math.random() * 10 : 50, cleared: Number(e.cleared || 3), chain: Number(e.chain || 1), attack: Number(e.attack || 0), particles: bi(e) };
+  const m = { id: t, text: l, tone: s, at: Date.now(), x: e.attack > 0 ? 63 : r ? 48 + Math.random() * 12 : 50, y: e.localPending ? 48 : e.attack > 0 ? 38 : r ? 46 + Math.random() * 10 : 50, cleared: Number(e.cleared || 3), chain: Number(e.chain || 1), attack: Number(e.attack || 0), bigChain: Number(e.chain || 1) >= 3 && !(Number(e.attack || 0) > 0) ? Number(e.chain || 1) : 0, particles: bi(e) };
   a.battleBursts = l ? [m] : [...a.battleBursts, m].slice(-2), K = "", window.setTimeout(() => {
     a.battleBursts = a.battleBursts.filter((g) => g.id !== t), K = "", $();
   }, e.localPending ? r ? animationMsAtLeast("localBurstHighSeconds", 1080) : animationMsAtLeast("localBurstSeconds", 940) : o ? animationMs("lowPerformanceBurstSeconds") : r ? animationMs("serverBurstHighSeconds") : animationMs("serverBurstSeconds"));
