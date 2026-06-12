@@ -399,8 +399,17 @@ async function processMatchWatchers() {
   );
 }
 
-async function saveRoom(room) {
-  await redisSetJson(`${REDIS_REALTIME_ROOM_PREFIX}${room.roomNo}`, room, 7200);
+function getRoomCacheTtlSeconds(room, fallbackSeconds = 7200) {
+  if (room?.status !== "finished" || !room.releasedAt) {
+    return fallbackSeconds;
+  }
+
+  const elapsedSeconds = Math.floor((Date.now() - Number(room.releasedAt || 0)) / 1000);
+  return Math.max(1, FINISHED_ROOM_GRACE_SECONDS - elapsedSeconds);
+}
+
+async function saveRoom(room, ttlSeconds = 7200) {
+  await redisSetJson(`${REDIS_REALTIME_ROOM_PREFIX}${room.roomNo}`, room, getRoomCacheTtlSeconds(room, ttlSeconds));
 }
 
 async function loadRoom(roomNo) {
@@ -682,6 +691,12 @@ async function handleJoin(socket, payload) {
     const player = room.players.find((item) => item.uid === uid);
     if (!player) {
       sendError(socket, "玩家不属于该房间");
+      return;
+    }
+
+    if (room.status === "finished") {
+      await redisDel(`${REDIS_USER_ROOM_PREFIX}${uid}`);
+      sendError(socket, "对局已结束");
       return;
     }
 
@@ -1098,8 +1113,8 @@ async function processRoomTick(roomNo, room) {
         result: room.finishReason || "finished"
       });
     }
-    await saveRoom(room);
     await settleRoomIfNeeded(room);
+    await saveRoom(room, getRoomCacheTtlSeconds(room));
     broadcastRoom(roomNo);
     return;
   }
@@ -1126,7 +1141,7 @@ async function processRoomTick(roomNo, room) {
       }
       await settleRoomIfNeeded(room);
     }
-    await saveRoom(room);
+    await saveRoom(room, getRoomCacheTtlSeconds(room));
     if (
       (room.players || []).some((player) => isExtremeRealtimeEnabled(room, player.uid)) &&
       now - Number(room.lastSnapshotAt || 0) >= extremeRealtime.snapshotIntervalMs
@@ -1145,8 +1160,8 @@ async function processRoomTick(roomNo, room) {
   }
 
   if (room.status === "finished" && !room.releasedAt) {
-    await saveRoom(room);
     await settleRoomIfNeeded(room);
+    await saveRoom(room);
   }
 
   broadcastRoom(roomNo);

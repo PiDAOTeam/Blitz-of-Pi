@@ -4,6 +4,8 @@ const { query } = require("../db/mysql");
 const { REDIS_HOST, REDIS_PORT } = require("../config");
 
 const PUBLIC_API_BASE = "https://blitzapi.hashpi.app";
+const ACTIVE_REALTIME_ROOM_STATUSES = new Set(["matched", "waiting_ready", "playing"]);
+const ACTIVE_REALTIME_ROOM_WARNING_THRESHOLD = 80;
 
 function toNumber(value) {
   return Number(value || 0);
@@ -24,6 +26,27 @@ function head(path) {
     req.on("error", (error) => resolve({ error: error.message }));
     req.end();
   });
+}
+
+async function scanRedisKeys(redis, pattern) {
+  const keys = [];
+  let cursor = "0";
+
+  do {
+    const [nextCursor, batch] = await redis.scan(cursor, "MATCH", pattern, "COUNT", 500);
+    cursor = nextCursor;
+    keys.push(...batch);
+  } while (cursor !== "0");
+
+  return keys;
+}
+
+function safeJsonParse(raw) {
+  try {
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
 }
 
 function createReportBuilder() {
@@ -176,11 +199,23 @@ async function checkRedisState(report) {
 
   try {
     await redis.connect();
-    const keys = await redis.keys("blitz:*");
+    const keys = await scanRedisKeys(redis, "blitz:*");
     const queueKeys = keys.filter((key) => key.startsWith("blitz:match:queue:"));
     const userRoomKeys = keys.filter((key) => key.startsWith("blitz:user-room:"));
+    const baseRoomKeys = keys.filter((key) => key.startsWith("blitz:room:"));
     const realtimeRoomKeys = keys.filter((key) => key.startsWith("blitz:realtime-room:"));
     const queues = {};
+    const invalidQueues = [];
+    const baseRooms = {};
+    const realtimeRooms = {};
+    const baseRoomStatusCounts = {};
+    const roomStatusCounts = {};
+    const staleUserRoomBindings = [];
+    let activeBaseRooms = 0;
+    let activeRealtimeRooms = 0;
+    let finishedRealtimeRooms = 0;
+    let invalidBaseRooms = 0;
+    let invalidRealtimeRooms = 0;
 
     for (const key of queueKeys) {
       const raw = await redis.get(key);
@@ -188,6 +223,57 @@ async function checkRedisState(report) {
         queues[key] = JSON.parse(raw || "[]").length;
       } catch {
         queues[key] = "invalid-json";
+        invalidQueues.push(key);
+      }
+    }
+
+    for (const key of baseRoomKeys) {
+      const raw = await redis.get(key);
+      const room = safeJsonParse(raw);
+      if (!room) {
+        invalidBaseRooms += 1;
+        continue;
+      }
+
+      const roomNo = String(room.roomNo || key.replace("blitz:room:", ""));
+      const status = String(room.status || "unknown");
+      baseRooms[roomNo] = { status };
+      baseRoomStatusCounts[status] = (baseRoomStatusCounts[status] || 0) + 1;
+
+      if (ACTIVE_REALTIME_ROOM_STATUSES.has(status)) {
+        activeBaseRooms += 1;
+      }
+    }
+
+    for (const key of realtimeRoomKeys) {
+      const raw = await redis.get(key);
+      const room = safeJsonParse(raw);
+      if (!room) {
+        invalidRealtimeRooms += 1;
+        continue;
+      }
+
+      const roomNo = String(room.roomNo || key.replace("blitz:realtime-room:", ""));
+      const status = String(room.status || "unknown");
+      realtimeRooms[roomNo] = { status, releasedAt: room.releasedAt || null };
+      roomStatusCounts[status] = (roomStatusCounts[status] || 0) + 1;
+
+      if (ACTIVE_REALTIME_ROOM_STATUSES.has(status)) {
+        activeRealtimeRooms += 1;
+      } else if (status === "finished") {
+        finishedRealtimeRooms += 1;
+      }
+    }
+
+    for (const key of userRoomKeys) {
+      const roomNo = String((await redis.get(key)) || "");
+      const room = realtimeRooms[roomNo] || baseRooms[roomNo];
+      if (!room || room.status === "finished") {
+        staleUserRoomBindings.push({
+          key,
+          roomNo,
+          status: room?.status || "missing"
+        });
       }
     }
 
@@ -195,21 +281,46 @@ async function checkRedisState(report) {
       keyCount: keys.length,
       queueKeys: queueKeys.length,
       userRoomKeys: userRoomKeys.length,
+      baseRoomKeys: baseRoomKeys.length,
       realtimeRoomKeys: realtimeRoomKeys.length,
+      activeBaseRooms,
+      activeRealtimeRooms,
+      finishedRealtimeRooms,
+      invalidBaseRooms,
+      invalidRealtimeRooms,
+      staleUserRoomBindings: staleUserRoomBindings.length,
+      baseRoomStatusCounts,
+      roomStatusCounts,
       queues
     };
 
-    if (Object.values(queues).some((value) => value === "invalid-json")) {
-      report.add("danger", "Redis 匹配队列格式异常", "匹配队列不是合法 JSON，可能影响匹配。", data);
+    if (invalidQueues.length > 0) {
+      report.add("danger", "Redis 匹配队列格式异常", "匹配队列数据损坏，可能影响匹配。", {
+        ...data,
+        invalidQueues
+      });
       return;
     }
 
-    if (userRoomKeys.length > 20 || realtimeRoomKeys.length > 20) {
-      report.add("warning", "Redis 房间键数量偏高", "房间绑定键较多，请结合在线人数判断是否有残留。", data);
+    if (invalidBaseRooms > 0 || invalidRealtimeRooms > 0) {
+      report.add("warning", "Redis 房间快照异常", "存在无法解析的房间快照，需要清理或观察。", data);
       return;
     }
 
-    report.add("ok", "Redis 状态健康", "匹配队列和房间状态计数正常。", data);
+    if (staleUserRoomBindings.length > 0) {
+      report.add("warning", "Redis 房间绑定残留", "少量用户绑定指向已结束或不存在的房间，建议自动清理。", {
+        ...data,
+        staleUserRoomBindingSamples: staleUserRoomBindings.slice(0, 10)
+      });
+      return;
+    }
+
+    if (activeBaseRooms + activeRealtimeRooms > ACTIVE_REALTIME_ROOM_WARNING_THRESHOLD) {
+      report.add("warning", "Redis 活跃房间偏多", "活跃对局数量超过巡检阈值，请结合在线人数判断。", data);
+      return;
+    }
+
+    report.add("ok", "Redis 状态健康", "匹配队列、活跃房间和用户绑定均正常。", data);
   } catch (error) {
     report.add("warning", "Redis 巡检失败", error.message);
   } finally {
