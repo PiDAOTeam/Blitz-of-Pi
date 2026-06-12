@@ -1,14 +1,14 @@
 const Ae = ["localhost", "127.0.0.1"].includes(window.location.hostname), Ee = Ae ? "http://localhost:3000" : "https://blitzapi.hashpi.app", Be = Ee, le = document.querySelector("#app");
 const BRAND_LOGO_HTML = '<img class="brand-logo" src="/assets/brand/blitz-logo-128.jpg" alt="" loading="eager" decoding="async" />';
 if (!le) throw new Error("\u672A\u627E\u5230\u540E\u53F0\u6302\u8F7D\u8282\u70B9");
-let _ = "overview", W = null, re = "", I = "all", G = "all", te = null, battleModeFilter = "all", paymentStatusFilter = "all", userListFilter = "all", ledgerListFilter = "all", withdrawListFilter = "all", growthRewardFilter = "all", logListFilter = "all";
+let _ = "overview", W = null, re = "", I = "all", G = "all", te = null, battleModeFilter = "all", paymentStatusFilter = "all", userListFilter = "all", ledgerListFilter = "all", withdrawListFilter = "all", growthRewardFilter = "all", watchRewardFilter = "all", logListFilter = "all";
 const V = 60, Z = {}, Te = "20260601-match-ops-v1";
 function fe() {
   return localStorage.getItem("blitz_admin_token") || "";
 }
 function ge(e) {
   const t = e.replace(/^#/, "");
-  return ["overview", "users", "funds", "withdraw", "growth", "ranks", "reconciliation", "risk", "matches", "config", "security", "logs"].includes(t) ? t : "overview";
+  return ["overview", "users", "funds", "withdraw", "growth", "watch-shareholder", "ranks", "reconciliation", "risk", "matches", "config", "security", "logs"].includes(t) ? t : "overview";
 }
 async function d(e, t) {
   const a = await fetch(`${Be}${e}`, { ...t, headers: { "Content-Type": "application/json", Authorization: `Bearer ${fe()}`, ...t?.headers || {} } }), n = await a.json();
@@ -25,7 +25,7 @@ function g(e) {
   }
 }
 function Me(e) {
-  return { overview: "\u6570\u636E\u603B\u89C8", users: "\u7528\u6237\u7BA1\u7406", funds: "\u8D44\u91D1\u6D41\u6C34", withdraw: "\u63D0\u73B0\u7BA1\u7406", growth: "\u589E\u957F\u8FD0\u8425", ranks: "\u6BB5\u4F4D\u8FD0\u8425", reconciliation: "\u5BF9\u8D26\u4E2D\u5FC3", risk: "\u98CE\u63A7\u5DE1\u68C0", matches: "\u5BF9\u5C40\u8BB0\u5F55", config: "\u8FD0\u8425\u914D\u7F6E", security: "\u8D26\u53F7\u5B89\u5168", logs: "\u64CD\u4F5C\u65E5\u5FD7" }[e];
+  return { overview: "\u6570\u636E\u603B\u89C8", users: "\u7528\u6237\u7BA1\u7406", funds: "\u8D44\u91D1\u6D41\u6C34", withdraw: "\u63D0\u73B0\u7BA1\u7406", growth: "\u589E\u957F\u8FD0\u8425", "watch-shareholder": "\u8155\u8868\u80A1\u4E1C\u6743\u76CA", ranks: "\u6BB5\u4F4D\u8FD0\u8425", reconciliation: "\u5BF9\u8D26\u4E2D\u5FC3", risk: "\u98CE\u63A7\u5DE1\u68C0", matches: "\u5BF9\u5C40\u8BB0\u5F55", config: "\u8FD0\u8425\u914D\u7F6E", security: "\u8D26\u53F7\u5B89\u5168", logs: "\u64CD\u4F5C\u65E5\u5FD7" }[e];
 }
 function h(e = "") {
   return e ? e.startsWith("bot_") ? e : e.length > 16 ? `${e.slice(0, 10)}...${e.slice(-6)}` : e : "-";
@@ -43,7 +43,7 @@ function oe(e = "") {
   return { quick_battle: "\u5FEB\u901F\u5F00\u6218", points_battle: "\u5C0F\u5BCC\u8C6A\uFF08\u79EF\u5206\uFF09", poc_battle: "\u5927\u5BCC\u8C6A\uFF08POC\uFF09", pi_battle: "\u8D85\u7EA7\u5BCC\u8C6A\uFF08Pi\uFF09", ticket_battle: "\u8D85\u7EA7\u5BCC\u8C6A\uFF08Pi\uFF09", rich_battle: "\u8D85\u7EA7\u5BCC\u8C6A\uFF08Pi\uFF09" }[e] || e || "-";
 }
 function qe(e = "") {
-  return { recharge: "\u5145\u503C", payment: "\u5145\u503C", reward: "\u5956\u52B1", battle_entry: "\u5165\u573A\u8D39", battle_reward: "\u5BF9\u6218\u5956\u52B1", battle_refund: "\u5E73\u5C40\u9000\u8D39", withdraw_lock: "\u63D0\u73B0\u51BB\u7ED3", withdraw_reject: "\u63D0\u73B0\u9000\u56DE", withdraw_paid: "\u63D0\u73B0\u6253\u6B3E", transfer_out: "\u8F6C\u8D26\u652F\u51FA", transfer_in: "\u8F6C\u8D26\u6536\u5165", transfer_fee: "\u8F6C\u8D26\u624B\u7EED\u8D39", invite_reward: "\u9080\u8BF7\u5956\u52B1", invite_commission: "\u9080\u8BF7\u63D0\u6210", daily_signin_reward: "\u7B7E\u5230\u5956\u52B1", daily_task_reward: "\u4EFB\u52A1\u5956\u52B1" }[e] || e || "-";
+  return { recharge: "\u5145\u503C", payment: "\u5145\u503C", reward: "\u5956\u52B1", battle_entry: "\u5165\u573A\u8D39", battle_reward: "\u5BF9\u6218\u5956\u52B1", battle_refund: "\u5E73\u5C40\u9000\u8D39", withdraw_lock: "\u63D0\u73B0\u51BB\u7ED3", withdraw_reject: "\u63D0\u73B0\u9000\u56DE", withdraw_paid: "\u63D0\u73B0\u6253\u6B3E", transfer_out: "\u8F6C\u8D26\u652F\u51FA", transfer_in: "\u8F6C\u8D26\u6536\u5165", transfer_fee: "\u8F6C\u8D26\u624B\u7EED\u8D39", invite_reward: "\u9080\u8BF7\u5956\u52B1", invite_commission: "\u9080\u8BF7\u63D0\u6210", daily_signin_reward: "\u7B7E\u5230\u5956\u52B1", daily_task_reward: "\u4EFB\u52A1\u5956\u52B1", watch_shareholder_reward: "\u8155\u8868\u5206\u7EA2" }[e] || e || "-";
 }
 function Le(e = "") {
   return { in: "\u6536\u5165", out: "\u652F\u51FA", lock: "\u51BB\u7ED3", unlock: "\u89E3\u51BB" }[e] || e || "-";
@@ -121,6 +121,13 @@ const GROWTH_REWARD_FILTERS = [
   { key: "battle_commission", label: "对战提成", match: (e) => e.rewardType === "battle_commission" },
   { key: "completed", label: "已完成", match: (e) => e.status === "completed" },
   { key: "pending", label: "待处理", match: (e) => e.status === "pending" }
+];
+const WATCH_REWARD_FILTERS = [
+  { key: "all", label: "全部", match: () => true },
+  { key: "pending", label: "待领取", match: (e) => ["pending", "queued"].includes(e.status) },
+  { key: "paid", label: "已发放", match: (e) => e.status === "paid" },
+  { key: "zero", label: "不足1积分", match: (e) => e.status === "zero" },
+  { key: "failed", label: "失败待处理", match: (e) => ["failed", "manual_review", "processing"].includes(e.status) }
 ];
 const LOG_LIST_FILTERS = [
   { key: "all", label: "全部", match: () => true },
@@ -500,7 +507,7 @@ function Ze(e, t) {
   `;
 }
 function Re(e) {
-  const t = ["overview", "users", "funds", "withdraw", "growth", "ranks", "reconciliation", "risk", "matches", "config", "security", "logs"];
+  const t = ["overview", "users", "funds", "withdraw", "growth", "watch-shareholder", "ranks", "reconciliation", "risk", "matches", "config", "security", "logs"];
   _ = ge(window.location.hash || _), le.innerHTML = `
     <div class="layout">
       <aside class="sidebar">
@@ -553,6 +560,10 @@ function Re(e) {
       if (n === "growth-rewards") {
         growthRewardFilter = s;
         Z["growth-rewards"] = 1;
+      }
+      if (n === "watch-rewards") {
+        watchRewardFilter = s;
+        Z["watch-rewards"] = 1;
       }
       if (n === "logs") {
         logListFilter = s;
@@ -765,15 +776,15 @@ function ae(e = "") {
     }
   });
 }
-function Ne(e, t, a, n, s, r, o, m, R, y, x, j, A, B, w, L, T, C, M, U) {
+function Ne(e, t, a, n, s, r, o, m, R, y, x, j, A, B, w, L, T, C, M, U, J) {
   const homeConfig = { projectName: "Pi闪电战", englishName: "Blitz of Pi", localizedContent: {}, banners: [], ...(t || {}) };
-  Q = [e, homeConfig, a, n, s, r, o, m, R, y, x, j, A, B, w, L, T, C, M, U];
-  const J = Array.isArray(homeConfig.banners) && homeConfig.banners.length ? homeConfig.banners[0] : {};
+  Q = [e, homeConfig, a, n, s, r, o, m, R, y, x, j, A, B, w, L, T, C, M, U, J];
+  const k = Array.isArray(homeConfig.banners) && homeConfig.banners.length ? homeConfig.banners[0] : {};
   Re(`
-    ${it({ admin: e, config: homeConfig, piConfig: a, gameConfig: n, dashboard: s, rooms: r, paymentOrders: o, users: m, ledgers: y, battleRooms: x, withdrawOrders: j, reconciliation: A, riskAudit: B, auditLogs: w, rankStarRecords: L, rankChestRecords: T, rankLeaderboard: C, rankWeeklySettlements: M, growthOps: U, banner: J })}
-  `), Ut(homeConfig, J, n), jt(), It(), Ft(), Dt();
+    ${it({ admin: e, config: homeConfig, piConfig: a, gameConfig: n, dashboard: s, rooms: r, paymentOrders: o, users: m, ledgers: y, battleRooms: x, withdrawOrders: j, reconciliation: A, riskAudit: B, auditLogs: w, rankStarRecords: L, rankChestRecords: T, rankLeaderboard: C, rankWeeklySettlements: M, growthOps: U, watchShareholderOps: J, banner: k })}
+  `), Ut(homeConfig, k, n), jt(), It(), Ft(), Dt(), bindWatchShareholderActions();
 }
-function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, rooms: r, paymentOrders: o, users: m, ledgers: R, battleRooms: y, withdrawOrders: x, reconciliation: j, riskAudit: A, auditLogs: B, rankStarRecords: w, rankChestRecords: L, rankLeaderboard: T, rankWeeklySettlements: C, growthOps: M, banner: U }) {
+function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, rooms: r, paymentOrders: o, users: m, ledgers: R, battleRooms: y, withdrawOrders: x, reconciliation: j, riskAudit: A, auditLogs: B, rankStarRecords: w, rankChestRecords: L, rankLeaderboard: T, rankWeeklySettlements: C, growthOps: M, watchShareholderOps: watchOps, banner: U }) {
   const userItems = Array.isArray(m) ? m : Array.isArray(m?.items) ? m.items : [];
   const userSummary = !Array.isArray(m) && m?.summary ? m.summary : null;
   const userLoadedLimit = Number(!Array.isArray(m) && m?.limit || userItems.length || 0);
@@ -875,6 +886,7 @@ function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, roo
         </form>
       </section>
     `;
+  if (_ === "watch-shareholder") return renderWatchShareholderAdmin(n, watchOps);
   if (_ === "config") return `
       <section class="panel">
         <h2>Pi\u8FD0\u884C\u73AF\u5883</h2>
@@ -1666,6 +1678,119 @@ function renderEngagementRewardJob(e) {
     </article>
   `;
 }
+function watchRewardStatusLabel(e = "") {
+  return { pending: "待领取", queued: "待发放", processing: "发放中", paid: "已发放", failed: "失败待重试", manual_review: "人工处理", zero: "不足1积分" }[e] || e || "-";
+}
+function renderWatchPeriodRow(e = {}) {
+  return `
+    <article class="row-card watch-period-row">
+      <strong>${i(e.seasonNo || "-")}</strong>
+      <span>${i(O(e.startAt))} - ${i(O(e.endAt))}</span>
+      <span>奖池 ${Math.floor(Number(e.poolPoints || 0))} 积分 · 已发 ${Math.floor(Number(e.paidPoints || 0))}</span>
+      <span>节点 ${Number(e.snapshotNodeCount || 0)} · 用户 ${Number(e.snapshotUserCount || 0)} · ${i(H(e.status))}</span>
+    </article>
+  `;
+}
+function renderWatchRewardRow(e = {}) {
+  const needsRetry = ["failed", "manual_review", "processing"].includes(e.status);
+  return `
+    <article class="row-card watch-reward-row">
+      <strong>${i(e.piUsername || e.nickname || h(e.piUid))}</strong>
+      <span>节点 ${Number(e.nodeCount || 0)} · ${i(h(e.piUid || e.uid))}</span>
+      <span>${Math.floor(Number(e.rewardPoints || 0))} 积分 · ${i(watchRewardStatusLabel(e.status))}</span>
+      <span>${i(e.lastError || O(e.claimedAt || e.createdAt))}</span>
+      ${needsRetry ? `<button type="button" data-watch-shareholder-retry="${e.id}">重试</button>` : ""}
+    </article>
+  `;
+}
+function renderWatchShareholderAdmin(e = {}, t = {}) {
+  const a = e.watchShareholder || {};
+  const n = t?.config || a || {}, s = t?.stats || {}, r = t?.latestPeriod || null, o = Array.isArray(t?.periods) ? t.periods : [], m = Array.isArray(t?.rewards) ? t.rewards : [], R = filterList(m, WATCH_REWARD_FILTERS, watchRewardFilter), y = N("watch-periods", o), x = N("watch-rewards", R), j = WATCH_REWARD_FILTERS.find((B) => B.key === watchRewardFilter) || WATCH_REWARD_FILTERS[0];
+  return `
+    <section class="panel watch-shareholder-hero">
+      <div class="section-head">
+        <div>
+          <p class="tag">Watch Node Equity</p>
+          <h2>腕表股东权益</h2>
+          <p class="meta">把小富豪积分场的平台抽成按周分给 HashPi 腕表节点用户。积分只发整数，不会超发。</p>
+        </div>
+        <span class="pill ${n.enabled ? "ok" : "warning"}">${n.enabled ? "分红已开启" : "分红未开启"}</span>
+      </div>
+      <div class="mini-grid">
+        ${f("最近期次", r?.seasonNo || "-", r ? `${i(O(r.startAt))} 至 ${i(O(r.endAt))}` : "暂无结算")}
+        ${f("本期奖池", `${Math.floor(Number(r?.poolPoints || 0))} 积分`, `抽成 ${Math.floor(Number(r?.platformFeePoints || 0))} · 比例 ${Math.round(Number(r?.shareRate ?? n.shareRate ?? 0) * 100)}%`)}
+        ${f("节点快照", `${Number(r?.snapshotUserCount || 0)} 人`, `${Number(r?.snapshotNodeCount || 0)} 个有效节点`)}
+        ${f("发放队列", `${Number(s.failedCount || 0)} 个异常`, `待领取 ${Math.floor(Number(s.pendingPoints || 0))} · 已发 ${Math.floor(Number(s.paidPoints || 0))}`)}
+      </div>
+      <div class="watch-action-row">
+        <button type="button" id="watch-shareholder-sync">同步节点名单</button>
+        <button type="button" id="watch-shareholder-settle">生成上周分红</button>
+        <button type="button" id="watch-shareholder-process">处理发放队列</button>
+        <p id="watch-shareholder-action-status" class="status"></p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>分红配置</h2>
+      <form id="watch-shareholder-config-form" class="form">
+        <div class="growth-config-grid">
+          <label><span>总开关</span><select name="watchShareholderEnabled">
+            <option value="false" ${n.enabled ? "" : "selected"}>关闭</option>
+            <option value="true" ${n.enabled ? "selected" : ""}>开启</option>
+          </select></label>
+          <label><span>自动周结算</span><select name="watchShareholderAutoSettleEnabled">
+            <option value="true" ${n.autoSettleEnabled !== false ? "selected" : ""}>开启</option>
+            <option value="false" ${n.autoSettleEnabled === false ? "selected" : ""}>关闭</option>
+          </select></label>
+          <label><span>前端入口</span><select name="watchShareholderFrontendEntryEnabled">
+            <option value="true" ${n.frontendEntryEnabled !== false ? "selected" : ""}>显示</option>
+            <option value="false" ${n.frontendEntryEnabled === false ? "selected" : ""}>隐藏</option>
+          </select></label>
+          <label><span>分红来源</span><select name="watchShareholderSourceMode">
+            <option value="points_battle" selected>小富豪积分抽成</option>
+          </select></label>
+          <label><span>抽成分红比例</span><input name="watchShareholderShareRate" type="number" inputmode="decimal" min="0" max="1" step="0.01" value="${n.shareRate ?? 0.5}" /></label>
+          <label><span>最低发放积分</span><input name="watchShareholderMinRewardPoints" type="number" inputmode="numeric" min="1" max="100000" step="1" value="${n.minRewardPoints ?? 1}" /></label>
+          <label><span>前台标题</span><input name="watchShareholderTitle" maxlength="32" value="${i(n.title || "腕表节点股东分红")}" /></label>
+          <label><span>前台说明</span><input name="watchShareholderSubtitle" maxlength="80" value="${i(n.subtitle || "腕表节点用户可领每周分红")}" /></label>
+          <label><span>结算文案</span><input name="watchShareholderSettlementText" maxlength="60" value="${i(n.settlementText || "每周一结算上周")}" /></label>
+        </div>
+        <p class="meta">建议保持默认 50%。生成期次后，已领取的期次不能重新生成，避免重复发放。</p>
+        <button type="submit">保存腕表分红配置</button>
+        <p id="watch-shareholder-config-status" class="status"></p>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h2>期次管理</h2>
+          <p class="meta">查看每周奖池、已发积分、未领积分和尾差。</p>
+        </div>
+        <span class="pill">共 ${o.length} 期</span>
+      </div>
+      <div class="table-list">
+        ${y.items.length ? y.items.map(renderWatchPeriodRow).join("") : '<p class="meta">暂无分红期次</p>'}
+      </div>
+      ${P("watch-periods", o.length)}
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h2>分红明细</h2>
+          <p class="meta">可按领取状态查看，失败项可手动重试。</p>
+        </div>
+        <span class="pill">${i(j.label)} ${R.length}</span>
+      </div>
+      ${renderListFilters(m, WATCH_REWARD_FILTERS, watchRewardFilter, "watch-rewards")}
+      <div class="table-list">
+        ${x.items.length ? x.items.map(renderWatchRewardRow).join("") : '<p class="meta">暂无分红明细</p>'}
+      </div>
+      ${P("watch-rewards", R.length)}
+    </section>
+  `;
+}
 function engagementConditionLabel(e = "") {
   return { battle_count: "\u5B8C\u6210\u5BF9\u5C40\u6570", win_count: "\u80DC\u5229\u5BF9\u5C40\u6570", paid_battle_count: "\u4ED8\u8D39\u5BF9\u5C40\u6570" }[e] || "\u5B8C\u6210\u5BF9\u5C40\u6570";
 }
@@ -2215,7 +2340,7 @@ function Ct(e) {
   `;
 }
 function Ut(e, t, a) {
-  const n = document.querySelector("#home-config-form"), s = document.querySelector("#status"), r = document.querySelector("#pi-config-form"), o = document.querySelector("#pi-status"), m = document.querySelector("#password-form"), R = document.querySelector("#password-status"), y = document.querySelector("#game-config-form"), x = document.querySelector("#game-status"), j = document.querySelector("#growth-config-form"), A = document.querySelector("#growth-config-status"), B = document.querySelector("#recharge-bonus-form"), w = document.querySelector("#recharge-bonus-status"), L = document.querySelector("#withdraw-risk-form"), T = document.querySelector("#withdraw-risk-status"), C = document.querySelector("#operation-config-form"), M = document.querySelector("#operation-status");
+  const n = document.querySelector("#home-config-form"), s = document.querySelector("#status"), r = document.querySelector("#pi-config-form"), o = document.querySelector("#pi-status"), m = document.querySelector("#password-form"), R = document.querySelector("#password-status"), y = document.querySelector("#game-config-form"), x = document.querySelector("#game-status"), j = document.querySelector("#growth-config-form"), A = document.querySelector("#growth-config-status"), B = document.querySelector("#recharge-bonus-form"), w = document.querySelector("#recharge-bonus-status"), L = document.querySelector("#withdraw-risk-form"), T = document.querySelector("#withdraw-risk-status"), C = document.querySelector("#operation-config-form"), M = document.querySelector("#operation-status"), watchForm = document.querySelector("#watch-shareholder-config-form"), watchStatus = document.querySelector("#watch-shareholder-config-status");
   m?.addEventListener("submit", async (c) => {
     c.preventDefault();
     const l = new FormData(m), p = String(l.get("newPassword") || ""), u = String(l.get("confirmPassword") || "");
@@ -2249,7 +2374,7 @@ function Ut(e, t, a) {
     }
   });
   function U(c) {
-    return { quickBattle: c.quickBattle || a.quickBattle, ticketBattle: c.ticketBattle || a.ticketBattle, richBattle: c.richBattle || a.richBattle, pointsBattle: c.pointsBattle || a.pointsBattle, pocBattle: c.pocBattle || a.pocBattle, piBattle: c.piBattle || a.piBattle, assetGateway: c.assetGateway || a.assetGateway, timing: c.timing || a.timing, capacity: c.capacity || a.capacity, extremeRealtime: c.extremeRealtime || a.extremeRealtime, withdrawRisk: c.withdrawRisk || a.withdrawRisk, rechargeBonus: c.rechargeBonus || a.rechargeBonus, transfer: c.transfer || a.transfer, inviteRewards: c.inviteRewards || a.inviteRewards, engagement: c.engagement || a.engagement, visualEffects: c.visualEffects || a.visualEffects, operation: c.operation || a.operation };
+    return { quickBattle: c.quickBattle || a.quickBattle, ticketBattle: c.ticketBattle || a.ticketBattle, richBattle: c.richBattle || a.richBattle, pointsBattle: c.pointsBattle || a.pointsBattle, pocBattle: c.pocBattle || a.pocBattle, piBattle: c.piBattle || a.piBattle, assetGateway: c.assetGateway || a.assetGateway, timing: c.timing || a.timing, capacity: c.capacity || a.capacity, extremeRealtime: c.extremeRealtime || a.extremeRealtime, withdrawRisk: c.withdrawRisk || a.withdrawRisk, rechargeBonus: c.rechargeBonus || a.rechargeBonus, transfer: c.transfer || a.transfer, inviteRewards: c.inviteRewards || a.inviteRewards, engagement: c.engagement || a.engagement, watchShareholder: c.watchShareholder || a.watchShareholder, visualEffects: c.visualEffects || a.visualEffects, operation: c.operation || a.operation };
   }
   function J(c) {
     return [0, 1, 2, 3, 4, 5].map((l) => ({ key: String(c.get(`inviteLevelKey${l}`) || "").trim(), name: String(c.get(`inviteLevelName${l}`) || "").trim(), commissionRate: Number(c.get(`inviteLevelRate${l}`) || 0), minBalance: Number(c.get(`inviteLevelMinBalance${l}`) || 0), minDirectInvites: Number(c.get(`inviteLevelMinInvites${l}`) || 0), enabled: String(c.get(`inviteLevelEnabled${l}`)) === "true" })).filter((l) => l.key && l.name);
@@ -2324,6 +2449,62 @@ function Ut(e, t, a) {
     } catch (u) {
       M && (M.textContent = g(u));
     }
+  }), watchForm?.addEventListener("submit", async (c) => {
+    c.preventDefault();
+    const l = new FormData(watchForm), p = Number(l.get("watchShareholderShareRate") || 0), u = Math.floor(Number(l.get("watchShareholderMinRewardPoints") || 1));
+    if (!Number.isFinite(p) || p < 0 || p > 1) {
+      watchStatus && (watchStatus.textContent = "分红比例必须在 0 到 1 之间");
+      return;
+    }
+    if (!Number.isInteger(u) || u < 1) {
+      watchStatus && (watchStatus.textContent = "最低发放积分必须是正整数");
+      return;
+    }
+    watchStatus && (watchStatus.textContent = "保存中...");
+    try {
+      await d("/admin-api/game-config", { method: "POST", body: JSON.stringify(U({ watchShareholder: {
+        enabled: String(l.get("watchShareholderEnabled")) === "true",
+        autoSettleEnabled: String(l.get("watchShareholderAutoSettleEnabled")) === "true",
+        frontendEntryEnabled: String(l.get("watchShareholderFrontendEntryEnabled")) === "true",
+        sourceMode: "points_battle",
+        shareRate: p,
+        minRewardPoints: u,
+        title: String(l.get("watchShareholderTitle") || "腕表节点股东分红").trim(),
+        subtitle: String(l.get("watchShareholderSubtitle") || "腕表节点用户可领每周分红").trim(),
+        settlementText: String(l.get("watchShareholderSettlementText") || "每周一结算上周").trim()
+      } })) }), watchStatus && (watchStatus.textContent = "保存成功，正在刷新..."), await q();
+    } catch (b) {
+      watchStatus && (watchStatus.textContent = g(b));
+    }
+  });
+}
+function bindWatchShareholderActions() {
+  const e = document.querySelector("#watch-shareholder-action-status"), t = async (a, n, s = "") => {
+    if (s && !window.confirm(s)) return;
+    const r = document.querySelector(a);
+    r && (r.disabled = true), e && (e.textContent = "处理中...");
+    try {
+      const o = await d(n, { method: "POST", body: JSON.stringify({}) });
+      e && (e.textContent = o?.message || "处理完成，正在刷新..."), await q();
+    } catch (o) {
+      e && (e.textContent = g(o)), r && (r.disabled = false);
+    }
+  };
+  document.querySelector("#watch-shareholder-sync")?.addEventListener("click", () => t("#watch-shareholder-sync", "/admin-api/watch-shareholder/sync-snapshot"));
+  document.querySelector("#watch-shareholder-settle")?.addEventListener("click", () => t("#watch-shareholder-settle", "/admin-api/watch-shareholder/settle-previous-week", "确认生成上周腕表股东分红？生成后如已有领取记录不能重算。"));
+  document.querySelector("#watch-shareholder-process")?.addEventListener("click", () => t("#watch-shareholder-process", "/admin-api/watch-shareholder/rewards/process"));
+  document.querySelectorAll("[data-watch-shareholder-retry]").forEach((a) => {
+    a.addEventListener("click", async () => {
+      const n = a.dataset.watchShareholderRetry || "";
+      if (!n) return;
+      a.disabled = true, e && (e.textContent = "正在重试...");
+      try {
+        await d(`/admin-api/watch-shareholder/rewards/retry/${encodeURIComponent(n)}`, { method: "POST", body: JSON.stringify({}) });
+        e && (e.textContent = "已重新排队，正在刷新..."), await q();
+      } catch (s) {
+        e && (e.textContent = g(s)), a.disabled = false;
+      }
+    });
   });
 }
 function jt() {
@@ -2452,8 +2633,8 @@ async function q() {
       return;
     }
     st();
-    const [e, t, a, n, s, r, o, m, R, y, x, j, A, B, w, L, T, C, M, U, J, k, z] = await Promise.all([d("/admin-api/auth/me"), d("/admin-api/home-config"), d("/admin-api/pi-config"), d("/admin-api/game-config"), d("/admin-api/dashboard/overview"), d("/admin-api/matches/rooms"), d("/admin-api/payments/orders"), d("/admin-api/users"), d("/admin-api/wallets"), d("/admin-api/wallet-ledgers"), d("/admin-api/battle-rooms"), d("/admin-api/withdraw/orders"), d("/admin-api/reconciliation/report"), d("/admin-api/risk-audit/report"), d("/admin-api/audit-logs"), d("/admin-api/ranks/star-records"), d("/admin-api/ranks/daily-chests"), d("/admin-api/ranks/leaderboard"), d("/admin-api/ranks/weekly-settlements"), d("/admin-api/withdraw/ops").catch(() => null), d("/admin-api/growth/ops").catch(() => null), d("/admin-api/engagement/claims").catch(() => []), d("/admin-api/engagement/reward-jobs").catch(() => [])]);
-    te = U, Ne(e, t, a, n, s, r, o, m, R, y, x, j, A, B, w, L, T, C, M, { ...(J || {}), engagementClaims: k || [], engagementRewardJobs: z || [] });
+    const [e, t, a, n, s, r, o, m, R, y, x, j, A, B, w, L, T, C, M, U, J, k, z, watchOps] = await Promise.all([d("/admin-api/auth/me"), d("/admin-api/home-config"), d("/admin-api/pi-config"), d("/admin-api/game-config"), d("/admin-api/dashboard/overview"), d("/admin-api/matches/rooms"), d("/admin-api/payments/orders"), d("/admin-api/users"), d("/admin-api/wallets"), d("/admin-api/wallet-ledgers"), d("/admin-api/battle-rooms"), d("/admin-api/withdraw/orders"), d("/admin-api/reconciliation/report"), d("/admin-api/risk-audit/report"), d("/admin-api/audit-logs"), d("/admin-api/ranks/star-records"), d("/admin-api/ranks/daily-chests"), d("/admin-api/ranks/leaderboard"), d("/admin-api/ranks/weekly-settlements"), d("/admin-api/withdraw/ops").catch(() => null), d("/admin-api/growth/ops").catch(() => null), d("/admin-api/engagement/claims").catch(() => []), d("/admin-api/engagement/reward-jobs").catch(() => []), d("/admin-api/watch-shareholder/overview").catch(() => null)]);
+    te = U, Ne(e, t, a, n, s, r, o, m, R, y, x, j, A, B, w, L, T, C, M, { ...(J || {}), engagementClaims: k || [], engagementRewardJobs: z || [] }, watchOps);
   } catch (e) {
     localStorage.removeItem("blitz_admin_token"), ae(`\u540E\u53F0\u52A0\u8F7D\u5931\u8D25\uFF1A${g(e)}`);
   }

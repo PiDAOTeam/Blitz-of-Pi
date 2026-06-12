@@ -1,0 +1,236 @@
+const assetGateway = require("./asset-gateway.service");
+const { readGameConfig } = require("../repositories/game-config.repository");
+const {
+  allocateIntegerRewards,
+  createOrReplacePeriodWithRewards,
+  ensureWatchShareholderSchema,
+  formatDateTime,
+  getAdminOverviewStats,
+  getLatestPeriod,
+  getPreviousWeekRangeFromDb,
+  getUserSummary,
+  linkRewardsForUser,
+  listPeriods,
+  listRewards,
+  listUserRewards,
+  sumPointsPlatformFee
+} = require("../repositories/watch-shareholder.repository");
+
+const DEFAULT_WATCH_SHAREHOLDER_CONFIG = {
+  enabled: false,
+  frontendEntryEnabled: true,
+  autoSettleEnabled: true,
+  shareRate: 0.5,
+  minRewardPoints: 1,
+  sourceMode: "points_battle",
+  settlementText: "每周一结算上周",
+  title: "腕表节点股东分红",
+  subtitle: "腕表节点用户可领每周分红"
+};
+
+function normalizeShareholderConfig(config = {}) {
+  const incoming = config.watchShareholder || {};
+  const rate = Number(incoming.shareRate);
+  const minRewardPoints = Math.floor(Number(incoming.minRewardPoints || DEFAULT_WATCH_SHAREHOLDER_CONFIG.minRewardPoints));
+  return {
+    ...DEFAULT_WATCH_SHAREHOLDER_CONFIG,
+    ...incoming,
+    enabled: Boolean(incoming.enabled),
+    frontendEntryEnabled: incoming.frontendEntryEnabled !== false,
+    autoSettleEnabled: incoming.autoSettleEnabled !== false,
+    shareRate: Number.isFinite(rate) && rate >= 0 && rate <= 1 ? Number(rate.toFixed(4)) : 0.5,
+    minRewardPoints: Math.max(1, minRewardPoints || 1),
+    sourceMode: "points_battle",
+    title: String(incoming.title || DEFAULT_WATCH_SHAREHOLDER_CONFIG.title).trim().slice(0, 32),
+    subtitle: String(incoming.subtitle || DEFAULT_WATCH_SHAREHOLDER_CONFIG.subtitle).trim().slice(0, 80),
+    settlementText: String(incoming.settlementText || DEFAULT_WATCH_SHAREHOLDER_CONFIG.settlementText).trim().slice(0, 60)
+  };
+}
+
+function toPeriodDto(row = {}) {
+  if (!row) return null;
+  return {
+    id: Number(row.id || 0),
+    seasonNo: row.season_no || "",
+    startAt: row.start_at,
+    endAt: row.end_at,
+    status: row.status || "",
+    sourceMode: row.source_mode || "points_battle",
+    assetType: row.asset_type || "POINTS",
+    platformFeePoints: Number(row.platform_fee_points || 0),
+    shareRate: Number(row.share_rate || 0),
+    poolPoints: Number(row.pool_points || 0),
+    allocatedPoints: Number(row.allocated_points || 0),
+    paidPoints: Number(row.paid_points || 0),
+    unclaimedPoints: Number(row.unclaimed_points || 0),
+    zeroRewardCount: Number(row.zero_reward_count || 0),
+    roundingDelta: Number(row.rounding_delta || 0),
+    snapshotUserCount: Number(row.snapshot_user_count || 0),
+    snapshotNodeCount: Number(row.snapshot_node_count || 0),
+    snapshotAt: row.snapshot_at,
+    lastError: row.last_error || "",
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function toRewardDto(row = {}) {
+  return {
+    id: Number(row.id || 0),
+    periodId: Number(row.period_id || 0),
+    seasonNo: row.season_no || "",
+    hashpiUserId: Number(row.hashpi_user_id || 0),
+    uid: row.uid || "",
+    piUid: row.pi_uid || "",
+    piUsername: row.pi_username || "",
+    nickname: row.nickname || "",
+    avatarKey: row.avatar_key || "avatar_1",
+    nodeCount: Number(row.node_count || 0),
+    rawAmount: Number(row.raw_amount || 0),
+    rewardPoints: Number(row.reward_points || 0),
+    status: row.status || "",
+    attempts: Number(row.attempts || 0),
+    maxAttempts: Number(row.max_attempts || 0),
+    nextRetryAt: row.next_retry_at,
+    claimedAt: row.claimed_at,
+    processedAt: row.processed_at,
+    lastError: row.last_error || "",
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+async function fetchWatchNodeSnapshot() {
+  const data = await assetGateway.watchNodeSnapshot();
+  const users = Array.isArray(data.users) ? data.users : [];
+  return {
+    snapshot_at: data.snapshot_at || new Date().toISOString(),
+    user_count: Number(data.user_count || users.length || 0),
+    node_count: Number(data.node_count || users.reduce((sum, user) => sum + Number(user.node_count || 0), 0)),
+    users
+  };
+}
+
+async function settlePreviousWeek({ force = false } = {}) {
+  await ensureWatchShareholderSchema();
+  const config = normalizeShareholderConfig(await readGameConfig());
+  if (!config.enabled) {
+    throw new Error("腕表股东分红未开启");
+  }
+  const range = await getPreviousWeekRangeFromDb();
+  const startAt = formatDateTime(range.start);
+  const endAt = formatDateTime(range.end);
+  const platformFeePoints = await sumPointsPlatformFee({
+    startAt,
+    endAt,
+    sourceMode: config.sourceMode
+  });
+  const poolPoints = Math.floor(platformFeePoints * config.shareRate);
+  const snapshot = await fetchWatchNodeSnapshot();
+  const allocation = allocateIntegerRewards({
+    poolPoints,
+    users: snapshot.users,
+    minRewardPoints: config.minRewardPoints
+  });
+  const result = await createOrReplacePeriodWithRewards({
+    seasonNo: range.seasonNo,
+    startAt,
+    endAt,
+    sourceMode: config.sourceMode,
+    platformFeePoints,
+    shareRate: config.shareRate,
+    poolPoints,
+    snapshot,
+    allocation,
+    force
+  });
+
+  return {
+    created: result.created,
+    alreadyExists: result.alreadyExists,
+    period: toPeriodDto(result.period),
+    snapshot: {
+      userCount: snapshot.user_count,
+      nodeCount: snapshot.node_count,
+      snapshotAt: snapshot.snapshot_at
+    },
+    allocation: {
+      allocatedPoints: allocation.allocatedPoints,
+      zeroRewardCount: allocation.zeroRewardCount,
+      roundingDelta: allocation.roundingDelta
+    }
+  };
+}
+
+async function getMyShareholderStatus(user) {
+  await ensureWatchShareholderSchema();
+  const config = normalizeShareholderConfig(await readGameConfig());
+  if (!config.enabled || !config.frontendEntryEnabled) {
+    return {
+      enabled: config.enabled,
+      frontendEntryEnabled: config.frontendEntryEnabled,
+      title: config.title,
+      subtitle: config.subtitle,
+      isWatchNode: false,
+      claimablePoints: 0,
+      nodeCount: 0,
+      paidPoints: 0,
+      unclaimedCount: 0,
+      rewards: [],
+      latestPeriod: toPeriodDto(await getLatestPeriod())
+    };
+  }
+
+  await linkRewardsForUser(user);
+
+  const [summary, rewards, latestPeriod] = await Promise.all([
+    getUserSummary(user.uid),
+    listUserRewards(user.uid, 30),
+    getLatestPeriod()
+  ]);
+
+  return {
+    enabled: config.enabled,
+    frontendEntryEnabled: config.frontendEntryEnabled,
+    title: config.title,
+    subtitle: config.subtitle,
+    settlementText: config.settlementText,
+    isWatchNode: summary.periodCount > 0 || summary.latestNodeCount > 0,
+    claimablePoints: summary.claimablePoints,
+    nodeCount: summary.latestNodeCount,
+    paidPoints: summary.paidPoints,
+    unclaimedCount: summary.unclaimedCount,
+    rewards: rewards.map(toRewardDto),
+    latestPeriod: toPeriodDto(latestPeriod)
+  };
+}
+
+async function getAdminShareholderOverview() {
+  await ensureWatchShareholderSchema();
+  const [config, latestPeriod, periods, rewards, stats] = await Promise.all([
+    readGameConfig().then(normalizeShareholderConfig),
+    getLatestPeriod(),
+    listPeriods(30),
+    listRewards({ limit: 300 }),
+    getAdminOverviewStats()
+  ]);
+
+  return {
+    config,
+    latestPeriod: toPeriodDto(latestPeriod),
+    periods: periods.map(toPeriodDto),
+    rewards: rewards.map(toRewardDto),
+    stats
+  };
+}
+
+module.exports = {
+  DEFAULT_WATCH_SHAREHOLDER_CONFIG,
+  fetchWatchNodeSnapshot,
+  getAdminShareholderOverview,
+  getMyShareholderStatus,
+  normalizeShareholderConfig,
+  settlePreviousWeek,
+  toPeriodDto,
+  toRewardDto
+};

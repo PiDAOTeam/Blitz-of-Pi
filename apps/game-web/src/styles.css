@@ -581,6 +581,18 @@ button.secondary {
   grid-area: arrow;
   align-self: center;
 }
+.watch-shareholder-cta {
+  margin-top: 8px;
+  border-color: rgba(255, 244, 169, .72);
+  background:
+    linear-gradient(135deg, rgba(255, 244, 169, .96), rgba(247, 183, 51, .95) 48%, rgba(188, 116, 19, .96)),
+    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, .55), transparent 36%);
+  box-shadow: 0 14px 30px rgba(247, 183, 51, .24), inset 0 1px 0 rgba(255, 255, 255, .48);
+}
+.watch-shareholder-badge {
+  background: linear-gradient(135deg, #fff7b3, #f1a71c);
+  color: #5b2600;
+}
 @keyframes dailyRewardShine {
   0%, 52% { transform: translateX(-88%); }
   72%, 100% { transform: translateX(88%); }
@@ -2403,6 +2415,69 @@ button:disabled {
 }
 .daily-reward-footer button {
   min-width: 92px;
+}
+.watch-shareholder-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 10px 0;
+}
+.watch-shareholder-summary article {
+  padding: 10px;
+  border: 1px solid rgba(255, 221, 98, .24);
+  border-radius: 16px;
+  background: rgba(255, 236, 158, .08);
+}
+.watch-shareholder-summary span,
+.watch-shareholder-summary strong {
+  display: block;
+}
+.watch-shareholder-summary span {
+  color: rgba(255, 245, 210, .76);
+  font-size: 11px;
+  font-weight: 900;
+}
+.watch-shareholder-summary strong {
+  margin-top: 3px;
+  color: #fff176;
+  font-size: 20px;
+  line-height: 1;
+}
+.watch-shareholder-list {
+  display: grid;
+  gap: 7px;
+  margin-top: 9px;
+}
+.watch-shareholder-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 10px;
+  border: 1px solid rgba(255, 221, 98, .18);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, .06);
+}
+.watch-shareholder-row strong,
+.watch-shareholder-row small,
+.watch-shareholder-row b {
+  display: block;
+}
+.watch-shareholder-row strong {
+  color: #fff8cf;
+  font-size: 13px;
+}
+.watch-shareholder-row small {
+  color: rgba(231, 205, 255, .72);
+  font-size: 10px;
+  font-weight: 800;
+}
+.watch-shareholder-row > div:last-child {
+  text-align: right;
+}
+.watch-shareholder-row b {
+  color: #fff176;
+  font-size: 14px;
 }
 .language-sheet {
   max-height: min(82dvh, 650px);

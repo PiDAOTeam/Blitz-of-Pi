@@ -68,6 +68,15 @@ const {
   retryAdminEngagementRewardJob
 } = require("../controllers/engagement.controller");
 const {
+  claimMyWatchShareholder,
+  getAdminWatchShareholderOverview,
+  getMyWatchShareholder,
+  processAdminWatchShareholderRewards,
+  retryAdminWatchShareholderReward,
+  settleAdminWatchShareholderPreviousWeek,
+  syncAdminWatchNodeSnapshot
+} = require("../controllers/watch-shareholder.controller");
+const {
   createRechargeOrder,
   approveRechargePayment,
   completeRechargePayment,
@@ -102,6 +111,9 @@ const EXPECTED_BUSINESS_ERROR_MESSAGES = new Set([
   "任务不存在或已关闭",
   "任务还未完成",
   "每日任务暂未开启",
+  "腕表股东分红未开启",
+  "暂无可领取腕表分红",
+  "本期已有用户领取，不能重新生成",
   "今日段位宝箱已领取",
   "Pi UID/用户名未绑定 HashPi 用户",
   "资产网关暂时不可用，请稍后重试",
@@ -290,6 +302,16 @@ async function handleRoutes(req, res) {
   if (url === "/api/engagement/task/claim" && method === "POST") {
     const payload = await readJsonBody(req);
     ok(res, await claimMyDailyTask(req, payload), "领取成功");
+    return;
+  }
+
+  if (url === "/api/watch-shareholder/me" && method === "GET") {
+    ok(res, await getMyWatchShareholder(req));
+    return;
+  }
+
+  if (url === "/api/watch-shareholder/claim" && method === "POST") {
+    ok(res, await claimMyWatchShareholder(req), "领取成功");
     return;
   }
 
@@ -589,6 +611,33 @@ async function handleRoutes(req, res) {
 
   if (url === "/admin-api/engagement/reward-jobs" && method === "GET") {
     ok(res, await getAdminEngagementRewardJobs());
+    return;
+  }
+
+  if (url === "/admin-api/watch-shareholder/overview" && method === "GET") {
+    ok(res, await getAdminWatchShareholderOverview());
+    return;
+  }
+
+  if (url === "/admin-api/watch-shareholder/settle-previous-week" && method === "POST") {
+    const payload = await readJsonBody(req);
+    ok(res, await settleAdminWatchShareholderPreviousWeek(req, payload), "上周分红已生成");
+    return;
+  }
+
+  if (url === "/admin-api/watch-shareholder/sync-snapshot" && method === "POST") {
+    ok(res, await syncAdminWatchNodeSnapshot(req), "节点快照可用");
+    return;
+  }
+
+  if (url === "/admin-api/watch-shareholder/rewards/process" && method === "POST") {
+    ok(res, await processAdminWatchShareholderRewards(req), "处理完成");
+    return;
+  }
+
+  if (url.startsWith("/admin-api/watch-shareholder/rewards/retry/") && method === "POST") {
+    const id = decodeURIComponent(url.replace("/admin-api/watch-shareholder/rewards/retry/", ""));
+    ok(res, await retryAdminWatchShareholderReward(req, id), "已重新排队");
     return;
   }
 

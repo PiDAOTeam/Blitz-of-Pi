@@ -236,6 +236,17 @@ const DEFAULT_GAME_CONFIG = {
       }
     ]
   },
+  watchShareholder: {
+    enabled: false,
+    frontendEntryEnabled: true,
+    autoSettleEnabled: true,
+    shareRate: 0.5,
+    minRewardPoints: 1,
+    sourceMode: "points_battle",
+    settlementText: "每周一结算上周",
+    title: "腕表节点股东分红",
+    subtitle: "腕表节点用户可领每周分红"
+  },
   visualEffects: {
     defaultMode: "balanced",
     piBrowserDefaultMode: "balanced",
@@ -879,6 +890,29 @@ function normalizeEngagementConfig(engagement = {}) {
   };
 }
 
+function normalizeWatchShareholderConfig(watchShareholder = {}) {
+  const defaults = DEFAULT_GAME_CONFIG.watchShareholder;
+  const shareRate = normalizeRate(Number(watchShareholder.shareRate), defaults.shareRate, 1);
+  const minRewardPoints = normalizeNumberInRange(
+    watchShareholder.minRewardPoints,
+    defaults.minRewardPoints,
+    1,
+    1000000
+  );
+
+  return {
+    enabled: Boolean(watchShareholder.enabled),
+    frontendEntryEnabled: watchShareholder.frontendEntryEnabled !== false,
+    autoSettleEnabled: watchShareholder.autoSettleEnabled !== false,
+    shareRate,
+    minRewardPoints,
+    sourceMode: "points_battle",
+    settlementText: String(watchShareholder.settlementText || defaults.settlementText).trim().slice(0, 60),
+    title: String(watchShareholder.title || defaults.title).trim().slice(0, 32),
+    subtitle: String(watchShareholder.subtitle || defaults.subtitle).trim().slice(0, 80)
+  };
+}
+
 function normalizeAnimationDurations(value = {}) {
   const defaults = DEFAULT_GAME_CONFIG.visualEffects.animationDurations;
   const normalizeSeconds = (key, precision = 2) =>
@@ -1156,6 +1190,7 @@ async function readGameConfig() {
         transfer: normalizeTransferConfig(value.transfer),
         inviteRewards: normalizeInviteRewardsConfig(value.inviteRewards),
         engagement: normalizeEngagementConfig(value.engagement),
+        watchShareholder: normalizeWatchShareholderConfig(value.watchShareholder),
         visualEffects: normalizeVisualEffectsConfig(value.visualEffects),
         timing: normalizeTimingConfig(value.timing),
         capacity: normalizeCapacityConfig(value.capacity),
@@ -1186,6 +1221,7 @@ function normalizeConfig(payload) {
   const transfer = normalizeTransferConfig(payload.transfer);
   const inviteRewards = normalizeInviteRewardsConfig(payload.inviteRewards);
   const engagement = normalizeEngagementConfig(payload.engagement);
+  const watchShareholder = normalizeWatchShareholderConfig(payload.watchShareholder);
   const visualEffects = normalizeVisualEffectsConfig(payload.visualEffects);
   const assetGateway = normalizeAssetGatewayConfig(payload.assetGateway);
   const extremeRealtime = normalizeExtremeRealtimeConfig(payload.extremeRealtime);
@@ -1212,6 +1248,7 @@ function normalizeConfig(payload) {
     transfer,
     inviteRewards,
     engagement,
+    watchShareholder,
     visualEffects,
     operation: {
       maintenanceEnabled: Boolean(operation.maintenanceEnabled),

@@ -4,6 +4,7 @@ const { startRankScheduler } = require("./services/rank-scheduler.service");
 const { startPaymentScheduler } = require("./services/payment-scheduler.service");
 const { startSettlementWorker } = require("./services/settlement-worker.service");
 const { startRoomMaintenanceScheduler } = require("./services/room-maintenance.service");
+const { startWatchShareholderScheduler } = require("./services/watch-shareholder-scheduler.service");
 
 const server = createServer();
 const bindHost = process.env.BIND_HOST || "127.0.0.1";
@@ -14,4 +15,5 @@ server.listen(API_PORT, bindHost, () => {
   startPaymentScheduler();
   startSettlementWorker();
   startRoomMaintenanceScheduler();
+  startWatchShareholderScheduler();
 });

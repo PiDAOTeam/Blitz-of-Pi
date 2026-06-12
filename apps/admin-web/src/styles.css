@@ -1648,6 +1648,32 @@ body {
 .growth-row {
   grid-template-columns: 1.15fr 1.7fr 1fr 1.2fr;
 }
+.watch-shareholder-hero {
+  border-color: rgba(214, 158, 46, .28);
+  background:
+    radial-gradient(circle at 96% 12%, rgba(255, 214, 99, .24), transparent 34%),
+    linear-gradient(135deg, #fffaf0, #fffdf8 58%, #f8fbff);
+}
+.watch-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-top: 14px;
+}
+.watch-action-row .status {
+  margin: 0;
+}
+.watch-period-row {
+  grid-template-columns: 1fr 1.6fr 1.2fr 1.2fr;
+}
+.watch-reward-row {
+  grid-template-columns: 1fr 1.4fr 1fr 1.4fr auto;
+}
+.watch-reward-row button {
+  min-width: 70px;
+  padding: 8px 10px;
+}
 @media (max-width: 900px) {
   .layout,
   .cards,
@@ -1668,6 +1694,8 @@ body {
   }
   .cards.compact,
   .row-card,
+  .watch-period-row,
+  .watch-reward-row,
   .rank-filter-bar,
   .rank-auto-panel,
   .rank-rule-summary,

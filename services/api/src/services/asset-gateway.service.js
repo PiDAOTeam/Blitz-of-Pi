@@ -146,6 +146,11 @@ async function summary(user) {
   return callGateway("summary", buildIdentity(user));
 }
 
+async function watchNodeSnapshot() {
+  assertGatewayReady("POINTS");
+  return callGateway("watchnodesnapshot", {});
+}
+
 async function freeze({ assetType, user, roomNo, amount, idempotencyKey, remark = "" }) {
   const normalizedAssetType = normalizeAssetType(assetType);
   assertGatewayReady(normalizedAssetType);
@@ -238,5 +243,6 @@ module.exports = {
   release,
   reward,
   settle,
-  summary
+  summary,
+  watchNodeSnapshot
 };

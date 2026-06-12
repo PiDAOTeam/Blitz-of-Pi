@@ -126,6 +126,13 @@ async function getPublicGameConfig() {
           rewardAmount: Number(task.rewardAmount || 0)
         }))
     },
+    watchShareholder: {
+      enabled: Boolean(config.watchShareholder?.enabled),
+      frontendEntryEnabled: config.watchShareholder?.frontendEntryEnabled !== false,
+      title: config.watchShareholder?.title || "腕表节点股东分红",
+      subtitle: config.watchShareholder?.subtitle || "腕表节点用户可领每周分红",
+      settlementText: config.watchShareholder?.settlementText || "每周一结算上周"
+    },
     visualEffects: {
       defaultMode: config.visualEffects?.defaultMode || "balanced",
       piBrowserDefaultMode: config.visualEffects?.piBrowserDefaultMode || "balanced",

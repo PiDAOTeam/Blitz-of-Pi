@@ -2,6 +2,7 @@ const { getActiveUserFromToken } = require("../services/auth.service");
 const { getWallet, listLedgers } = require("../repositories/wallet.repository");
 const { listUserAssetBattleLedgerRows } = require("../repositories/battle.repository");
 const { listUserEngagementAssetRewardRows } = require("../repositories/engagement.repository");
+const { listUserRewards: listUserWatchShareholderRewards } = require("../repositories/watch-shareholder.repository");
 const { readGameConfig } = require("../repositories/game-config.repository");
 const assetGateway = require("../services/asset-gateway.service");
 
@@ -165,6 +166,25 @@ function buildEngagementAssetLedgers(rows, uid) {
   return ledgers;
 }
 
+function buildWatchShareholderLedgers(rows, uid) {
+  return (Array.isArray(rows) ? rows : [])
+    .filter((row) => row.status === "paid" && Number(row.reward_points || 0) > 0)
+    .map((row) => ({
+      id: `watch_shareholder:${row.id}`,
+      uid,
+      type: "watch_shareholder_reward",
+      direction: "in",
+      amount: Math.floor(Number(row.reward_points || 0)),
+      balance_after: null,
+      related_type: "watch_shareholder_reward",
+      related_id: `${row.season_no}:${row.pi_uid}`,
+      remark: `腕表节点股东分红 ${row.season_no}`,
+      created_at: row.processed_at || row.claimed_at || row.updated_at || row.created_at,
+      asset_type: "POINTS",
+      synthetic: true
+    }));
+}
+
 function sortLedgersByTime(ledgers) {
   return [...ledgers].sort((a, b) => {
     const left = new Date(a.created_at || 0).getTime();
@@ -182,7 +202,11 @@ async function getMyWallet(req) {
     await listUserEngagementAssetRewardRows(user.uid),
     user.uid
   );
-  const assetLedgers = sortLedgersByTime([...battleAssetLedgers, ...engagementAssetLedgers]);
+  const watchShareholderLedgers = buildWatchShareholderLedgers(
+    await listUserWatchShareholderRewards(user.uid, 80),
+    user.uid
+  );
+  const assetLedgers = sortLedgersByTime([...battleAssetLedgers, ...engagementAssetLedgers, ...watchShareholderLedgers]);
   const allLedgers = sortLedgersByTime([...ledgers, ...assetLedgers]).slice(0, 120);
   const config = await readGameConfig();
   let remoteAssets = null;

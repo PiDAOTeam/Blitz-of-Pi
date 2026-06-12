@@ -21,7 +21,7 @@ function bn() {
   const e = localStorage.getItem(Wa);
   return ot.includes(e) ? e : "balanced";
 }
-const Z = ["ruby", "amber", "jade", "aqua", "slate", "gold"], wa = 10, ya = 20, ka = 30, a = { user: null, home: null, wallet: null, rankStatus: null, rankLeaderboard: null, piConfig: null, gameConfig: null, inviteInfo: null, engagement: null, battleHistory: [], battleHistoryPage: 1, battleHistoryTotal: 0, battleHistoryTotalPages: 1, battleHistoryFilter: "all", walletLedgerExpanded: false, walletLedgerPage: 1, walletLedgerFilter: "all", screen: "loading", activePanel: "home", selectedMode: "quick_battle", roomNo: "", roomJoinToken: "", room: null, realtimeRoom: null, result: null, selectedTile: null, tileEffect: null, battleMessage: "", networkStatus: "connecting", networkLatencyMs: 0, vsIntroUntil: 0, lastRoomStateAt: 0, lastSwapSentAt: 0, lastSwapSeq: 0, pendingSwapSeq: 0, pendingSwapPositions: [], pendingSwapQueue: [], clientRoomVersion: 0, clientPredictedBoard: null, clientPredictionStats: { sent: 0, ack: 0, reject: 0, rollback: 0, corrected: 0, longFrames: 0 }, lastSwapPositions: [], battleConnectingAt: 0, battleEnteredAt: 0, feedbackEventId: "", feedback: null, battleBursts: [], battleImpacts: [], localBattleEvents: [], localSwapFx: null, canvasTileBursts: [], matchPollTimer: null, matchUiTimer: null, matchStartedAt: 0, matchWaitingSeconds: 0, matchCanCancel: false, matchCancelMessage: "", matchCancelling: false, matchRecoverable: false, matchSessionId: 0, matchPollFailedCount: 0, language: gn(), visualEffectMode: bn(), effectiveVisualEffectMode: "balanced", profileOptions: null, withdrawWallets: [] };
+const Z = ["ruby", "amber", "jade", "aqua", "slate", "gold"], wa = 10, ya = 20, ka = 30, a = { user: null, home: null, wallet: null, rankStatus: null, rankLeaderboard: null, piConfig: null, gameConfig: null, inviteInfo: null, engagement: null, watchShareholder: null, battleHistory: [], battleHistoryPage: 1, battleHistoryTotal: 0, battleHistoryTotalPages: 1, battleHistoryFilter: "all", walletLedgerExpanded: false, walletLedgerPage: 1, walletLedgerFilter: "all", screen: "loading", activePanel: "home", selectedMode: "quick_battle", roomNo: "", roomJoinToken: "", room: null, realtimeRoom: null, result: null, selectedTile: null, tileEffect: null, battleMessage: "", networkStatus: "connecting", networkLatencyMs: 0, vsIntroUntil: 0, lastRoomStateAt: 0, lastSwapSentAt: 0, lastSwapSeq: 0, pendingSwapSeq: 0, pendingSwapPositions: [], pendingSwapQueue: [], clientRoomVersion: 0, clientPredictedBoard: null, clientPredictionStats: { sent: 0, ack: 0, reject: 0, rollback: 0, corrected: 0, longFrames: 0 }, lastSwapPositions: [], battleConnectingAt: 0, battleEnteredAt: 0, feedbackEventId: "", feedback: null, battleBursts: [], battleImpacts: [], localBattleEvents: [], localSwapFx: null, canvasTileBursts: [], matchPollTimer: null, matchUiTimer: null, matchStartedAt: 0, matchWaitingSeconds: 0, matchCanCancel: false, matchCancelMessage: "", matchCancelling: false, matchRecoverable: false, matchSessionId: 0, matchPollFailedCount: 0, language: gn(), visualEffectMode: bn(), effectiveVisualEffectMode: "balanced", profileOptions: null, withdrawWallets: [] };
 a.matchedHapticRoomNo = "";
 document.documentElement.lang = a.language;
 function animationSeconds(e) {
@@ -1222,7 +1222,7 @@ function yr(e) {
   `;
 }
 function Ga(e = "", t = "") {
-  const r = { recharge: "ledgerRecharge", reward: "ledgerReward", battle_entry: "ledgerBattleEntry", battle_refund: "ledgerBattleRefund", withdraw_lock: "ledgerWithdrawLock", withdraw_unlock: "ledgerWithdrawUnlock", withdraw_complete: "ledgerWithdrawComplete", withdraw_reject: "ledgerWithdrawReject", transfer_out: "ledgerTransferOut", transfer_in: "ledgerTransferIn", transfer_fee: "ledgerTransferFee", invite_reward: "ledgerInviteReward", invite_commission: "ledgerInviteCommission", daily_signin_reward: "ledgerDailySigninReward", daily_task_reward: "ledgerDailyTaskReward" };
+  const r = { recharge: "ledgerRecharge", reward: "ledgerReward", battle_entry: "ledgerBattleEntry", battle_refund: "ledgerBattleRefund", withdraw_lock: "ledgerWithdrawLock", withdraw_unlock: "ledgerWithdrawUnlock", withdraw_complete: "ledgerWithdrawComplete", withdraw_reject: "ledgerWithdrawReject", transfer_out: "ledgerTransferOut", transfer_in: "ledgerTransferIn", transfer_fee: "ledgerTransferFee", invite_reward: "ledgerInviteReward", invite_commission: "ledgerInviteCommission", daily_signin_reward: "ledgerDailySigninReward", daily_task_reward: "ledgerDailyTaskReward", watch_shareholder_reward: "ledgerWatchShareholderReward" };
   return r[e] ? n(r[e]) : t === "in" ? n("ledgerIncome") : t === "out" ? n("ledgerExpense") : t === "lock" ? n("ledgerLock") : t === "unlock" ? n("ledgerUnlock") : e || n("ledgerDefault");
 }
 function kr(e = "") {
@@ -1504,6 +1504,97 @@ function renderDailyRewardEntry() {
       <span class="home-invite-arrow" aria-hidden="true">\u203A</span>
     </button>
   `;
+}
+function renderWatchShareholderEntry() {
+  const e = a.watchShareholder;
+  if (!e?.enabled || e.frontendEntryEnabled === false) return "";
+  const t = Math.floor(Number(e.claimablePoints || 0)), r = Math.floor(Number(e.nodeCount || 0));
+  const o = t > 0 ? n("watchShareholderClaimable", { amount: t }) : r > 0 ? n("watchShareholderWaiting") : n("watchShareholderGuide");
+  return `
+    <button type="button" class="daily-reward-cta watch-shareholder-cta" id="open-watch-shareholder">
+      <span class="daily-reward-badge watch-shareholder-badge" aria-hidden="true">\u265B</span>
+      <span class="daily-reward-copy">
+        <strong>${i(e.title || n("watchShareholderTitle"))}</strong>
+        <small>${i(o)}</small>
+      </span>
+      <span class="daily-reward-prize">
+        <b>${i(t > 0 ? `+${t}` : r > 0 ? `${r}` : n("dailyRewardGo"))}</b>
+        <small>${i(t > 0 ? n("pointsAsset") : n("watchShareholderNodeUnit"))}</small>
+      </span>
+      <span class="home-invite-arrow" aria-hidden="true">\u203A</span>
+    </button>
+  `;
+}
+function renderWatchRewardRow(e = {}) {
+  const t = Math.floor(Number(e.rewardPoints || 0)), r = Math.floor(Number(e.nodeCount || 0));
+  const o = e.status === "paid" ? n("watchShareholderPaid") : t > 0 ? n("watchShareholderPending") : n("watchShareholderZero");
+  return `
+    <article class="watch-shareholder-row ${i(e.status || "")}">
+      <div>
+        <strong>${i(e.seasonNo || "-")}</strong>
+        <small>${i(n("watchShareholderNodes", { count: r }))}</small>
+      </div>
+      <div>
+        <b>${i(`${t} ${n("pointsAsset")}`)}</b>
+        <small>${i(o)}</small>
+      </div>
+    </article>
+  `;
+}
+function openWatchShareholderSheet() {
+  const e = a.watchShareholder;
+  if (!e?.enabled) return;
+  document.querySelectorAll("#watch-shareholder-sheet-mask").forEach((p) => p.remove());
+  const t = Math.floor(Number(e.claimablePoints || 0)), r = Math.floor(Number(e.nodeCount || 0)), o = Math.floor(Number(e.paidPoints || 0)), s = Number(e.unclaimedCount || 0), l = e.latestPeriod, c = e.rewards || [], d = t > 0 ? n("watchShareholderClaimButton", { amount: t }) : r > 0 ? n("watchShareholderNoClaim") : n("watchShareholderNotNode"), u = t > 0;
+  R.insertAdjacentHTML("beforeend", `
+    <div class="mode-sheet-mask" id="watch-shareholder-sheet-mask">
+      <section class="mode-sheet daily-reward-sheet watch-shareholder-sheet">
+        <p class="eyebrow">${i(n("watchShareholderEyebrow"))}</p>
+        <h2>${i(e.title || n("watchShareholderTitle"))}</h2>
+        <p class="summary">${i(e.subtitle || n("watchShareholderSubtitle"))}</p>
+        <div class="watch-shareholder-summary">
+          <article><span>${i(n("watchShareholderCanClaim"))}</span><strong>${i(`${t}`)}</strong></article>
+          <article><span>${i(n("watchShareholderNodeCount"))}</span><strong>${i(`${r}`)}</strong></article>
+          <article><span>${i(n("watchShareholderPaidTotal"))}</span><strong>${i(`${o}`)}</strong></article>
+          <article><span>${i(n("watchShareholderUnclaimedPeriods"))}</span><strong>${i(`${s}`)}</strong></article>
+        </div>
+        <article class="daily-sign-card watch-shareholder-period">
+          <div>
+            <span>${i(n("watchShareholderLatestPeriod"))}</span>
+            <strong>${i(l?.seasonNo || n("watchShareholderNoPeriod"))}</strong>
+            <small>${i(l ? n("watchShareholderPool", { pool: Math.floor(Number(l.poolPoints || 0)), nodes: Math.floor(Number(l.snapshotNodeCount || 0)) }) : n("watchShareholderWaiting"))}</small>
+          </div>
+          <button type="button" id="claim-watch-shareholder" ${u ? "" : "disabled"}>${i(d)}</button>
+        </article>
+        <div class="watch-shareholder-list">
+          ${c.length ? c.slice(0, 12).map(renderWatchRewardRow).join("") : `<article class="daily-task-empty">${i(n("watchShareholderNoDetail"))}</article>`}
+        </div>
+        <div class="daily-reward-footer">
+          <span>${i(e.settlementText || n("watchShareholderSettlementText"))}</span>
+          <button type="button" class="secondary" data-close-watch-shareholder="1">${i(n("gotIt"))}</button>
+        </div>
+        <p id="watch-shareholder-status" class="summary" role="status" aria-live="polite"></p>
+      </section>
+    </div>
+  `);
+  const h = document.querySelector("#watch-shareholder-status");
+  document.querySelector("#watch-shareholder-sheet-mask")?.addEventListener("click", (p) => {
+    (p.target === p.currentTarget || p.target?.closest("[data-close-watch-shareholder]")) && document.querySelector("#watch-shareholder-sheet-mask")?.remove();
+  });
+  document.querySelector("#claim-watch-shareholder")?.addEventListener("click", async (p) => {
+    const f = p.currentTarget;
+    if (f?.disabled) return;
+    f.disabled = true, f.classList.add("is-loading"), h && (h.textContent = n("claiming"));
+    try {
+      const m = await w("/api/watch-shareholder/claim", { method: "POST", body: JSON.stringify({}) });
+      a.watchShareholder = m.status || await w("/api/watch-shareholder/me"), a.wallet = await w("/api/wallet/me"), h && (h.textContent = n("claimSuccess")), S(n("claimSuccess"), "success"), window.setTimeout(() => {
+        document.querySelector("#watch-shareholder-sheet-mask")?.remove(), _();
+      }, 450);
+    } catch (m) {
+      const g = N(m);
+      h && (h.textContent = g), S(g, "error"), f.disabled = false, f.classList.remove("is-loading");
+    }
+  });
 }
 function dailyTaskModeText(e = []) {
   const t = ["quick_battle", "points_battle", "poc_battle", "pi_battle"], r = (Array.isArray(e) ? e : []).filter((o) => t.includes(o));
@@ -1869,6 +1960,7 @@ function _() {
                 <article><span>${i(n("publicRewardPoc"))}</span><strong>${i(formatPublicRewardNumber("POC", d.totalRewardPoc))}</strong></article>
               </section>` : ""}
         ${renderDailyRewardEntry()}
+        ${renderWatchShareholderEntry()}
         ${Er()}
         <section class="home-arena">
           <article class="arena-card free">
@@ -1926,7 +2018,7 @@ function _() {
     </main>
   `, document.querySelector("#start-match")?.addEventListener("click", async () => {
     Xa();
-  }), Dr(), document.querySelector("#open-daily-rewards")?.addEventListener("click", () => openDailyRewards()), document.querySelector("#open-home-invite")?.addEventListener("click", () => at()), document.querySelector("#open-game-tips")?.addEventListener("click", () => Hr()), document.querySelector("#open-rank-leaderboard")?.addEventListener("click", async () => {
+  }), Dr(), document.querySelector("#open-daily-rewards")?.addEventListener("click", () => openDailyRewards()), document.querySelector("#open-watch-shareholder")?.addEventListener("click", () => openWatchShareholderSheet()), document.querySelector("#open-home-invite")?.addEventListener("click", () => at()), document.querySelector("#open-game-tips")?.addEventListener("click", () => Hr()), document.querySelector("#open-rank-leaderboard")?.addEventListener("click", async () => {
     await Kt(1), Ot();
   }), da();
 }
@@ -3941,8 +4033,8 @@ async function Yi() {
   localStorage.setItem("blitz_user_token", s.accessToken), localStorage.setItem("blitz_pi_auth", JSON.stringify({ uid: o.user.uid, username: o.user.username || "", loggedAt: Date.now(), sandbox: r }));
 }
 async function D() {
-  const [e, t, r, o, s, l, c, d, u, h, p, f] = await Promise.all([w("/api/home/index"), w("/api/auth/profile"), w("/api/wallet/me"), w("/api/rank/me"), w("/api/rank/leaderboard?page=1&pageSize=15&type=weekly"), w("/api/pi/config"), w("/api/profile/options"), w("/api/game/config"), w(`/api/battle/history?page=${a.battleHistoryPage}&pageSize=5&mode=${encodeURIComponent(a.battleHistoryFilter === "all" ? "" : a.battleHistoryFilter)}`), w("/api/withdraw/wallets").catch(() => []), w("/api/invite/me").catch(() => null), w("/api/engagement/me").catch(() => null)]);
-  a.home = e, a.user = t, a.wallet = r, a.rankStatus = o, a.rankLeaderboard = s, a.piConfig = l, a.profileOptions = c, a.gameConfig = d, a.inviteInfo = p, a.engagement = f, Qe(), a.withdrawWallets = h, a.battleHistory = u.items, a.battleHistoryPage = u.page, a.battleHistoryTotal = u.total, a.battleHistoryTotalPages = u.totalPages;
+  const [e, t, r, o, s, l, c, d, u, h, p, f, m] = await Promise.all([w("/api/home/index"), w("/api/auth/profile"), w("/api/wallet/me"), w("/api/rank/me"), w("/api/rank/leaderboard?page=1&pageSize=15&type=weekly"), w("/api/pi/config"), w("/api/profile/options"), w("/api/game/config"), w(`/api/battle/history?page=${a.battleHistoryPage}&pageSize=5&mode=${encodeURIComponent(a.battleHistoryFilter === "all" ? "" : a.battleHistoryFilter)}`), w("/api/withdraw/wallets").catch(() => []), w("/api/invite/me").catch(() => null), w("/api/engagement/me").catch(() => null), w("/api/watch-shareholder/me").catch(() => null)]);
+  a.home = e, a.user = t, a.wallet = r, a.rankStatus = o, a.rankLeaderboard = s, a.piConfig = l, a.profileOptions = c, a.gameConfig = d, a.inviteInfo = p, a.engagement = f, a.watchShareholder = m, Qe(), a.withdrawWallets = h, a.battleHistory = u.items, a.battleHistoryPage = u.page, a.battleHistoryTotal = u.total, a.battleHistoryTotalPages = u.totalPages;
 }
 async function vt(e) {
   const t = Math.max(1, Math.min(a.battleHistoryTotalPages || 1, e)), r = a.battleHistoryFilter === "all" ? "" : a.battleHistoryFilter, o = await w(`/api/battle/history?page=${t}&pageSize=5&mode=${encodeURIComponent(r)}`);
