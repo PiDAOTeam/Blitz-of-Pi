@@ -10,10 +10,29 @@ function ge(e) {
   const t = e.replace(/^#/, "");
   return ["overview", "users", "funds", "withdraw", "growth", "watch-shareholder", "ranks", "reconciliation", "risk", "matches", "config", "security", "logs"].includes(t) ? t : "overview";
 }
-async function d(e, t) {
-  const a = await fetch(`${Be}${e}`, { ...t, headers: { "Content-Type": "application/json", Authorization: `Bearer ${fe()}`, ...t?.headers || {} } }), n = await a.json();
-  if (!a.ok || n.code !== 0) throw new Error(n.message || "\u8BF7\u6C42\u5931\u8D25");
-  return n.data;
+async function d(e, t = {}) {
+  const { timeoutMs = 15000, ...a } = t || {};
+  const n = new AbortController(), s = setTimeout(() => n.abort(), Math.max(3000, Number(timeoutMs || 15000)));
+  try {
+    const r = await fetch(`${Be}${e}`, { ...a, headers: { "Content-Type": "application/json", Authorization: `Bearer ${fe()}`, ...a?.headers || {} }, signal: a.signal || n.signal });
+    let o = {};
+    try {
+      o = await r.json();
+    } catch {
+      o = {};
+    }
+    if (!r.ok || o.code !== 0) {
+      const m = new Error(o.message || "\u8BF7\u6C42\u5931\u8D25");
+      m.status = r.status;
+      throw m;
+    }
+    return o.data;
+  } catch (r) {
+    if (r?.name === "AbortError") throw new Error("\u8BF7\u6C42\u8D85\u65F6\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5");
+    throw r;
+  } finally {
+    clearTimeout(s);
+  }
 }
 function g(e) {
   if (e instanceof Error) return e.message;
@@ -775,6 +794,15 @@ function ae(e = "") {
       n && (n.textContent = g(s));
     }
   });
+}
+function showLoadError(e) {
+  if (Q) {
+    F();
+    const t = document.querySelector(".content");
+    t?.insertAdjacentHTML("afterbegin", `<section class="panel"><p class="status danger">\u540E\u53F0\u5237\u65B0\u5931\u8D25\uFF1A${i(g(e))}\u3002\u5DF2\u4FDD\u7559\u5F53\u524D\u9875\u9762\uFF0C\u53EF\u4EE5\u91CD\u8BD5\u64CD\u4F5C\u3002</p></section>`);
+    return;
+  }
+  ae(`\u540E\u53F0\u52A0\u8F7D\u5931\u8D25\uFF1A${g(e)}`);
 }
 function Ne(e, t, a, n, s, r, o, m, R, y, x, j, A, B, w, L, T, C, M, U, J) {
   const homeConfig = { projectName: "Pi闪电战", englishName: "Blitz of Pi", localizedContent: {}, banners: [], ...(t || {}) };
@@ -2484,7 +2512,7 @@ function bindWatchShareholderActions() {
     const r = document.querySelector(a);
     r && (r.disabled = true), e && (e.textContent = "处理中...");
     try {
-      const o = await d(n, { method: "POST", body: JSON.stringify({}) });
+      const o = await d(n, { method: "POST", body: JSON.stringify({}), timeoutMs: 25000 });
       e && (e.textContent = o?.message || "处理完成，正在刷新..."), await q();
     } catch (o) {
       e && (e.textContent = g(o)), r && (r.disabled = false);
@@ -2636,7 +2664,11 @@ async function q() {
     const [e, t, a, n, s, r, o, m, R, y, x, j, A, B, w, L, T, C, M, U, J, k, z, watchOps] = await Promise.all([d("/admin-api/auth/me"), d("/admin-api/home-config"), d("/admin-api/pi-config"), d("/admin-api/game-config"), d("/admin-api/dashboard/overview"), d("/admin-api/matches/rooms"), d("/admin-api/payments/orders"), d("/admin-api/users"), d("/admin-api/wallets"), d("/admin-api/wallet-ledgers"), d("/admin-api/battle-rooms"), d("/admin-api/withdraw/orders"), d("/admin-api/reconciliation/report"), d("/admin-api/risk-audit/report"), d("/admin-api/audit-logs"), d("/admin-api/ranks/star-records"), d("/admin-api/ranks/daily-chests"), d("/admin-api/ranks/leaderboard"), d("/admin-api/ranks/weekly-settlements"), d("/admin-api/withdraw/ops").catch(() => null), d("/admin-api/growth/ops").catch(() => null), d("/admin-api/engagement/claims").catch(() => []), d("/admin-api/engagement/reward-jobs").catch(() => []), d("/admin-api/watch-shareholder/overview").catch(() => null)]);
     te = U, Ne(e, t, a, n, s, r, o, m, R, y, x, j, A, B, w, L, T, C, M, { ...(J || {}), engagementClaims: k || [], engagementRewardJobs: z || [] }, watchOps);
   } catch (e) {
-    localStorage.removeItem("blitz_admin_token"), ae(`\u540E\u53F0\u52A0\u8F7D\u5931\u8D25\uFF1A${g(e)}`);
+    if (e?.status === 401 || e?.status === 403) {
+      localStorage.removeItem("blitz_admin_token"), ae(`\u540E\u53F0\u52A0\u8F7D\u5931\u8D25\uFF1A${g(e)}`);
+      return;
+    }
+    showLoadError(e);
   }
 }
 q();
