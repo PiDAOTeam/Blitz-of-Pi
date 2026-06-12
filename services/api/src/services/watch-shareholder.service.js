@@ -125,7 +125,40 @@ async function fetchWatchNodeSnapshot() {
   };
 }
 
-async function getWeeklyEstimate(config) {
+function toPublicWeeklyEstimate(bundle = {}) {
+  return bundle.publicValue || null;
+}
+
+function getEstimatedRewardForUser(bundle, user = {}) {
+  const piUid = String(user.piUserId || user.pi_user_id || "").trim();
+  const piUsername = String(user.piUsername || user.pi_username || "").trim().toLowerCase();
+  const rewards = Array.isArray(bundle?.rewards) ? bundle.rewards : [];
+  const reward = rewards.find((item) => {
+    const itemPiUid = String(item.piUid || item.pi_uid || "").trim();
+    const itemPiUsername = String(item.piUsername || item.pi_username || "").trim().toLowerCase();
+    return (piUid && itemPiUid === piUid) || (piUsername && itemPiUsername === piUsername);
+  });
+
+  if (!reward) {
+    return {
+      nodeCount: 0,
+      dividendPoints: 0,
+      subsidyPoints: 0,
+      rewardPoints: 0,
+      status: "zero"
+    };
+  }
+
+  return {
+    nodeCount: Number(reward.nodeCount || 0),
+    dividendPoints: Number(reward.dividendPoints || 0),
+    subsidyPoints: Number(reward.subsidyPoints || 0),
+    rewardPoints: Number(reward.rewardPoints || 0),
+    status: reward.status || "zero"
+  };
+}
+
+async function getWeeklyEstimateBundle(config) {
   const normalizedConfig = normalizeShareholderConfig({ watchShareholder: config });
   const subsidyPointsPerUser = normalizedConfig.subsidyEnabled ? normalizedConfig.subsidyPointsPerUser : 0;
   const range = await getCurrentWeekRangeFromDb();
@@ -153,7 +186,7 @@ async function getWeeklyEstimate(config) {
     minRewardPoints: normalizedConfig.minRewardPoints,
     subsidyPointsPerUser
   });
-  const value = {
+  const publicValue = {
     seasonNo: range.seasonNo,
     startAt,
     endAt,
@@ -171,12 +204,20 @@ async function getWeeklyEstimate(config) {
     snapshotUserCount: snapshot.user_count,
     snapshotNodeCount: snapshot.node_count
   };
+  const value = {
+    publicValue,
+    rewards: allocation.rewards || []
+  };
   weeklyEstimateCache = {
     key: cacheKey,
     createdAt: Date.now(),
     value
   };
   return value;
+}
+
+async function getWeeklyEstimate(config) {
+  return toPublicWeeklyEstimate(await getWeeklyEstimateBundle(config));
 }
 
 async function settlePreviousWeek({ force = false } = {}) {
@@ -257,12 +298,15 @@ async function getMyShareholderStatus(user) {
 
   await linkRewardsForUser(user);
 
-  const [summary, rewards, latestPeriod, weeklyEstimate] = await Promise.all([
+  const [summary, rewards, latestPeriod, weeklyEstimateBundle] = await Promise.all([
     getUserSummary(user.uid),
     listUserRewards(user.uid, 30),
     getLatestPeriod(),
-    getWeeklyEstimate(config).catch(() => null)
+    getWeeklyEstimateBundle(config).catch(() => null)
   ]);
+  const weeklyEstimate = toPublicWeeklyEstimate(weeklyEstimateBundle);
+  const myWeeklyEstimate = getEstimatedRewardForUser(weeklyEstimateBundle, user);
+  const currentNodeCount = myWeeklyEstimate.nodeCount || summary.latestNodeCount;
 
   return {
     enabled: config.enabled,
@@ -270,14 +314,15 @@ async function getMyShareholderStatus(user) {
     title: config.title,
     subtitle: config.subtitle,
     settlementText: config.settlementText,
-    isWatchNode: summary.periodCount > 0 || summary.latestNodeCount > 0,
+    isWatchNode: summary.periodCount > 0 || currentNodeCount > 0,
     claimablePoints: summary.claimablePoints,
-    nodeCount: summary.latestNodeCount,
+    nodeCount: currentNodeCount,
     paidPoints: summary.paidPoints,
     unclaimedCount: summary.unclaimedCount,
     rewards: rewards.map(toRewardDto),
     latestPeriod: toPeriodDto(latestPeriod),
-    weeklyEstimate
+    weeklyEstimate,
+    myWeeklyEstimate
   };
 }
 

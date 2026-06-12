@@ -2473,6 +2473,15 @@ button:disabled {
   border-radius: 16px;
   background: rgba(255, 236, 158, .08);
 }
+.watch-shareholder-summary .watch-shareholder-my-estimate {
+  grid-column: 1 / -1;
+  min-height: 78px;
+  background:
+    radial-gradient(circle at 12% 10%, rgba(255, 255, 186, .26), transparent 36%),
+    linear-gradient(135deg, rgba(255, 210, 72, .22), rgba(255, 255, 255, .08));
+  border-color: rgba(255, 236, 137, .42);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), 0 10px 22px rgba(247, 183, 51, .12);
+}
 .watch-shareholder-summary span,
 .watch-shareholder-summary strong {
   display: block;
@@ -2487,6 +2496,10 @@ button:disabled {
   color: #fff176;
   font-size: 19px;
   line-height: 1;
+}
+.watch-shareholder-summary .watch-shareholder-my-estimate strong {
+  font-size: 26px;
+  text-shadow: 0 0 14px rgba(255, 234, 104, .42);
 }
 .watch-shareholder-summary small {
   display: block;
