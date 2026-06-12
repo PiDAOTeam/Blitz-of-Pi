@@ -202,6 +202,7 @@ function matchIsRecoverable() {
   return !!a.matchRecoverable;
 }
 function matchFailureStatusText() {
+  if (/资产网络繁忙|Asset network busy/i.test(a.matchCancelMessage || "")) return n("matchAssetGatewayBusy");
   return n("matchTimeoutRetry");
 }
 function markMatchRecoverable(e = "") {

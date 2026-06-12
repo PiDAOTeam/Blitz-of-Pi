@@ -48,6 +48,16 @@ function isTransientGatewayError(error) {
   );
 }
 
+function createGatewayBusyError(cause = null) {
+  const error = new Error("资产网络繁忙，请稍后重试");
+  error.expectedBusinessError = true;
+  error.businessCode = 1701;
+  if (cause) {
+    error.cause = cause;
+  }
+  return error;
+}
+
 function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -115,16 +125,21 @@ async function callGateway(action, payload) {
       return data.data || {};
     } catch (error) {
       lastError = error;
-      if (attempt >= 2 || !isTransientGatewayError(error)) {
+      const transient = isTransientGatewayError(error);
+      if (attempt >= 2 || !transient) {
+        if (transient) {
+          throw createGatewayBusyError(error);
+        }
         throw error;
       }
+      console.warn(`[asset-gateway] ${action} transient failure, retrying (${attempt}/2): ${error.message || error.name || "network"}`);
       await wait(300);
     } finally {
       clearTimeout(timer);
     }
   }
 
-  throw lastError || new Error("资产网关请求失败");
+  throw lastError && isTransientGatewayError(lastError) ? createGatewayBusyError(lastError) : lastError || new Error("资产网关请求失败");
 }
 
 function buildIdentity(user = {}) {

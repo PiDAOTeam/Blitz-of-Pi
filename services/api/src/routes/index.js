@@ -117,6 +117,7 @@ const EXPECTED_BUSINESS_ERROR_MESSAGES = new Set([
   "今日段位宝箱已领取",
   "Pi UID/用户名未绑定 HashPi 用户",
   "资产网关暂时不可用，请稍后重试",
+  "资产网络繁忙，请稍后重试",
   "积分余额不足",
   "POC余额不足",
   "Pi余额不足",

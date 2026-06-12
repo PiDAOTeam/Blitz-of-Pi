@@ -1,4 +1,8 @@
-const { query } = require("../db/mysql");
+const { query, isRetryableTransactionError } = require("../db/mysql");
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 function executor(connection) {
   return connection || {
@@ -222,21 +226,34 @@ async function expireStaleFreeBotRooms(minutes = 5) {
   const safeMinutes = Math.min(60, Math.max(2, Number.parseInt(String(minutes), 10) || 5));
   await ensureBattleAssetColumns();
 
-  const result = await query(
-    `UPDATE battle_rooms
-     SET status = 'expired',
-         finished_at = COALESCE(finished_at, NOW()),
-         asset_error = CASE
-           WHEN COALESCE(asset_error, '') = '' THEN 'free stale room auto expired'
-           ELSE asset_error
-         END
-     WHERE status = 'playing'
-       AND entry_fee = 0
-       AND COALESCE(asset_type, 'FREE') = 'FREE'
-       AND created_at < DATE_SUB(NOW(), INTERVAL ${safeMinutes} MINUTE)`
-  );
+  let attempt = 0;
+  while (true) {
+    attempt += 1;
+    try {
+      const result = await query(
+        `UPDATE battle_rooms
+         SET status = 'expired',
+             finished_at = COALESCE(finished_at, NOW()),
+             asset_error = CASE
+               WHEN COALESCE(asset_error, '') = '' THEN 'free stale room auto expired'
+               ELSE asset_error
+             END
+         WHERE status = 'playing'
+           AND entry_fee = 0
+           AND COALESCE(asset_type, 'FREE') = 'FREE'
+           AND created_at < DATE_SUB(NOW(), INTERVAL ${safeMinutes} MINUTE)`
+      );
 
-  return Number(result?.affectedRows || 0);
+      return Number(result?.affectedRows || 0);
+    } catch (error) {
+      if (attempt >= 4 || !isRetryableTransactionError(error)) {
+        throw error;
+      }
+      const delayMs = 120 * attempt + Math.floor(Math.random() * 160);
+      console.warn(`[room-maintenance] stale room cleanup retry after ${error.code || error.errno || "lock"} (${attempt}/3)`);
+      await wait(delayMs);
+    }
+  }
 }
 
 async function updateBattleRoomStatus(roomNo, status, connection = null) {
