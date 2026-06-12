@@ -4,8 +4,9 @@ const BRAND_MARK_HTML = '<img class="brand-logo" src="/assets/brand/blitz-logo-1
 const Da = "blitz_language", Wa = "blitz_visual_effect_mode", INVITE_CODE_STORAGE_KEY = "blitz_pending_invite_code", Jt = ["zh-CN", "en", "vi", "ko", "ja"], ot = ["balanced", "high"];
 const BATTLE_SFX_OUTPUT_GAIN = 8, BATTLE_BGM_OUTPUT_GAIN = 6;
 const BATTLE_PRAISE_CUES = ["Good", "Great", "Amazing", "Excellent", "Unbelievable", "Crazy", "Wonderful"];
-const BATTLE_PRAISE_AUDIO_SRC = Object.fromEntries(BATTLE_PRAISE_CUES.map((e) => [e, `/assets/audio/praise/${e.toLowerCase()}.wav`]));
-const BATTLE_ATTACK_VOICE_SRC = "/assets/audio/voice/oh-my-god.wav";
+const BATTLE_VOICE_ASSET_VERSION = "20260612-clear2";
+const BATTLE_PRAISE_AUDIO_SRC = Object.fromEntries(BATTLE_PRAISE_CUES.map((e) => [e, `/assets/audio/praise/${e.toLowerCase()}.wav?v=${BATTLE_VOICE_ASSET_VERSION}`]));
+const BATTLE_ATTACK_VOICE_SRC = `/assets/audio/voice/oh-my-god.wav?v=${BATTLE_VOICE_ASSET_VERSION}`;
 const INVITE_LIST_PAGE_SIZE = 6;
 let inviteRelationPage = 1, inviteIncomePage = 1;
 function gn() {
@@ -793,6 +794,10 @@ function battleBgmVolume() {
   const e = Number(ve().bgmVolume);
   return Math.min(3, Math.max(0, Number.isFinite(e) ? e : 0) * BATTLE_BGM_OUTPUT_GAIN);
 }
+function battleVoiceVolume() {
+  const e = Number(ve().soundVolume);
+  return Math.min(0.98, Math.max(0.68, Number.isFinite(e) ? e * 1.02 : 0.92));
+}
 function ensureBattleAudioContext() {
   if (!battleSoundEnabled()) return null;
   try {
@@ -972,7 +977,7 @@ async function playBattlePraiseAudio(e) {
     const r = battlePraiseBuffers.get(e) || await loadBattlePraiseAudio(e);
     if (!r) return false;
     const o = t.createBufferSource(), s = t.createGain();
-    o.buffer = r, o.playbackRate.value = 1.08, s.gain.value = Math.min(3.2, Math.max(1, battleSfxVolume() * 0.95)), o.connect(s), s.connect(t.destination), o.start(0), window.setTimeout(() => {
+    o.buffer = r, o.playbackRate.value = 1, s.gain.value = battleVoiceVolume(), o.connect(s), s.connect(t.destination), o.start(0), window.setTimeout(() => {
       try {
         o.disconnect(), s.disconnect();
       } catch {
@@ -1002,7 +1007,7 @@ async function playBattleVoiceAudio(e, t) {
     const o = battleVoiceBuffers.get(e) || await loadBattleVoiceAudio(e, t);
     if (!o) return false;
     const s = r.createBufferSource(), l = r.createGain();
-    s.buffer = o, s.playbackRate.value = 1, l.gain.value = Math.min(3.4, Math.max(1, battleSfxVolume())), s.connect(l), l.connect(r.destination), s.start(0), window.setTimeout(() => {
+    s.buffer = o, s.playbackRate.value = 1, l.gain.value = battleVoiceVolume(), s.connect(l), l.connect(r.destination), s.start(0), window.setTimeout(() => {
       try {
         s.disconnect(), l.disconnect();
       } catch {
@@ -1025,9 +1030,9 @@ function playBattleSpeech(e, t = 0, r = {}) {
   try {
     const o = new SpeechSynthesisUtterance(e);
     o.lang = "en-US";
-    o.rate = Math.max(0.8, Math.min(1.45, Number(r.rate ?? 1.22)));
-    o.pitch = Math.max(0.8, Math.min(2, Number(r.pitch ?? 1.48) + Math.min(0.22, t * 0.035)));
-    o.volume = Math.min(1, Math.max(0.72, battleSfxVolume()));
+    o.rate = Math.max(0.82, Math.min(1.08, Number(r.rate ?? 0.96)));
+    o.pitch = Math.max(0.92, Math.min(1.34, Number(r.pitch ?? 1.12) + Math.min(0.1, t * 0.015)));
+    o.volume = battleVoiceVolume();
     const s = selectBattleSpeechVoice();
     s && (o.voice = s);
     window.speechSynthesis.cancel?.();
@@ -1036,7 +1041,7 @@ function playBattleSpeech(e, t = 0, r = {}) {
   }
 }
 function playBattlePraiseSpeech(e, t = 0) {
-  playBattleSpeech(e, t, { rate: 1.24, pitch: 1.5 });
+  playBattleSpeech(e, t, { rate: 0.96, pitch: 1.14 });
 }
 function playBattleAttackSpeech() {
   if (!battleSoundEnabled()) return;
@@ -1044,8 +1049,8 @@ function playBattleAttackSpeech() {
   if (e - battleAttackSpeechLastAt < 1600) return;
   battleAttackSpeechLastAt = e;
   playBattleVoiceAudio("attack-oh-my-god", BATTLE_ATTACK_VOICE_SRC).then((t) => {
-    t || playBattleSpeech("Oh my God!", 4, { rate: 1.18, pitch: 1.55 });
-  }).catch(() => playBattleSpeech("Oh my God!", 4, { rate: 1.18, pitch: 1.55 }));
+    t || playBattleSpeech("Oh my God!", 4, { rate: 0.94, pitch: 1.18 });
+  }).catch(() => playBattleSpeech("Oh my God!", 4, { rate: 0.94, pitch: 1.18 }));
 }
 function playBattlePraiseCue(e) {
   const t = battlePraiseCue(e);
