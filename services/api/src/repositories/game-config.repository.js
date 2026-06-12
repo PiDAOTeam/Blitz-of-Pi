@@ -242,6 +242,8 @@ const DEFAULT_GAME_CONFIG = {
     autoSettleEnabled: true,
     shareRate: 0.5,
     minRewardPoints: 1,
+    subsidyEnabled: false,
+    subsidyPointsPerUser: 0,
     sourceMode: "points_battle",
     settlementText: "每周一结算上周",
     title: "腕表节点股东分红",
@@ -899,6 +901,12 @@ function normalizeWatchShareholderConfig(watchShareholder = {}) {
     1,
     1000000
   );
+  const subsidyPointsPerUser = normalizeNumberInRange(
+    watchShareholder.subsidyPointsPerUser,
+    defaults.subsidyPointsPerUser,
+    0,
+    1000000
+  );
 
   return {
     enabled: Boolean(watchShareholder.enabled),
@@ -906,6 +914,8 @@ function normalizeWatchShareholderConfig(watchShareholder = {}) {
     autoSettleEnabled: watchShareholder.autoSettleEnabled !== false,
     shareRate,
     minRewardPoints,
+    subsidyEnabled: Boolean(watchShareholder.subsidyEnabled),
+    subsidyPointsPerUser: Math.floor(subsidyPointsPerUser),
     sourceMode: "points_battle",
     settlementText: String(watchShareholder.settlementText || defaults.settlementText).trim().slice(0, 60),
     title: String(watchShareholder.title || defaults.title).trim().slice(0, 32),

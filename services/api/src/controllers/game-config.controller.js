@@ -129,6 +129,12 @@ async function getPublicGameConfig() {
     watchShareholder: {
       enabled: Boolean(config.watchShareholder?.enabled),
       frontendEntryEnabled: config.watchShareholder?.frontendEntryEnabled !== false,
+      autoSettleEnabled: config.watchShareholder?.autoSettleEnabled !== false,
+      shareRate: Number(config.watchShareholder?.shareRate ?? 0.5),
+      minRewardPoints: Number(config.watchShareholder?.minRewardPoints || 1),
+      subsidyEnabled: Boolean(config.watchShareholder?.subsidyEnabled),
+      subsidyPointsPerUser: Math.floor(Number(config.watchShareholder?.subsidyPointsPerUser || 0)),
+      sourceMode: config.watchShareholder?.sourceMode || "points_battle",
       title: config.watchShareholder?.title || "腕表节点股东分红",
       subtitle: config.watchShareholder?.subtitle || "腕表节点用户可领每周分红",
       settlementText: config.watchShareholder?.settlementText || "每周一结算上周"
