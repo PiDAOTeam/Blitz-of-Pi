@@ -1549,7 +1549,7 @@ function openWatchShareholderSheet() {
   const e = a.watchShareholder;
   if (!e?.enabled) return;
   document.querySelectorAll("#watch-shareholder-sheet-mask").forEach((p) => p.remove());
-  const t = Math.floor(Number(e.claimablePoints || 0)), r = Math.floor(Number(e.nodeCount || 0)), o = Math.floor(Number(e.paidPoints || 0)), s = Number(e.unclaimedCount || 0), l = e.latestPeriod, weeklyEstimate = e.weeklyEstimate || null, c = e.rewards || [], d = t > 0 ? n("watchShareholderClaimButton", { amount: t }) : r > 0 ? n("watchShareholderNoClaim") : n("watchShareholderNotNode"), u = t > 0, shareholderBadge = r > 0 ? n(r > 1 ? "watchShareholderBadgeCount" : "watchShareholderBadge", { count: r }) : "";
+  const t = Math.floor(Number(e.claimablePoints || 0)), r = Math.floor(Number(e.nodeCount || 0)), o = Math.floor(Number(e.paidPoints || 0)), s = Number(e.unclaimedCount || 0), l = e.latestPeriod, weeklyEstimate = e.weeklyEstimate || null, weeklyPool = Math.floor(Number(weeklyEstimate?.poolPoints || 0)), weeklySubsidy = Math.floor(Number(weeklyEstimate?.subsidyPointsTotal || 0)), weeklyRooms = Math.floor(Number(weeklyEstimate?.roomCount || 0)), weeklyFee = Math.floor(Number(weeklyEstimate?.platformFeePoints || 0)), c = e.rewards || [], d = t > 0 ? n("watchShareholderClaimButton", { amount: t }) : r > 0 ? n("watchShareholderNoClaim") : n("watchShareholderNotNode"), u = t > 0, shareholderBadge = r > 0 ? n(r > 1 ? "watchShareholderBadgeCount" : "watchShareholderBadge", { count: r }) : "";
   R.insertAdjacentHTML("beforeend", `
     <div class="mode-sheet-mask" id="watch-shareholder-sheet-mask">
       <section class="mode-sheet daily-reward-sheet watch-shareholder-sheet">
@@ -1562,6 +1562,10 @@ function openWatchShareholderSheet() {
           <article><span>${i(n("watchShareholderNodeCount"))}</span><strong>${i(`${r}`)}</strong></article>
           <article><span>${i(n("watchShareholderPaidTotal"))}</span><strong>${i(`${o}`)}</strong></article>
           <article><span>${i(n("watchShareholderUnclaimedPeriods"))}</span><strong>${i(`${s}`)}</strong></article>
+          ${weeklyEstimate ? `
+            <article><span>${i(n("watchShareholderWeeklyPool"))}</span><strong>${i(`${weeklyPool + weeklySubsidy}`)}</strong><small>${i(n("watchShareholderWeeklyPoolDetail", { pool: weeklyPool, subsidy: weeklySubsidy }))}</small></article>
+            <article><span>${i(n("watchShareholderWeeklyBattleStats"))}</span><strong>${i(`${weeklyRooms}`)}</strong><small>${i(n("watchShareholderWeeklyFeeDetail", { fee: weeklyFee }))}</small></article>
+          ` : ""}
         </div>
         <article class="daily-sign-card watch-shareholder-period">
           <div>
@@ -1571,16 +1575,6 @@ function openWatchShareholderSheet() {
           </div>
           <button type="button" id="claim-watch-shareholder" ${u ? "" : "disabled"}>${i(d)}</button>
         </article>
-        ${weeklyEstimate ? `
-          <article class="daily-sign-card watch-shareholder-period">
-            <div>
-              <span>${i(n("watchShareholderCurrentWeek"))}</span>
-              <strong>${i(n("watchShareholderEstimatedPool", { pool: Math.floor(Number(weeklyEstimate.poolPoints || 0)), subsidy: Math.floor(Number(weeklyEstimate.subsidyPointsTotal || 0)) }))}</strong>
-              <small>${i(n("watchShareholderWeeklyMatches", { count: Math.floor(Number(weeklyEstimate.roomCount || 0)), fee: Math.floor(Number(weeklyEstimate.platformFeePoints || 0)) }))}</small>
-            </div>
-            <button type="button" disabled>${i(n("watchShareholderHourlyUpdate"))}</button>
-          </article>
-        ` : ""}
         <div class="watch-shareholder-list">
           ${c.length ? c.slice(0, 12).map(renderWatchRewardRow).join("") : `<article class="daily-task-empty">${i(n("watchShareholderNoDetail"))}</article>`}
         </div>

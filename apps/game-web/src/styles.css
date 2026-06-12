@@ -2463,11 +2463,12 @@ button:disabled {
 .watch-shareholder-summary {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: 7px;
   margin: 10px 0;
 }
 .watch-shareholder-summary article {
-  padding: 10px;
+  min-height: 72px;
+  padding: 9px 10px;
   border: 1px solid rgba(255, 221, 98, .24);
   border-radius: 16px;
   background: rgba(255, 236, 158, .08);
@@ -2484,8 +2485,16 @@ button:disabled {
 .watch-shareholder-summary strong {
   margin-top: 3px;
   color: #fff176;
-  font-size: 20px;
+  font-size: 19px;
   line-height: 1;
+}
+.watch-shareholder-summary small {
+  display: block;
+  margin-top: 4px;
+  color: rgba(255, 238, 188, .78);
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1.18;
 }
 .watch-shareholder-list {
   display: grid;

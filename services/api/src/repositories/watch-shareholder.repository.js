@@ -254,16 +254,16 @@ function normalizeSnapshotUsers(users = []) {
 function allocateIntegerRewards({ poolPoints, users, minRewardPoints = 1, subsidyPointsPerUser = 0 }) {
   const pool = Math.max(0, Math.floor(Number(poolPoints || 0)));
   const normalizedUsers = normalizeSnapshotUsers(users);
-  const subsidyPerUser = Math.max(0, Math.floor(Number(subsidyPointsPerUser || 0)));
+  const subsidyPerNode = Math.max(0, Math.floor(Number(subsidyPointsPerUser || 0)));
   const totalNodeCount = normalizedUsers.reduce((sum, user) => sum + user.nodeCount, 0);
   if (pool <= 0 || totalNodeCount <= 0) {
     const rewards = normalizedUsers.map((user) => ({
       ...user,
       rawAmount: 0,
       dividendPoints: 0,
-      subsidyPoints: subsidyPerUser,
-      rewardPoints: subsidyPerUser,
-      status: subsidyPerUser > 0 ? "pending" : "zero"
+      subsidyPoints: subsidyPerNode * user.nodeCount,
+      rewardPoints: subsidyPerNode * user.nodeCount,
+      status: subsidyPerNode * user.nodeCount > 0 ? "pending" : "zero"
     }));
     return {
       totalNodeCount,
@@ -285,10 +285,10 @@ function allocateIntegerRewards({ poolPoints, users, minRewardPoints = 1, subsid
       ...user,
       rawAmount,
       dividendPoints,
-      subsidyPoints: subsidyPerUser,
-      rewardPoints: dividendPoints + subsidyPerUser,
+      subsidyPoints: subsidyPerNode * user.nodeCount,
+      rewardPoints: dividendPoints + subsidyPerNode * user.nodeCount,
       fraction: rawAmount - Math.floor(rawAmount),
-      status: dividendPoints + subsidyPerUser > 0 ? "pending" : "zero"
+      status: dividendPoints + subsidyPerNode * user.nodeCount > 0 ? "pending" : "zero"
     };
   });
 

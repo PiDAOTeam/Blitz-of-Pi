@@ -1752,10 +1752,10 @@ function renderWatchShareholderAdmin(e = {}, t = {}) {
         ${f("最近期次", formatSeasonNo(r?.seasonNo), r ? `${i(O(r.startAt))} 至 ${i(O(r.endAt))}` : "暂无结算")}
         ${f("本期奖池", `${Math.floor(Number(r?.poolPoints || 0))} 积分`, `抽成 ${Math.floor(Number(r?.platformFeePoints || 0))} · 比例 ${Math.round(Number(r?.shareRate ?? n.shareRate ?? 0) * 100)}%`)}
         ${f("节点快照", `${Number(r?.snapshotUserCount || 0)} 人`, `${Number(r?.snapshotNodeCount || 0)} 个有效节点`)}
-        ${f("平台补贴", `${Math.floor(Number(r?.subsidyPointsTotal || 0))} 积分`, `${n.subsidyEnabled ? `每人 ${Math.floor(Number(n.subsidyPointsPerUser || 0))} 积分` : "未开启"}`)}
+        ${f("平台补贴", `${Math.floor(Number(r?.subsidyPointsTotal || 0))} 积分`, `${n.subsidyEnabled ? `每节点 ${Math.floor(Number(n.subsidyPointsPerUser || 0))} 积分` : "未开启"}`)}
         ${f("本周小富豪", `${Math.floor(Number(weeklyEstimate?.roomCount || 0))} 局`, "已结算真人积分局")}
         ${f("本周预计奖池", `${Math.floor(Number(weeklyEstimate?.poolPoints || 0))} 积分`, `抽成 ${Math.floor(Number(weeklyEstimate?.platformFeePoints || 0))} · 1小时更新`)}
-        ${f("本周预计补贴", `${Math.floor(Number(weeklyEstimate?.subsidyPointsTotal || 0))} 积分`, `${n.subsidyEnabled ? `每人 ${Math.floor(Number(weeklyEstimate?.subsidyPointsPerUser || n.subsidyPointsPerUser || 0))} · 节点 ${Number(weeklyEstimate?.snapshotNodeCount || 0)}` : "未开启"}`)}
+        ${f("本周预计补贴", `${Math.floor(Number(weeklyEstimate?.subsidyPointsTotal || 0))} 积分`, `${n.subsidyEnabled ? `每节点 ${Math.floor(Number(weeklyEstimate?.subsidyPointsPerUser || n.subsidyPointsPerUser || 0))} · 节点 ${Number(weeklyEstimate?.snapshotNodeCount || 0)}` : "未开启"}`)}
       </div>
       <div class="watch-action-row">
         <button type="button" id="watch-shareholder-sync">同步节点名单</button>
@@ -1790,12 +1790,12 @@ function renderWatchShareholderAdmin(e = {}, t = {}) {
             <option value="false" ${n.subsidyEnabled ? "" : "selected"}>关闭</option>
             <option value="true" ${n.subsidyEnabled ? "selected" : ""}>开启</option>
           </select></label>
-          <label><span>每人每周补贴积分</span><input name="watchShareholderSubsidyPointsPerUser" type="number" inputmode="numeric" min="0" max="100000" step="1" value="${Math.floor(Number(n.subsidyPointsPerUser || 0))}" /></label>
+          <label><span>每节点每周补贴积分</span><input name="watchShareholderSubsidyPointsPerUser" type="number" inputmode="numeric" min="0" max="100000" step="1" value="${Math.floor(Number(n.subsidyPointsPerUser || 0))}" /></label>
           <label><span>前台标题</span><input name="watchShareholderTitle" maxlength="32" value="${i(n.title || "腕表节点股东分红")}" /></label>
           <label><span>前台说明</span><input name="watchShareholderSubtitle" maxlength="80" value="${i(n.subtitle || "腕表节点用户可领每周分红")}" /></label>
           <label><span>结算文案</span><input name="watchShareholderSettlementText" maxlength="60" value="${i(n.settlementText || "每周一结算上周")}" /></label>
         </div>
-        <p class="meta">平台补贴按腕表节点用户“每人”增加，不按节点数倍增。生成期次后，已领取的期次不能重新生成。</p>
+        <p class="meta">平台补贴按“有效节点数量”增加。比如填 10，2 个节点每周补贴 20 积分。生成期次后，已领取的期次不能重新生成。</p>
         <button type="submit">保存腕表分红配置</button>
         <p id="watch-shareholder-config-status" class="status"></p>
       </form>
