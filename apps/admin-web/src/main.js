@@ -1737,7 +1737,7 @@ function renderWatchRewardRow(e = {}) {
 }
 function renderWatchShareholderAdmin(e = {}, t = {}) {
   const a = e.watchShareholder || {};
-  const n = t?.config || a || {}, s = t?.stats || {}, r = t?.latestPeriod || null, o = Array.isArray(t?.periods) ? t.periods : [], m = Array.isArray(t?.rewards) ? t.rewards : [], R = filterList(m, WATCH_REWARD_FILTERS, watchRewardFilter), y = N("watch-periods", o), x = N("watch-rewards", R), j = WATCH_REWARD_FILTERS.find((B) => B.key === watchRewardFilter) || WATCH_REWARD_FILTERS[0];
+  const n = t?.config || a || {}, s = t?.stats || {}, r = t?.latestPeriod || null, weeklyEstimate = t?.weeklyEstimate || null, o = Array.isArray(t?.periods) ? t.periods : [], m = Array.isArray(t?.rewards) ? t.rewards : [], R = filterList(m, WATCH_REWARD_FILTERS, watchRewardFilter), y = N("watch-periods", o), x = N("watch-rewards", R), j = WATCH_REWARD_FILTERS.find((B) => B.key === watchRewardFilter) || WATCH_REWARD_FILTERS[0];
   return `
     <section class="panel watch-shareholder-hero">
       <div class="section-head">
@@ -1753,6 +1753,9 @@ function renderWatchShareholderAdmin(e = {}, t = {}) {
         ${f("本期奖池", `${Math.floor(Number(r?.poolPoints || 0))} 积分`, `抽成 ${Math.floor(Number(r?.platformFeePoints || 0))} · 比例 ${Math.round(Number(r?.shareRate ?? n.shareRate ?? 0) * 100)}%`)}
         ${f("节点快照", `${Number(r?.snapshotUserCount || 0)} 人`, `${Number(r?.snapshotNodeCount || 0)} 个有效节点`)}
         ${f("平台补贴", `${Math.floor(Number(r?.subsidyPointsTotal || 0))} 积分`, `${n.subsidyEnabled ? `每人 ${Math.floor(Number(n.subsidyPointsPerUser || 0))} 积分` : "未开启"}`)}
+        ${f("本周小富豪", `${Math.floor(Number(weeklyEstimate?.roomCount || 0))} 局`, "已结算真人积分局")}
+        ${f("本周预计奖池", `${Math.floor(Number(weeklyEstimate?.poolPoints || 0))} 积分`, `抽成 ${Math.floor(Number(weeklyEstimate?.platformFeePoints || 0))} · 1小时更新`)}
+        ${f("本周预计补贴", `${Math.floor(Number(weeklyEstimate?.subsidyPointsTotal || 0))} 积分`, `${n.subsidyEnabled ? `每人 ${Math.floor(Number(weeklyEstimate?.subsidyPointsPerUser || n.subsidyPointsPerUser || 0))} · 节点 ${Number(weeklyEstimate?.snapshotNodeCount || 0)}` : "未开启"}`)}
       </div>
       <div class="watch-action-row">
         <button type="button" id="watch-shareholder-sync">同步节点名单</button>

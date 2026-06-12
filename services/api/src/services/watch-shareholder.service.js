@@ -6,7 +6,9 @@ const {
   ensureWatchShareholderSchema,
   formatDateTime,
   getAdminOverviewStats,
+  getCurrentWeekRangeFromDb,
   getLatestPeriod,
+  getPointsBattleStats,
   getPreviousWeekRangeFromDb,
   getUserSummary,
   linkRewardsForUser,
@@ -15,6 +17,9 @@ const {
   listUserRewards,
   sumPointsPlatformFee
 } = require("../repositories/watch-shareholder.repository");
+
+const ESTIMATE_CACHE_TTL_MS = 60 * 60 * 1000;
+let weeklyEstimateCache = null;
 
 const DEFAULT_WATCH_SHAREHOLDER_CONFIG = {
   enabled: false,
@@ -120,6 +125,60 @@ async function fetchWatchNodeSnapshot() {
   };
 }
 
+async function getWeeklyEstimate(config) {
+  const normalizedConfig = normalizeShareholderConfig({ watchShareholder: config });
+  const subsidyPointsPerUser = normalizedConfig.subsidyEnabled ? normalizedConfig.subsidyPointsPerUser : 0;
+  const range = await getCurrentWeekRangeFromDb();
+  const cacheKey = JSON.stringify({
+    seasonNo: range.seasonNo,
+    sourceMode: normalizedConfig.sourceMode,
+    shareRate: normalizedConfig.shareRate,
+    subsidyPointsPerUser,
+    minRewardPoints: normalizedConfig.minRewardPoints
+  });
+  if (weeklyEstimateCache && weeklyEstimateCache.key === cacheKey && Date.now() - weeklyEstimateCache.createdAt < ESTIMATE_CACHE_TTL_MS) {
+    return weeklyEstimateCache.value;
+  }
+
+  const startAt = formatDateTime(range.start);
+  const endAt = formatDateTime(range.now);
+  const [stats, snapshot] = await Promise.all([
+    getPointsBattleStats({ startAt, endAt, sourceMode: normalizedConfig.sourceMode }),
+    fetchWatchNodeSnapshot()
+  ]);
+  const poolPoints = Math.floor(stats.platformFeePoints * normalizedConfig.shareRate);
+  const allocation = allocateIntegerRewards({
+    poolPoints,
+    users: snapshot.users,
+    minRewardPoints: normalizedConfig.minRewardPoints,
+    subsidyPointsPerUser
+  });
+  const value = {
+    seasonNo: range.seasonNo,
+    startAt,
+    endAt,
+    estimatedAt: formatDateTime(range.now),
+    cacheSeconds: Math.floor(ESTIMATE_CACHE_TTL_MS / 1000),
+    roomCount: stats.roomCount,
+    platformFeePoints: stats.platformFeePoints,
+    shareRate: normalizedConfig.shareRate,
+    poolPoints,
+    subsidyPointsPerUser,
+    subsidyPointsTotal: allocation.subsidyPointsTotal,
+    estimatedAllocatedPoints: allocation.allocatedPoints,
+    estimatedDividendPoints: allocation.dividendAllocatedPoints,
+    roundingDelta: allocation.roundingDelta,
+    snapshotUserCount: snapshot.user_count,
+    snapshotNodeCount: snapshot.node_count
+  };
+  weeklyEstimateCache = {
+    key: cacheKey,
+    createdAt: Date.now(),
+    value
+  };
+  return value;
+}
+
 async function settlePreviousWeek({ force = false } = {}) {
   await ensureWatchShareholderSchema();
   const config = normalizeShareholderConfig(await readGameConfig());
@@ -191,16 +250,18 @@ async function getMyShareholderStatus(user) {
       paidPoints: 0,
       unclaimedCount: 0,
       rewards: [],
-      latestPeriod: toPeriodDto(await getLatestPeriod())
+      latestPeriod: toPeriodDto(await getLatestPeriod()),
+      weeklyEstimate: null
     };
   }
 
   await linkRewardsForUser(user);
 
-  const [summary, rewards, latestPeriod] = await Promise.all([
+  const [summary, rewards, latestPeriod, weeklyEstimate] = await Promise.all([
     getUserSummary(user.uid),
     listUserRewards(user.uid, 30),
-    getLatestPeriod()
+    getLatestPeriod(),
+    getWeeklyEstimate(config).catch(() => null)
   ]);
 
   return {
@@ -215,18 +276,20 @@ async function getMyShareholderStatus(user) {
     paidPoints: summary.paidPoints,
     unclaimedCount: summary.unclaimedCount,
     rewards: rewards.map(toRewardDto),
-    latestPeriod: toPeriodDto(latestPeriod)
+    latestPeriod: toPeriodDto(latestPeriod),
+    weeklyEstimate
   };
 }
 
 async function getAdminShareholderOverview() {
   await ensureWatchShareholderSchema();
-  const [config, latestPeriod, periods, rewards, stats] = await Promise.all([
-    readGameConfig().then(normalizeShareholderConfig),
+  const config = normalizeShareholderConfig(await readGameConfig());
+  const [latestPeriod, periods, rewards, stats, weeklyEstimate] = await Promise.all([
     getLatestPeriod(),
     listPeriods(30),
     listRewards({ limit: 300 }),
-    getAdminOverviewStats()
+    getAdminOverviewStats(),
+    getWeeklyEstimate(config).catch(() => null)
   ]);
 
   return {
@@ -234,6 +297,7 @@ async function getAdminShareholderOverview() {
     latestPeriod: toPeriodDto(latestPeriod),
     periods: periods.map(toPeriodDto),
     rewards: rewards.map(toRewardDto),
+    weeklyEstimate,
     stats
   };
 }
@@ -243,6 +307,7 @@ module.exports = {
   fetchWatchNodeSnapshot,
   getAdminShareholderOverview,
   getMyShareholderStatus,
+  getWeeklyEstimate,
   normalizeShareholderConfig,
   settlePreviousWeek,
   toPeriodDto,
