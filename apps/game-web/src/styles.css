@@ -4420,6 +4420,14 @@ button:disabled {
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   text-align: center;
+  pointer-events: auto;
+  touch-action: manipulation;
+}
+.finish-card,
+.finish-actions {
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
 }
 .ready-confirm-mask {
   z-index: 45;
@@ -4927,9 +4935,15 @@ button:disabled {
   gap: 10px;
   width: min(320px, 84vw);
   padding: 0 28px;
+  touch-action: manipulation;
 }
 .finish-actions button {
   width: 100%;
+  position: relative;
+  z-index: 3;
+  pointer-events: auto;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 .home-arena {
   gap: 12px;

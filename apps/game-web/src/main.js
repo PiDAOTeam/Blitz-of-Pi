@@ -2,6 +2,9 @@ const qa = ["localhost", "127.0.0.1"].includes(window.location.hostname), fn = q
 if (!R) throw new Error("\u672A\u627E\u5230\u5E94\u7528\u6302\u8F7D\u8282\u70B9");
 const BRAND_MARK_HTML = '<img class="brand-logo" src="/assets/brand/blitz-logo-128.jpg" alt="" loading="eager" decoding="async" />';
 const Da = "blitz_language", Wa = "blitz_visual_effect_mode", INVITE_CODE_STORAGE_KEY = "blitz_pending_invite_code", Jt = ["zh-CN", "en", "vi", "ko", "ja"], ot = ["balanced", "high"];
+const BATTLE_SFX_OUTPUT_GAIN = 3, BATTLE_BGM_OUTPUT_GAIN = 3;
+const BATTLE_PRAISE_CUES = ["Good", "Great", "Amazing", "Excellent", "Unbelievable", "Crazy", "Wonderful"];
+const BATTLE_PRAISE_AUDIO_SRC = Object.fromEntries(BATTLE_PRAISE_CUES.map((e) => [e, `/assets/audio/praise/${e.toLowerCase()}.wav`]));
 const INVITE_LIST_PAGE_SIZE = 6;
 let inviteRelationPage = 1, inviteIncomePage = 1;
 function gn() {
@@ -261,10 +264,12 @@ Object.assign($t.en, {
   ledgerUnlock: "Unlocked",
   ledgerDefault: "Ledger"
 });
-let M = null, A = null, be = null, ze = null, he = 0, Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, finishFeedbackKey = "";
+let M = null, A = null, be = null, ze = null, he = 0, Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, finishFeedbackKey = "", finishActionLockUntil = 0;
 const vn = 1100, va = 2600, Sn = 80, me = /* @__PURE__ */ new Set();
 let Se = null, battleAudioContext = null, battleAudioUnlocked = false, battleBgmGain = null, battleBgmTimer = null, battleBgmPlaying = false, battleBgmStep = 0, battlePraiseLastAt = 0, battleSpeechLastAt = 0;
 const battleSfxLastPlayed = /* @__PURE__ */ new Map();
+const battlePraiseBuffers = /* @__PURE__ */ new Map(), battlePraiseLoading = /* @__PURE__ */ new Map();
+let battlePraiseFilesPreloaded = false;
 function Ua() {
   return Se = { board: document.querySelector("#game-board"), overlay: document.querySelector("#battle-overlay"), feedbackLayer: document.querySelector("#battle-feedback-layer"), shell: document.querySelector(".battle-shell"), roomLabel: document.querySelector("#battle-room-label"), title: document.querySelector("#battle-title"), modeLabel: document.querySelector("#battle-mode-label"), timerWrap: document.querySelector("#battle-timer-wrap"), timer: document.querySelector("#battle-timer"), timerBar: document.querySelector("#battle-timer-bar"), selfCard: document.querySelector("#battle-self-card"), opponentCard: document.querySelector("#battle-opponent-card"), selfName: document.querySelector("#battle-self-name"), opponentName: document.querySelector("#battle-opponent-name"), selfScore: document.querySelector("#battle-self-score"), opponentScore: document.querySelector("#battle-opponent-score"), selfPressureMeter: document.querySelector("#battle-self-pressure-meter"), opponentPressureMeter: document.querySelector("#battle-opponent-pressure-meter"), selfPressure: document.querySelector("#battle-self-pressure"), opponentPressure: document.querySelector("#battle-opponent-pressure"), networkPill: document.querySelector("#network-pill") }, Se;
 }
@@ -711,7 +716,7 @@ function battleBurstText(e) {
 function battlePraiseCue(e) {
   if (!e) return "";
   const t = battleChainCount(e), r = battleClearCount(e), o = Number(e?.specialTriggered || 0), s = Number(e?.specialCreated || 0);
-  return o && t >= 4 || t >= 6 || r >= 12 ? "Unbelievable" : o || t >= 5 || r >= 10 ? "Crazy" : t >= 4 || r >= 8 ? "Excellent" : s && r >= 5 || t >= 3 || r >= 6 ? "Amazing" : s || t >= 2 || r >= 5 ? "Wonderful" : r >= 4 ? "Great" : r >= 3 ? "Good" : "";
+  return o && t >= 4 || t >= 6 || r >= 12 ? "Wonderful" : o || t >= 5 || r >= 10 ? "Crazy" : t >= 4 || r >= 8 ? "Unbelievable" : s && r >= 5 || t >= 3 || r >= 6 ? "Excellent" : s || t >= 2 || r >= 5 ? "Amazing" : r >= 4 ? "Great" : r >= 3 ? "Good" : "";
 }
 function waPreviewText(e) {
   return battleBurstText(e);
@@ -778,13 +783,15 @@ function battleSoundEnabled() {
   return a.gameConfig?.visualEffects?.soundEnabled !== false && !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 }
 function battleSfxVolume() {
-  return ve().soundVolume;
+  const e = Number(ve().soundVolume);
+  return Math.min(3, Math.max(0, Number.isFinite(e) ? e : 0) * BATTLE_SFX_OUTPUT_GAIN);
 }
 function battleBgmEnabled() {
   return battleSoundEnabled() && ve().bgmEnabled !== false && battleBgmVolume() > 0 && a.screen === "battle" && a.realtimeRoom?.status === "playing";
 }
 function battleBgmVolume() {
-  return ve().bgmVolume;
+  const e = Number(ve().bgmVolume);
+  return Math.min(1.5, Math.max(0, Number.isFinite(e) ? e : 0) * BATTLE_BGM_OUTPUT_GAIN);
 }
 function ensureBattleAudioContext() {
   if (!battleSoundEnabled()) return null;
@@ -802,7 +809,7 @@ function ensureBattleAudioContext() {
 function unlockBattleAudio() {
   if (battleAudioUnlocked) return;
   const e = ensureBattleAudioContext();
-  e && (battleAudioUnlocked = true, updateBattleBgm());
+  e && (battleAudioUnlocked = true, preloadBattlePraiseAudio(), updateBattleBgm());
 }
 function setupBattleAudioUnlock() {
   ["pointerdown", "touchstart", "click"].forEach((e) => document.addEventListener(e, unlockBattleAudio, { passive: true, capture: true }));
@@ -895,7 +902,7 @@ function playBattleSfx(e, t = 0) {
   if (!l || l.state === "closed") return;
   battleAudioUnlocked = true, updateBattleBgm();
   try {
-    const c = Math.max(0, Math.min(6, Number(t || 0))), d = l.currentTime + 0.002, u = l.createGain(), h = Math.min(0.16, (0.045 + c * 0.01) * battleSfxVolume());
+    const c = Math.max(0, Math.min(6, Number(t || 0))), d = l.currentTime + 0.002, u = l.createGain(), h = Math.min(0.48, (0.045 + c * 0.01) * battleSfxVolume());
     u.gain.setValueAtTime(0.0001, d), u.gain.exponentialRampToValueAtTime(h, d + 0.012), u.gain.exponentialRampToValueAtTime(0.0001, d + 0.24 + c * 0.018), u.connect(l.destination);
     const p = (m, g, P = 0, C = "triangle", T = 0) => {
       const U = l.createOscillator(), Te = l.createGain(), qe = Math.max(0.025, Number(g || 0.06));
@@ -929,21 +936,83 @@ function playBattleSfx(e, t = 0) {
   } catch {
   }
 }
+function loadBattlePraiseAudio(e) {
+  const t = BATTLE_PRAISE_AUDIO_SRC[e];
+  if (!t || battlePraiseBuffers.has(e)) return Promise.resolve(battlePraiseBuffers.get(e) || null);
+  if (battlePraiseLoading.has(e)) return battlePraiseLoading.get(e);
+  const r = ensureBattleAudioContext();
+  if (!r) return Promise.resolve(null);
+  const o = fetch(t, { cache: "force-cache" }).then((s) => s.ok ? s.arrayBuffer() : Promise.reject(new Error("praise audio missing"))).then((s) => decodeBattleAudioData(r, s)).then((s) => s ? (battlePraiseBuffers.set(e, s), s) : null).catch(() => null).finally(() => battlePraiseLoading.delete(e));
+  battlePraiseLoading.set(e, o);
+  return o;
+}
+function decodeBattleAudioData(e, t) {
+  return new Promise((r) => {
+    try {
+      const o = (s) => r(s || null), l = () => r(null), c = e.decodeAudioData(t.slice(0), o, l);
+      c?.then?.(o).catch?.(l);
+    } catch {
+      r(null);
+    }
+  });
+}
+function preloadBattlePraiseAudio() {
+  if (!battleSoundEnabled()) return;
+  preloadBattlePraiseFiles();
+  BATTLE_PRAISE_CUES.forEach((e) => {
+    loadBattlePraiseAudio(e);
+  });
+}
+function preloadBattlePraiseFiles() {
+  if (battlePraiseFilesPreloaded || typeof document == "undefined") return;
+  battlePraiseFilesPreloaded = true;
+  BATTLE_PRAISE_CUES.forEach((e) => {
+    const t = document.createElement("link");
+    t.rel = "preload", t.as = "fetch", t.href = BATTLE_PRAISE_AUDIO_SRC[e], t.crossOrigin = "anonymous", document.head?.appendChild(t);
+  });
+}
+async function playBattlePraiseAudio(e) {
+  if (!battleSoundEnabled()) return false;
+  const t = ensureBattleAudioContext();
+  if (!t || t.state === "closed") return false;
+  battleAudioUnlocked = true;
+  try {
+    t.state === "suspended" && await t.resume?.();
+    const r = battlePraiseBuffers.get(e) || await loadBattlePraiseAudio(e);
+    if (!r) return false;
+    const o = t.createBufferSource(), s = t.createGain();
+    o.buffer = r, o.playbackRate.value = 1.04, s.gain.value = Math.min(1.45, Math.max(0.75, battleSfxVolume() * 0.7)), o.connect(s), s.connect(t.destination), o.start(0), window.setTimeout(() => {
+      try {
+        o.disconnect(), s.disconnect();
+      } catch {
+      }
+    }, Math.ceil((r.duration + 0.18) * 1e3));
+    return true;
+  } catch {
+    return false;
+  }
+}
+function playBattlePraiseSpeech(e, t = 0) {
+  if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
+  try {
+    const r = new SpeechSynthesisUtterance(e);
+    r.lang = "en-US", r.rate = 1.06, r.pitch = 1.05 + Math.min(0.28, t * 0.035), r.volume = Math.min(1, Math.max(0.35, battleSfxVolume() * 0.8));
+    const o = window.speechSynthesis.getVoices?.() || [], s = o.find((l) => /^en[-_]/i.test(l.lang || "")) || o.find((l) => /english/i.test(l.name || "")) || null;
+    s && (r.voice = s), window.speechSynthesis.cancel?.(), window.speechSynthesis.speak(r);
+  } catch {
+  }
+}
 function playBattlePraiseCue(e) {
   const t = battlePraiseCue(e);
   if (!t || !battleSoundEnabled()) return;
-  const r = Date.now(), o = ["Good", "Great", "Wonderful", "Amazing", "Excellent", "Crazy", "Unbelievable"].indexOf(t), s = Math.max(0, o);
+  const r = Date.now(), o = BATTLE_PRAISE_CUES.indexOf(t), s = Math.max(0, o);
   if (r - battlePraiseLastAt > 260) {
     battlePraiseLastAt = r, playBattleSfx(`praise:${s}`, Math.min(6, s + 1));
   }
-  if (r - battleSpeechLastAt < 950 || !window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
-  try {
-    const l = new SpeechSynthesisUtterance(t);
-    l.lang = "en-US", l.rate = 1.06, l.pitch = 1.05 + Math.min(0.28, s * 0.035), l.volume = Math.min(1, Math.max(0.25, battleSfxVolume() * 0.72));
-    const c = window.speechSynthesis.getVoices?.() || [], d = c.find((u) => /^en[-_]/i.test(u.lang || "")) || c.find((u) => /english/i.test(u.name || "")) || null;
-    d && (l.voice = d), window.speechSynthesis.cancel?.(), window.speechSynthesis.speak(l), battleSpeechLastAt = r;
-  } catch {
-  }
+  if (r - battleSpeechLastAt < 950) return;
+  battleSpeechLastAt = r, playBattlePraiseAudio(t).then((l) => {
+    l || playBattlePraiseSpeech(t, s);
+  }).catch(() => playBattlePraiseSpeech(t, s));
 }
 function playBattleEventFeedback(e, t = false) {
   if (!e) return;
@@ -3697,13 +3766,38 @@ function Ai(e, t, r, o) {
         ${p}
       </div>
       <div class="finish-actions">
-        ${fa ? `<button type="button" class="gold-action" id="battle-paid-next">${i(n("tryPaidMode"))}</button>` : ""}
-        <button type="button" id="battle-restart">${i(n("playAgain"))}</button>
-        <button type="button" class="secondary" id="battle-back-home">${i(n("backLobby"))}</button>
+        ${fa ? `<button type="button" class="gold-action" id="battle-paid-next" data-battle-finish-action="paid-next">${i(n("tryPaidMode"))}</button>` : ""}
+        <button type="button" id="battle-restart" data-battle-finish-action="restart">${i(n("playAgain"))}</button>
+        <button type="button" class="secondary" id="battle-back-home" data-battle-finish-action="home">${i(n("backLobby"))}</button>
       </div>
     </section>`;
   }
   return "";
+}
+function resetBattleViewState() {
+  Q(), O(), ce(), a.screen = "home", a.roomNo = "", a.roomJoinToken = "", a.room = null, a.realtimeRoom = null, a.result = null, a.selectedTile = null, a.battleConnectingAt = 0, a.battleEnteredAt = 0, a.feedback = null, a.feedbackEventId = "", a.battleMessage = "";
+}
+async function handleBattleFinishAction(e, t) {
+  const r = e?.target?.closest?.("[data-battle-finish-action], #battle-back-home, #battle-restart, #battle-paid-next");
+  if (!r || !document.querySelector(".finish-mask")?.contains(r)) return false;
+  e.preventDefault?.(), e.stopPropagation?.(), e.stopImmediatePropagation?.();
+  const o = Date.now();
+  if (o < finishActionLockUntil) return true;
+  finishActionLockUntil = o + 700;
+  const s = r.dataset.battleFinishAction || (r.id === "battle-back-home" ? "home" : r.id === "battle-restart" ? "restart" : r.id === "battle-paid-next" ? "paid-next" : "");
+  if (s === "home") {
+    resetBattleViewState(), await D(), _();
+    return true;
+  }
+  if (s === "restart") {
+    await zi();
+    return true;
+  }
+  if (s === "paid-next") {
+    resetBattleViewState(), await D(), _(), ma("points_battle");
+    return true;
+  }
+  return false;
 }
 function Fi(e, t, r) {
   const o = F(), s = Va(e.mode) && !r.isBot;
@@ -3831,7 +3925,15 @@ function Ui() {
     if (!h) return;
     const p = Ye(h.clientX, h.clientY);
     p && (c.preventDefault(), Fa(p, h.clientX, h.clientY, "touch", h.identifier));
-  }, t), o(document, "pointermove", s, t), o(document, "pointerup", l, t), o(document, "pointercancel", () => Ue(), t), o(document, "touchmove", d, t), o(document, "touchend", u, t), o(document, "touchcancel", () => Ue(), t), o(document.querySelector("#battle-overlay"), "click", async (c) => {
+  }, t), o(document, "pointermove", s, t), o(document, "pointerup", async (c) => {
+    if (await handleBattleFinishAction(c)) return;
+    l(c);
+  }, t), o(document, "pointercancel", () => Ue(), t), o(document, "touchmove", d, t), o(document, "touchend", async (c) => {
+    if (await handleBattleFinishAction(c)) return;
+    u(c);
+  }, t), o(document, "touchcancel", () => Ue(), t), o(document, "click", async (c) => {
+    if (await handleBattleFinishAction(c)) return;
+  }, t), o(document.querySelector("#battle-overlay"), "click", async (c) => {
     const h = c.target;
     if (h?.closest("#battle-ready-confirm")) {
       if (!M || M.readyState !== WebSocket.OPEN) {
@@ -3842,14 +3944,14 @@ function Ui() {
       return;
     }
     if (h?.closest("#battle-back-home")) {
-      Q(), O(), ce(), a.screen = "home", a.roomNo = "", a.roomJoinToken = "", a.room = null, a.realtimeRoom = null, a.result = null, a.selectedTile = null, a.battleConnectingAt = 0, a.battleEnteredAt = 0, a.feedback = null, a.feedbackEventId = "", a.battleMessage = "", await D(), _();
+      resetBattleViewState(), await D(), _();
       return;
     }
     if (h?.closest("#battle-restart")) {
       await zi();
       return;
     }
-    h?.closest("#battle-paid-next") && (Q(), O(), ce(), a.screen = "home", a.roomNo = "", a.roomJoinToken = "", a.room = null, a.realtimeRoom = null, a.result = null, a.selectedTile = null, a.battleConnectingAt = 0, a.battleEnteredAt = 0, a.feedback = null, a.feedbackEventId = "", a.battleMessage = "", await D(), _(), ma("points_battle"));
+    h?.closest("#battle-paid-next") && (resetBattleViewState(), await D(), _(), ma("points_battle"));
   });
 }
 function Hi() {
@@ -4243,5 +4345,6 @@ async function ao() {
   }
 }
 setupBattleAudioUnlock();
+preloadBattlePraiseFiles();
 ao();
 
