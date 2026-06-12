@@ -670,19 +670,39 @@ async function resetStaleProcessing(staleMinutes = 10) {
 
 async function getAdminOverviewStats() {
   await ensureWatchShareholderSchema();
-  const rows = await query(
+  const [rows, statusRows] = await Promise.all([
+    query(
     `SELECT
        COUNT(*) AS reward_rows,
        COALESCE(SUM(CASE WHEN status IN ('pending', 'queued', 'failed', 'manual_review') THEN reward_points ELSE 0 END), 0) AS pending_points,
        COALESCE(SUM(CASE WHEN status = 'paid' THEN reward_points ELSE 0 END), 0) AS paid_points,
        SUM(CASE WHEN status IN ('failed', 'manual_review', 'processing') THEN 1 ELSE 0 END) AS failed_count
      FROM watch_shareholder_rewards`
+    ),
+    query(
+      `SELECT status, COUNT(*) AS total
+       FROM watch_shareholder_rewards
+       GROUP BY status`
+    )
+  ]);
+  const statusCounts = statusRows.reduce(
+    (acc, row) => {
+      const status = String(row.status || "");
+      const total = Number(row.total || 0);
+      acc.all += total;
+      if (["pending", "queued"].includes(status)) acc.pending += total;
+      else if (["failed", "manual_review"].includes(status)) acc.failed += total;
+      else acc[status] = total;
+      return acc;
+    },
+    { all: 0, pending: 0, paid: 0, zero: 0, failed: 0 }
   );
   return {
     rewardRows: Number(rows[0]?.reward_rows || 0),
     pendingPoints: Number(rows[0]?.pending_points || 0),
     paidPoints: Number(rows[0]?.paid_points || 0),
-    failedCount: Number(rows[0]?.failed_count || 0)
+    failedCount: Number(rows[0]?.failed_count || 0),
+    rewardStatusCounts: statusCounts
   };
 }
 

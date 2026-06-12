@@ -2466,6 +2466,46 @@ button:disabled {
   gap: 7px;
   margin: 10px 0;
 }
+.watch-shareholder-topline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 8px 0 10px;
+}
+.watch-shareholder-rate-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 13px;
+  border: 1px solid rgba(255, 244, 151, .72);
+  border-radius: 999px;
+  background: linear-gradient(135deg, #fff6a8, #ffbf25 45%, #e18a00);
+  color: #4b2500;
+  font-size: 13px;
+  font-weight: 1000;
+  box-shadow: 0 8px 20px rgba(255, 174, 31, .28), inset 0 1px 0 rgba(255, 255, 255, .6);
+}
+.watch-shareholder-rules {
+  margin: 8px 0 10px;
+  padding: 9px 11px;
+  border: 1px solid rgba(255, 221, 98, .2);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, .06);
+}
+.watch-shareholder-rules summary {
+  color: #fff176;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 1000;
+}
+.watch-shareholder-rules p {
+  margin: 6px 0 0;
+  color: rgba(255, 241, 205, .78);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.35;
+}
 .watch-shareholder-summary article {
   min-height: 72px;
   padding: 9px 10px;

@@ -193,6 +193,9 @@ function filterList(e = [], t = [], a = "all") {
 function filterCount(e = [], t) {
   return e.filter((a) => t.match(a)).length;
 }
+function watchRewardCountKey(e = "all") {
+  return e === "all" ? "all" : e === "pending" ? "pending" : e === "paid" ? "paid" : e === "zero" ? "zero" : e === "failed" ? "failed" : e;
+}
 function getFilterCount(e = [], t, a = null) {
   if (a && Object.prototype.hasOwnProperty.call(a, t.key)) return Number(a[t.key] || 0);
   return filterCount(e, t);
@@ -1737,7 +1740,7 @@ function renderWatchRewardRow(e = {}) {
 }
 function renderWatchShareholderAdmin(e = {}, t = {}) {
   const a = e.watchShareholder || {};
-  const n = t?.config || a || {}, s = t?.stats || {}, r = t?.latestPeriod || null, weeklyEstimate = t?.weeklyEstimate || null, o = Array.isArray(t?.periods) ? t.periods : [], m = Array.isArray(t?.rewards) ? t.rewards : [], R = filterList(m, WATCH_REWARD_FILTERS, watchRewardFilter), y = N("watch-periods", o), x = N("watch-rewards", R), j = WATCH_REWARD_FILTERS.find((B) => B.key === watchRewardFilter) || WATCH_REWARD_FILTERS[0];
+  const n = t?.config || a || {}, s = t?.stats || {}, rewardStatusCounts = s.rewardStatusCounts || {}, r = t?.latestPeriod || null, weeklyEstimate = t?.weeklyEstimate || null, o = Array.isArray(t?.periods) ? t.periods : [], m = Array.isArray(t?.rewards) ? t.rewards : [], R = filterList(m, WATCH_REWARD_FILTERS, watchRewardFilter), y = N("watch-periods", o), x = N("watch-rewards", R), j = WATCH_REWARD_FILTERS.find((B) => B.key === watchRewardFilter) || WATCH_REWARD_FILTERS[0], activeRewardTotal = Number(rewardStatusCounts[watchRewardCountKey(j.key)] ?? R.length);
   return `
     <section class="panel watch-shareholder-hero">
       <div class="section-head">
@@ -1820,11 +1823,11 @@ function renderWatchShareholderAdmin(e = {}, t = {}) {
       <div class="section-head">
         <div>
           <h2>分红明细</h2>
-          <p class="meta">可按领取状态查看，失败项可手动重试。</p>
+          <p class="meta">可按领取状态查看。当前列表显示最近 ${m.length} 条，筛选后展示 ${R.length}/${activeRewardTotal} 条。</p>
         </div>
-        <span class="pill">${i(j.label)} ${R.length}</span>
+        <span class="pill">${i(j.label)} ${activeRewardTotal}</span>
       </div>
-      ${renderListFilters(m, WATCH_REWARD_FILTERS, watchRewardFilter, "watch-rewards")}
+      ${renderListFilters(m, WATCH_REWARD_FILTERS, watchRewardFilter, "watch-rewards", Object.fromEntries(WATCH_REWARD_FILTERS.map((B) => [B.key, Number(rewardStatusCounts[watchRewardCountKey(B.key)] ?? filterCount(m, B))])))}
       <div class="table-list">
         ${x.items.length ? x.items.map(renderWatchRewardRow).join("") : '<p class="meta">暂无分红明细</p>'}
       </div>
