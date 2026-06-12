@@ -2,9 +2,10 @@ const qa = ["localhost", "127.0.0.1"].includes(window.location.hostname), fn = q
 if (!R) throw new Error("\u672A\u627E\u5230\u5E94\u7528\u6302\u8F7D\u8282\u70B9");
 const BRAND_MARK_HTML = '<img class="brand-logo" src="/assets/brand/blitz-logo-128.jpg" alt="" loading="eager" decoding="async" />';
 const Da = "blitz_language", Wa = "blitz_visual_effect_mode", INVITE_CODE_STORAGE_KEY = "blitz_pending_invite_code", Jt = ["zh-CN", "en", "vi", "ko", "ja"], ot = ["balanced", "high"];
-const BATTLE_SFX_OUTPUT_GAIN = 3, BATTLE_BGM_OUTPUT_GAIN = 3;
+const BATTLE_SFX_OUTPUT_GAIN = 8, BATTLE_BGM_OUTPUT_GAIN = 6;
 const BATTLE_PRAISE_CUES = ["Good", "Great", "Amazing", "Excellent", "Unbelievable", "Crazy", "Wonderful"];
 const BATTLE_PRAISE_AUDIO_SRC = Object.fromEntries(BATTLE_PRAISE_CUES.map((e) => [e, `/assets/audio/praise/${e.toLowerCase()}.wav`]));
+const BATTLE_ATTACK_VOICE_SRC = "/assets/audio/voice/oh-my-god.wav";
 const INVITE_LIST_PAGE_SIZE = 6;
 let inviteRelationPage = 1, inviteIncomePage = 1;
 function gn() {
@@ -266,10 +267,9 @@ Object.assign($t.en, {
 });
 let M = null, A = null, be = null, ze = null, he = 0, Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, finishFeedbackKey = "", finishActionLockUntil = 0;
 const vn = 1100, va = 2600, Sn = 80, me = /* @__PURE__ */ new Set();
-let Se = null, battleAudioContext = null, battleAudioUnlocked = false, battleBgmGain = null, battleBgmTimer = null, battleBgmPlaying = false, battleBgmStep = 0, battlePraiseLastAt = 0, battleSpeechLastAt = 0;
+let Se = null, battleAudioContext = null, battleAudioUnlocked = false, battleBgmGain = null, battleBgmTimer = null, battleBgmPlaying = false, battleBgmStep = 0, battlePraiseLastAt = 0, battleSpeechLastAt = 0, battleAttackSpeechLastAt = 0;
 const battleSfxLastPlayed = /* @__PURE__ */ new Map();
-const battlePraiseBuffers = /* @__PURE__ */ new Map(), battlePraiseLoading = /* @__PURE__ */ new Map();
-let battlePraiseFilesPreloaded = false;
+const battlePraiseBuffers = /* @__PURE__ */ new Map(), battlePraiseLoading = /* @__PURE__ */ new Map(), battleVoiceBuffers = /* @__PURE__ */ new Map(), battleVoiceLoading = /* @__PURE__ */ new Map();
 function Ua() {
   return Se = { board: document.querySelector("#game-board"), overlay: document.querySelector("#battle-overlay"), feedbackLayer: document.querySelector("#battle-feedback-layer"), shell: document.querySelector(".battle-shell"), roomLabel: document.querySelector("#battle-room-label"), title: document.querySelector("#battle-title"), modeLabel: document.querySelector("#battle-mode-label"), timerWrap: document.querySelector("#battle-timer-wrap"), timer: document.querySelector("#battle-timer"), timerBar: document.querySelector("#battle-timer-bar"), selfCard: document.querySelector("#battle-self-card"), opponentCard: document.querySelector("#battle-opponent-card"), selfName: document.querySelector("#battle-self-name"), opponentName: document.querySelector("#battle-opponent-name"), selfScore: document.querySelector("#battle-self-score"), opponentScore: document.querySelector("#battle-opponent-score"), selfPressureMeter: document.querySelector("#battle-self-pressure-meter"), opponentPressureMeter: document.querySelector("#battle-opponent-pressure-meter"), selfPressure: document.querySelector("#battle-self-pressure"), opponentPressure: document.querySelector("#battle-opponent-pressure"), networkPill: document.querySelector("#network-pill") }, Se;
 }
@@ -784,14 +784,14 @@ function battleSoundEnabled() {
 }
 function battleSfxVolume() {
   const e = Number(ve().soundVolume);
-  return Math.min(3, Math.max(0, Number.isFinite(e) ? e : 0) * BATTLE_SFX_OUTPUT_GAIN);
+  return Math.min(8, Math.max(0, Number.isFinite(e) ? e : 0) * BATTLE_SFX_OUTPUT_GAIN);
 }
 function battleBgmEnabled() {
   return battleSoundEnabled() && ve().bgmEnabled !== false && battleBgmVolume() > 0 && a.screen === "battle" && a.realtimeRoom?.status === "playing";
 }
 function battleBgmVolume() {
   const e = Number(ve().bgmVolume);
-  return Math.min(1.5, Math.max(0, Number.isFinite(e) ? e : 0) * BATTLE_BGM_OUTPUT_GAIN);
+  return Math.min(3, Math.max(0, Number.isFinite(e) ? e : 0) * BATTLE_BGM_OUTPUT_GAIN);
 }
 function ensureBattleAudioContext() {
   if (!battleSoundEnabled()) return null;
@@ -902,7 +902,7 @@ function playBattleSfx(e, t = 0) {
   if (!l || l.state === "closed") return;
   battleAudioUnlocked = true, updateBattleBgm();
   try {
-    const c = Math.max(0, Math.min(6, Number(t || 0))), d = l.currentTime + 0.002, u = l.createGain(), h = Math.min(0.48, (0.045 + c * 0.01) * battleSfxVolume());
+    const c = Math.max(0, Math.min(6, Number(t || 0))), d = l.currentTime + 0.002, u = l.createGain(), h = Math.min(1.15, (0.045 + c * 0.01) * battleSfxVolume());
     u.gain.setValueAtTime(0.0001, d), u.gain.exponentialRampToValueAtTime(h, d + 0.012), u.gain.exponentialRampToValueAtTime(0.0001, d + 0.24 + c * 0.018), u.connect(l.destination);
     const p = (m, g, P = 0, C = "triangle", T = 0) => {
       const U = l.createOscillator(), Te = l.createGain(), qe = Math.max(0.025, Number(g || 0.06));
@@ -958,17 +958,8 @@ function decodeBattleAudioData(e, t) {
 }
 function preloadBattlePraiseAudio() {
   if (!battleSoundEnabled()) return;
-  preloadBattlePraiseFiles();
   BATTLE_PRAISE_CUES.forEach((e) => {
     loadBattlePraiseAudio(e);
-  });
-}
-function preloadBattlePraiseFiles() {
-  if (battlePraiseFilesPreloaded || typeof document == "undefined") return;
-  battlePraiseFilesPreloaded = true;
-  BATTLE_PRAISE_CUES.forEach((e) => {
-    const t = document.createElement("link");
-    t.rel = "preload", t.as = "fetch", t.href = BATTLE_PRAISE_AUDIO_SRC[e], t.crossOrigin = "anonymous", document.head?.appendChild(t);
   });
 }
 async function playBattlePraiseAudio(e) {
@@ -981,7 +972,7 @@ async function playBattlePraiseAudio(e) {
     const r = battlePraiseBuffers.get(e) || await loadBattlePraiseAudio(e);
     if (!r) return false;
     const o = t.createBufferSource(), s = t.createGain();
-    o.buffer = r, o.playbackRate.value = 1.04, s.gain.value = Math.min(1.45, Math.max(0.75, battleSfxVolume() * 0.7)), o.connect(s), s.connect(t.destination), o.start(0), window.setTimeout(() => {
+    o.buffer = r, o.playbackRate.value = 1.08, s.gain.value = Math.min(3.2, Math.max(1, battleSfxVolume() * 0.95)), o.connect(s), s.connect(t.destination), o.start(0), window.setTimeout(() => {
       try {
         o.disconnect(), s.disconnect();
       } catch {
@@ -992,15 +983,69 @@ async function playBattlePraiseAudio(e) {
     return false;
   }
 }
-function playBattlePraiseSpeech(e, t = 0) {
+function loadBattleVoiceAudio(e, t) {
+  if (!t || battleVoiceBuffers.has(e)) return Promise.resolve(battleVoiceBuffers.get(e) || null);
+  if (battleVoiceLoading.has(e)) return battleVoiceLoading.get(e);
+  const r = ensureBattleAudioContext();
+  if (!r) return Promise.resolve(null);
+  const o = fetch(t, { cache: "force-cache" }).then((s) => s.ok ? s.arrayBuffer() : Promise.reject(new Error("voice audio missing"))).then((s) => decodeBattleAudioData(r, s)).then((s) => s ? (battleVoiceBuffers.set(e, s), s) : null).catch(() => null).finally(() => battleVoiceLoading.delete(e));
+  battleVoiceLoading.set(e, o);
+  return o;
+}
+async function playBattleVoiceAudio(e, t) {
+  if (!battleSoundEnabled()) return false;
+  const r = ensureBattleAudioContext();
+  if (!r || r.state === "closed") return false;
+  battleAudioUnlocked = true;
+  try {
+    r.state === "suspended" && await r.resume?.();
+    const o = battleVoiceBuffers.get(e) || await loadBattleVoiceAudio(e, t);
+    if (!o) return false;
+    const s = r.createBufferSource(), l = r.createGain();
+    s.buffer = o, s.playbackRate.value = 1, l.gain.value = Math.min(3.4, Math.max(1, battleSfxVolume())), s.connect(l), l.connect(r.destination), s.start(0), window.setTimeout(() => {
+      try {
+        s.disconnect(), l.disconnect();
+      } catch {
+      }
+    }, Math.ceil((o.duration + 0.18) * 1e3));
+    return true;
+  } catch {
+    return false;
+  }
+}
+function selectBattleSpeechVoice() {
+  const e = window.speechSynthesis?.getVoices?.() || [];
+  if (!e.length) return null;
+  const t = (r) => /^en[-_]/i.test(r.lang || "") || /english/i.test(r.name || "");
+  const r = (o) => /child|kid|girl|female|woman|samantha|victoria|zira|aria|jenny|susan|karen|moira|ava|serena|salli/i.test(o.name || "");
+  return e.find((o) => t(o) && r(o)) || e.find((o) => t(o)) || e.find((o) => r(o)) || null;
+}
+function playBattleSpeech(e, t = 0, r = {}) {
   if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
   try {
-    const r = new SpeechSynthesisUtterance(e);
-    r.lang = "en-US", r.rate = 1.06, r.pitch = 1.05 + Math.min(0.28, t * 0.035), r.volume = Math.min(1, Math.max(0.35, battleSfxVolume() * 0.8));
-    const o = window.speechSynthesis.getVoices?.() || [], s = o.find((l) => /^en[-_]/i.test(l.lang || "")) || o.find((l) => /english/i.test(l.name || "")) || null;
-    s && (r.voice = s), window.speechSynthesis.cancel?.(), window.speechSynthesis.speak(r);
+    const o = new SpeechSynthesisUtterance(e);
+    o.lang = "en-US";
+    o.rate = Math.max(0.8, Math.min(1.45, Number(r.rate ?? 1.22)));
+    o.pitch = Math.max(0.8, Math.min(2, Number(r.pitch ?? 1.48) + Math.min(0.22, t * 0.035)));
+    o.volume = Math.min(1, Math.max(0.72, battleSfxVolume()));
+    const s = selectBattleSpeechVoice();
+    s && (o.voice = s);
+    window.speechSynthesis.cancel?.();
+    window.speechSynthesis.speak(o);
   } catch {
   }
+}
+function playBattlePraiseSpeech(e, t = 0) {
+  playBattleSpeech(e, t, { rate: 1.24, pitch: 1.5 });
+}
+function playBattleAttackSpeech() {
+  if (!battleSoundEnabled()) return;
+  const e = Date.now();
+  if (e - battleAttackSpeechLastAt < 1600) return;
+  battleAttackSpeechLastAt = e;
+  playBattleVoiceAudio("attack-oh-my-god", BATTLE_ATTACK_VOICE_SRC).then((t) => {
+    t || playBattleSpeech("Oh my God!", 4, { rate: 1.18, pitch: 1.55 });
+  }).catch(() => playBattleSpeech("Oh my God!", 4, { rate: 1.18, pitch: 1.55 }));
 }
 function playBattlePraiseCue(e) {
   const t = battlePraiseCue(e);
@@ -3471,7 +3516,7 @@ function hi(e, t) {
     const p = clientShouldSkipServerBurst(r);
     p || (nn(r), Number(r.attack || 0) > 0 && Ni({ id: `${o}:attack-line`, type: "attack-line", from: "self", attack: Number(r.attack || 0) }), playBattleEventFeedback(r, false)), Si(r);
   } else
-    r.attack > 0 && (showAttackWarning(r), Ni({ id: `${o}:self-hit`, type: "self-hit", from: "opponent", attack: Number(r.attack || 0) }), playBattleSfx("hit", battleFeedbackPower(r)), de(vi(r)));
+    r.attack > 0 && (showAttackWarning(r), Ni({ id: `${o}:self-hit`, type: "self-hit", from: "opponent", attack: Number(r.attack || 0) }), playBattleSfx("hit", battleFeedbackPower(r)), playBattleAttackSpeech(), de(vi(r)));
 }
 function clientShouldSkipServerBurst(e) {
   const t = Number(e.seq || 0);
@@ -4345,6 +4390,5 @@ async function ao() {
   }
 }
 setupBattleAudioUnlock();
-preloadBattlePraiseFiles();
 ao();
 
