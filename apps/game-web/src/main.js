@@ -95,13 +95,13 @@ function Oa(e) {
 function kn(e) {
   a.visualEffectMode = ot.includes(e) ? e : "balanced", localStorage.setItem(Wa, a.visualEffectMode), Qe();
 }
-let M = null, A = null, be = null, ze = null, he = 0, Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, finishFeedbackKey = "", finishActionLockUntil = 0;
+let M = null, A = null, be = null, ze = null, he = 0, Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", burstLayerKey = "", impactLayerKey = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, finishFeedbackKey = "", finishActionLockUntil = 0;
 const vn = 1100, va = 2600, Sn = 80, me = /* @__PURE__ */ new Set();
 let Se = null, battleAudioContext = null, battleAudioUnlocked = false, battleBgmGain = null, battleBgmTimer = null, battleBgmPlaying = false, battleBgmStep = 0, battlePraiseLastAt = 0, battleSpeechLastAt = 0, battleAttackSpeechLastAt = 0, battleShakeLastAt = 0;
 const battleSfxLastPlayed = /* @__PURE__ */ new Map();
 const battlePraiseBuffers = /* @__PURE__ */ new Map(), battlePraiseLoading = /* @__PURE__ */ new Map(), battleVoiceBuffers = /* @__PURE__ */ new Map(), battleVoiceLoading = /* @__PURE__ */ new Map();
 function Ua() {
-  return Se = { board: document.querySelector("#game-board"), overlay: document.querySelector("#battle-overlay"), feedbackLayer: document.querySelector("#battle-feedback-layer"), shell: document.querySelector(".battle-shell"), roomLabel: document.querySelector("#battle-room-label"), title: document.querySelector("#battle-title"), modeLabel: document.querySelector("#battle-mode-label"), timerWrap: document.querySelector("#battle-timer-wrap"), timer: document.querySelector("#battle-timer"), timerBar: document.querySelector("#battle-timer-bar"), selfCard: document.querySelector("#battle-self-card"), opponentCard: document.querySelector("#battle-opponent-card"), selfName: document.querySelector("#battle-self-name"), opponentName: document.querySelector("#battle-opponent-name"), selfScore: document.querySelector("#battle-self-score"), opponentScore: document.querySelector("#battle-opponent-score"), selfPressureMeter: document.querySelector("#battle-self-pressure-meter"), opponentPressureMeter: document.querySelector("#battle-opponent-pressure-meter"), selfPressure: document.querySelector("#battle-self-pressure"), opponentPressure: document.querySelector("#battle-opponent-pressure"), networkPill: document.querySelector("#network-pill") }, Se;
+  return Se = { board: document.querySelector("#game-board"), overlay: document.querySelector("#battle-overlay"), feedbackLayer: document.querySelector("#battle-feedback-layer"), burstLayer: document.querySelector("#battle-burst-layer"), impactLayer: document.querySelector("#battle-impact-layer"), shell: document.querySelector(".battle-shell"), roomLabel: document.querySelector("#battle-room-label"), title: document.querySelector("#battle-title"), modeLabel: document.querySelector("#battle-mode-label"), timerWrap: document.querySelector("#battle-timer-wrap"), timer: document.querySelector("#battle-timer"), timerBar: document.querySelector("#battle-timer-bar"), selfCard: document.querySelector("#battle-self-card"), opponentCard: document.querySelector("#battle-opponent-card"), selfName: document.querySelector("#battle-self-name"), opponentName: document.querySelector("#battle-opponent-name"), selfScore: document.querySelector("#battle-self-score"), opponentScore: document.querySelector("#battle-opponent-score"), selfPressureMeter: document.querySelector("#battle-self-pressure-meter"), opponentPressureMeter: document.querySelector("#battle-opponent-pressure-meter"), selfPressure: document.querySelector("#battle-self-pressure"), opponentPressure: document.querySelector("#battle-opponent-pressure"), networkPill: document.querySelector("#network-pill") }, Se;
 }
 function st() {
   return Se?.board ? Se : Ua();
@@ -142,7 +142,7 @@ function cleanupBoardInputs() {
   Ne = null;
 }
 function ce() {
-  stopBattleBgm(), be && (window.cancelAnimationFrame(be), be = null), ee && (window.clearTimeout(ee), ee = null), le && (window.cancelAnimationFrame(le), le = null), j && (window.cancelAnimationFrame(j), j = null), V && (window.cancelAnimationFrame(V), V = null), z = null, W = null, At = 0, q = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPerfLockedLow = false, clientPerfFrameCount = 0, clientPerfLongFrameCount = 0, clientPerfSampleStartedAt = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0, document.documentElement.classList.remove("low-performance"), we(), Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, finishFeedbackKey = "", Se = null, me.clear(), Nt = "", y = null, Et = 0, Lt = "", xt = 0, a.pendingSwapSeq = 0, a.pendingSwapPositions = [], cleanupBoardInputs(), x = null, k = null, Yt = 0, a.battleBursts = [], a.battleImpacts = [], a.localBattleEvents = [], a.localSwapFx = null, a.canvasSpecialFx = [], a.canvasSpecialBirths = [];
+  stopBattleBgm(), be && (window.cancelAnimationFrame(be), be = null), ee && (window.clearTimeout(ee), ee = null), le && (window.cancelAnimationFrame(le), le = null), j && (window.cancelAnimationFrame(j), j = null), V && (window.cancelAnimationFrame(V), V = null), z = null, W = null, At = 0, q = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPerfLockedLow = false, clientPerfFrameCount = 0, clientPerfLongFrameCount = 0, clientPerfSampleStartedAt = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0, document.documentElement.classList.remove("low-performance"), we(), Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", burstLayerKey = "", impactLayerKey = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, finishFeedbackKey = "", Se = null, me.clear(), Nt = "", y = null, Et = 0, Lt = "", xt = 0, a.pendingSwapSeq = 0, a.pendingSwapPositions = [], cleanupBoardInputs(), x = null, k = null, Yt = 0, a.battleBursts = [], a.battleImpacts = [], a.localBattleEvents = [], a.localSwapFx = null, a.canvasSpecialFx = [], a.canvasSpecialBirths = [];
 }
 function ge() {
   ze && (window.clearTimeout(ze), ze = null);
@@ -3123,6 +3123,16 @@ function mi() {
   const e = a.battleBursts.map(pi).join(""), t = a.battleImpacts.map(fi).join("");
   return `${e}${t}`;
 }
+function renderFeedbackLayers(e = st()) {
+  if (e.feedbackLayer && (!e.burstLayer || !e.impactLayer)) {
+    e.feedbackLayer.innerHTML = '<div id="battle-burst-layer"></div><div id="battle-impact-layer"></div>';
+    Se = null, e = st(), burstLayerKey = "", impactLayerKey = "";
+  }
+  const t = a.battleBursts.map((s) => s.id).join("|"), r = a.battleImpacts.map((s) => s.id).join("|");
+  if (e.burstLayer && t !== burstLayerKey) e.burstLayer.innerHTML = a.battleBursts.map(pi).join(""), burstLayerKey = t;
+  if (e.impactLayer && r !== impactLayerKey) e.impactLayer.innerHTML = a.battleImpacts.map(fi).join(""), impactLayerKey = r;
+  K = `${t}::${r}`;
+}
 function pi(e) {
   const t = Array.from({ length: e.particles }, (r, o) => {
     const s = Math.PI * 2 * o / Math.max(1, e.particles), l = 36 + o % 3 * 14 + Math.min(18, e.cleared * 2), c = Math.round(Math.cos(s) * l), d = Math.round(Math.sin(s) * l);
@@ -3185,14 +3195,14 @@ function showAttackWarning(e) {
   const r = attackWarningText(e).trim();
   if (!r) return;
   const o = a.effectiveVisualEffectMode === "low" || document.documentElement.classList.contains("low-performance"), s = Math.max(0.92, animationSeconds("hitWarningSeconds")), l = { id: t, text: r, tone: "attack", at: Date.now(), x: 50, y: 34, cleared: Number(e.cleared || 3), chain: Number(e.chain || 1), attack: Number(e.attack || 0), particles: o ? 0 : a.effectiveVisualEffectMode === "high" ? 4 : 2, durationSeconds: s };
-  a.battleBursts = [l], K = "", window.setTimeout(() => {
-    a.battleBursts = a.battleBursts.filter((h) => h.id !== t), K = "", $();
+  a.battleBursts = [l], burstLayerKey = "", K = "", window.setTimeout(() => {
+    a.battleBursts = a.battleBursts.filter((h) => h.id !== t), burstLayerKey = "", K = "", $();
   }, Math.max(120, Math.round(s * 1e3)));
 }
 function gi(e, t) {
   const r = ui(e, t);
   if (!r || !lt(`${r.id}:haptic`)) return;
-  a.localBattleEvents = a.localBattleEvents.filter((s) => s.uid !== t.uid), a.feedbackEventId = r.id, a.feedback = null, K = "";
+  a.localBattleEvents = a.localBattleEvents.filter((s) => s.uid !== t.uid), a.feedbackEventId = r.id, a.feedback = null;
   const o = e.events.find((s) => s.uid === t.uid);
   if (o && clientShouldSkipServerBurst(o)) return;
   de(o ? vi(o) : 12);
@@ -3321,8 +3331,8 @@ function nn(e) {
   }
   l && (Rt = c, Mt = d, Bt = Date.now(), (e.specialTriggered || e.specialCreated || e.attack > 0) && v("client_burst_show", { roomNo: a.roomNo, mode: a.realtimeRoom?.mode || a.selectedMode, message: l, seq: e.seq || 0, result: ne(e), specialTriggered: e.specialTriggered || 0, specialCreated: e.specialCreated || 0, attack: e.attack || 0 }, 0));
   const m = { id: t, text: l, tone: s, at: Date.now(), x: e.attack > 0 ? 63 : r ? 48 + Math.random() * 12 : 50, y: e.localPending ? 48 : e.attack > 0 ? 38 : r ? 46 + Math.random() * 10 : 50, cleared: Number(e.cleared || 3), chain: Number(e.chain || 1), attack: Number(e.attack || 0), bigChain: Number(e.chain || 1) >= 3 && !(Number(e.attack || 0) > 0) ? Number(e.chain || 1) : 0, particles: bi(e) };
-  a.battleBursts = l ? [m] : [...a.battleBursts, m].slice(-2), K = "", window.setTimeout(() => {
-    a.battleBursts = a.battleBursts.filter((g) => g.id !== t), K = "", $();
+  a.battleBursts = l ? [m] : [...a.battleBursts, m].slice(-2), burstLayerKey = "", K = "", window.setTimeout(() => {
+    a.battleBursts = a.battleBursts.filter((g) => g.id !== t), burstLayerKey = "", K = "", $();
   }, e.localPending ? r ? animationMsAtLeast("localBurstHighSeconds", 1080) : animationMsAtLeast("localBurstSeconds", 940) : o ? animationMs("lowPerformanceBurstSeconds") : r ? animationMs("serverBurstHighSeconds") : animationMs("serverBurstSeconds"));
 }
 function Bi(e, t) {
@@ -3334,10 +3344,10 @@ function Bi(e, t) {
 }
 function Ni(e) {
   if (a.battleImpacts.some((r) => r.id === e.id)) return;
-  a.battleImpacts = [...a.battleImpacts, e].slice(-4), K = "";
+  a.battleImpacts = [...a.battleImpacts, e].slice(-4), impactLayerKey = "", K = "";
   const t = oe();
   e.type === "self-hit" && t && (t.classList.remove("board-under-attack"), t.offsetWidth, t.classList.add("board-under-attack"), window.setTimeout(() => t.classList.remove("board-under-attack"), animationMs("boardUnderAttackSeconds", 40))), window.setTimeout(() => {
-    a.battleImpacts = a.battleImpacts.filter((r) => r.id !== e.id), K = "", $();
+    a.battleImpacts = a.battleImpacts.filter((r) => r.id !== e.id), impactLayerKey = "", K = "", $();
   }, a.effectiveVisualEffectMode === "high" ? animationMs("impactHighSeconds") : animationMs("impactSeconds"));
 }
 function rn(e) {
@@ -3709,7 +3719,10 @@ function Hi() {
         </div>
       </section>
 
-      <div id="battle-feedback-layer"></div>
+      <div id="battle-feedback-layer">
+        <div id="battle-burst-layer"></div>
+        <div id="battle-impact-layer"></div>
+      </div>
       <div id="battle-overlay"></div>
     </main>
   `, Ui(), Ua()), l || gi(t, e);
@@ -3740,7 +3753,7 @@ function Hi() {
   const gt = on(t), ha = `${c ? "waiting" : za() ? "vs" : !l && ht(t) > 0 ? "ready" : l ? "finished" : "none"}:${t.roomNo}:${t.winnerUid}:${o.score}:${s.score}:${o.pressure}:${s.pressure}:${t.finishReason || ""}:${gt}:${o.readyAt || 0}:${s.readyAt || 0}`;
   ha !== Ve && (m.overlay && (m.overlay.innerHTML = Ai(t, e, o, s)), Ve = ha), l && (hr(t, e), playFinishFeedback(t, e));
   const ga = [a.battleBursts.map((E) => E.id).join("|"), a.battleImpacts.map((E) => E.id).join("|")].join("::");
-  ga !== K && (m.feedbackLayer && (m.feedbackLayer.innerHTML = mi()), K = ga);
+  ga !== K && renderFeedbackLayers(m);
 }
 async function zi() {
   const e = a.realtimeRoom?.mode || a.room?.mode || a.selectedMode || "quick_battle", t = a.realtimeRoom?.roomNo || a.roomNo;
