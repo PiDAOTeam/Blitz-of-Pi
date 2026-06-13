@@ -34,6 +34,14 @@ async function d(e, t = {}) {
     clearTimeout(s);
   }
 }
+async function safeAdminLoad(e, t, a = {}) {
+  try {
+    return await d(e, a);
+  } catch (n) {
+    console.warn("[admin] optional load failed", e, g(n));
+    return typeof t == "function" ? t(n) : t;
+  }
+}
 function g(e) {
   if (e instanceof Error) return e.message;
   if (typeof e == "string") return e;
@@ -853,6 +861,26 @@ function showLoadError(e) {
     F();
     const t = document.querySelector(".content");
     t?.insertAdjacentHTML("afterbegin", `<section class="panel"><p class="status danger">\u540E\u53F0\u5237\u65B0\u5931\u8D25\uFF1A${i(g(e))}\u3002\u5DF2\u4FDD\u7559\u5F53\u524D\u9875\u9762\uFF0C\u53EF\u4EE5\u91CD\u8BD5\u64CD\u4F5C\u3002</p></section>`);
+    return;
+  }
+  if (fe()) {
+    le.innerHTML = `
+      <main class="login-page">
+        <section class="login-card">
+          <div class="login-brand-mark" aria-hidden="true">${BRAND_LOGO_HTML}</div>
+          <p class="tag">Blitz of Pi Admin</p>
+          <h1>后台连接超时</h1>
+          <p class="meta">登录状态已保留，可能是接口繁忙或网络波动。</p>
+          <button type="button" id="retry-admin-load">重新加载</button>
+          <button type="button" id="back-admin-login" class="ghost-button">重新登录</button>
+          <p class="status danger">${i(g(e))}</p>
+        </section>
+      </main>
+    `;
+    document.querySelector("#retry-admin-load")?.addEventListener("click", () => q());
+    document.querySelector("#back-admin-login")?.addEventListener("click", () => {
+      localStorage.removeItem("blitz_admin_token"), ae();
+    });
     return;
   }
   ae(`\u540E\u53F0\u52A0\u8F7D\u5931\u8D25\uFF1A${g(e)}`);
@@ -2745,7 +2773,32 @@ async function q() {
       return;
     }
     st();
-    const [e, t, a, n, s, r, o, m, R, y, x, j, A, B, w, L, T, C, M, U, J, k, z, watchOps] = await Promise.all([d("/admin-api/auth/me"), d("/admin-api/home-config"), d("/admin-api/pi-config"), d("/admin-api/game-config"), d("/admin-api/dashboard/overview"), d("/admin-api/matches/rooms"), d("/admin-api/payments/orders"), d("/admin-api/users"), d("/admin-api/wallets"), d("/admin-api/wallet-ledgers"), d("/admin-api/battle-rooms"), d("/admin-api/withdraw/orders"), d("/admin-api/reconciliation/report"), d("/admin-api/risk-audit/report"), d("/admin-api/audit-logs"), d("/admin-api/ranks/star-records"), d("/admin-api/ranks/daily-chests"), d("/admin-api/ranks/leaderboard"), d("/admin-api/ranks/weekly-settlements"), d("/admin-api/withdraw/ops").catch(() => null), d("/admin-api/growth/ops").catch(() => null), d("/admin-api/engagement/claims").catch(() => []), d("/admin-api/engagement/reward-jobs").catch(() => []), d("/admin-api/watch-shareholder/overview").catch(() => null)]);
+    const e = await d("/admin-api/auth/me", { timeoutMs: 10000 });
+    const [t, a, n, s, r, o, m, R, y, x, j, A, B, w, L, T, C, M, U, J, k, z, watchOps] = await Promise.all([
+      safeAdminLoad("/admin-api/home-config", null),
+      safeAdminLoad("/admin-api/pi-config", null),
+      safeAdminLoad("/admin-api/game-config", null),
+      safeAdminLoad("/admin-api/dashboard/overview", {}, { timeoutMs: 25000 }),
+      safeAdminLoad("/admin-api/matches/rooms", []),
+      safeAdminLoad("/admin-api/payments/orders", []),
+      safeAdminLoad("/admin-api/users", []),
+      safeAdminLoad("/admin-api/wallets", []),
+      safeAdminLoad("/admin-api/wallet-ledgers", []),
+      safeAdminLoad("/admin-api/battle-rooms", []),
+      safeAdminLoad("/admin-api/withdraw/orders", []),
+      safeAdminLoad("/admin-api/reconciliation/report", null, { timeoutMs: 25000 }),
+      safeAdminLoad("/admin-api/risk-audit/report", null, { timeoutMs: 25000 }),
+      safeAdminLoad("/admin-api/audit-logs", []),
+      safeAdminLoad("/admin-api/ranks/star-records", []),
+      safeAdminLoad("/admin-api/ranks/daily-chests", []),
+      safeAdminLoad("/admin-api/ranks/leaderboard", []),
+      safeAdminLoad("/admin-api/ranks/weekly-settlements", []),
+      safeAdminLoad("/admin-api/withdraw/ops", null),
+      safeAdminLoad("/admin-api/growth/ops", null),
+      safeAdminLoad("/admin-api/engagement/claims", []),
+      safeAdminLoad("/admin-api/engagement/reward-jobs", []),
+      safeAdminLoad("/admin-api/watch-shareholder/overview", null, { timeoutMs: 25000 })
+    ]);
     te = U, Ne(e, t, a, n, s, r, o, m, R, y, x, j, A, B, w, L, T, C, M, { ...(J || {}), engagementClaims: k || [], engagementRewardJobs: z || [] }, watchOps);
   } catch (e) {
     if (e?.status === 401 || e?.status === 403) {
