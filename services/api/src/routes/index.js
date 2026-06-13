@@ -124,7 +124,15 @@ const EXPECTED_BUSINESS_ERROR_MESSAGES = new Set([
   "POC余额不足",
   "Pi余额不足",
   "钱包余额不足",
-  "你已有未完成的快速开战，请先完成后再进入其他模式",
+  "冻结余额不足",
+  "匹配队列异常，请重新匹配",
+  "实时房间创建失败，请重新匹配",
+  "积分/POC 资产同步未开启，暂未开放",
+  "小富豪积分场暂未开放",
+  "大富豪 POC 场暂未开放",
+  "该资产场当前仅对指定用户开放",
+  "无权查看该房间",
+  "旧版对战操作接口已停用，请使用实时对战通道",
   "平台转账暂未开启",
   "请填写收款用户 Pi 用户名",
   "转账金额不正确",
@@ -136,16 +144,41 @@ const EXPECTED_BUSINESS_ERROR_MESSAGES = new Set([
   "你已经绑定过邀请人",
   "邀请人不存在或已被限制",
   "不能绑定自己",
-  "暂无可领取邀请奖励"
+  "暂无可领取邀请奖励",
+  "请先登录",
+  "请先登录后台",
+  "后台账号不存在或已禁用",
+  "后台账号或密码错误",
+  "当前密码错误",
+  "账号不可用，请联系平台",
+  "用户不存在",
+  "对局不存在",
+  "请填写链上 TXID 后再标记打款",
+  "TXID 格式不正确，请核对后再提交",
+  "提现金额不正确",
+  "提现金额扣除手续费后不足以打款",
+  "提现订单不存在",
+  "只有待审核订单可以通过",
+  "只有待审核订单可以拒绝",
+  "只有已审核订单可以标记打款",
+  "该 TXID 已被其他提现订单使用"
 ]);
 
 const EXPECTED_BUSINESS_ERROR_PATTERNS = [
   /^刚刚取消过匹配，请 \d+ 秒后再试$/,
   /^匹配开始 \d+ 秒后才能取消，请再等 \d+ 秒$/,
+  /^你已有未完成的.+，请先完成后再进入其他模式$/,
+  /^.+需达到.+段位后进入$/,
+  /^.+暂未开放$/,
+  /^.+只允许真人匹配，不能创建机器人房间$/,
   /^昵称至少需要 \d+ 个字符$/,
   /^单笔转账至少 [\d.]+ Pi$/,
   /^单笔转账最多 [\d.]+ Pi$/,
-  /^转账太频繁，请 \d+ 秒后再试$/
+  /^转账太频繁，请 \d+ 秒后再试$/,
+  /^单笔提现不能低于 [\d.]+ Pi$/,
+  /^今日提现额度不足，单日最多 [\d.]+ Pi$/,
+  /^今日还需完成 \d+ 场有效段位对局才能领取$/,
+  /^Pi 支付状态不可完成：.+$/
 ];
 
 function isExpectedBusinessError(message) {
@@ -153,6 +186,20 @@ function isExpectedBusinessError(message) {
     EXPECTED_BUSINESS_ERROR_MESSAGES.has(message) ||
     EXPECTED_BUSINESS_ERROR_PATTERNS.some((pattern) => pattern.test(message))
   );
+}
+
+function logRouteError(error, message, req) {
+  const isExpected = error.expectedBusinessError || isExpectedBusinessError(message);
+  if (isExpected) {
+    console.log("[api] business rejected:", {
+      method: req.method,
+      url: req.url,
+      message,
+      code: error.businessCode || 1000
+    });
+    return;
+  }
+  console.error("[api] route failed:", error);
 }
 
 async function handleRoutes(req, res) {
@@ -708,9 +755,7 @@ async function handleRoutes(req, res) {
     notFound(res);
   } catch (error) {
     const message = error.message || "服务处理失败";
-    if (!error.expectedBusinessError && !isExpectedBusinessError(message)) {
-      console.error("[api] route failed:", error);
-    }
+    logRouteError(error, message, req);
     fail(res, message, 400, error.businessCode || 1000);
   }
 }
