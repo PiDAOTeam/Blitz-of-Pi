@@ -1744,6 +1744,9 @@ function renderWatchShareholderAdmin(e = {}, t = {}) {
   const currentSnapshotUserCount = Number(weeklyEstimate?.snapshotUserCount ?? r?.snapshotUserCount ?? 0);
   const currentSnapshotNodeCount = Number(weeklyEstimate?.snapshotNodeCount ?? r?.snapshotNodeCount ?? 0);
   const currentSnapshotTime = weeklyEstimate?.estimatedAt || r?.snapshotAt || "";
+  const weeklyPoolPoints = Math.floor(Number(weeklyEstimate?.poolPoints || 0));
+  const weeklySubsidyPoints = Math.floor(Number(weeklyEstimate?.subsidyPointsTotal || 0));
+  const weeklyTotalPoints = weeklyPoolPoints + weeklySubsidyPoints;
   return `
     <section class="panel watch-shareholder-hero">
       <div class="section-head">
@@ -1754,14 +1757,23 @@ function renderWatchShareholderAdmin(e = {}, t = {}) {
         </div>
         <span class="pill ${n.enabled ? "ok" : "warning"}">${n.enabled ? "分红已开启" : "分红未开启"}</span>
       </div>
-      <div class="mini-grid">
-        ${f("最近期次", formatSeasonNo(r?.seasonNo), r ? `${i(O(r.startAt))} 至 ${i(O(r.endAt))}` : "暂无结算")}
-        ${f("本期奖池", `${Math.floor(Number(r?.poolPoints || 0))} 积分`, `抽成 ${Math.floor(Number(r?.platformFeePoints || 0))} · 比例 ${Math.round(Number(r?.shareRate ?? n.shareRate ?? 0) * 100)}%`)}
-        ${f("当前节点快照", `${currentSnapshotUserCount} 人`, `${currentSnapshotNodeCount} 个有效节点 · ${currentSnapshotTime ? i(O(currentSnapshotTime)) : "自动更新"}`)}
-        ${f("平台补贴", `${Math.floor(Number(r?.subsidyPointsTotal || 0))} 积分`, `${n.subsidyEnabled ? `每节点 ${Math.floor(Number(n.subsidyPointsPerUser || 0))} 积分` : "未开启"}`)}
-        ${f("本周小富豪", `${Math.floor(Number(weeklyEstimate?.roomCount || 0))} 局`, "已结算真人积分局")}
-        ${f("本周预计奖池", `${Math.floor(Number(weeklyEstimate?.poolPoints || 0))} 积分`, `抽成 ${Math.floor(Number(weeklyEstimate?.platformFeePoints || 0))} · 3小时自动更新`)}
-        ${f("本周预计补贴", `${Math.floor(Number(weeklyEstimate?.subsidyPointsTotal || 0))} 积分`, `${n.subsidyEnabled ? `每节点 ${Math.floor(Number(weeklyEstimate?.subsidyPointsPerUser || n.subsidyPointsPerUser || 0))} · 节点 ${Number(weeklyEstimate?.snapshotNodeCount || 0)}` : "未开启"}`)}
+      <div class="watch-summary-block">
+        <div class="watch-summary-title"><strong>上期已结算</strong><span>用于对账</span></div>
+        <div class="mini-grid">
+          ${f("上期周期", formatSeasonNo(r?.seasonNo), r ? `${i(O(r.startAt))} 至 ${i(O(r.endAt))}` : "暂无结算")}
+          ${f("上期分红池", `${Math.floor(Number(r?.poolPoints || 0))} 积分`, `抽成 ${Math.floor(Number(r?.platformFeePoints || 0))} · 比例 ${Math.round(Number(r?.shareRate ?? n.shareRate ?? 0) * 100)}%`)}
+          ${f("上期平台补贴", `${Math.floor(Number(r?.subsidyPointsTotal || 0))} 积分`, `${n.subsidyEnabled ? `每节点 ${Math.floor(Number(r?.subsidyPointsPerUser ?? n.subsidyPointsPerUser ?? 0))} 积分` : "未开启"}`)}
+        </div>
+      </div>
+      <div class="watch-summary-block current">
+        <div class="watch-summary-title"><strong>本周预计</strong><span>约每3小时更新</span></div>
+        <div class="mini-grid">
+          ${f("当前腕表节点", `${currentSnapshotUserCount} 人`, `${currentSnapshotNodeCount} 个有效节点 · ${currentSnapshotTime ? i(O(currentSnapshotTime)) : "自动更新"}`)}
+          ${f("本周小富豪场次", `${Math.floor(Number(weeklyEstimate?.roomCount || 0))} 局`, "已结算真人积分局")}
+          ${f("本周分红池", `${weeklyPoolPoints} 积分`, `抽成 ${Math.floor(Number(weeklyEstimate?.platformFeePoints || 0))} · 比例 ${Math.round(Number(weeklyEstimate?.shareRate ?? n.shareRate ?? 0) * 100)}%`)}
+          ${f("本周节点补贴", `${weeklySubsidyPoints} 积分`, `${n.subsidyEnabled ? `每节点 ${Math.floor(Number(weeklyEstimate?.subsidyPointsPerUser || n.subsidyPointsPerUser || 0))} · 节点 ${Number(weeklyEstimate?.snapshotNodeCount || 0)}` : "未开启"}`)}
+          ${f("本周预计总分红", `${weeklyTotalPoints} 积分`, `分红池 ${weeklyPoolPoints} + 节点补贴 ${weeklySubsidyPoints}`)}
+        </div>
       </div>
       <div class="watch-action-row">
         <span class="watch-auto-note">自动：每3小时更新预计和节点，每10分钟处理发放，周一自动结算。</span>

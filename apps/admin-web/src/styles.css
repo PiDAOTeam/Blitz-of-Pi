@@ -1654,6 +1654,32 @@ body {
     radial-gradient(circle at 96% 12%, rgba(255, 214, 99, .24), transparent 34%),
     linear-gradient(135deg, #fffaf0, #fffdf8 58%, #f8fbff);
 }
+.watch-summary-block {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid rgba(214, 158, 46, .18);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .58);
+}
+.watch-summary-block.current {
+  background: linear-gradient(135deg, rgba(255, 248, 221, .82), rgba(255, 255, 255, .72));
+}
+.watch-summary-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.watch-summary-title strong {
+  color: #7a4c08;
+  font-size: 15px;
+}
+.watch-summary-title span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
 .watch-action-row {
   display: flex;
   flex-wrap: wrap;
