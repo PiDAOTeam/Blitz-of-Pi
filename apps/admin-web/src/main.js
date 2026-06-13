@@ -1741,6 +1741,9 @@ function renderWatchRewardRow(e = {}) {
 function renderWatchShareholderAdmin(e = {}, t = {}) {
   const a = e.watchShareholder || {};
   const n = t?.config || a || {}, s = t?.stats || {}, rewardStatusCounts = s.rewardStatusCounts || {}, r = t?.latestPeriod || null, weeklyEstimate = t?.weeklyEstimate || null, o = Array.isArray(t?.periods) ? t.periods : [], m = Array.isArray(t?.rewards) ? t.rewards : [], R = filterList(m, WATCH_REWARD_FILTERS, watchRewardFilter), y = N("watch-periods", o), x = N("watch-rewards", R), j = WATCH_REWARD_FILTERS.find((B) => B.key === watchRewardFilter) || WATCH_REWARD_FILTERS[0], activeRewardTotal = Number(rewardStatusCounts[watchRewardCountKey(j.key)] ?? R.length);
+  const currentSnapshotUserCount = Number(weeklyEstimate?.snapshotUserCount ?? r?.snapshotUserCount ?? 0);
+  const currentSnapshotNodeCount = Number(weeklyEstimate?.snapshotNodeCount ?? r?.snapshotNodeCount ?? 0);
+  const currentSnapshotTime = weeklyEstimate?.estimatedAt || r?.snapshotAt || "";
   return `
     <section class="panel watch-shareholder-hero">
       <div class="section-head">
@@ -1754,7 +1757,7 @@ function renderWatchShareholderAdmin(e = {}, t = {}) {
       <div class="mini-grid">
         ${f("最近期次", formatSeasonNo(r?.seasonNo), r ? `${i(O(r.startAt))} 至 ${i(O(r.endAt))}` : "暂无结算")}
         ${f("本期奖池", `${Math.floor(Number(r?.poolPoints || 0))} 积分`, `抽成 ${Math.floor(Number(r?.platformFeePoints || 0))} · 比例 ${Math.round(Number(r?.shareRate ?? n.shareRate ?? 0) * 100)}%`)}
-        ${f("节点快照", `${Number(r?.snapshotUserCount || 0)} 人`, `${Number(r?.snapshotNodeCount || 0)} 个有效节点`)}
+        ${f("当前节点快照", `${currentSnapshotUserCount} 人`, `${currentSnapshotNodeCount} 个有效节点 · ${currentSnapshotTime ? i(O(currentSnapshotTime)) : "自动更新"}`)}
         ${f("平台补贴", `${Math.floor(Number(r?.subsidyPointsTotal || 0))} 积分`, `${n.subsidyEnabled ? `每节点 ${Math.floor(Number(n.subsidyPointsPerUser || 0))} 积分` : "未开启"}`)}
         ${f("本周小富豪", `${Math.floor(Number(weeklyEstimate?.roomCount || 0))} 局`, "已结算真人积分局")}
         ${f("本周预计奖池", `${Math.floor(Number(weeklyEstimate?.poolPoints || 0))} 积分`, `抽成 ${Math.floor(Number(weeklyEstimate?.platformFeePoints || 0))} · 3小时自动更新`)}
