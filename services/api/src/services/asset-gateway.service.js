@@ -6,8 +6,11 @@ const {
   ASSET_GATEWAY_ENABLED,
   ASSET_GATEWAY_TIMEOUT_MS
 } = require("../config");
+const { recordExternalDependencyResult } = require("./external-health.service");
 
 const SUPPORTED_REMOTE_ASSETS = new Set(["POINTS", "POC"]);
+const SUMMARY_CACHE_TTL_MS = 15_000;
+const summaryCache = new Map();
 
 function normalizeAssetType(assetType = "") {
   return String(assetType || "").trim().toUpperCase();
@@ -85,6 +88,7 @@ async function callGateway(action, payload) {
   let lastError = null;
 
   for (let attempt = 1; attempt <= 2; attempt += 1) {
+    const startedAt = Date.now();
     const timestamp = String(Math.floor(Date.now() / 1000));
     const nonce = crypto.randomBytes(12).toString("hex");
     const signing = `POST${requestPath}${timestamp}${nonce}${rawBody}`;
@@ -122,11 +126,26 @@ async function callGateway(action, payload) {
         throw new Error(data.msg || `资产网关请求失败: HTTP ${response.status}`);
       }
 
+      recordExternalDependencyResult({
+        provider: "asset-gateway",
+        action,
+        ok: true,
+        startedAt,
+        detail: { attempt }
+      }).catch(() => {});
       return data.data || {};
     } catch (error) {
       lastError = error;
       const transient = isTransientGatewayError(error);
       if (attempt >= 2 || !transient) {
+        recordExternalDependencyResult({
+          provider: "asset-gateway",
+          action,
+          ok: false,
+          startedAt,
+          error,
+          detail: { attempt, transient }
+        }).catch(() => {});
         if (transient) {
           throw createGatewayBusyError(error);
         }
@@ -156,9 +175,29 @@ function buildIdentity(user = {}) {
   };
 }
 
+function getSummaryCacheKey(user = {}) {
+  const identity = buildIdentity(user);
+  return identity.pi_uid ? `uid:${identity.pi_uid}` : `username:${identity.pi_username.toLowerCase()}`;
+}
+
 async function summary(user) {
   assertGatewayReady("POINTS");
-  return callGateway("summary", buildIdentity(user));
+  const cacheKey = getSummaryCacheKey(user);
+  const cached = summaryCache.get(cacheKey);
+  if (cached && Date.now() - cached.cachedAt <= SUMMARY_CACHE_TTL_MS) {
+    return cached.data;
+  }
+
+  const data = await callGateway("summary", buildIdentity(user));
+  summaryCache.set(cacheKey, {
+    cachedAt: Date.now(),
+    data
+  });
+  if (summaryCache.size > 1000) {
+    const oldestKey = summaryCache.keys().next().value;
+    summaryCache.delete(oldestKey);
+  }
+  return data;
 }
 
 async function watchNodeSnapshot() {

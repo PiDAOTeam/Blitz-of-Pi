@@ -1,7 +1,10 @@
 const { query } = require("../db/mysql");
 const { redisGet, redisScan } = require("../db/redis");
 const { getActiveSessionStats } = require("./session.repository");
+const { getEngagementRewardQueueStats } = require("./engagement.repository");
+const { getAdminOverviewStats: getWatchShareholderStats } = require("./watch-shareholder.repository");
 const { readBattleObserverSnapshot } = require("../services/battle-observer.service");
+const { readExternalDependencyHealth } = require("../services/external-health.service");
 
 function toNumber(value) {
   return Number(value || 0);
@@ -246,9 +249,12 @@ async function readDashboard() {
 
   const matchingUsers = await readMatchQueueCount();
   const sessionStats = getActiveSessionStats();
-  const [realtimeStats, battleObserver] = await Promise.all([
+  const [realtimeStats, battleObserver, externalHealth, engagementRewardQueue, watchShareholderStats] = await Promise.all([
     readRealtimeStats(),
-    readBattleObserverSnapshot()
+    readBattleObserverSnapshot(),
+    readExternalDependencyHealth(),
+    getEngagementRewardQueueStats().catch(() => null),
+    getWatchShareholderStats().catch(() => null)
   ]);
   const totalUsers = Number(totalUsersRows[0]?.count || 0);
   const todayActiveUsers = Number(todayActiveUsersRows[0]?.count || 0);
@@ -294,7 +300,20 @@ async function readDashboard() {
     pendingPaymentCount: Number(pendingPaymentRows[0]?.count || 0),
     todayActiveRate: totalUsers ? Number(((todayActiveUsers / totalUsers) * 100).toFixed(2)) : 0,
     todayPaidBattleRate: todayBattleCount ? Number(((todayPaidBattleCount / todayBattleCount) * 100).toFixed(2)) : 0,
-    battleObserver
+    battleObserver,
+    externalHealth,
+    rewardQueues: {
+      engagement: engagementRewardQueue,
+      watchShareholder: watchShareholderStats
+        ? {
+            total: Number(watchShareholderStats.rewardRows || 0),
+            retryable: Number(watchShareholderStats.failedCount || 0),
+            failed: Number(watchShareholderStats.failedCount || 0),
+            manualReview: Number(watchShareholderStats.rewardStatusCounts?.failed || 0),
+            pendingPoints: Number(watchShareholderStats.pendingPoints || 0)
+          }
+        : null
+    }
   };
 }
 

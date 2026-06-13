@@ -1,5 +1,6 @@
 const https = require("https");
 const { PI_PLATFORM_API_BASE, PI_API_KEY } = require("../config");
+const { recordExternalDependencyResult } = require("./external-health.service");
 
 const PI_API_TIMEOUT_MS = 8000;
 
@@ -52,15 +53,48 @@ async function requestPiPlatform(path, options = {}) {
   const url = new URL(path, PI_PLATFORM_API_BASE.endsWith("/") ? PI_PLATFORM_API_BASE : `${PI_PLATFORM_API_BASE}/`);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), PI_API_TIMEOUT_MS);
+  const startedAt = Date.now();
 
   try {
-    return await fetch(url, {
+    const response = await fetch(url, {
       ...options,
       signal: controller.signal
     });
+    recordExternalDependencyResult({
+      provider: "pi-platform",
+      action: "request",
+      ok: true,
+      startedAt,
+      detail: { path: url.pathname }
+    }).catch(() => {});
+    return response;
   } catch (error) {
     console.warn(`[pi-platform] fetch failed, retrying with IPv4: ${error.message}`);
-    return requestWithHttps(url, options);
+    try {
+      const response = await requestWithHttps(url, options);
+      recordExternalDependencyResult({
+        provider: "pi-platform",
+        action: "request",
+        ok: true,
+        startedAt,
+        detail: { path: url.pathname, fallback: "ipv4" }
+      }).catch(() => {});
+      return response;
+    } catch (fallbackError) {
+      recordExternalDependencyResult({
+        provider: "pi-platform",
+        action: "request",
+        ok: false,
+        startedAt,
+        error: fallbackError,
+        detail: { path: url.pathname, fallback: "ipv4" }
+      }).catch(() => {});
+      const friendlyError = new Error("Pi网络繁忙，请稍后重试");
+      friendlyError.expectedBusinessError = true;
+      friendlyError.businessCode = 1702;
+      friendlyError.cause = fallbackError;
+      throw friendlyError;
+    }
   } finally {
     clearTimeout(timer);
   }

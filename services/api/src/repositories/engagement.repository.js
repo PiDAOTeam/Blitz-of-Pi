@@ -524,6 +524,30 @@ async function retryEngagementRewardJob(id) {
   return Number(result?.affectedRows || 0) > 0;
 }
 
+async function getEngagementRewardQueueStats() {
+  await ensureEngagementRewardJobSchema();
+  const rows = await query(
+    `SELECT
+       COUNT(*) AS total,
+       SUM(CASE WHEN status IN ('queued', 'failed') AND attempts < max_attempts THEN 1 ELSE 0 END) AS retryable,
+       SUM(CASE WHEN status = 'queued' THEN 1 ELSE 0 END) AS queued,
+       SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) AS failed,
+       SUM(CASE WHEN status = 'manual_review' THEN 1 ELSE 0 END) AS manual_review,
+       SUM(CASE WHEN status = 'processing' THEN 1 ELSE 0 END) AS processing
+     FROM engagement_asset_reward_jobs`
+  );
+  const row = rows[0] || {};
+
+  return {
+    total: Number(row.total || 0),
+    retryable: Number(row.retryable || 0),
+    queued: Number(row.queued || 0),
+    failed: Number(row.failed || 0),
+    manualReview: Number(row.manual_review || 0),
+    processing: Number(row.processing || 0)
+  };
+}
+
 async function listUserEngagementAssetRewardRows(uid, limit = 80) {
   await ensureEngagementSchema();
   const safeLimit = Math.min(120, Math.max(1, Number.parseInt(String(limit), 10) || 80));
@@ -544,6 +568,7 @@ module.exports = {
   claimDailySignIn,
   claimDailyTask,
   getEngagementStatus,
+  getEngagementRewardQueueStats,
   listAdminEngagementRewardJobs,
   listAdminEngagementClaims,
   listEngagementRewardCandidates,

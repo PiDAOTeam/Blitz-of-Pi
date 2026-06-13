@@ -4057,9 +4057,40 @@ async function Yi() {
   }), s = await w("/api/auth/pi-login", { method: "POST", body: JSON.stringify({ piAccessToken: o.accessToken, piUserId: o.user.uid, piUsername: o.user.username || "", nickname: o.user.username || n("piPlayer") }) });
   localStorage.setItem("blitz_user_token", s.accessToken), localStorage.setItem("blitz_pi_auth", JSON.stringify({ uid: o.user.uid, username: o.user.username || "", loggedAt: Date.now(), sandbox: r }));
 }
-async function D() {
-  const [e, t, r, o, s, l, c, d, u, h, p, f, m] = await Promise.all([w("/api/home/index"), w("/api/auth/profile"), w("/api/wallet/me"), w("/api/rank/me"), w("/api/rank/leaderboard?page=1&pageSize=15&type=weekly"), w("/api/pi/config"), w("/api/profile/options"), w("/api/game/config"), w(`/api/battle/history?page=${a.battleHistoryPage}&pageSize=5&mode=${encodeURIComponent(a.battleHistoryFilter === "all" ? "" : a.battleHistoryFilter)}`), w("/api/withdraw/wallets").catch(() => []), w("/api/invite/me").catch(() => null), w("/api/engagement/me").catch(() => null), w("/api/watch-shareholder/me").catch(() => null)]);
-  a.home = e, a.user = t, a.wallet = r, a.rankStatus = o, a.rankLeaderboard = s, a.piConfig = l, a.profileOptions = c, a.gameConfig = d, a.inviteInfo = p, a.engagement = f, a.watchShareholder = m, Qe(), a.withdrawWallets = h, a.battleHistory = u.items, a.battleHistoryPage = u.page, a.battleHistoryTotal = u.total, a.battleHistoryTotalPages = u.totalPages;
+function tokenLooksUsable() {
+  const e = dt();
+  return !!e && e.length > 20;
+}
+function shouldRefreshPiLogin() {
+  try {
+    const e = JSON.parse(localStorage.getItem("blitz_pi_auth") || "{}"), t = Number(e.loggedAt || 0);
+    return !t || Date.now() - t > 5 * 24 * 60 * 60 * 1e3;
+  } catch {
+    return true;
+  }
+}
+function fallbackWallet(e = "") {
+  return { balance: 0, availableBalance: 0, lockedBalance: 0, ledgers: [], assetLedgers: [], allLedgers: [], remoteAssets: null, remoteAssetsError: e || n("requestTimeout") };
+}
+async function safeLoad(e, t, r = "") {
+  try {
+    return await e();
+  } catch (o) {
+    console.warn("[init] optional load failed", r, N(o));
+    return typeof t == "function" ? t(o) : t;
+  }
+}
+async function D(e = {}) {
+  const t = e.tolerant === true, r = w("/api/home/index"), o = w("/api/auth/profile"), s = w("/api/game/config"), l = w("/api/pi/config"), c = t ? safeLoad(() => w("/api/wallet/me"), (T) => fallbackWallet(N(T)), "wallet") : w("/api/wallet/me"), d = safeLoad(() => w("/api/rank/me"), null, "rank"), u = safeLoad(() => w("/api/rank/leaderboard?page=1&pageSize=15&type=weekly"), null, "leaderboard"), h = safeLoad(() => w("/api/profile/options"), null, "profile-options"), p = safeLoad(() => w(`/api/battle/history?page=${a.battleHistoryPage}&pageSize=5&mode=${encodeURIComponent(a.battleHistoryFilter === "all" ? "" : a.battleHistoryFilter)}`), { items: [], page: 1, total: 0, totalPages: 1 }, "battle-history"), f = safeLoad(() => w("/api/withdraw/wallets"), [], "withdraw-wallets"), m = safeLoad(() => w("/api/invite/me"), null, "invite"), g = safeLoad(() => w("/api/engagement/me"), null, "engagement"), C = safeLoad(() => w("/api/watch-shareholder/me"), null, "watch-shareholder");
+  const [T, y, P, A, E, b, L, x, I, M, U, W, J] = await Promise.all([r, o, c, d, u, l, h, s, p, f, m, g, C]);
+  a.home = T, a.user = y, a.wallet = P || fallbackWallet(), a.rankStatus = A, a.rankLeaderboard = E, a.piConfig = b, a.profileOptions = L, a.gameConfig = x, a.inviteInfo = U, a.engagement = W, a.watchShareholder = J, Qe(), a.withdrawWallets = M || [], a.battleHistory = I?.items || [], a.battleHistoryPage = I?.page || 1, a.battleHistoryTotal = I?.total || 0, a.battleHistoryTotalPages = I?.totalPages || 1;
+}
+async function refreshLoginInBackground() {
+  try {
+    await Yi(), await D({ tolerant: true }), a.screen === "home" && _();
+  } catch (e) {
+    console.warn("[init] background login refresh failed", N(e));
+  }
 }
 async function vt(e) {
   const t = Math.max(1, Math.min(a.battleHistoryTotalPages || 1, e)), r = a.battleHistoryFilter === "all" ? "" : a.battleHistoryFilter, o = await w(`/api/battle/history?page=${t}&pageSize=5&mode=${encodeURIComponent(r)}`);
@@ -4193,7 +4224,17 @@ async function to(e, t) {
 }
 async function ao() {
   try {
-    Qe(), ua(n("loginLoading")), await Yi(), Qe(), await D(), await tryAutoBindInvite(), a.screen = "home", Xi();
+    Qe(), ua(n("loginLoading"));
+    if (tokenLooksUsable()) {
+      try {
+        await D({ tolerant: true }), await tryAutoBindInvite(), a.screen = "home", Xi(), shouldRefreshPiLogin() && refreshLoginInBackground();
+        return;
+      } catch (e) {
+        if (e?.code === 401 || e?.status === 401) localStorage.removeItem("blitz_user_token");
+        console.warn("[init] stored token restore failed", N(e));
+      }
+    }
+    await Yi(), Qe(), await D({ tolerant: true }), await tryAutoBindInvite(), a.screen = "home", Xi();
   } catch (e) {
     console.error("\u521D\u59CB\u5316\u5931\u8D25", e), Fe(n("initFailed", { message: N(e) }));
   }

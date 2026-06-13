@@ -727,6 +727,52 @@ function getObserverActionCount(e = {}) {
 function getObserverWatchCount(e = {}) {
   return Number(e.client_match_poll_failed || 0) + Number(e.client_realtime_connect_slow || 0) + Number(e.match_watch_failed || 0) + Number(e.realtime_tick_slow || 0) + Number(e.realtime_tick_skipped || 0) + Number(e.realtime_broadcast_slow || 0);
 }
+function externalActionLabel(e = {}) {
+  const t = `${e.provider || ""}:${e.action || ""}`;
+  return {
+    "pi-platform:request": "Pi登录/支付",
+    "asset-gateway:summary": "积分/POC查询",
+    "asset-gateway:freeze": "入场冻结",
+    "asset-gateway:settle": "胜负结算",
+    "asset-gateway:release": "平局释放",
+    "asset-gateway:reward": "奖励发放",
+    "asset-gateway:watchnodesnapshot": "腕表节点"
+  }[t] || t;
+}
+function externalStatusText(e = {}) {
+  if (e.status === "ok") return "正常";
+  if (e.status === "error") return `异常${Number(e.consecutiveFailures || 0) ? ` ${Number(e.consecutiveFailures || 0)}次` : ""}`;
+  return "未检测";
+}
+function renderExternalHealth(e = {}, t = {}) {
+  const a = Array.isArray(e?.items) ? e.items : [], n = Array.isArray(e?.recentFailures) ? e.recentFailures : [], s = t?.engagement || {}, r = t?.watchShareholder || {}, o = a.filter((m) => m.status === "error").length + Number(s.failed || 0) + Number(s.manualReview || 0) + Number(r.failed || 0) + Number(r.manualReview || 0);
+  return `
+    <section class="panel overview-block external-health-panel">
+      <div class="section-head">
+        <div>
+          <p class="tag">External Health</p>
+          <h2>外部接口与发奖队列</h2>
+        </div>
+        <span class="pill ${o ? "warning" : "ok"}">${o ? `${o} 项需关注` : "当前正常"}</span>
+      </div>
+      <p class="meta">用于排查登录慢、余额不刷新、奖励没到账。这里只显示关键接口和队列状态。</p>
+      <div class="external-health-grid">
+        ${a.map((m) => `
+          <article class="observer-event ${m.status === "error" ? "warning" : ""}">
+            <b>${i(externalActionLabel(m))}</b>
+            <span>${i(externalStatusText(m))} · ${Number(m.lastLatencyMs || 0)}ms</span>
+            <small>${m.lastError ? i(m.lastError) : i(m.lastCheckedAt ? O(m.lastCheckedAt) : "暂无检测")}</small>
+          </article>
+        `).join("") || '<article class="observer-event empty"><b>暂无检测</b><span>等待接口调用后写入</span><small>-</small></article>'}
+      </div>
+      <div class="external-queue-grid">
+        ${f("每日奖励队列", Number(s.retryable || 0), `排队 ${Number(s.queued || 0)} · 失败 ${Number(s.failed || 0)} · 人工 ${Number(s.manualReview || 0)}`)}
+        ${f("腕表分红队列", Number(r.retryable || 0), `失败 ${Number(r.failed || 0)} · 人工 ${Number(r.manualReview || 0)} · 待发 ${Number(r.pendingPoints || 0)}积分`)}
+      </div>
+      ${n.length ? `<div class="external-failure-list">${n.slice(0, 4).map((m) => `<span>${i(externalActionLabel(m))} · ${i(tt(m.at))} · ${i(m.error || "-")}</span>`).join("")}</div>` : ""}
+    </section>
+  `;
+}
 function nt(e) {
   const t = e?.counters || {}, a = e?.recentEvents || [], n = [["\u8FDB\u5165\u961F\u5217", t.match_queue_join || 0, "\u4ECA\u65E5\u5339\u914D\u8BF7\u6C42"], ["\u7528\u6237\u70B9\u5339\u914D", t.client_match_start || 0, "\u524D\u7AEF\u53D1\u8D77\u6B21\u6570"], ["\u521B\u5EFA\u623F\u95F4", (t.match_room_created || 0) + (t.match_status_room_created || 0), "\u771F\u4EBA/\u8F6E\u8BE2\u6210\u623F"], ["\u63A8\u9001\u63A5\u5165", t.match_watch_join || 0, "\u670D\u52A1\u7AEF\u5339\u914DWS"], ["\u7528\u6237\u8FDB\u623F", t.client_match_enter_room || 0, "\u5339\u914D\u6210\u529F\u5230\u8FDB\u623F"], ["WS\u8FDB\u623F", t.realtime_join || 0, "\u8FDB\u5165\u5B9E\u65F6\u623F\u95F4"], ["\u6536\u5230\u9996\u5305", t.client_realtime_first_state || 0, "\u7528\u6237\u7AEF\u9996\u4E2A\u623F\u95F4\u5305"], ["\u6B63\u5F0F\u5F00\u5C40", t.realtime_started || 0, "\u53CC\u65B9\u51C6\u5907\u5B8C\u6210"], ["\u64CD\u4F5C\u62E6\u622A", t.realtime_swap_error || 0, "\u9650\u9891/\u623F\u95F4\u8FC7\u671F"], ["\u7528\u6237\u5F31\u7F51", t.client_realtime_slow || 0, "\u5BA2\u6237\u7AEF\u7F51\u7EDC\u89C2\u5BDF"], ["Tick\u6162", t.realtime_tick_slow || 0, "\u670D\u52A1\u7AEF\u5FAA\u73AF\u8017\u65F6\u9AD8"], ["\u5E7F\u64AD\u6162", t.realtime_broadcast_slow || 0, "\u623F\u95F4\u72B6\u6001\u4E0B\u53D1\u6162"], ["\u7ED3\u7B97\u5B8C\u6210", t.settlement_done || 0, "\u5B9E\u65F6\u7ED3\u7B97\u95ED\u73AF"]], s = getObserverActionCount(t), r = getObserverWatchCount(t);
   return `
@@ -902,6 +948,7 @@ function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, roo
         </section>
       </section>
       ${nt(s.battleObserver)}
+      ${renderExternalHealth(s.externalHealth, s.rewardQueues)}
       <section class="overview-metrics compact-dashboard">
         ${S("\u8D44\u6599\u5B8C\u6210", s.profileCompletedUsers, "\u5DF2\u8BBE\u7F6E\u6635\u79F0\u548C\u5934\u50CF", "")}
         ${S("\u5C01\u7981\u7528\u6237", s.bannedUsers, "\u9700\u8981\u6301\u7EED\u89C2\u5BDF\u5F02\u5E38\u884C\u4E3A", s.bannedUsers ? "danger" : "")}
