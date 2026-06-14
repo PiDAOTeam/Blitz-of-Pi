@@ -123,6 +123,7 @@ a.canvasSpecialFx = [];
 a.canvasSpecialBirths = [];
 let cleanupBoardInputListeners = null;
 const Sa = /* @__PURE__ */ new Map();
+const clientTraceDropStages = new Set(["client_swap_send", "client_prediction_ack", "client_prediction_reject", "client_snapshot_corrected", "client_burst_show", "client_burst_suppressed", "client_perf_sample"]);
 let z = null, W = null, At = 0, q = null;
 const $n = 8e3, Pn = 3, Cn = 9e3, Ha = 1200, Tn = 1800, Ie = 8, Rn = 5e3, Mn = 6, Xt = 8e3, fe = 3, Bn = 12, Nn = 6, $a = 30, $e = 8, Pe = 6, Pa = 0.18, En = 1200;
 function we() {
@@ -287,11 +288,19 @@ async function w(e, t) {
 function v(e, t = {}, r = En) {
   const o = dt();
   if (!o) return;
+  if (clientTraceDropStages.has(e) || xn() && a.screen === "battle") return;
   const s = Date.now(), l = [e, t.roomNo || a.roomNo || "", t.seq || "", t.message || ""].join(":"), c = Sa.get(l) || 0;
   if (s - c < r) return;
   Sa.set(l, s);
-  const d = { stage: e, roomNo: a.roomNo, mode: a.selectedMode, status: a.realtimeRoom?.status || a.screen, screen: a.screen, network: a.networkStatus, latencyMs: a.networkLatencyMs, waitingSeconds: a.screen === "matching" ? ct() : 0, clientAt: s, ...t };
-  fetch(`${Gt}/api/client/trace`, { method: "POST", keepalive: true, headers: { "Content-Type": "application/json", Authorization: `Bearer ${o}` }, body: JSON.stringify(d) }).catch(() => {
+  const d = JSON.stringify({ stage: e, roomNo: a.roomNo, mode: a.selectedMode, status: a.realtimeRoom?.status || a.screen, screen: a.screen, network: a.networkStatus, latencyMs: a.networkLatencyMs, waitingSeconds: a.screen === "matching" ? ct() : 0, clientAt: s, token: o, ...t });
+  try {
+    if (navigator.sendBeacon && d.length < 6e4) {
+      navigator.sendBeacon(`${Gt}/api/client/trace`, new Blob([d], { type: "text/plain" }));
+      return;
+    }
+  } catch {
+  }
+  fetch(`${Gt}/api/client/trace`, { method: "POST", keepalive: true, headers: { "Content-Type": "text/plain" }, body: d }).catch(() => {
   });
 }
 function i(e) {

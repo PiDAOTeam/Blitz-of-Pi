@@ -273,15 +273,15 @@ async function handleRoutes(req, res) {
     }
 
   if (url === "/api/client/trace" && method === "POST") {
-    const token = req.headers.authorization?.replace("Bearer ", "") || "";
+    const payload = await readJsonBody(req);
+    const token = req.headers.authorization?.replace("Bearer ", "") || String(payload.token || "");
     const profile = await getSessionProfile(token, "user");
 
     if (!profile) {
-      fail(res, "请先登录", 401, 1401);
+      ok(res, { accepted: false });
       return;
     }
 
-    const payload = await readJsonBody(req);
     const stage = String(payload.stage || "");
     if (!stage.startsWith("client_")) {
       fail(res, "追踪节点无效", 400, 1400);
