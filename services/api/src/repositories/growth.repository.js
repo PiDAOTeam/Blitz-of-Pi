@@ -1,4 +1,4 @@
-const { query } = require("../db/mysql");
+const { query, transaction } = require("../db/mysql");
 
 let schemaReady = false;
 
@@ -6,6 +6,41 @@ function executor(connection) {
   return connection || {
     execute: (sql, params) => query(sql, params).then((rows) => [rows])
   };
+}
+
+async function ignoreDuplicateColumn(sql, connection = null) {
+  try {
+    await executor(connection).execute(sql);
+  } catch (error) {
+    if (!/Duplicate column|ER_DUP_FIELDNAME|1060/i.test(String(error.message || error.code || ""))) {
+      throw error;
+    }
+  }
+}
+
+async function ignoreSchemaChangeWarning(sql, connection = null) {
+  try {
+    await executor(connection).execute(sql);
+  } catch (error) {
+    if (!/Duplicate column|ER_DUP_FIELDNAME|1060/i.test(String(error.message || error.code || ""))) {
+      throw error;
+    }
+  }
+}
+
+async function ensureInviteRewardAmountPrecision(connection = null) {
+  const [rows] = await executor(connection).execute(
+    `SELECT NUMERIC_PRECISION AS numeric_precision
+     FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'invite_rewards'
+       AND COLUMN_NAME = 'amount'
+     LIMIT 1`
+  );
+  const precision = Number(rows[0]?.numeric_precision || 0);
+  if (precision > 0 && precision < 20) {
+    await ignoreSchemaChangeWarning("ALTER TABLE invite_rewards MODIFY amount DECIMAL(20, 8) NOT NULL", connection);
+  }
 }
 
 async function ensureGrowthSchema() {
@@ -49,9 +84,21 @@ async function ensureGrowthSchema() {
       qualified_invite_count INT NOT NULL DEFAULT 0,
       paid_battle_count INT NOT NULL DEFAULT 0,
       total_commission DECIMAL(18, 8) NOT NULL DEFAULT 0,
+      total_commission_pi DECIMAL(18, 8) NOT NULL DEFAULT 0,
+      total_commission_points DECIMAL(20, 0) NOT NULL DEFAULT 0,
+      total_commission_poc DECIMAL(20, 6) NOT NULL DEFAULT 0,
       total_qualification_reward DECIMAL(18, 8) NOT NULL DEFAULT 0,
       updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )`
+  );
+  await ignoreDuplicateColumn("ALTER TABLE invite_stats ADD COLUMN total_commission_pi DECIMAL(18, 8) NOT NULL DEFAULT 0 AFTER total_commission");
+  await ignoreDuplicateColumn("ALTER TABLE invite_stats ADD COLUMN total_commission_points DECIMAL(20, 0) NOT NULL DEFAULT 0 AFTER total_commission_pi");
+  await ignoreDuplicateColumn("ALTER TABLE invite_stats ADD COLUMN total_commission_poc DECIMAL(20, 6) NOT NULL DEFAULT 0 AFTER total_commission_points");
+  await query(
+    `UPDATE invite_stats
+     SET total_commission_pi = total_commission
+     WHERE total_commission_pi = 0
+       AND total_commission > 0`
   );
 
   await query(
@@ -63,6 +110,7 @@ async function ensureGrowthSchema() {
       battle_room_no VARCHAR(64) DEFAULT '',
       reward_type VARCHAR(32) NOT NULL,
       level_key VARCHAR(32) DEFAULT '',
+      asset_type VARCHAR(20) NOT NULL DEFAULT 'PI',
       amount DECIMAL(18, 8) NOT NULL,
       rate DECIMAL(8, 6) NOT NULL DEFAULT 0,
       status VARCHAR(24) NOT NULL DEFAULT 'claimable',
@@ -71,6 +119,35 @@ async function ensureGrowthSchema() {
       UNIQUE KEY uk_invite_reward_once (reward_type, invitee_uid, battle_room_no),
       KEY idx_invite_reward_inviter_id (inviter_uid, id),
       KEY idx_invite_reward_status (status)
+    )`
+  );
+  await ignoreDuplicateColumn("ALTER TABLE invite_rewards ADD COLUMN asset_type VARCHAR(20) NOT NULL DEFAULT 'PI' AFTER level_key");
+  await ensureInviteRewardAmountPrecision();
+
+  await query(
+    `CREATE TABLE IF NOT EXISTS invite_commission_reward_jobs (
+      id BIGINT PRIMARY KEY AUTO_INCREMENT,
+      reward_no VARCHAR(64) NOT NULL UNIQUE,
+      inviter_uid VARCHAR(64) NOT NULL,
+      invitee_uid VARCHAR(64) NOT NULL DEFAULT '',
+      battle_room_no VARCHAR(64) NOT NULL DEFAULT '',
+      asset_type VARCHAR(20) NOT NULL,
+      amount DECIMAL(20, 8) NOT NULL DEFAULT 0,
+      external_order_no VARCHAR(128) NOT NULL,
+      idempotency_key VARCHAR(160) NOT NULL,
+      remark VARCHAR(255) NOT NULL DEFAULT '',
+      status VARCHAR(32) NOT NULL DEFAULT 'queued',
+      attempts INT NOT NULL DEFAULT 0,
+      max_attempts INT NOT NULL DEFAULT 5,
+      next_retry_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      locked_at DATETIME DEFAULT NULL,
+      processed_at DATETIME DEFAULT NULL,
+      last_error VARCHAR(255) NOT NULL DEFAULT '',
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE KEY uk_invite_commission_job_idem (idempotency_key),
+      KEY idx_invite_commission_job_status (status, next_retry_at, id),
+      KEY idx_invite_commission_job_inviter_id (inviter_uid, id)
     )`
   );
 
@@ -298,8 +375,8 @@ async function createQualificationReward({ inviterUid, inviteeUid, amount }, con
 
   await executor(connection).execute(
     `INSERT IGNORE INTO invite_rewards
-       (reward_no, inviter_uid, invitee_uid, reward_type, amount, status)
-     VALUES (?, ?, ?, 'qualification', ?, 'claimable')`,
+       (reward_no, inviter_uid, invitee_uid, reward_type, asset_type, amount, status)
+     VALUES (?, ?, ?, 'qualification', 'PI', ?, 'claimable')`,
     [rewardNo, inviterUid, inviteeUid, amount]
   );
 
@@ -354,20 +431,49 @@ async function findBattleCommissionReward(roomNo, inviterUid, inviteeUid = "", c
 }
 
 async function createBattleCommissionReward(
-  { inviterUid, inviteeUid, roomNo, levelKey, amount, rate },
+  { inviterUid, inviteeUid, roomNo, levelKey, assetType = "PI", amount, rate, status = "claimed" },
   connection = null
 ) {
   await ensureGrowthSchema();
   const rewardNo = `INVC${Date.now()}${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
+  const safeStatus = String(status || "claimed");
+  const claimedAtSql = safeStatus === "claimed" ? "NOW()" : "NULL";
 
   await executor(connection).execute(
     `INSERT IGNORE INTO invite_rewards
-       (reward_no, inviter_uid, invitee_uid, battle_room_no, reward_type, level_key, amount, rate, status, claimed_at)
-     VALUES (?, ?, ?, ?, 'battle_commission', ?, ?, ?, 'claimed', NOW())`,
-    [rewardNo, inviterUid, inviteeUid, roomNo, levelKey || "", amount, rate || 0]
+       (reward_no, inviter_uid, invitee_uid, battle_room_no, reward_type, level_key, asset_type, amount, rate, status, claimed_at)
+     VALUES (?, ?, ?, ?, 'battle_commission', ?, ?, ?, ?, ?, ${claimedAtSql})`,
+    [rewardNo, inviterUid, inviteeUid, roomNo, levelKey || "", assetType, amount, rate || 0, safeStatus]
   );
 
   return findBattleCommissionReward(roomNo, inviterUid, inviteeUid, connection);
+}
+
+async function enqueueInviteCommissionRewardJob(reward, connection = null) {
+  await ensureGrowthSchema();
+  const rewardNo = reward.reward_no || reward.rewardNo;
+  const assetType = String(reward.asset_type || reward.assetType || "").toUpperCase();
+  if (!rewardNo || !["POINTS", "POC"].includes(assetType)) return false;
+
+  const orderNo = `invite_commission:${rewardNo}:${assetType}`;
+  const [result] = await executor(connection).execute(
+    `INSERT IGNORE INTO invite_commission_reward_jobs
+       (reward_no, inviter_uid, invitee_uid, battle_room_no, asset_type, amount,
+        external_order_no, idempotency_key, remark, status, next_retry_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'queued', NOW())`,
+    [
+      rewardNo,
+      reward.inviter_uid || reward.inviterUid,
+      reward.invitee_uid || reward.inviteeUid || "",
+      reward.battle_room_no || reward.roomNo || "",
+      assetType,
+      reward.amount || 0,
+      orderNo,
+      orderNo,
+      reward.remark || "Pi闪电战邀请对战提成"
+    ]
+  );
+  return Number(result?.affectedRows || 0) > 0;
 }
 
 async function listInviteRewardsForInviter(inviterUid, limit = 20, connection = null) {
@@ -394,14 +500,22 @@ async function incrementQualifiedInvite(inviterUid, connection = null) {
   );
 }
 
-async function incrementCommissionStats(inviterUid, amount, connection = null) {
+async function incrementCommissionStats(inviterUid, amount, assetType = "PI", connection = null) {
   await ensureInviteStats(inviterUid, connection);
+  const normalizedAssetType = String(assetType || "PI").toUpperCase();
+  const column =
+    normalizedAssetType === "POINTS"
+      ? "total_commission_points"
+      : normalizedAssetType === "POC"
+        ? "total_commission_poc"
+        : "total_commission_pi";
   await executor(connection).execute(
     `UPDATE invite_stats
      SET paid_battle_count = paid_battle_count + 1,
-         total_commission = total_commission + ?
+         total_commission = total_commission + ?,
+         ${column} = ${column} + ?
      WHERE uid = ?`,
-    [amount, inviterUid]
+    [normalizedAssetType === "PI" ? amount : 0, amount, inviterUid]
   );
 }
 
@@ -476,6 +590,212 @@ async function listInviteRewards(limit = 100) {
   );
 }
 
+async function listInviteCommissionRewardJobs(limit = 100) {
+  await ensureGrowthSchema();
+  const safeLimit = Math.min(300, Math.max(1, Number.parseInt(String(limit), 10) || 100));
+
+  return query(
+    `SELECT j.*, iu.pi_user_id AS inviter_pi_user_id, iu.pi_username AS inviter_pi_username,
+            iu.nickname AS inviter_nickname, iu.avatar_key AS inviter_avatar_key,
+            eu.pi_username AS invitee_pi_username, eu.nickname AS invitee_nickname
+     FROM invite_commission_reward_jobs j
+     LEFT JOIN users iu ON iu.uid = j.inviter_uid
+     LEFT JOIN users eu ON eu.uid = j.invitee_uid
+     ORDER BY j.id DESC
+     LIMIT ${safeLimit}`
+  );
+}
+
+async function listInviteCommissionRewardCandidates(limit = 20) {
+  await ensureGrowthSchema();
+  const safeLimit = Math.min(50, Math.max(1, Number.parseInt(String(limit), 10) || 20));
+
+  return query(
+    `SELECT j.*, u.pi_user_id, u.pi_username, u.nickname, u.avatar_key
+     FROM invite_commission_reward_jobs j
+     LEFT JOIN users u ON u.uid = j.inviter_uid
+     WHERE j.status IN ('queued', 'failed')
+       AND j.attempts < j.max_attempts
+       AND (j.next_retry_at IS NULL OR j.next_retry_at <= NOW())
+     ORDER BY j.id ASC
+     LIMIT ${safeLimit}`
+  );
+}
+
+async function markInviteCommissionRewardProcessing(id) {
+  await ensureGrowthSchema();
+  const [result] = await executor().execute(
+    `UPDATE invite_commission_reward_jobs
+     SET status = 'processing',
+         attempts = attempts + 1,
+         locked_at = NOW(),
+         last_error = ''
+     WHERE id = ?
+       AND status IN ('queued', 'failed')
+       AND attempts < max_attempts`,
+    [id]
+  );
+  if (Number(result?.affectedRows || 0) < 1) return null;
+
+  const [rows] = await executor().execute(
+    `SELECT j.*, u.pi_user_id, u.pi_username, u.nickname, u.avatar_key
+     FROM invite_commission_reward_jobs j
+     LEFT JOIN users u ON u.uid = j.inviter_uid
+     WHERE j.id = ?
+     LIMIT 1`,
+    [id]
+  );
+  return rows[0] || null;
+}
+
+async function markInviteCommissionRewardPaid(id) {
+  await ensureGrowthSchema();
+  return transaction(async (connection) => {
+    const [rows] = await executor(connection).execute(
+      "SELECT * FROM invite_commission_reward_jobs WHERE id = ? LIMIT 1 FOR UPDATE",
+      [id]
+    );
+    const job = rows[0] || null;
+    if (!job || job.status !== "processing") return null;
+
+    const [result] = await executor(connection).execute(
+      `UPDATE invite_commission_reward_jobs
+       SET status = 'paid',
+           processed_at = NOW(),
+           last_error = ''
+       WHERE id = ?
+         AND status = 'processing'`,
+      [id]
+    );
+    if (Number(result?.affectedRows || 0) < 1) return null;
+
+    await executor(connection).execute(
+      `UPDATE invite_rewards
+       SET status = 'claimed',
+           claimed_at = COALESCE(claimed_at, NOW())
+       WHERE reward_no = ?`,
+      [job.reward_no]
+    );
+    await incrementCommissionStats(job.inviter_uid, Number(job.amount || 0), job.asset_type, connection);
+    return job;
+  }, { label: "invite_commission.mark_paid" });
+}
+
+async function markInviteCommissionRewardFailed(id, errorMessage, { manualReview = false, nextRetrySeconds = 60 } = {}) {
+  await ensureGrowthSchema();
+  const status = manualReview ? "manual_review" : "failed";
+  const [rows] = await executor().execute(
+    "SELECT reward_no FROM invite_commission_reward_jobs WHERE id = ? LIMIT 1",
+    [id]
+  );
+  const rewardNo = rows[0]?.reward_no || "";
+  await executor().execute(
+    `UPDATE invite_commission_reward_jobs
+     SET status = ?,
+         last_error = ?,
+         next_retry_at = DATE_ADD(NOW(), INTERVAL ? SECOND)
+     WHERE id = ?`,
+    [status, String(errorMessage || "发放失败").slice(0, 255), Math.max(1, Number(nextRetrySeconds || 60)), id]
+  );
+  if (rewardNo) {
+    await executor().execute("UPDATE invite_rewards SET status = ? WHERE reward_no = ?", [status, rewardNo]);
+  }
+}
+
+async function resetStaleInviteCommissionRewardProcessing(staleMinutes = 10) {
+  await ensureGrowthSchema();
+  const [rows] = await executor().execute(
+    `SELECT reward_no FROM invite_commission_reward_jobs
+     WHERE status = 'processing'
+       AND locked_at < DATE_SUB(NOW(), INTERVAL ? MINUTE)`,
+    [Math.max(1, Number(staleMinutes || 10))]
+  );
+  const [result] = await executor().execute(
+    `UPDATE invite_commission_reward_jobs
+     SET status = 'failed',
+         last_error = '发放任务超时，已回到失败队列等待重试',
+         next_retry_at = NOW()
+     WHERE status = 'processing'
+       AND locked_at < DATE_SUB(NOW(), INTERVAL ? MINUTE)`,
+    [Math.max(1, Number(staleMinutes || 10))]
+  );
+  for (const row of rows || []) {
+    await executor().execute("UPDATE invite_rewards SET status = 'failed' WHERE reward_no = ?", [row.reward_no]);
+  }
+  return Number(result?.affectedRows || 0);
+}
+
+async function retryInviteCommissionRewardJob(id) {
+  await ensureGrowthSchema();
+  const [rows] = await executor().execute(
+    "SELECT reward_no FROM invite_commission_reward_jobs WHERE id = ? LIMIT 1",
+    [id]
+  );
+  const rewardNo = rows[0]?.reward_no || "";
+  const [result] = await executor().execute(
+    `UPDATE invite_commission_reward_jobs
+     SET status = 'queued',
+         next_retry_at = NOW(),
+         last_error = ''
+     WHERE id = ?
+       AND status IN ('failed', 'manual_review', 'processing')`,
+    [id]
+  );
+  const changed = Number(result?.affectedRows || 0) > 0;
+  if (changed && rewardNo) {
+    await executor().execute("UPDATE invite_rewards SET status = 'queued' WHERE reward_no = ?", [rewardNo]);
+  }
+  return changed;
+}
+
+async function getInviteCommissionRewardQueueStats() {
+  await ensureGrowthSchema();
+  const rows = await query(
+    `SELECT
+       COUNT(*) AS total,
+       SUM(CASE WHEN status IN ('queued', 'failed') AND attempts < max_attempts THEN 1 ELSE 0 END) AS retryable,
+       SUM(CASE WHEN status = 'queued' THEN 1 ELSE 0 END) AS queued,
+       SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) AS failed,
+       SUM(CASE WHEN status = 'manual_review' THEN 1 ELSE 0 END) AS manual_review,
+       SUM(CASE WHEN status = 'processing' THEN 1 ELSE 0 END) AS processing,
+       SUM(CASE WHEN status = 'paid' THEN 1 ELSE 0 END) AS paid
+     FROM invite_commission_reward_jobs`
+  );
+  const row = rows[0] || {};
+
+  return {
+    total: Number(row.total || 0),
+    retryable: Number(row.retryable || 0),
+    queued: Number(row.queued || 0),
+    failed: Number(row.failed || 0),
+    manualReview: Number(row.manual_review || 0),
+    processing: Number(row.processing || 0),
+    paid: Number(row.paid || 0)
+  };
+}
+
+async function listUserInviteCommissionAssetRows(uid, limit = 80) {
+  await ensureGrowthSchema();
+  const safeLimit = Math.min(120, Math.max(1, Number.parseInt(String(limit), 10) || 80));
+
+  return query(
+    `SELECT * FROM invite_rewards
+     WHERE inviter_uid = ?
+       AND reward_type = 'battle_commission'
+       AND asset_type IN ('POINTS', 'POC')
+       AND status = 'claimed'
+     ORDER BY id DESC
+     LIMIT ${safeLimit}`,
+    [uid]
+  );
+}
+
+async function getInviteStats(uid, connection = null) {
+  await ensureGrowthSchema();
+  const [rows] = await executor(connection).execute("SELECT * FROM invite_stats WHERE uid = ? LIMIT 1", [uid]);
+  return rows[0] || null;
+}
+
 module.exports = {
   ensureGrowthSchema,
   findUserByPiUsername,
@@ -495,6 +815,7 @@ module.exports = {
   markRewardClaimed,
   findBattleCommissionReward,
   createBattleCommissionReward,
+  enqueueInviteCommissionRewardJob,
   listInviteRewardsForInviter,
   incrementQualifiedInvite,
   incrementCommissionStats,
@@ -502,5 +823,15 @@ module.exports = {
   updateInviteLevel,
   getInviteDashboard,
   listInviteRelations,
-  listInviteRewards
+  listInviteRewards,
+  listInviteCommissionRewardJobs,
+  listInviteCommissionRewardCandidates,
+  markInviteCommissionRewardFailed,
+  markInviteCommissionRewardPaid,
+  markInviteCommissionRewardProcessing,
+  resetStaleInviteCommissionRewardProcessing,
+  retryInviteCommissionRewardJob,
+  getInviteCommissionRewardQueueStats,
+  listUserInviteCommissionAssetRows,
+  getInviteStats
 };

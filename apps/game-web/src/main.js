@@ -1840,6 +1840,15 @@ function xr(e = Ja()) {
 function Ar(e = "") {
   return e === "battle_commission" ? n("paidCommission") : e === "qualification" ? n("claimInviteReward") : Ga(e);
 }
+function inviteAssetName(e = "") {
+  return { POINTS: n("pointsAsset"), POC: "POC", PI: "Pi" }[String(e || "PI").toUpperCase()] || e || "Pi";
+}
+function formatInviteRewardAmount(e, t = "PI") {
+  const r = String(t || "PI").toUpperCase(), o = Number(e || 0);
+  if (r === "POINTS") return `${Math.floor(o)} ${n("pointsAsset")}`;
+  if (r === "POC") return `${Number(o.toFixed(2)).toString()} POC`;
+  return `${b(o)} Pi`;
+}
 function invitePagerHtml(e, t, r) {
   return t <= 1 ? "" : `
     <div class="invite-pager">
@@ -1904,14 +1913,14 @@ function _r(e) {
       </div>
       ${t.length ? `<div class="invite-income-list">
               ${s.map((r) => {
-    const o = r.inviteeNickname || r.inviteePiUsername || "\u597D\u53CB", s = r.rate > 0 ? ` \xB7 ${sa(r.rate)}%` : "", l = r.battleRoomNo ? ` \xB7 ${r.battleRoomNo}` : "";
+    const o = r.inviteeNickname || r.inviteePiUsername || "\u597D\u53CB", s = r.rate > 0 ? ` \xB7 ${sa(r.rate)}%` : "", l = r.battleRoomNo ? ` \xB7 ${r.battleRoomNo}` : "", c = r.assetType || "PI";
     return `
                     <article>
                       <div>
                         <strong>${i(Ar(r.rewardType))}</strong>
-                        <span>${i(o)}${i(s)}${i(l)}</span>
+                        <span>${i(o)} · ${i(inviteAssetName(c))}${i(s)}${i(l)}</span>
                       </div>
-                      <b>+${i(b(r.amount))}</b>
+                      <b>+${i(formatInviteRewardAmount(r.amount, c))}</b>
                     </article>
                   `;
   }).join("")}
@@ -2856,7 +2865,7 @@ function at() {
     `, document.querySelector("#back-home")?.addEventListener("click", L);
     return;
   }
-  const t = e?.stats.levelKey ? e?.config.levels.find((f) => f.key === e.stats.levelKey) : null, r = (e?.claimableRewards || []).reduce((f, m) => f + Number(m.amount || 0), 0), o = Math.round(Number(t?.commissionRate || 0) * 1e3) / 10, s = Number(e.stats.totalCommission || 0) + Number(e.stats.totalQualificationReward || 0), inviteLink = getMyInviteLink();
+  const t = e?.stats.levelKey ? e?.config.levels.find((f) => f.key === e.stats.levelKey) : null, r = (e?.claimableRewards || []).reduce((f, m) => f + Number(m.amount || 0), 0), o = Math.round(Number(t?.commissionRate || 0) * 1e3) / 10, sPi = Number((e.stats.totalCommissionPi ?? e.stats.totalCommission) || 0) + Number(e.stats.totalQualificationReward || 0), sPoints = Number(e.stats.totalCommissionPoints || 0), sPoc = Number(e.stats.totalCommissionPoc || 0), inviteLink = getMyInviteLink();
   R.innerHTML = `
     <main class="shell">
       <section class="hero">
@@ -2872,8 +2881,8 @@ function at() {
           </div>
           <div>
             <span>${i(n("inviteTotalIncome"))}</span>
-            <strong>${i(b(s))}</strong>
-            <small>${i(n("inviteCount", { count: e.stats.directInviteCount || 0 }))}</small>
+            <strong>${i(b(sPi))} Pi</strong>
+            <small>${i(`积分 ${Math.floor(sPoints)} · POC ${Number(sPoc.toFixed(2))}`)}</small>
           </div>
         </section>
         <section class="invite-link-card">

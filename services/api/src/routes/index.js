@@ -56,7 +56,9 @@ const {
   bindMyInvite,
   getMyInviteDashboard,
   claimMyInviteRewards,
-  getAdminGrowthOps
+  getAdminGrowthOps,
+  processAdminInviteCommissionRewardJobs,
+  retryAdminInviteCommissionRewardJob
 } = require("../controllers/growth.controller");
 const {
   claimMyDailySignIn,
@@ -655,6 +657,17 @@ async function handleRoutes(req, res) {
 
   if (url === "/admin-api/growth/ops" && method === "GET") {
     ok(res, await getAdminGrowthOps());
+    return;
+  }
+
+  if (url === "/admin-api/growth/invite-commission/reward-jobs/process" && method === "POST") {
+    ok(res, await processAdminInviteCommissionRewardJobs(), "处理完成");
+    return;
+  }
+
+  if (url.startsWith("/admin-api/growth/invite-commission/reward-jobs/retry/") && method === "POST") {
+    const id = decodeURIComponent(url.replace("/admin-api/growth/invite-commission/reward-jobs/retry/", ""));
+    ok(res, await retryAdminInviteCommissionRewardJob(id), "已重新排队");
     return;
   }
 

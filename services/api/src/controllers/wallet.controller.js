@@ -3,6 +3,7 @@ const { getWallet, listLedgers } = require("../repositories/wallet.repository");
 const { listUserAssetBattleLedgerRows } = require("../repositories/battle.repository");
 const { listUserEngagementAssetRewardRows } = require("../repositories/engagement.repository");
 const { listUserRewards: listUserWatchShareholderRewards } = require("../repositories/watch-shareholder.repository");
+const { listUserInviteCommissionAssetRows } = require("../repositories/growth.repository");
 const { readGameConfig } = require("../repositories/game-config.repository");
 const assetGateway = require("../services/asset-gateway.service");
 
@@ -187,6 +188,28 @@ function buildWatchShareholderLedgers(rows, uid) {
     }));
 }
 
+function buildInviteCommissionAssetLedgers(rows, uid) {
+  return (Array.isArray(rows) ? rows : [])
+    .filter((row) => ["POINTS", "POC"].includes(String(row.asset_type || "").toUpperCase()) && Number(row.amount || 0) > 0)
+    .map((row) => {
+      const assetType = String(row.asset_type || "").toUpperCase();
+      return {
+        id: `invite_commission:${row.reward_no}`,
+        uid,
+        type: "invite_commission",
+        direction: "in",
+        amount: assetType === "POINTS" ? Math.floor(Number(row.amount || 0)) : Number(Number(row.amount || 0).toFixed(6)),
+        balance_after: null,
+        related_type: "invite_battle_commission",
+        related_id: row.reward_no,
+        remark: assetType === "POINTS" ? "邀请对战提成（积分）" : "邀请对战提成（POC）",
+        created_at: row.claimed_at || row.created_at,
+        asset_type: assetType,
+        synthetic: true
+      };
+    });
+}
+
 function sortLedgersByTime(ledgers) {
   return [...ledgers].sort((a, b) => {
     const left = new Date(a.created_at || 0).getTime();
@@ -225,7 +248,16 @@ async function getMyWallet(req) {
     await listUserWatchShareholderRewards(user.uid, 80),
     user.uid
   );
-  const assetLedgers = sortLedgersByTime([...battleAssetLedgers, ...engagementAssetLedgers, ...watchShareholderLedgers]);
+  const inviteCommissionAssetLedgers = buildInviteCommissionAssetLedgers(
+    await listUserInviteCommissionAssetRows(user.uid, 80),
+    user.uid
+  );
+  const assetLedgers = sortLedgersByTime([
+    ...battleAssetLedgers,
+    ...engagementAssetLedgers,
+    ...watchShareholderLedgers,
+    ...inviteCommissionAssetLedgers
+  ]);
   const allLedgers = sortLedgersByTime([...ledgers, ...assetLedgers]).slice(0, 120);
   const config = await readGameConfig();
   let remoteAssets = null;

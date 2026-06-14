@@ -7,6 +7,12 @@ const {
   claimInviteRewards,
   listAdminGrowthData
 } = require("../services/growth.service");
+const {
+  retryInviteCommissionRewardJob
+} = require("../repositories/growth.repository");
+const {
+  processInviteCommissionRewardsOnce
+} = require("../services/invite-commission-queue.service");
 
 function toTransferDto(row) {
   return {
@@ -56,11 +62,35 @@ function toRewardDto(row) {
     battleRoomNo: row.battle_room_no || "",
     rewardType: row.reward_type,
     levelKey: row.level_key || "",
+    assetType: row.asset_type || "PI",
     amount: Number(row.amount || 0),
     rate: Number(row.rate || 0),
     status: row.status,
     claimedAt: row.claimed_at,
     createdAt: row.created_at
+  };
+}
+
+function toInviteCommissionJobDto(row) {
+  return {
+    id: row.id,
+    rewardNo: row.reward_no,
+    inviterUid: row.inviter_uid,
+    inviterPiUsername: row.inviter_pi_username || "",
+    inviterNickname: row.inviter_nickname || "",
+    inviteeUid: row.invitee_uid || "",
+    inviteePiUsername: row.invitee_pi_username || "",
+    inviteeNickname: row.invitee_nickname || "",
+    battleRoomNo: row.battle_room_no || "",
+    assetType: row.asset_type || "",
+    amount: Number(row.amount || 0),
+    status: row.status,
+    attempts: Number(row.attempts || 0),
+    maxAttempts: Number(row.max_attempts || 0),
+    nextRetryAt: row.next_retry_at,
+    lastError: row.last_error || "",
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
   };
 }
 
@@ -95,8 +125,22 @@ async function getAdminGrowthOps() {
   return {
     transfers: data.transfers.map(toTransferDto),
     relations: data.relations.map(toRelationDto),
-    rewards: data.rewards.map(toRewardDto)
+    rewards: data.rewards.map(toRewardDto),
+    inviteCommissionJobs: (data.inviteCommissionJobs || []).map(toInviteCommissionJobDto),
+    inviteCommissionQueueStats: data.inviteCommissionQueueStats || {}
   };
+}
+
+async function processAdminInviteCommissionRewardJobs() {
+  return processInviteCommissionRewardsOnce(20);
+}
+
+async function retryAdminInviteCommissionRewardJob(id) {
+  const ok = await retryInviteCommissionRewardJob(id);
+  if (!ok) {
+    throw new Error("任务不存在或当前状态不能重试");
+  }
+  return { id: Number(id), queued: true };
 }
 
 module.exports = {
@@ -105,5 +149,7 @@ module.exports = {
   bindMyInvite,
   getMyInviteDashboard,
   claimMyInviteRewards,
-  getAdminGrowthOps
+  getAdminGrowthOps,
+  processAdminInviteCommissionRewardJobs,
+  retryAdminInviteCommissionRewardJob
 };

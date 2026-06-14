@@ -93,6 +93,14 @@ async function getPublicGameConfig() {
       qualificationRequiredBattles: Number(config.inviteRewards?.qualificationRequiredBattles || 2),
       qualificationRewardAmount: Number(config.inviteRewards?.qualificationRewardAmount || 0),
       battleCommissionEnabled: config.inviteRewards?.battleCommissionEnabled !== false,
+      piCommissionEnabled: config.inviteRewards?.piCommissionEnabled !== false,
+      pointsCommissionEnabled: config.inviteRewards?.pointsCommissionEnabled !== false,
+      pocCommissionEnabled: config.inviteRewards?.pocCommissionEnabled !== false,
+      botCommissionEnabled: config.inviteRewards?.botCommissionEnabled === true,
+      commissionModes: Array.isArray(config.inviteRewards?.commissionModes)
+        ? config.inviteRewards.commissionModes
+        : ["points_battle", "poc_battle", "pi_battle"],
+      pointsRoundMode: "floor",
       commissionBase: config.inviteRewards?.commissionBase || "entry_fee",
       maxCommissionRate: Number(config.inviteRewards?.maxCommissionRate || 0),
       levels: (config.inviteRewards?.levels || []).map((level) => ({

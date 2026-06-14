@@ -159,8 +159,12 @@ const GROWTH_REWARD_FILTERS = [
   { key: "all", label: "全部", match: () => true },
   { key: "qualification", label: "对局奖励", match: (e) => e.rewardType === "qualification" },
   { key: "battle_commission", label: "对战提成", match: (e) => e.rewardType === "battle_commission" },
-  { key: "completed", label: "已完成", match: (e) => e.status === "completed" },
-  { key: "pending", label: "待处理", match: (e) => e.status === "pending" }
+  { key: "claimed", label: "已发放", match: (e) => e.status === "claimed" },
+  { key: "queued", label: "待发放", match: (e) => e.status === "queued" || e.status === "processing" },
+  { key: "failed", label: "失败", match: (e) => e.status === "failed" || e.status === "manual_review" },
+  { key: "points", label: "积分", match: (e) => e.assetType === "POINTS" },
+  { key: "poc", label: "POC", match: (e) => e.assetType === "POC" },
+  { key: "pi", label: "Pi", match: (e) => !e.assetType || e.assetType === "PI" }
 ];
 const WATCH_REWARD_FILTERS = [
   { key: "all", label: "全部", match: () => true },
@@ -652,6 +656,27 @@ function Re(e) {
       a.disabled = true, s && (s.textContent = "正在重试...");
       try {
         await d(`/admin-api/engagement/reward-jobs/retry/${encodeURIComponent(n)}`, { method: "POST" });
+        s && (s.textContent = "已重新排队"), await q();
+      } catch (r) {
+        s && (s.textContent = g(r)), a.disabled = false;
+      }
+    });
+  }), document.querySelector("#invite-commission-process")?.addEventListener("click", async (a) => {
+    const n = a.currentTarget, s = document.querySelector("#invite-commission-status");
+    n.disabled = true, s && (s.textContent = "正在处理...");
+    try {
+      const r = await d("/admin-api/growth/invite-commission/reward-jobs/process", { method: "POST" });
+      s && (s.textContent = `处理完成：${Number(r.processed || 0)} 条`), await q();
+    } catch (r) {
+      s && (s.textContent = g(r)), n.disabled = false;
+    }
+  }), document.querySelectorAll("[data-invite-commission-retry]").forEach((a) => {
+    a.addEventListener("click", async () => {
+      const n = a.dataset.inviteCommissionRetry || "", s = document.querySelector("#invite-commission-status");
+      if (!n) return;
+      a.disabled = true, s && (s.textContent = "正在重试...");
+      try {
+        await d(`/admin-api/growth/invite-commission/reward-jobs/retry/${encodeURIComponent(n)}`, { method: "POST" });
         s && (s.textContent = "已重新排队"), await q();
       } catch (r) {
         s && (s.textContent = g(r)), a.disabled = false;
@@ -1760,6 +1785,15 @@ function pt(e, t) {
 function bt(e = "") {
   return { qualification: "\u5B8C\u6210\u5BF9\u5C40\u5956\u52B1", battle_commission: "\u4ED8\u8D39\u5BF9\u6218\u63D0\u6210" }[e] || e || "-";
 }
+function growthAssetLabel(e = "") {
+  return { POINTS: "积分", POC: "POC", PI: "Pi" }[String(e || "PI").toUpperCase()] || e || "Pi";
+}
+function formatGrowthAssetAmount(e, t = "PI") {
+  const a = String(t || "PI").toUpperCase(), n = Number(e || 0);
+  if (a === "POINTS") return `${Math.floor(n)} 积分`;
+  if (a === "POC") return `${Number(n.toFixed(2)).toString()} POC`;
+  return `${$(n)} Pi`;
+}
 function $t(e) {
   return `
     <article class="row-card growth-row">
@@ -1781,11 +1815,12 @@ function vt(e) {
   `;
 }
 function ht(e) {
+  const t = e.assetType || "PI";
   return `
     <article class="row-card growth-row">
       <strong>${i(bt(e.rewardType))}</strong>
       <span>${i(e.inviterNickname || e.inviterPiUsername || h(e.inviterUid))} \xB7 ${i(e.inviteeNickname || e.inviteePiUsername || h(e.inviteeUid))}</span>
-      <span>${$(e.amount)} Pi \xB7 ${e.rate ? `${Math.round(e.rate * 1e3) / 10}%` : "-"}</span>
+      <span>${i(formatGrowthAssetAmount(e.amount, t))} \xB7 ${i(growthAssetLabel(t))} \xB7 ${e.rate ? `${Math.round(e.rate * 1e3) / 10}%` : "-"}</span>
       <span>${i(H(e.status))} \xB7 ${i(O(e.createdAt))}</span>
     </article>
   `;
@@ -1803,6 +1838,18 @@ function renderEngagementClaim(e) {
 }
 function engagementRewardJobStatus(e = "") {
   return { queued: "待发放", processing: "发放中", paid: "已发放", failed: "失败待重试", manual_review: "人工处理" }[e] || e || "-";
+}
+function renderInviteCommissionJob(e) {
+  const t = ["failed", "manual_review", "processing"].includes(e.status);
+  return `
+    <article class="row-card growth-row">
+      <strong>${i(engagementRewardJobStatus(e.status))}</strong>
+      <span>${i(e.inviterNickname || e.inviterPiUsername || h(e.inviterUid))} ← ${i(e.inviteeNickname || e.inviteePiUsername || h(e.inviteeUid))}</span>
+      <span>${i(formatGrowthAssetAmount(e.amount, e.assetType))} · ${i(e.battleRoomNo || "-")} · ${Number(e.attempts || 0)}/${Number(e.maxAttempts || 0)}</span>
+      <span>${i(e.lastError || O(e.createdAt))}</span>
+      ${t ? `<button type="button" data-invite-commission-retry="${e.id}">重试</button>` : ""}
+    </article>
+  `;
 }
 function renderEngagementRewardJob(e) {
   const t = e.assetType === "POINTS" ? `${Math.floor(Number(e.amount || 0))} 积分` : `${Number(e.amount || 0).toFixed(2).replace(/\.?0+$/, "")} ${i(e.assetType || "")}`, a = ["failed", "manual_review", "processing"].includes(e.status);
@@ -1982,6 +2029,19 @@ function inviteRequiredModeChecks(e = []) {
     </div>
   `;
 }
+function inviteCommissionModeChecks(e = []) {
+  const t = Array.isArray(e) && e.length ? e : ["points_battle", "poc_battle", "pi_battle"];
+  return `
+    <div class="engagement-mode-checks">
+      ${ENGAGEMENT_BATTLE_MODES.filter((a) => a.key !== "quick_battle").map((a) => `
+        <label>
+          <input type="checkbox" name="inviteCommissionMode" value="${a.key}" ${t.includes(a.key) ? "checked" : ""} />
+          <span>${i(a.label)}</span>
+        </label>
+      `).join("")}
+    </div>
+  `;
+}
 function engagementTaskRows(e = []) {
   const t = (e.length ? e : ENGAGEMENT_TASK_DEFAULTS).map((a, n) => ({ ...ENGAGEMENT_TASK_DEFAULTS[n], ...a }));
   return t.map((a, n) => `
@@ -2011,7 +2071,7 @@ function engagementTaskRows(e = []) {
   `).join("");
 }
 function ft(e, t) {
-  const a = e.transfer || { enabled: true, minAmount: 0.01, maxAmount: 20, dailyLimitAmount: 50, feeRate: 0, feeMinAmount: 0, cooldownSeconds: 10 }, n = e.inviteRewards || { enabled: true, bindEnabled: true, bindRequiredEnabled: true, bindRequiredAfterBattles: 5, bindRequiredModes: ENGAGEMENT_BATTLE_MODES.map((B) => B.key), officialInviterPiUsername: "", bindRequiredMessage: "\u8BF7\u5148\u7ED1\u5B9A\u9080\u8BF7\u4EBA\uFF0C\u518D\u7EE7\u7EED\u5BF9\u6218\u3002", qualificationEnabled: true, qualificationRequiredBattles: 2, qualificationRewardAmount: 0.02, battleCommissionEnabled: true, commissionBase: "entry_fee", maxCommissionRate: 0.2, levels: [] }, engagement = e.engagement || { enabled: true, dailySignIn: { enabled: true, title: "\u6BCF\u65E5\u7B7E\u5230", piRewardEnabled: true, rewardAmount: 0.01, pointsRewardEnabled: false, pointsRewardAmount: 0, pocRewardEnabled: false, pocRewardAmount: 0 }, tasks: ENGAGEMENT_TASK_DEFAULTS }, s = n.levels?.length ? n.levels : [{ key: "starter", name: "\u95EA\u7535\u4F19\u4F34", commissionRate: 0.03, minBalance: 0, minDirectInvites: 0, enabled: true }, { key: "silver", name: "\u94F6\u724C\u961F\u957F", commissionRate: 0.05, minBalance: 5, minDirectInvites: 5, enabled: true }, { key: "gold", name: "\u91D1\u724C\u961F\u957F", commissionRate: 0.08, minBalance: 20, minDirectInvites: 20, enabled: true }], r = t?.transfers || [], o = t?.relations || [], m = t?.rewards || [], engagementClaims = t?.engagementClaims || [], engagementRewardJobs = t?.engagementRewardJobs || [], filteredRewards = filterList(m, GROWTH_REWARD_FILTERS, growthRewardFilter), R = N("growth-transfers", r), y = N("growth-relations", o), x = N("growth-rewards", filteredRewards), engagementClaimPager = N("growth-engagement-claims", engagementClaims), engagementRewardJobPager = N("growth-engagement-reward-jobs", engagementRewardJobs), j = m.reduce((B, w) => B + Number(w.amount || 0), 0), A = r.reduce((B, w) => B + Number(w.feeAmount || 0), 0), activeRewardFilter = GROWTH_REWARD_FILTERS.find((B) => B.key === growthRewardFilter) || GROWTH_REWARD_FILTERS[0];
+  const a = e.transfer || { enabled: true, minAmount: 0.01, maxAmount: 20, dailyLimitAmount: 50, feeRate: 0, feeMinAmount: 0, cooldownSeconds: 10 }, n = e.inviteRewards || { enabled: true, bindEnabled: true, bindRequiredEnabled: true, bindRequiredAfterBattles: 5, bindRequiredModes: ENGAGEMENT_BATTLE_MODES.map((B) => B.key), officialInviterPiUsername: "", bindRequiredMessage: "\u8BF7\u5148\u7ED1\u5B9A\u9080\u8BF7\u4EBA\uFF0C\u518D\u7EE7\u7EED\u5BF9\u6218\u3002", qualificationEnabled: true, qualificationRequiredBattles: 2, qualificationRewardAmount: 0.02, battleCommissionEnabled: true, piCommissionEnabled: true, pointsCommissionEnabled: true, pocCommissionEnabled: true, botCommissionEnabled: false, commissionModes: ["points_battle", "poc_battle", "pi_battle"], commissionBase: "entry_fee", maxCommissionRate: 0.2, levels: [] }, engagement = e.engagement || { enabled: true, dailySignIn: { enabled: true, title: "\u6BCF\u65E5\u7B7E\u5230", piRewardEnabled: true, rewardAmount: 0.01, pointsRewardEnabled: false, pointsRewardAmount: 0, pocRewardEnabled: false, pocRewardAmount: 0 }, tasks: ENGAGEMENT_TASK_DEFAULTS }, s = n.levels?.length ? n.levels : [{ key: "starter", name: "\u95EA\u7535\u4F19\u4F34", commissionRate: 0.03, minBalance: 0, minDirectInvites: 0, enabled: true }, { key: "silver", name: "\u94F6\u724C\u961F\u957F", commissionRate: 0.05, minBalance: 5, minDirectInvites: 5, enabled: true }, { key: "gold", name: "\u91D1\u724C\u961F\u957F", commissionRate: 0.08, minBalance: 20, minDirectInvites: 20, enabled: true }], r = t?.transfers || [], o = t?.relations || [], m = t?.rewards || [], inviteCommissionJobs = t?.inviteCommissionJobs || [], inviteCommissionQueueStats = t?.inviteCommissionQueueStats || {}, engagementClaims = t?.engagementClaims || [], engagementRewardJobs = t?.engagementRewardJobs || [], filteredRewards = filterList(m, GROWTH_REWARD_FILTERS, growthRewardFilter), R = N("growth-transfers", r), y = N("growth-relations", o), x = N("growth-rewards", filteredRewards), inviteCommissionJobPager = N("growth-invite-commission-jobs", inviteCommissionJobs), engagementClaimPager = N("growth-engagement-claims", engagementClaims), engagementRewardJobPager = N("growth-engagement-reward-jobs", engagementRewardJobs), jPi = m.filter((B) => !B.assetType || B.assetType === "PI").reduce((B, w) => B + Number(w.amount || 0), 0), jPoints = m.filter((B) => B.assetType === "POINTS").reduce((B, w) => B + Number(w.amount || 0), 0), jPoc = m.filter((B) => B.assetType === "POC").reduce((B, w) => B + Number(w.amount || 0), 0), A = r.reduce((B, w) => B + Number(w.feeAmount || 0), 0), activeRewardFilter = GROWTH_REWARD_FILTERS.find((B) => B.key === growthRewardFilter) || GROWTH_REWARD_FILTERS[0];
   return `
     <section class="panel">
       <div class="section-head">
@@ -2020,12 +2080,13 @@ function ft(e, t) {
           <h2>\u589E\u957F\u8FD0\u8425</h2>
           <p class="meta">\u7BA1\u7406\u5E73\u53F0\u5185\u8F6C\u8D26\u3001\u9080\u8BF7\u5956\u52B1\u548C\u8D21\u732E\u7B49\u7EA7\u3002\u7528\u6237\u7AEF\u6587\u6848\u4FDD\u6301\u201C\u9080\u8BF7\u597D\u53CB\u201D\uFF0C\u907F\u514D\u590D\u6742\u8868\u8FF0\u3002</p>
         </div>
-        <span class="pill">\u9080\u8BF7\u5DF2\u53D1 ${$(j)} Pi</span>
+        <span class="pill">Pi ${$(jPi)} · 积分 ${Math.floor(jPoints)} · POC ${Number(jPoc.toFixed(2))}</span>
       </div>
       <div class="mini-grid">
         ${f("\u8F6C\u8D26\u7B14\u6570", r.length, `\u624B\u7EED\u8D39 ${$(A)} Pi`)}
         ${f("\u9080\u8BF7\u5173\u7CFB", o.length, "\u5DF2\u7ED1\u5B9A\u7528\u6237")}
         ${f("\u5956\u52B1\u8BB0\u5F55", m.length, "\u5B8C\u6210\u5956\u52B1 + \u5BF9\u6218\u63D0\u6210")}
+        ${f("\u63D0\u6210\u961F\u5217", Number(inviteCommissionQueueStats.retryable || 0), `待发 ${Number(inviteCommissionQueueStats.queued || 0)} · 失败 ${Number(inviteCommissionQueueStats.failed || 0)}`)}
         ${f("\u6700\u9AD8\u63D0\u6210", `${Math.round(Number(n.maxCommissionRate || 0) * 1e3) / 10}%`, "\u5355\u4EBA\u6BD4\u4F8B\u4E0A\u9650")}
       </div>
     </section>
@@ -2073,12 +2134,33 @@ function ft(e, t) {
             <option value="true" ${n.battleCommissionEnabled !== false ? "selected" : ""}>\u5F00\u542F</option>
             <option value="false" ${n.battleCommissionEnabled === false ? "selected" : ""}>\u5173\u95ED</option>
           </select></label>
+          <label><span>Pi\u63D0\u6210</span><select name="piCommissionEnabled">
+            <option value="true" ${n.piCommissionEnabled !== false ? "selected" : ""}>开启</option>
+            <option value="false" ${n.piCommissionEnabled === false ? "selected" : ""}>关闭</option>
+          </select></label>
+          <label><span>\u79EF\u5206\u63D0\u6210</span><select name="pointsCommissionEnabled">
+            <option value="true" ${n.pointsCommissionEnabled !== false ? "selected" : ""}>开启</option>
+            <option value="false" ${n.pointsCommissionEnabled === false ? "selected" : ""}>关闭</option>
+          </select></label>
+          <label><span>POC\u63D0\u6210</span><select name="pocCommissionEnabled">
+            <option value="true" ${n.pocCommissionEnabled !== false ? "selected" : ""}>开启</option>
+            <option value="false" ${n.pocCommissionEnabled === false ? "selected" : ""}>关闭</option>
+          </select></label>
+          <label><span>\u673A\u5668\u4EBA\u5C40\u8FD4\u4F63</span><select name="botCommissionEnabled">
+            <option value="false" ${n.botCommissionEnabled ? "" : "selected"}>关闭（推荐）</option>
+            <option value="true" ${n.botCommissionEnabled ? "selected" : ""}>开启</option>
+          </select></label>
           <label><span>\u63D0\u6210\u57FA\u51C6</span><select name="commissionBase">
             <option value="entry_fee" ${n.commissionBase !== "platform_fee" ? "selected" : ""}>\u6309\u5165\u573A\u8D39</option>
             <option value="platform_fee" ${n.commissionBase === "platform_fee" ? "selected" : ""}>\u6309\u5E73\u53F0\u62BD\u6210</option>
           </select></label>
           <label><span>\u6700\u9AD8\u63D0\u6210\u6BD4\u4F8B</span><input name="maxCommissionRate" type="number" inputmode="decimal" min="0" max="0.2" step="0.001" value="${n.maxCommissionRate}" /></label>
         </div>
+        <label class="engagement-task-modes">
+          <span>\u8FD4\u4F63\u751F\u6548\u573A\u6B21</span>
+          ${inviteCommissionModeChecks(n.commissionModes)}
+        </label>
+        <p class="meta">\u79EF\u5206\u8FD4\u4F63\u81EA\u52A8\u5411\u4E0B\u53D6\u6574\uFF0C\u4F4E\u4E8E 1 \u79EF\u5206\u4E0D\u53D1\u653E\u3002\u673A\u5668\u4EBA\u5C40\u9ED8\u8BA4\u4E0D\u8FD4\u4F63\uFF0C\u9632\u6B62\u5237\u5956\u3002</p>
         <label class="engagement-task-modes">
           <span>\u9650\u5236\u573A\u6B21</span>
           ${inviteRequiredModeChecks(n.bindRequiredModes)}
@@ -2166,6 +2248,21 @@ function ft(e, t) {
       </div>
       <div class="table-list">${engagementClaimPager.items.map(renderEngagementClaim).join("") || '<p class="meta">\u6682\u65E0\u9886\u53D6\u8BB0\u5F55</p>'}</div>
       ${P("growth-engagement-claims", engagementClaims.length)}
+    </section>
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h2>\u9080\u8BF7\u8FD4\u4F63\u961F\u5217</h2>
+          <p class="meta">\u79EF\u5206/POC \u8FD4\u4F63\u901A\u8FC7 HashPi \u7F51\u5173\u5F02\u6B65\u53D1\u653E\uFF0C\u5931\u8D25\u53EF\u91CD\u8BD5\u3002</p>
+        </div>
+        <div class="toolbar-actions">
+          <button type="button" id="invite-commission-process">\u5904\u7406\u4E00\u8F6E</button>
+          <span class="pill">${inviteCommissionJobs.length} \u6761</span>
+        </div>
+      </div>
+      <p id="invite-commission-status" class="status"></p>
+      <div class="table-list">${inviteCommissionJobPager.items.map(renderInviteCommissionJob).join("") || '<p class="meta">\u6682\u65E0\u9080\u8BF7\u8FD4\u4F63\u4EFB\u52A1</p>'}</div>
+      ${P("growth-invite-commission-jobs", inviteCommissionJobs.length)}
     </section>
     <section class="panel">
       <div class="section-head">
@@ -2580,7 +2677,7 @@ function Ut(e, t, a) {
     }
     A && (A.textContent = "\u4FDD\u5B58\u4E2D...");
     try {
-      await d("/admin-api/game-config", { method: "POST", body: JSON.stringify(U({ transfer: { enabled: String(l.get("transferEnabled")) === "true", minAmount: Number(l.get("transferMinAmount") || 0), maxAmount: Number(l.get("transferMaxAmount") || 0), dailyLimitAmount: Number(l.get("transferDailyLimitAmount") || 0), feeRate: Number(l.get("transferFeeRate") || 0), feeMinAmount: Number(l.get("transferFeeMinAmount") || 0), cooldownSeconds: Number(l.get("transferCooldownSeconds") || 0) }, inviteRewards: { enabled: String(l.get("inviteEnabled")) === "true", bindEnabled: String(l.get("inviteBindEnabled")) === "true", bindRequiredEnabled: String(l.get("inviteBindRequiredEnabled")) === "true", bindRequiredAfterBattles: Number(l.get("inviteBindRequiredAfterBattles") || 5), bindRequiredModes: l.getAll("inviteBindRequiredMode").filter(Boolean), officialInviterPiUsername: String(l.get("officialInviterPiUsername") || "").trim(), bindRequiredMessage: String(l.get("inviteBindRequiredMessage") || "\u8BF7\u5148\u7ED1\u5B9A\u9080\u8BF7\u4EBA\uFF0C\u518D\u7EE7\u7EED\u5BF9\u6218\u3002").trim(), qualificationEnabled: String(l.get("qualificationEnabled")) === "true", qualificationRequiredBattles: Number(l.get("qualificationRequiredBattles") || 2), qualificationRewardAmount: Number(l.get("qualificationRewardAmount") || 0), battleCommissionEnabled: String(l.get("battleCommissionEnabled")) === "true", commissionBase: String(l.get("commissionBase") || "entry_fee") === "platform_fee" ? "platform_fee" : "entry_fee", maxCommissionRate: Number(l.get("maxCommissionRate") || 0), levels: J(l) }, engagement: { enabled: String(l.get("engagementEnabled")) === "true", dailySignIn: { enabled: String(l.get("dailySignInEnabled")) === "true", title: String(l.get("dailySignInTitle") || "\u6BCF\u65E5\u7B7E\u5230"), piRewardEnabled: String(l.get("dailySignInPiRewardEnabled")) === "true", rewardAmount: Number(l.get("dailySignInReward") || 0), pointsRewardEnabled: String(l.get("dailySignInPointsRewardEnabled")) === "true", pointsRewardAmount: pointsSignReward, pocRewardEnabled: String(l.get("dailySignInPocRewardEnabled")) === "true", pocRewardAmount: Number(l.get("dailySignInPocReward") || 0) }, tasks: buildEngagementTasks() } })) }), A && (A.textContent = "\u4FDD\u5B58\u6210\u529F\uFF0C\u6B63\u5728\u5237\u65B0..."), await q();
+      await d("/admin-api/game-config", { method: "POST", body: JSON.stringify(U({ transfer: { enabled: String(l.get("transferEnabled")) === "true", minAmount: Number(l.get("transferMinAmount") || 0), maxAmount: Number(l.get("transferMaxAmount") || 0), dailyLimitAmount: Number(l.get("transferDailyLimitAmount") || 0), feeRate: Number(l.get("transferFeeRate") || 0), feeMinAmount: Number(l.get("transferFeeMinAmount") || 0), cooldownSeconds: Number(l.get("transferCooldownSeconds") || 0) }, inviteRewards: { enabled: String(l.get("inviteEnabled")) === "true", bindEnabled: String(l.get("inviteBindEnabled")) === "true", bindRequiredEnabled: String(l.get("inviteBindRequiredEnabled")) === "true", bindRequiredAfterBattles: Number(l.get("inviteBindRequiredAfterBattles") || 5), bindRequiredModes: l.getAll("inviteBindRequiredMode").filter(Boolean), officialInviterPiUsername: String(l.get("officialInviterPiUsername") || "").trim(), bindRequiredMessage: String(l.get("inviteBindRequiredMessage") || "\u8BF7\u5148\u7ED1\u5B9A\u9080\u8BF7\u4EBA\uFF0C\u518D\u7EE7\u7EED\u5BF9\u6218\u3002").trim(), qualificationEnabled: String(l.get("qualificationEnabled")) === "true", qualificationRequiredBattles: Number(l.get("qualificationRequiredBattles") || 2), qualificationRewardAmount: Number(l.get("qualificationRewardAmount") || 0), battleCommissionEnabled: String(l.get("battleCommissionEnabled")) === "true", piCommissionEnabled: String(l.get("piCommissionEnabled")) === "true", pointsCommissionEnabled: String(l.get("pointsCommissionEnabled")) === "true", pocCommissionEnabled: String(l.get("pocCommissionEnabled")) === "true", botCommissionEnabled: String(l.get("botCommissionEnabled")) === "true", commissionModes: l.getAll("inviteCommissionMode").filter(Boolean), pointsRoundMode: "floor", commissionBase: String(l.get("commissionBase") || "entry_fee") === "platform_fee" ? "platform_fee" : "entry_fee", maxCommissionRate: Number(l.get("maxCommissionRate") || 0), levels: J(l) }, engagement: { enabled: String(l.get("engagementEnabled")) === "true", dailySignIn: { enabled: String(l.get("dailySignInEnabled")) === "true", title: String(l.get("dailySignInTitle") || "\u6BCF\u65E5\u7B7E\u5230"), piRewardEnabled: String(l.get("dailySignInPiRewardEnabled")) === "true", rewardAmount: Number(l.get("dailySignInReward") || 0), pointsRewardEnabled: String(l.get("dailySignInPointsRewardEnabled")) === "true", pointsRewardAmount: pointsSignReward, pocRewardEnabled: String(l.get("dailySignInPocRewardEnabled")) === "true", pocRewardAmount: Number(l.get("dailySignInPocReward") || 0) }, tasks: buildEngagementTasks() } })) }), A && (A.textContent = "\u4FDD\u5B58\u6210\u529F\uFF0C\u6B63\u5728\u5237\u65B0..."), await q();
     } catch (p) {
       A && (A.textContent = g(p));
     }

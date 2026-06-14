@@ -1109,7 +1109,7 @@ async function settleFinishedRoom(room) {
       );
     }
 
-    if (!hasBot && assetType === "PI") {
+    if (entryFee > 0 && ["PI", "POINTS", "POC"].includes(assetType)) {
       await settleBattleInviteCommission(room, battle, connection);
     }
 

@@ -24,13 +24,16 @@ const {
   markRewardClaimed,
   findBattleCommissionReward,
   createBattleCommissionReward,
+  enqueueInviteCommissionRewardJob,
   incrementQualifiedInvite,
   incrementCommissionStats,
   incrementQualificationRewardStats,
   updateInviteLevel,
   getInviteDashboard,
   listInviteRelations,
-  listInviteRewards
+  listInviteRewards,
+  listInviteCommissionRewardJobs,
+  getInviteCommissionRewardQueueStats
 } = require("../repositories/growth.repository");
 
 function createNo(prefix) {
@@ -39,6 +42,29 @@ function createNo(prefix) {
 
 function normalizeAmount(value) {
   return Number(Number(value || 0).toFixed(8));
+}
+
+function normalizeAssetAmount(assetType, value) {
+  const normalizedAssetType = String(assetType || "PI").toUpperCase();
+  const amount = Number(value || 0);
+  if (!Number.isFinite(amount) || amount <= 0) return 0;
+  if (normalizedAssetType === "POINTS") return Math.floor(amount);
+  if (normalizedAssetType === "POC") return Number(amount.toFixed(6));
+  return normalizeAmount(amount);
+}
+
+function isCommissionAssetEnabled(assetType, inviteConfig) {
+  const normalizedAssetType = String(assetType || "PI").toUpperCase();
+  if (normalizedAssetType === "POINTS") return inviteConfig.pointsCommissionEnabled !== false;
+  if (normalizedAssetType === "POC") return inviteConfig.pocCommissionEnabled !== false;
+  if (normalizedAssetType === "PI") return inviteConfig.piCommissionEnabled !== false;
+  return false;
+}
+
+function isCommissionModeEnabled(mode, inviteConfig) {
+  const modes = Array.isArray(inviteConfig.commissionModes) ? inviteConfig.commissionModes : [];
+  if (!modes.length) return ["points_battle", "poc_battle", "pi_battle"].includes(mode);
+  return modes.includes(mode);
 }
 
 function sortByUid(rows = [], key = "uid") {
@@ -339,6 +365,14 @@ async function getMyInviteInfo(uid) {
       bindRequiredMessage: config.inviteRewards?.bindRequiredMessage || "请先绑定邀请人，再继续对战。",
       qualificationRequiredBattles: Number(config.inviteRewards?.qualificationRequiredBattles || 2),
       qualificationRewardAmount: Number(config.inviteRewards?.qualificationRewardAmount || 0),
+      battleCommissionEnabled: config.inviteRewards?.battleCommissionEnabled !== false,
+      piCommissionEnabled: config.inviteRewards?.piCommissionEnabled !== false,
+      pointsCommissionEnabled: config.inviteRewards?.pointsCommissionEnabled !== false,
+      pocCommissionEnabled: config.inviteRewards?.pocCommissionEnabled !== false,
+      botCommissionEnabled: config.inviteRewards?.botCommissionEnabled === true,
+      commissionModes: Array.isArray(config.inviteRewards?.commissionModes)
+        ? config.inviteRewards.commissionModes
+        : ["points_battle", "poc_battle", "pi_battle"],
       levels: getEnabledInviteLevels(config).map((item) => ({
         key: item.key,
         name: item.name,
@@ -354,6 +388,9 @@ async function getMyInviteInfo(uid) {
       qualifiedInviteCount: Number(refreshed.stats?.qualified_invite_count || 0),
       paidBattleCount: Number(refreshed.stats?.paid_battle_count || 0),
       totalCommission: Number(refreshed.stats?.total_commission || 0),
+      totalCommissionPi: Number(refreshed.stats?.total_commission_pi || refreshed.stats?.total_commission || 0),
+      totalCommissionPoints: Number(refreshed.stats?.total_commission_points || 0),
+      totalCommissionPoc: Number(refreshed.stats?.total_commission_poc || 0),
       totalQualificationReward: Number(refreshed.stats?.total_qualification_reward || 0)
     },
     inviter: refreshed.relation
@@ -368,6 +405,7 @@ async function getMyInviteInfo(uid) {
     claimableRewards: refreshed.rewards.map((reward) => ({
       rewardNo: reward.reward_no,
       rewardType: reward.reward_type,
+      assetType: reward.asset_type || "PI",
       amount: Number(reward.amount || 0),
       inviteeUid: reward.invitee_uid || "",
       inviteePiUsername: reward.invitee_pi_username || "",
@@ -377,6 +415,7 @@ async function getMyInviteInfo(uid) {
     rewardHistory: (refreshed.rewardRows || []).map((reward) => ({
       rewardNo: reward.reward_no,
       rewardType: reward.reward_type,
+      assetType: reward.asset_type || "PI",
       amount: Number(reward.amount || 0),
       rate: Number(reward.rate || 0),
       status: reward.status || "",
@@ -452,15 +491,28 @@ async function settleBattleInviteCommission(room, battle, connection) {
     return [];
   }
 
+  const mode = String(battle.mode || room.mode || "");
+  const assetType = String(battle.asset_type || "PI").toUpperCase();
   const entryFee = Number(battle.entry_fee || 0);
-  if (entryFee <= 0 || Number(battle.is_bot_room || 0) === 1) {
+  const isBotRoom = Number(battle.is_bot_room || 0) === 1 || (room.players || []).some((player) => String(player?.uid || "").startsWith("bot_"));
+  if (
+    entryFee <= 0 ||
+    !["PI", "POINTS", "POC"].includes(assetType) ||
+    !isCommissionAssetEnabled(assetType, inviteConfig) ||
+    !isCommissionModeEnabled(mode, inviteConfig) ||
+    (isBotRoom && inviteConfig.botCommissionEnabled !== true)
+  ) {
     return [];
   }
 
-  const platformFeeAmount = normalizeAmount(entryFee * 2 * Number(battle.platform_fee_rate || 0));
+  const recordedPlatformFee = Number((battle.platform_fee_amount ?? battle.platform_fee) || 0);
+  const platformFeeAmount = normalizeAssetAmount(
+    assetType,
+    recordedPlatformFee > 0 ? recordedPlatformFee : entryFee * 2 * Number(battle.platform_fee_rate || 0)
+  );
   const maxCommissionRate = Number(inviteConfig.maxCommissionRate || 0.2);
   const commissionBase =
-    inviteConfig.commissionBase === "platform_fee" ? platformFeeAmount : entryFee;
+    inviteConfig.commissionBase === "platform_fee" ? platformFeeAmount : normalizeAssetAmount(assetType, entryFee);
   const settled = [];
   let remainingCommissionBudget = platformFeeAmount;
   const candidates = [];
@@ -488,10 +540,11 @@ async function settleBattleInviteCommission(room, battle, connection) {
 
     const level = await refreshInviteLevel(inviterUid, config, connection);
     const safeRate = Math.min(Number(level?.commissionRate || 0), maxCommissionRate);
-    const rawAmount = normalizeAmount(commissionBase * safeRate);
-    const amount = normalizeAmount(Math.min(rawAmount, remainingCommissionBudget));
+    const rawAmount = normalizeAssetAmount(assetType, commissionBase * safeRate);
+    const amount = normalizeAssetAmount(assetType, Math.min(rawAmount, remainingCommissionBudget));
 
     if (amount <= 0) continue;
+    if (assetType === "POINTS" && amount < 1) continue;
 
     const reward = await createBattleCommissionReward(
       {
@@ -499,28 +552,41 @@ async function settleBattleInviteCommission(room, battle, connection) {
         inviteeUid: player.uid,
         roomNo: room.roomNo,
         levelKey: level?.key || "",
+        assetType,
         amount,
-        rate: safeRate
+        rate: safeRate,
+        status: assetType === "PI" ? "claimed" : "queued"
       },
       connection
     );
 
     if (!reward) continue;
 
-    await increaseBalance(
-      inviterUid,
-      amount,
-      {
-        type: "invite_commission",
-        relatedType: "invite_battle_commission",
-        relatedId: reward.reward_no,
-        remark: `邀请好友${getDisplayName(player, "好友")}付费对战奖励 · 房间${room.roomNo}`
-      },
-      connection
-    );
+    if (assetType === "PI") {
+      await increaseBalance(
+        inviterUid,
+        amount,
+        {
+          type: "invite_commission",
+          relatedType: "invite_battle_commission",
+          relatedId: reward.reward_no,
+          remark: `邀请好友${getDisplayName(player, "好友")}付费对战奖励 · 房间${room.roomNo}`
+        },
+        connection
+      );
 
-    await incrementCommissionStats(inviterUid, amount, connection);
-    remainingCommissionBudget = normalizeAmount(remainingCommissionBudget - amount);
+      await incrementCommissionStats(inviterUid, amount, "PI", connection);
+    } else {
+      await enqueueInviteCommissionRewardJob(
+        {
+          ...reward,
+          remark: `Pi闪电战邀请对战提成 · 房间${room.roomNo}`
+        },
+        connection
+      );
+    }
+
+    remainingCommissionBudget = normalizeAssetAmount(assetType, remainingCommissionBudget - amount);
     settled.push(reward);
   }
 
@@ -528,16 +594,20 @@ async function settleBattleInviteCommission(room, battle, connection) {
 }
 
 async function listAdminGrowthData() {
-  const [transfers, relations, rewards] = await Promise.all([
+  const [transfers, relations, rewards, inviteCommissionJobs, inviteCommissionQueueStats] = await Promise.all([
     listTransfers("", 200),
     listInviteRelations(200),
-    listInviteRewards(200)
+    listInviteRewards(200),
+    listInviteCommissionRewardJobs(200),
+    getInviteCommissionRewardQueueStats()
   ]);
 
   return {
     transfers,
     relations,
-    rewards
+    rewards,
+    inviteCommissionJobs,
+    inviteCommissionQueueStats
   };
 }
 

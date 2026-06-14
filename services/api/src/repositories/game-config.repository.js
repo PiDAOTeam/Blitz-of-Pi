@@ -467,6 +467,16 @@ const DEFAULT_GAME_CONFIG = {
     "qualificationRequiredBattles": 2,
     "qualificationRewardAmount": 0.02,
     "battleCommissionEnabled": true,
+    "piCommissionEnabled": true,
+    "pointsCommissionEnabled": true,
+    "pocCommissionEnabled": true,
+    "botCommissionEnabled": false,
+    "commissionModes": [
+      "points_battle",
+      "poc_battle",
+      "pi_battle"
+    ],
+    "pointsRoundMode": "floor",
     "commissionBase": "entry_fee",
     "maxCommissionRate": 0.2,
     "levels": [
@@ -1316,6 +1326,11 @@ function normalizeInviteRewardsConfig(inviteRewards = {}) {
         .map((mode) => String(mode || "").trim())
         .filter((mode, index, list) => SUPPORTED_BATTLE_MODES.includes(mode) && list.indexOf(mode) === index)
     : defaults.bindRequiredModes;
+  const commissionModes = Array.isArray(inviteRewards.commissionModes)
+    ? inviteRewards.commissionModes
+        .map((mode) => String(mode || "").trim())
+        .filter((mode, index, list) => ["points_battle", "poc_battle", "pi_battle"].includes(mode) && list.indexOf(mode) === index)
+    : defaults.commissionModes;
   const sourceLevels = Array.isArray(inviteRewards.levels) && inviteRewards.levels.length
     ? inviteRewards.levels
     : defaults.levels;
@@ -1341,6 +1356,12 @@ function normalizeInviteRewardsConfig(inviteRewards = {}) {
         ? Number(qualificationRewardAmount.toFixed(8))
         : defaults.qualificationRewardAmount,
     battleCommissionEnabled: inviteRewards.battleCommissionEnabled !== false,
+    piCommissionEnabled: inviteRewards.piCommissionEnabled !== false,
+    pointsCommissionEnabled: inviteRewards.pointsCommissionEnabled !== false,
+    pocCommissionEnabled: inviteRewards.pocCommissionEnabled !== false,
+    botCommissionEnabled: inviteRewards.botCommissionEnabled === true,
+    commissionModes: commissionModes.length ? commissionModes : defaults.commissionModes,
+    pointsRoundMode: "floor",
     commissionBase: ["entry_fee", "platform_fee"].includes(inviteRewards.commissionBase)
       ? inviteRewards.commissionBase
       : defaults.commissionBase,
