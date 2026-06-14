@@ -964,6 +964,19 @@ function getRemoteAssetSnapshot(e) {
   if (Array.isArray(t.assets)) return t.assets.find((r) => String(r.assetType || r.asset_type || r.type || "").toUpperCase() === e) || null;
   return null;
 }
+function getRemoteAssetSyncNotice() {
+  const e = a.wallet || {};
+  if (e.remoteAssetsError) return { tone: "warning", title: n("assetSyncSlow"), detail: n("assetSyncUsingLocal") };
+  if (e.remoteAssets?.stale || e.remoteAssetsWarning) return { tone: "muted", title: n("assetSyncRecentBalance"), detail: n("assetSyncWillRefresh") };
+  return null;
+}
+function renderRemoteAssetSyncNotice(e = "inline") {
+  const t = getRemoteAssetSyncNotice();
+  return t ? `<div class="asset-sync-notice ${i(t.tone)} ${i(e)}" role="status">
+    <strong>${i(t.title)}</strong>
+    <span>${i(t.detail)}</span>
+  </div>` : "";
+}
 function getModeBalanceState(e) {
   const t = modeAssetType(e);
   if (t === "FREE") return { assetType: t, balance: 0, label: n("modeEconomyFree"), error: "" };
@@ -972,7 +985,10 @@ function getModeBalanceState(e) {
     return { assetType: t, balance: o, label: formatModeAmount(e, o), error: "" };
   }
   const r = getRemoteAssetSnapshot(t);
-  if (a.wallet?.remoteAssetsError) return { assetType: t, balance: 0, label: `-- ${assetUnitLabel(t)}`, error: /资产网络繁忙|Asset network busy/i.test(a.wallet.remoteAssetsError) ? n("assetGatewayBusy") : a.wallet.remoteAssetsError };
+  if (a.wallet?.remoteAssetsError) {
+    const o = r ? Number(r.balance ?? r.availableBalance ?? r.available_balance ?? r.amount ?? 0) : 0, s = Number.isFinite(o) ? o : 0;
+    return { assetType: t, balance: s, label: r ? `${formatModeAmount(e, s)} · ${n("assetSyncingShort")}` : `-- ${assetUnitLabel(t)}`, error: /资产网络繁忙|资产同步繁忙|Asset network busy|Asset sync/i.test(a.wallet.remoteAssetsError) ? n("assetGatewayBusy") : a.wallet.remoteAssetsError };
+  }
   if (!a.user?.piUserId && !a.user?.pi_user_id && !a.user?.piUsername && !a.user?.pi_username) return { assetType: t, balance: 0, label: `-- ${assetUnitLabel(t)}`, error: "\u5F53\u524D\u8D26\u53F7\u7F3A\u5C11 Pi UID/username\uFF0C\u4E0D\u80FD\u8FDB\u5165\u8D44\u4EA7\u573A" };
   if (!r) return { assetType: t, balance: 0, label: `-- ${assetUnitLabel(t)}`, error: "\u8D44\u4EA7\u4F59\u989D\u6682\u672A\u540C\u6B65\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5" };
   const o = Number(r.balance ?? r.availableBalance ?? r.available_balance ?? r.amount ?? 0);
@@ -1346,6 +1362,7 @@ function vr(e) {
     <div class="wallet-ledger-tabs">
       ${P.map((p) => `<button type="button" class="${a.walletLedgerFilter === p ? "active" : ""}" data-wallet-ledger-filter="${i(p)}">${i(walletLedgerFilterLabel(p))}</button>`).join("")}
     </div>
+    ${renderRemoteAssetSyncNotice("ledger")}
     <div class="wallet-ledger-list">
       ${u.map((p) => {
     const f = p.balance_after !== null && p.balance_after !== void 0 && p.balance_after !== "", m = Number(p.balance_after || 0), g = kr(p.direction), C = p.direction === "in" || p.direction === "unlock" ? "in" : p.direction === "lock" ? "lock" : "out", T = p.created_at ? new Date(p.created_at).toLocaleString(void 0, { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }) : "-";
@@ -1380,6 +1397,7 @@ function vr(e) {
       <div class="wallet-ledger-tabs">
         ${P.map((p) => `<button type="button" class="${a.walletLedgerFilter === p ? "active" : ""}" data-wallet-ledger-filter="${i(p)}">${i(walletLedgerFilterLabel(p))}</button>`).join("")}
       </div>
+      ${renderRemoteAssetSyncNotice("ledger")}
       <p class="wallet-ledger-empty">${i(o)}</p>
     </section>`;
 }
@@ -2454,6 +2472,7 @@ function L() {
           <button type="button" class="ghost-button" id="edit-profile">${i(n("edit"))}</button>
           ${Sr()}
           <section class="profile-wallet" aria-label="${i(n("walletOverview"))}">
+            ${renderRemoteAssetSyncNotice("wallet")}
             <div class="profile-wallet-grid">
               <article><span>${i(n("availableBalance"))}</span><strong>${b(t?.availableBalance ?? 0)}</strong></article>
               <article><span>${i(n("pointsAsset"))}</span><strong>${i(getModeBalanceState("points_battle").label)}</strong></article>
