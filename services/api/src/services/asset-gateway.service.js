@@ -10,6 +10,7 @@ const { recordExternalDependencyResult } = require("./external-health.service");
 
 const SUPPORTED_REMOTE_ASSETS = new Set(["POINTS", "POC"]);
 const SUMMARY_CACHE_TTL_MS = 15_000;
+const SUMMARY_STALE_TTL_MS = 2 * 60_000;
 const TRANSIENT_RETRY_LOG_INTERVAL_MS = 60_000;
 const summaryCache = new Map();
 const transientRetryLogState = new Map();
@@ -57,6 +58,8 @@ function createGatewayBusyError(cause = null) {
   const error = new Error("资产网络繁忙，请稍后重试");
   error.expectedBusinessError = true;
   error.businessCode = 1701;
+  error.gatewayBusy = true;
+  error.retryAfterSeconds = 3;
   if (cause) {
     error.cause = cause;
   }
@@ -220,11 +223,21 @@ async function summary(user) {
     return cached.data;
   }
 
-  const data = await callGateway("summary", buildIdentity(user));
-  summaryCache.set(cacheKey, {
-    cachedAt: Date.now(),
-    data
-  });
+  let data;
+  try {
+    data = await callGateway("summary", buildIdentity(user));
+  } catch (error) {
+    if (cached && Date.now() - cached.cachedAt <= SUMMARY_STALE_TTL_MS && error?.businessCode === 1701) {
+      return {
+        ...cached.data,
+        stale: true,
+        cachedAt: cached.cachedAt,
+        remoteAssetsWarning: "资产同步稍慢，正在显示最近一次余额"
+      };
+    }
+    throw error;
+  }
+  summaryCache.set(cacheKey, { cachedAt: Date.now(), data });
   if (summaryCache.size > 1000) {
     const oldestKey = summaryCache.keys().next().value;
     summaryCache.delete(oldestKey);

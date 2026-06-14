@@ -191,6 +191,7 @@ function isExpectedBusinessError(message) {
 function logRouteError(error, message, req) {
   const isExpected = error.expectedBusinessError || isExpectedBusinessError(message);
   if (isExpected) {
+    if (error.businessCode === 1701) return;
     console.log("[api] business rejected:", {
       method: req.method,
       url: req.url,
@@ -757,6 +758,14 @@ async function handleRoutes(req, res) {
   } catch (error) {
     const message = error.message || "服务处理失败";
     logRouteError(error, message, req);
+    if (error.businessCode === 1701) {
+      fail(res, message, 503, 1701, {
+        retryable: true,
+        retryAfterSeconds: error.retryAfterSeconds || 3,
+        reason: "asset_gateway_busy"
+      });
+      return;
+    }
     fail(res, message, 400, error.businessCode || 1000);
   }
 }

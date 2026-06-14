@@ -13,11 +13,11 @@ function ok(res, data = null, message = "success") {
   });
 }
 
-function fail(res, message = "请求失败", statusCode = 400, code = 1000) {
+function fail(res, message = "请求失败", statusCode = 400, code = 1000, data = null) {
   sendJson(res, statusCode, {
     code,
     message,
-    data: null
+    data
   });
 }
 

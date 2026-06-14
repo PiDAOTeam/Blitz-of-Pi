@@ -201,8 +201,11 @@ function Qt() {
 function matchIsRecoverable() {
   return !!a.matchRecoverable;
 }
+function isAssetGatewayBusyError(e) {
+  return e?.code === 1701 || e?.data?.reason === "asset_gateway_busy" || /资产网络繁忙|资产同步繁忙|Asset network busy|Asset sync/i.test(N(e));
+}
 function matchFailureStatusText() {
-  if (/资产网络繁忙|Asset network busy/i.test(a.matchCancelMessage || "")) return n("matchAssetGatewayBusy");
+  if (/资产网络繁忙|资产同步繁忙|Asset network busy|Asset sync/i.test(a.matchCancelMessage || "")) return n("matchAssetGatewayBusy");
   return n("matchTimeoutRetry");
 }
 function markMatchRecoverable(e = "") {
@@ -238,6 +241,7 @@ function xn() {
   return window.location.hostname === "sandbox.minepi.com" || document.referrer.includes("sandbox.minepi.com") || t.includes("sandbox.minepi.com") || e.get("sandbox") === "true" || e.get("pi_sandbox") === "true" || !!window.__BLITZ_PI_SANDBOX__;
 }
 function N(e) {
+  if (e?.code === 1701 || e?.data?.reason === "asset_gateway_busy") return n("assetGatewayBusy");
   if (e instanceof Error) return e.message;
   if (typeof e == "string") return e;
   try {
@@ -265,10 +269,17 @@ async function w(e, t) {
   } finally {
     window.clearTimeout(o);
   }
-  const l = await s.json();
+  let l;
+  try {
+    l = await s.json();
+  } catch {
+    const c = new Error(n("networkRequestFailed"));
+    c.status = s.status, c.data = null;
+    throw c;
+  }
   if (!s.ok || l.code !== 0) {
     const c = new Error(l.message || n("requestFailed"));
-    c.code = l.code;
+    c.code = l.code, c.status = s.status, c.data = l.data || null;
     throw c;
   }
   return l.data;
@@ -890,7 +901,7 @@ function getModeBalanceState(e) {
     return { assetType: t, balance: o, label: formatModeAmount(e, o), error: "" };
   }
   const r = getRemoteAssetSnapshot(t);
-  if (a.wallet?.remoteAssetsError) return { assetType: t, balance: 0, label: `-- ${assetUnitLabel(t)}`, error: a.wallet.remoteAssetsError };
+  if (a.wallet?.remoteAssetsError) return { assetType: t, balance: 0, label: `-- ${assetUnitLabel(t)}`, error: /资产网络繁忙|Asset network busy/i.test(a.wallet.remoteAssetsError) ? n("assetGatewayBusy") : a.wallet.remoteAssetsError };
   if (!a.user?.piUserId && !a.user?.pi_user_id && !a.user?.piUsername && !a.user?.pi_username) return { assetType: t, balance: 0, label: `-- ${assetUnitLabel(t)}`, error: "\u5F53\u524D\u8D26\u53F7\u7F3A\u5C11 Pi UID/username\uFF0C\u4E0D\u80FD\u8FDB\u5165\u8D44\u4EA7\u573A" };
   if (!r) return { assetType: t, balance: 0, label: `-- ${assetUnitLabel(t)}`, error: "\u8D44\u4EA7\u4F59\u989D\u6682\u672A\u540C\u6B65\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5" };
   const o = Number(r.balance ?? r.availableBalance ?? r.available_balance ?? r.amount ?? 0);
