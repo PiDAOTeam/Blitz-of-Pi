@@ -170,7 +170,7 @@ async function getCurrentWeekRangeFromDb() {
   return getCurrentWeekRange(now);
 }
 
-async function sumPointsPlatformFee({ startAt, endAt, sourceMode = "points_battle" }) {
+async function sumPointsPlatformFee({ startAt, endAt, sourceMode = "points_battle", includeBotRooms = true }) {
   await ensureWatchShareholderSchema();
   const rows = await query(
     `SELECT COALESCE(SUM(FLOOR(platform_fee_amount)), 0) AS total
@@ -178,16 +178,16 @@ async function sumPointsPlatformFee({ startAt, endAt, sourceMode = "points_battl
      WHERE mode = ?
        AND asset_type = 'POINTS'
        AND status = 'finished'
-       AND is_bot_room = 0
+       AND (? = 1 OR is_bot_room = 0)
        AND asset_settlement_status = 'settled'
        AND finished_at >= ?
        AND finished_at <= ?`,
-    [sourceMode, startAt, endAt]
+    [sourceMode, includeBotRooms ? 1 : 0, startAt, endAt]
   );
   return Math.max(0, Math.floor(Number(rows[0]?.total || 0)));
 }
 
-async function getPointsBattleStats({ startAt, endAt, sourceMode = "points_battle" }) {
+async function getPointsBattleStats({ startAt, endAt, sourceMode = "points_battle", includeBotRooms = true }) {
   await ensureWatchShareholderSchema();
   const rows = await query(
     `SELECT
@@ -197,11 +197,11 @@ async function getPointsBattleStats({ startAt, endAt, sourceMode = "points_battl
      WHERE mode = ?
        AND asset_type = 'POINTS'
        AND status = 'finished'
-       AND is_bot_room = 0
+       AND (? = 1 OR is_bot_room = 0)
        AND asset_settlement_status = 'settled'
        AND finished_at >= ?
        AND finished_at <= ?`,
-    [sourceMode, startAt, endAt]
+    [sourceMode, includeBotRooms ? 1 : 0, startAt, endAt]
   );
   return {
     roomCount: Number(rows[0]?.room_count || 0),

@@ -83,7 +83,7 @@ function observeRealtimeStage(stage, detail = {}) {
 }
 
 function getBotMoveIntervalMs(room) {
-  const seconds = Number(room?.timing?.botMoveIntervalSeconds || 2.6);
+  const seconds = Number(room?.botConfig?.moveIntervalSeconds || room?.timing?.botMoveIntervalSeconds || 2.6);
   return Math.max(1000, Math.min(10000, Math.round(seconds * 1000)));
 }
 

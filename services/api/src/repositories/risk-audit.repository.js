@@ -110,7 +110,11 @@ async function checkBattleIntegrity(report) {
          AND b.created_at < DATE_SUB(NOW(), INTERVAL 5 MINUTE)
          AND (b.entry_fee > 0 OR COALESCE(b.asset_type, 'FREE') <> 'FREE')
         THEN 1 ELSE 0 END) AS stale_playing_rooms,
-      SUM(CASE WHEN b.entry_fee > 0 AND b.is_bot_room = 1 THEN 1 ELSE 0 END) AS paid_bot_rooms,
+      SUM(CASE
+        WHEN b.entry_fee > 0
+         AND b.is_bot_room = 1
+         AND b.mode <> 'points_battle'
+        THEN 1 ELSE 0 END) AS unexpected_paid_bot_rooms,
       SUM(CASE WHEN b.status = 'manual_review' THEN 1 ELSE 0 END) AS manual_review_rooms,
       SUM(CASE
         WHEN b.status = 'finished'
@@ -127,8 +131,8 @@ async function checkBattleIntegrity(report) {
     FROM battle_rooms b
   `);
 
-  if (toNumber(summary.paid_bot_rooms) > 0) {
-    report.add("danger", "付费场出现机器人局", "付费模式应只允许真人匹配。", summary);
+  if (toNumber(summary.unexpected_paid_bot_rooms) > 0) {
+    report.add("danger", "异常付费补位局", "目前仅小富豪允许智能补位，其他付费场出现机器人局需要核对。", summary);
     return;
   }
 
@@ -142,7 +146,7 @@ async function checkBattleIntegrity(report) {
     return;
   }
 
-  report.add("ok", "对局结算健康", "资产场超时房间、付费机器人局和待复核房间均正常。", summary);
+  report.add("ok", "对局结算健康", "资产场超时房间、异常补位局和待复核房间均正常。", summary);
 }
 
 async function checkWalletIntegrity(report) {

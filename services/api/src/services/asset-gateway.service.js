@@ -269,6 +269,35 @@ async function settle({
   });
 }
 
+async function botSettle({
+  assetType,
+  roomNo,
+  user,
+  userResult,
+  entryAmount,
+  rewardAmount,
+  platformFeeAmount,
+  idempotencyKey,
+  remark = ""
+}) {
+  const normalizedAssetType = normalizeAssetType(assetType);
+  assertGatewayReady(normalizedAssetType);
+  const userIdentity = buildIdentity(user);
+
+  return callGateway("botsettle", {
+    asset_type: normalizedAssetType,
+    external_order_no: roomNo,
+    idempotency_key: idempotencyKey,
+    user_pi_uid: userIdentity.pi_uid,
+    user_pi_username: userIdentity.pi_username,
+    user_result: userResult,
+    entry_amount: normalizeAmount(normalizedAssetType, entryAmount),
+    reward_amount: normalizeAmount(normalizedAssetType, rewardAmount),
+    platform_fee_amount: normalizeAmount(normalizedAssetType, platformFeeAmount),
+    remark
+  });
+}
+
 async function reward({ assetType, user, orderNo, amount, idempotencyKey, remark = "" }) {
   const normalizedAssetType = normalizeAssetType(assetType);
   assertGatewayReady(normalizedAssetType);
@@ -290,6 +319,7 @@ async function reward({ assetType, user, orderNo, amount, idempotencyKey, remark
 
 module.exports = {
   SUPPORTED_REMOTE_ASSETS,
+  botSettle,
   buildIdentity,
   freeze,
   normalizeAmount,

@@ -755,9 +755,24 @@ function applyBotMove(room) {
   if (!bot || !human || room.status !== "playing") return null;
   if (getReadySeconds(room) > 0) return null;
 
-  const gain = 20 + Math.floor(nextRoomRandom(room) * 45);
-  const chain = nextRoomRandom(room) > 0.74 ? 2 : 1;
-  const attack = chain > 1 ? 1 : 0;
+  const botConfig = room.botConfig || {};
+  const targetMin = Math.max(0, Number(botConfig.targetScoreMin || 0));
+  const targetMax = Math.max(targetMin, Number(botConfig.targetScoreMax || 0));
+  const remainSeconds = getRemainSeconds(room);
+  const totalSeconds = Math.max(1, Number(getRoomTiming(room).paidRoundSeconds || getRoomTiming(room).quickRoundSeconds || 90));
+  const elapsedRatio = Math.max(0, Math.min(1, (totalSeconds - remainSeconds) / totalSeconds));
+  const targetNow = targetMax > 0
+    ? targetMin + (targetMax - targetMin) * elapsedRatio
+    : 0;
+  const behindTarget = targetNow > 0 ? targetNow - Number(bot.score || 0) : 0;
+  const baseGain = targetMax > 0
+    ? Math.max(18, Math.min(95, behindTarget / Math.max(1, remainSeconds / Math.max(0.5, Number(botConfig.moveIntervalSeconds || 1.2)))))
+    : 20 + Math.floor(nextRoomRandom(room) * 45);
+  const variance = 0.78 + nextRoomRandom(room) * 0.44;
+  const gain = Math.max(12, Math.round(baseGain * variance));
+  const chainChance = botConfig.difficulty === "expert" ? 0.38 : botConfig.difficulty === "hard" ? 0.31 : botConfig.difficulty === "easy" ? 0.16 : 0.24;
+  const chain = nextRoomRandom(room) < chainChance ? 2 : 1;
+  const attack = chain > 1 && nextRoomRandom(room) > 0.35 ? 1 : 0;
 
   bot.score += gain * chain;
   bot.combo = chain;

@@ -168,6 +168,7 @@ function getEstimatedRewardForUser(bundle, user = {}) {
 
 async function getWeeklyEstimateBundle(config, { force = false } = {}) {
   const normalizedConfig = normalizeShareholderConfig({ watchShareholder: config });
+  const gameConfig = await readGameConfig();
   const subsidyPointsPerUser = normalizedConfig.subsidyEnabled ? normalizedConfig.subsidyPointsPerUser : 0;
   const range = await getCurrentWeekRangeFromDb();
   const cacheKey = JSON.stringify({
@@ -184,7 +185,12 @@ async function getWeeklyEstimateBundle(config, { force = false } = {}) {
   const startAt = formatDateTime(range.start);
   const endAt = formatDateTime(range.now);
   const [stats, snapshot] = await Promise.all([
-    getPointsBattleStats({ startAt, endAt, sourceMode: normalizedConfig.sourceMode }),
+    getPointsBattleStats({
+      startAt,
+      endAt,
+      sourceMode: normalizedConfig.sourceMode,
+      includeBotRooms: gameConfig.pointsBattle?.botCountInWatchShareholder !== false
+    }),
     fetchWatchNodeSnapshot()
   ]);
   const poolPoints = Math.floor(stats.platformFeePoints * normalizedConfig.shareRate);
@@ -230,7 +236,8 @@ async function getWeeklyEstimate(config, options = {}) {
 
 async function settlePreviousWeek({ force = false } = {}) {
   await ensureWatchShareholderSchema();
-  const config = normalizeShareholderConfig(await readGameConfig());
+  const gameConfig = await readGameConfig();
+  const config = normalizeShareholderConfig(gameConfig);
   if (!config.enabled) {
     throw new Error("腕表股东分红未开启");
   }
@@ -240,7 +247,8 @@ async function settlePreviousWeek({ force = false } = {}) {
   const platformFeePoints = await sumPointsPlatformFee({
     startAt,
     endAt,
-    sourceMode: config.sourceMode
+    sourceMode: config.sourceMode,
+    includeBotRooms: gameConfig.pointsBattle?.botCountInWatchShareholder !== false
   });
   const poolPoints = Math.floor(platformFeePoints * config.shareRate);
   const snapshot = await fetchWatchNodeSnapshot();

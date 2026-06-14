@@ -51,12 +51,23 @@ const DEFAULT_GAME_CONFIG = {
     key: "points_battle",
     name: "小富豪",
     assetType: "POINTS",
-    enabled: false,
+    enabled: true,
     entryFee: 100,
     platformFeeRate: 0.3,
     rewardRate: 0.7,
-    botMatchEnabled: false,
-    botRewardsEnabled: false
+    botMatchEnabled: true,
+    botRewardsEnabled: true,
+    botFallbackSeconds: 15,
+    botDifficulty: "normal",
+    botDifficultyRanges: {
+      easy: { minScore: 1800, maxScore: 2600, moveIntervalSeconds: 1.5 },
+      normal: { minScore: 2600, maxScore: 3600, moveIntervalSeconds: 1.2 },
+      hard: { minScore: 3600, maxScore: 4600, moveIntervalSeconds: 1 },
+      expert: { minScore: 4600, maxScore: 5600, moveIntervalSeconds: 0.85 }
+    },
+    botCountInRank: true,
+    botCountInWeekly: true,
+    botCountInWatchShareholder: true
   },
   pocBattle: {
     key: "poc_battle",
@@ -485,7 +496,7 @@ function normalizeBattleModeConfig(modeKey, incoming = {}, defaults = {}) {
     1 - platformFeeRate
   );
 
-  return {
+  const normalized = {
     ...defaults,
     ...incoming,
     key: modeKey,
@@ -498,6 +509,52 @@ function normalizeBattleModeConfig(modeKey, incoming = {}, defaults = {}) {
     botMatchEnabled: modeKey === "quick_battle" ? incoming.botMatchEnabled !== false : incoming.botMatchEnabled === true,
     botRewardsEnabled: Boolean(incoming.botRewardsEnabled)
   };
+
+  if (modeKey === "points_battle") {
+    const fallbackDefaults = defaults.botDifficultyRanges || DEFAULT_GAME_CONFIG.pointsBattle.botDifficultyRanges;
+    const incomingRanges = incoming.botDifficultyRanges || {};
+    const rangeKeys = ["easy", "normal", "hard", "expert"];
+
+    normalized.botFallbackSeconds = normalizeNumberInRange(
+      incoming.botFallbackSeconds,
+      defaults.botFallbackSeconds || DEFAULT_GAME_CONFIG.pointsBattle.botFallbackSeconds,
+      5,
+      120
+    );
+    normalized.botDifficulty = ["easy", "normal", "hard", "expert"].includes(String(incoming.botDifficulty || defaults.botDifficulty))
+      ? String(incoming.botDifficulty || defaults.botDifficulty)
+      : DEFAULT_GAME_CONFIG.pointsBattle.botDifficulty;
+    normalized.botDifficultyRanges = Object.fromEntries(
+      rangeKeys.map((key) => {
+        const fallback = fallbackDefaults[key] || DEFAULT_GAME_CONFIG.pointsBattle.botDifficultyRanges[key];
+        const range = incomingRanges[key] || {};
+        const minScore = normalizeNumberInRange(range.minScore, fallback.minScore, 0, 20000);
+        const maxScore = Math.max(
+          minScore,
+          normalizeNumberInRange(range.maxScore, fallback.maxScore, 0, 20000)
+        );
+        return [
+          key,
+          {
+            minScore,
+            maxScore,
+            moveIntervalSeconds: normalizeNumberInRange(
+              range.moveIntervalSeconds,
+              fallback.moveIntervalSeconds,
+              0.5,
+              10,
+              2
+            )
+          }
+        ];
+      })
+    );
+    normalized.botCountInRank = incoming.botCountInRank !== false;
+    normalized.botCountInWeekly = incoming.botCountInWeekly !== false;
+    normalized.botCountInWatchShareholder = incoming.botCountInWatchShareholder !== false;
+  }
+
+  return normalized;
 }
 
 function normalizeAssetGatewayConfig(assetGateway = {}) {

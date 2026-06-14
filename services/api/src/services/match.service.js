@@ -19,7 +19,7 @@ const {
   countActiveBattleRooms,
   expireStaleFreeBotRooms
 } = require("../repositories/battle.repository");
-const { settleRankMatch } = require("../repositories/rank.repository");
+const { settleRankBotMatch, settleRankMatch } = require("../repositories/rank.repository");
 const { settleBattleInviteCommission } = require("./growth.service");
 const { observeBattleStage } = require("./battle-observer.service");
 const { findUserByUid } = require("../repositories/user.repository");
@@ -155,6 +155,67 @@ function createBotPlayer() {
   };
 }
 
+function getPointsBotRange(modeConfig = {}) {
+  const difficulty = ["easy", "normal", "hard", "expert"].includes(String(modeConfig.botDifficulty))
+    ? String(modeConfig.botDifficulty)
+    : "normal";
+  const fallbackRanges = {
+    easy: { minScore: 1800, maxScore: 2600, moveIntervalSeconds: 1.5 },
+    normal: { minScore: 2600, maxScore: 3600, moveIntervalSeconds: 1.2 },
+    hard: { minScore: 3600, maxScore: 4600, moveIntervalSeconds: 1 },
+    expert: { minScore: 4600, maxScore: 5600, moveIntervalSeconds: 0.85 }
+  };
+  const range = modeConfig.botDifficultyRanges?.[difficulty] || fallbackRanges[difficulty];
+  return {
+    difficulty,
+    minScore: Math.max(0, Math.round(Number(range.minScore || fallbackRanges[difficulty].minScore))),
+    maxScore: Math.max(0, Math.round(Number(range.maxScore || fallbackRanges[difficulty].maxScore))),
+    moveIntervalSeconds: Math.max(0.5, Math.min(10, Number(range.moveIntervalSeconds || fallbackRanges[difficulty].moveIntervalSeconds)))
+  };
+}
+
+function getRoomTimingForMode(mode, timing = DEFAULT_TIMING, modeConfig = {}) {
+  if (mode !== "points_battle") {
+    return timing;
+  }
+  const botRange = getPointsBotRange(modeConfig);
+  return {
+    ...timing,
+    botMoveIntervalSeconds: botRange.moveIntervalSeconds
+  };
+}
+
+function getRoomBotConfig(mode, modeConfig = {}) {
+  if (mode !== "points_battle") return {};
+  const botRange = getPointsBotRange(modeConfig);
+  return {
+    difficulty: botRange.difficulty,
+    targetScoreMin: botRange.minScore,
+    targetScoreMax: botRange.maxScore,
+    moveIntervalSeconds: botRange.moveIntervalSeconds,
+    countInRank: modeConfig.botCountInRank !== false,
+    countInWeekly: modeConfig.botCountInWeekly !== false,
+    countInWatchShareholder: modeConfig.botCountInWatchShareholder !== false
+  };
+}
+
+function canUseBotRoom(mode, modeConfig = {}) {
+  if (mode === "quick_battle") {
+    return modeConfig.botMatchEnabled !== false;
+  }
+  return mode === "points_battle" && modeConfig.botMatchEnabled === true;
+}
+
+function getBotFallbackMs(mode, timing = DEFAULT_TIMING, modeConfig = {}) {
+  if (mode === "quick_battle") {
+    return Math.max(0, Number(timing.quickBotFallbackSeconds || 0) * 1000);
+  }
+  if (mode === "points_battle") {
+    return Math.max(0, Number(modeConfig.botFallbackSeconds || 0) * 1000);
+  }
+  return 0;
+}
+
 function normalizeBattleMode(mode) {
   return BATTLE_MODES[mode] ? mode : "quick_battle";
 }
@@ -248,7 +309,7 @@ function getQueueKey(mode) {
   return `${REDIS_QUEUE_PREFIX}${normalizeBattleMode(mode)}`;
 }
 
-function createRoom(playerA, playerB, mode = "quick_battle", timing = DEFAULT_TIMING) {
+function createRoom(playerA, playerB, mode = "quick_battle", timing = DEFAULT_TIMING, botConfig = {}) {
   const roomNo = `room_${Date.now()}_${crypto.randomBytes(6).toString("hex")}`;
   const toRoomPlayer = (player, seed) => ({
     uid: player.uid,
@@ -265,6 +326,7 @@ function createRoom(playerA, playerB, mode = "quick_battle", timing = DEFAULT_TI
     status: "playing",
     createdAt: new Date().toISOString(),
     timing,
+    botConfig,
     players: [
       toRoomPlayer(playerA, 1001),
       toRoomPlayer(playerB, 2002)
@@ -421,6 +483,10 @@ function getRewardAmount(entryFee, rewardRate, assetType) {
 }
 
 function isAssetGatewayModeAllowed(mode, user, config) {
+  if (isBotUid(user?.uid)) {
+    return true;
+  }
+
   const assetGatewayConfig = config.assetGateway || {};
   const modeAssetType = getModeAssetType(mode, config[getModeMeta(mode).configKey] || {});
 
@@ -577,11 +643,13 @@ async function createRoomInStore(playerA, playerB, mode = "quick_battle") {
     throw new Error("匹配队列异常，请重新匹配");
   }
 
-  if (battleMode !== "quick_battle" && (isBotUid(playerA.uid) || isBotUid(playerB.uid))) {
+  const hasBotPlayer = isBotUid(playerA.uid) || isBotUid(playerB.uid);
+  if (hasBotPlayer && !canUseBotRoom(battleMode, modeConfig)) {
     throw new Error(`${BATTLE_MODES[battleMode].name}只允许真人匹配，不能创建机器人房间`);
   }
 
-  const room = createRoom(playerA, playerB, battleMode, timing);
+  const roomTiming = getRoomTimingForMode(battleMode, timing, modeConfig);
+  const room = createRoom(playerA, playerB, battleMode, roomTiming, getRoomBotConfig(battleMode, modeConfig));
 
   const assetType = getModeAssetType(battleMode, modeConfig);
   const entryFee = normalizeEntryAmount(assetType, modeConfig.entryFee || 0);
@@ -590,7 +658,7 @@ async function createRoomInStore(playerA, playerB, mode = "quick_battle") {
   const isBotRoom = room.players.some((player) => isBotUid(player.uid));
   const remoteFreezes = [];
 
-  if (entryFee > 0 && isBotRoom) {
+  if (entryFee > 0 && isBotRoom && !canUseBotRoom(battleMode, modeConfig)) {
     throw new Error(`${BATTLE_MODES[battleMode].name}只允许真人匹配，不能创建机器人房间`);
   }
 
@@ -929,7 +997,7 @@ async function settleFinishedRoom(room) {
 
     const hasBot = room.players.some((player) => isBotUid(player.uid));
     const isBotWinner = isBotUid(winner.uid);
-    const rewardAmount = hasBot || isBotWinner ? 0 : Number(battle.reward_amount || 0);
+    const rewardAmount = isBotWinner ? 0 : Number(battle.reward_amount || 0);
     const entryFee = Number(battle.entry_fee || 0);
     const assetType = String(battle.asset_type || getModeAssetType(battle.mode || room.mode)).toUpperCase();
 
@@ -944,6 +1012,25 @@ async function settleFinishedRoom(room) {
         platformFeeAmount: Number(battle.platform_fee_amount || getPlatformFeeAmount(entryFee, battle.platform_fee_rate, assetType)),
         idempotencyKey: `${room.roomNo}:settle`,
         remark: "Pi闪电战付费对战结算"
+      });
+      await updateBattleAssetStatus(room.roomNo, "settled", "", connection);
+    }
+
+    if (entryFee > 0 && hasBot && isRemoteAssetType(assetType)) {
+      const human = room.players.find((player) => !isBotUid(player.uid));
+      if (!human) {
+        throw new Error("机器人局缺少真实用户，不能结算");
+      }
+      await assetGateway.botSettle({
+        assetType,
+        roomNo: room.roomNo,
+        user: human,
+        userResult: isBotWinner ? "lose" : "win",
+        entryAmount: entryFee,
+        rewardAmount: isBotWinner ? 0 : rewardAmount,
+        platformFeeAmount: Number(battle.platform_fee_amount || getPlatformFeeAmount(entryFee, battle.platform_fee_rate, assetType, rewardAmount)),
+        idempotencyKey: `${room.roomNo}:${human.uid}:botsettle`,
+        remark: "Pi闪电战机器人补位局结算"
       });
       await updateBattleAssetStatus(room.roomNo, "settled", "", connection);
     }
@@ -997,6 +1084,23 @@ async function settleFinishedRoom(room) {
         },
         connection
       );
+    } else if (assetType === "POINTS" && (room.botConfig?.countInRank !== false || room.botConfig?.countInWeekly !== false)) {
+      const human = room.players.find((player) => !isBotUid(player.uid));
+      const bot = room.players.find((player) => isBotUid(player.uid));
+      if (human) {
+        await settleRankBotMatch(
+          {
+            roomNo: room.roomNo,
+            userUid: human.uid,
+            userResult: isBotWinner ? "lose" : "win",
+            botUid: bot?.uid || "bot",
+            mode: battle.mode || room.mode,
+            entryFee: Number(battle.entry_fee || 0),
+            rewardAmount: isBotWinner ? 0 : rewardAmount
+          },
+          connection
+        );
+      }
     }
 
     await finishBattleRoomRecord(room, connection);
@@ -1149,8 +1253,8 @@ async function joinQueueWithLock(user, mode) {
   const waitingPlayer = redisQueue[0];
   const waitingMs = waitingPlayer?.queuedAt ? Date.now() - waitingPlayer.queuedAt : 0;
   const modeConfig = config[BATTLE_MODES[mode].configKey] || {};
-  const botEnabled = modeConfig.botMatchEnabled !== false;
-  const fallbackBotAfterMs = mode === "quick_battle" ? Number(timing.quickBotFallbackSeconds || 0) * 1000 : 0;
+  const botEnabled = canUseBotRoom(mode, modeConfig);
+  const fallbackBotAfterMs = getBotFallbackMs(mode, timing, modeConfig);
 
   if (botEnabled && fallbackBotAfterMs > 0 && waitingPlayer?.uid === user.uid && waitingMs >= fallbackBotAfterMs) {
     if (await isRoomCapacityFull(config)) {
@@ -1312,10 +1416,10 @@ async function getMatchStatusWithoutLock(user) {
     const timing = getTimingConfig(config);
     const cancelWaitSeconds = Number(timing.matchCancelWaitSeconds || 0);
     const modeConfig = config[BATTLE_MODES[mode].configKey] || {};
-    const botEnabled = modeConfig.botMatchEnabled !== false;
-    const fallbackBotAfterMs = mode === "quick_battle" ? Number(timing.quickBotFallbackSeconds || 0) * 1000 : 0;
+    const botEnabled = canUseBotRoom(mode, modeConfig);
+    const fallbackBotAfterMs = getBotFallbackMs(mode, timing, modeConfig);
 
-    if (redisQueue.length >= 2 && !isPaidMode(mode)) {
+    if (redisQueue.length >= 2) {
       const lockedResult = await tryWithMatchLock(mode, async () => {
         const latestQueue = sanitizeQueue((await readJson(getQueueKey(mode))) || [], mode);
         const latestItem = latestQueue.find((item) => item.uid === user.uid);

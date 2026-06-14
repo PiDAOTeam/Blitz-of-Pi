@@ -262,7 +262,7 @@ async function readReconciliationReport() {
        WHERE (status = 'playing'
               AND created_at < DATE_SUB(NOW(), INTERVAL 5 MINUTE)
               AND (entry_fee > 0 OR COALESCE(asset_type, 'FREE') <> 'FREE'))
-          OR (mode IN ('ticket_battle', 'rich_battle', 'points_battle', 'poc_battle', 'pi_battle') AND is_bot_room = 1)
+          OR (mode IN ('ticket_battle', 'rich_battle', 'poc_battle', 'pi_battle') AND is_bot_room = 1)
           OR (status = 'finished' AND winner_uid = '' AND is_bot_room = 0 AND entry_fee > 0 AND reward_amount > 0
               AND COALESCE(asset_type, 'PI') = 'PI'
               AND NOT EXISTS (
@@ -274,7 +274,6 @@ async function readReconciliationReport() {
           OR (COALESCE(asset_type, 'PI') IN ('POINTS', 'POC')
               AND status = 'finished'
               AND entry_fee > 0
-              AND is_bot_room = 0
               AND COALESCE(asset_settlement_status, '') NOT IN ('settled', 'released'))
        ORDER BY id DESC
        LIMIT 30`

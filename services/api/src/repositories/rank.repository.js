@@ -332,6 +332,60 @@ async function settleRankMatch(
   };
 }
 
+async function settleRankBotMatch(
+  { roomNo, userUid, userResult, botUid = "bot", mode = "points_battle", entryFee = 0, rewardAmount = 0 },
+  connection = null
+) {
+  const config = await readGameConfig();
+  const rankedModes = config.operation?.rankRules?.rankedModes || RANKED_MODE_DEFAULTS;
+
+  if (!rankedModes.includes(mode)) {
+    return {
+      ranked: false
+    };
+  }
+
+  const lockedRanks = await ensureRanksForUpdate([userUid], connection);
+  const rank = lockedRanks[userUid];
+
+  if (!rank) {
+    throw new Error("段位数据锁定失败，请稍后重试");
+  }
+
+  const result = userResult === "win" ? "win" : "lose";
+  const next = applyRankResult(rank, config, result, mode);
+  await updateRank(userUid, next, result, connection);
+  await insertStarRecord({ roomNo, uid: userUid, mode, result, next }, connection);
+
+  await executor(connection).execute(
+    `INSERT INTO rank_match_records
+       (room_no, winner_uid, loser_uid, entry_fee, reward_amount, winner_score_delta, loser_score_delta)
+     VALUES (?, ?, ?, ?, ?, ?, ?)
+     ON DUPLICATE KEY UPDATE winner_uid = VALUES(winner_uid)`,
+    [
+      roomNo,
+      result === "win" ? userUid : botUid,
+      result === "win" ? botUid : userUid,
+      entryFee,
+      rewardAmount,
+      result === "win" ? next.score - Number(rank.rank_score) : 0,
+      result === "lose" ? next.score - Number(rank.rank_score) : 0
+    ]
+  );
+
+  return {
+    ranked: true,
+    user: {
+      ...rank,
+      rank_score: next.score,
+      rank_name: next.rankName,
+      rank_key: next.rankKey,
+      stars: next.stars,
+      win_streak: next.winStreak
+    }
+  };
+}
+
 async function countTodayRankedBattles(uid, config) {
   const modes = config.operation?.rankRules?.rankedModes || RANKED_MODE_DEFAULTS;
   const placeholders = modes.map(() => "?").join(",");
@@ -339,7 +393,6 @@ async function countTodayRankedBattles(uid, config) {
     `SELECT COUNT(*) AS count
      FROM battle_rooms
      WHERE status = 'finished'
-       AND is_bot_room = 0
        AND DATE(finished_at) = CURDATE()
        AND (player_a_uid = ? OR player_b_uid = ?)
        AND mode IN (${placeholders})`,
@@ -742,6 +795,7 @@ async function settleWeeklyLeaderboard(options = {}) {
 module.exports = {
   ensureRank,
   settleRankMatch,
+  settleRankBotMatch,
   getRankStatus,
   claimDailyRankChest,
   listAdminRankStarRecords,
