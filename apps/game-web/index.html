@@ -6,7 +6,8 @@
     <title>Pi闪电战 | Blitz of Pi</title>
     <link rel="icon" type="image/jpeg" href="/assets/brand/blitz-logo-64.jpg" />
     <link rel="apple-touch-icon" href="/assets/brand/blitz-logo-200.jpg" />
-    <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+    <link rel="preconnect" href="https://sdk.minepi.com" crossorigin />
+    <link rel="preconnect" href="https://blitzapi.hashpi.app" crossorigin />
     <script>
       function detectBlitzPiSandbox() {
         var params = new URLSearchParams(window.location.search);
@@ -17,6 +18,18 @@
         return window.location.hostname === "sandbox.minepi.com" || document.referrer.indexOf("sandbox.minepi.com") >= 0 || ancestorOrigins.indexOf("sandbox.minepi.com") >= 0 || href.indexOf("sandbox.minepi.com") >= 0 || params.get("sandbox") === "true" || params.get("pi_sandbox") === "true";
       }
       window.__BLITZ_PI_SANDBOX__ = detectBlitzPiSandbox();
+      window.__BLITZ_PI_SDK_LOADING__ = new Promise(function(resolve) {
+        if (window.Pi) {
+          resolve(window.Pi);
+          return;
+        }
+        var script = document.createElement("script");
+        script.src = "https://sdk.minepi.com/pi-sdk.js";
+        script.async = true;
+        script.onload = function() { resolve(window.Pi || null); };
+        script.onerror = function() { resolve(null); };
+        document.head.appendChild(script);
+      });
     </script>
     <link rel="stylesheet" href="/src/styles.css" />
     <script type="module" src="/src/main.js"></script>

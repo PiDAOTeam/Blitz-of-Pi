@@ -103,6 +103,15 @@ function cleanupExpiredPendingSwaps(e = Date.now()) {
   }
   return r !== a.pendingSwapQueue.length;
 }
+function clearStalledPendingSwaps(e = Date.now()) {
+  const t = a.pendingSwapQueue || [];
+  if (!t.length) return false;
+  const r = Math.min(...t.map((o) => Number(o.sentAt || e)));
+  if (e - r < 850) return false;
+  zt(), a.networkStatus = "slow";
+  v("client_pending_swap_unblocked", { roomNo: a.roomNo, mode: a.realtimeRoom?.mode || a.selectedMode, result: String(t.length), latencyMs: a.networkLatencyMs }, 4e3);
+  return true;
+}
 function Oa(e) {
   const t = ve(), r = Zt() ? t.piBrowserDefaultMode : t.defaultMode;
   return (ot.includes(e) ? e : r) === "high" ? "high" : "balanced";
@@ -178,7 +187,7 @@ function ensureBattleCleanupLoop() {
       stopBattleCleanupLoop();
       return;
     }
-    (cleanupExpiredPendingSwaps() || cleanupExpiredFeedback()) && $();
+    (cleanupExpiredPendingSwaps() || clearStalledPendingSwaps() || cleanupExpiredFeedback()) && $();
   }, 420));
 }
 function flashClass(e, t, r) {
@@ -286,9 +295,19 @@ function N(e) {
 }
 async function An(e = 6e3) {
   const t = Date.now();
+  if (window.Pi) return window.Pi;
+  const r = window.__BLITZ_PI_SDK_LOADING__;
+  if (r && typeof r.then == "function") {
+    const o = Math.max(300, Math.min(e, e - (Date.now() - t)));
+    try {
+      await Promise.race([r.catch(() => null), new Promise((s) => window.setTimeout(s, o))]);
+    } catch {
+    }
+    if (window.Pi) return window.Pi;
+  }
   for (; Date.now() - t < e; ) {
     if (window.Pi) return window.Pi;
-    await new Promise((r) => window.setTimeout(r, 120));
+    await new Promise((o) => window.setTimeout(o, 120));
   }
   return null;
 }
@@ -3220,7 +3239,7 @@ function li(e, t, r) {
   return l?.seq && Number(l.seq) >= a.pendingSwapSeq || l?.at && l.at >= a.lastSwapSentAt - 250 ? true : o ? s.score !== o.score || s.lastGain !== o.lastGain || s.combo !== o.combo || s.pressure !== o.pressure || jt(s) !== jt(o) : false;
 }
 function zt() {
-  a.pendingSwapSeq = 0, a.pendingSwapPositions = [];
+  a.pendingSwapSeq = 0, a.pendingSwapPositions = [], a.pendingSwapQueue = [];
 }
 function clearPendingSwapSeq(e) {
   const t = Number(e || 0);
@@ -3240,6 +3259,7 @@ function syncAuthoritativeRoom(e, t = "state") {
   if (!e) return;
   const r = a.realtimeRoom, o = xa(r, a.user?.uid || ""), s = xa(e, a.user?.uid || "");
   const l = roomPlayerCorrectionReason(o, s);
+  t !== "delta" && (t !== "state" || !a.pendingSwapQueue.length || e.status !== "playing") && zt();
   a.realtimeRoom = e, a.clientRoomVersion = Number(e.version || a.clientRoomVersion || 0), a.clientPredictedBoard = s?.board ? clientCloneBoard(s.board) : null, a.lastRoomStateAt = Date.now(), a.screen = "battle";
   updateBattleBgm();
   l && t !== "state" && (a.clientPredictionStats.corrected += 1, v("client_snapshot_corrected", { roomNo: e.roomNo, mode: e.mode, result: l, message: t, version: a.clientRoomVersion }, 5e3));
@@ -3269,8 +3289,6 @@ function handleSwapReject(e) {
 }
 function handleRoomSnapshot(e) {
   if (!e.room) return;
-  a.pendingSwapQueue = (a.pendingSwapQueue || []).filter((t) => Date.now() - Number(t.sentAt || 0) < pendingSwapTimeoutMs());
-  a.pendingSwapSeq = a.pendingSwapQueue[0]?.seq || 0, a.pendingSwapPositions = a.pendingSwapQueue[0]?.positions || [];
   syncAuthoritativeRoom(e.room, "snapshot"), $();
 }
 function ci(e) {
@@ -3673,6 +3691,13 @@ function Ai(e, t, r, o) {
 function resetBattleViewState() {
   Q(), O(), ce(), a.screen = "home", a.roomNo = "", a.roomJoinToken = "", a.room = null, a.realtimeRoom = null, a.result = null, a.selectedTile = null, a.battleConnectingAt = 0, a.battleEnteredAt = 0, a.feedback = null, a.feedbackEventId = "", a.battleMessage = "";
 }
+function refreshHomeDataInBackground() {
+  D({ tolerant: true }).then(() => {
+    a.screen === "home" ? _() : a.screen === "mine" && L();
+  }).catch((e) => {
+    console.warn("[battle] background refresh failed", N(e));
+  });
+}
 async function handleBattleFinishAction(e, t) {
   const r = e?.target?.closest?.("[data-battle-finish-action], #battle-back-home, #battle-restart, #battle-paid-next");
   if (!r || !document.querySelector(".finish-mask")?.contains(r)) return false;
@@ -3682,15 +3707,15 @@ async function handleBattleFinishAction(e, t) {
   finishActionLockUntil = o + 700;
   const s = r.dataset.battleFinishAction || (r.id === "battle-back-home" ? "home" : r.id === "battle-restart" ? "restart" : r.id === "battle-paid-next" ? "paid-next" : "");
   if (s === "home") {
-    resetBattleViewState(), await D(), _();
+    resetBattleViewState(), _(), refreshHomeDataInBackground();
     return true;
   }
   if (s === "restart") {
-    await zi();
+    zi();
     return true;
   }
   if (s === "paid-next") {
-    resetBattleViewState(), await D(), _(), ma("points_battle");
+    resetBattleViewState(), _(), ma("points_battle"), refreshHomeDataInBackground();
     return true;
   }
   return false;
@@ -3830,6 +3855,7 @@ function Ui() {
   }, t), o(document, "touchcancel", () => Ue(), t), o(document, "click", async (c) => {
     if (await handleBattleFinishAction(c)) return;
   }, t), o(document.querySelector("#battle-overlay"), "click", async (c) => {
+    if (await handleBattleFinishAction(c)) return;
     const h = c.target;
     if (h?.closest("#battle-ready-confirm")) {
       if (!M || M.readyState !== WebSocket.OPEN) {
@@ -3839,15 +3865,6 @@ function Ui() {
       M.send(JSON.stringify({ type: "player_ready" })), a.battleMessage = n("readyWaitingOpponent"), $();
       return;
     }
-    if (h?.closest("#battle-back-home")) {
-      resetBattleViewState(), await D(), _();
-      return;
-    }
-    if (h?.closest("#battle-restart")) {
-      await zi();
-      return;
-    }
-    h?.closest("#battle-paid-next") && (resetBattleViewState(), await D(), _(), ma("points_battle"));
   });
 }
 function Hi() {
@@ -3948,8 +3965,10 @@ function Hi() {
 async function zi() {
   const e = a.realtimeRoom?.mode || a.room?.mode || a.selectedMode || "quick_battle", t = a.realtimeRoom?.roomNo || a.roomNo;
   Q(), O(), ce(), a.screen = "matching", a.selectedMode = e, a.roomNo = "", a.roomJoinToken = "", a.room = null, a.realtimeRoom = null, a.result = null, a.selectedTile = null, a.battleConnectingAt = 0, a.battleEnteredAt = 0, a.feedback = null, a.feedbackEventId = "", a.battleMessage = "", resetMatchState(), nt(n("restartingMode", { mode: I(e) }));
+  t && ji(t).catch((r) => console.warn("[battle] settlement wait failed", N(r)));
+  refreshHomeDataInBackground();
   try {
-    await ji(t), await D(), await un(e);
+    await un(e);
   } catch (r) {
     a.matchCancelMessage = N(r), nt(a.matchCancelMessage);
   }
@@ -4025,13 +4044,13 @@ function ln(e = true) {
     if (s.type === "room_state" && s.room) {
       ge(), he = 0;
       const l = a.realtimeRoom, c = !l || l.roomNo !== s.room.roomNo, d = Date.now(), u = a.lastRoomStateAt, h = s.room.status === "playing" && (!l || l.roomNo !== s.room.roomNo || l.status !== "playing");
-      if (li(l || null, s.room, t.uid) && zt(), a.realtimeRoom = s.room, a.clientRoomVersion = Number(s.room.version || a.clientRoomVersion || 0), a.clientPredictedBoard = xa(s.room, t.uid)?.board ? clientCloneBoard(xa(s.room, t.uid).board) : null, a.lastRoomStateAt = d, a.networkLatencyMs = u ? Math.max(0, d - u) : a.networkLatencyMs, a.networkStatus = a.networkLatencyMs > 1900 ? "slow" : "online", c ? v("client_realtime_first_state", { roomNo: s.room.roomNo, mode: s.room.mode, status: s.room.status, costMs: a.battleConnectingAt ? d - a.battleConnectingAt : 0 }, 0) : a.networkStatus === "slow" && v("client_realtime_slow", { roomNo: s.room.roomNo, mode: s.room.mode, status: s.room.status, latencyMs: a.networkLatencyMs }, 5e3), h) {
+      if (li(l || null, s.room, t.uid) && zt(), syncAuthoritativeRoom(s.room, "state"), a.networkLatencyMs = u ? Math.max(0, d - u) : a.networkLatencyMs, a.networkStatus = a.networkLatencyMs > 1900 ? "slow" : "online", c ? v("client_realtime_first_state", { roomNo: s.room.roomNo, mode: s.room.mode, status: s.room.status, costMs: a.battleConnectingAt ? d - a.battleConnectingAt : 0 }, 0) : a.networkStatus === "slow" && v("client_realtime_slow", { roomNo: s.room.roomNo, mode: s.room.mode, status: s.room.status, latencyMs: a.networkLatencyMs }, 5e3), h) {
         const p = Ei(s.room);
         a.vsIntroUntil = p > 0 ? d + p : 0, window.setTimeout(() => {
           a.screen === "battle" && a.roomNo === s.room?.roomNo && $();
         }, p + 80);
       }
-      xi(s.room), playMatchReadyHaptic(s.room), a.battleMessage = s.message || a.battleMessage, a.battleEnteredAt === 0 && s.room.status !== "finished" && (a.battleEnteredAt = Date.now()), a.screen = "battle", updateBattleBgm(), $();
+      playMatchReadyHaptic(s.room), a.battleMessage = s.message || a.battleMessage, a.battleEnteredAt === 0 && s.room.status !== "finished" && (a.battleEnteredAt = Date.now()), a.screen = "battle", $();
       return;
     }
     if (s.type === "swap_ack") {
@@ -4061,13 +4080,16 @@ function ln(e = true) {
   }, M.onerror = () => {
     a.networkStatus = "offline", v("client_realtime_error", { roomNo: a.roomNo, mode: a.selectedMode, costMs: a.battleConnectingAt ? Date.now() - a.battleConnectingAt : 0 }, 0), kt(n("realtimeError"));
   }, M.onclose = () => {
-    ge(), a.screen === "battle" && a.roomNo && a.realtimeRoom?.status !== "finished" && (a.networkStatus = "reconnecting", v("client_realtime_closed", { roomNo: a.roomNo, mode: a.selectedMode, latencyMs: a.networkLatencyMs }, 3e3), kt(n("reconnecting")));
+    ge(), a.screen === "battle" && a.roomNo && a.realtimeRoom?.status !== "finished" && (a.networkStatus = "reconnecting", zt(), v("client_realtime_closed", { roomNo: a.roomNo, mode: a.selectedMode, latencyMs: a.networkLatencyMs }, 3e3), kt(n("reconnecting")), he < Mn && window.setTimeout(() => {
+      a.screen === "battle" && a.roomNo && (!M || M.readyState === WebSocket.CLOSED) && (he += 1, ln(false));
+    }, Math.min(2500, 500 + he * 300)));
   };
 }
 function cn() {
   const e = extremeRealtimeConfig();
   cleanupExpiredPendingSwaps();
-  return (a.pendingSwapQueue || []).length >= e.maxPendingSwaps ? false : a.realtimeRoom?.status === "waiting_ready" ? (a.battleMessage = n("waitBothReady"), $(), false) : a.realtimeRoom && ht(a.realtimeRoom) > 0 ? (a.battleMessage = n("waitReady"), $(), false) : !M || M.readyState !== WebSocket.OPEN ? (a.battleMessage = n("socketNotReady"), $(), false) : true;
+  (a.pendingSwapQueue || []).length >= e.maxPendingSwaps && clearStalledPendingSwaps();
+  return (a.pendingSwapQueue || []).length >= e.maxPendingSwaps ? (a.networkStatus = "slow", false) : a.realtimeRoom?.status === "waiting_ready" ? (a.battleMessage = n("waitBothReady"), $(), false) : a.realtimeRoom && ht(a.realtimeRoom) > 0 ? (a.battleMessage = n("waitReady"), $(), false) : !M || M.readyState !== WebSocket.OPEN ? (a.battleMessage = n("socketNotReady"), $(), false) : true;
 }
 function dn(e, t) {
   const r = Date.now(), o = `${e.row}:${e.col}:${t.row}:${t.col}`;
