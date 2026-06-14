@@ -7,6 +7,7 @@ const buckets = new Map();
 const RULES = [
   { test: (url) => url === "/admin-api/auth/login", limit: 10, windowMs: 60_000 },
   { test: (url) => url === "/api/auth/pi-login", limit: 20, windowMs: 60_000 },
+  { test: (url) => url === "/api/auth/hashpi-bridge-login", limit: 30, windowMs: 60_000 },
   { test: (url) => url.startsWith("/api/payments/"), limit: 30, windowMs: 60_000 },
   { test: (url) => url.startsWith("/api/withdraw/"), limit: 10, windowMs: 60_000 },
   { test: (url) => url === "/api/match/status", limit: 180, windowMs: 60_000 },

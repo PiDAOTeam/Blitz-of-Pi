@@ -396,6 +396,18 @@
         "summaryEnabled": true,
         "grayUserPiUsernames": []
       },
+      "hashPiAppBridge": {
+        "enabled": true,
+        "allowedModes": [
+          "quick_battle",
+          "points_battle",
+          "poc_battle",
+          "pi_battle"
+        ],
+        "ticketTtlSeconds": 120,
+        "failureMessage": "HashPi APP 登录失败，请返回 HashPi 后重试。",
+        "piRechargeHint": "APP 内暂不支持 Pi 充值，请用 Pi Browser 打开 Pi闪电战完成充值。"
+      },
       "pointsBattle": {
         "key": "points_battle",
         "name": "小富豪",

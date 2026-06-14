@@ -272,6 +272,28 @@ function assertModeRankAccess(user, mode, config) {
   }
 }
 
+function assertHashPiAppBridgeModeAccess(user, mode, config) {
+  const isHashPiAppUser =
+    user?.loginSource === "hashpi_app" ||
+    Boolean(user?.hashpiUserId) ||
+    String(user?.uid || "").startsWith("hashpi_");
+
+  if (!isHashPiAppUser) return;
+
+  const bridgeConfig = config.hashPiAppBridge || {};
+  if (bridgeConfig.enabled === false) {
+    throw new Error("HashPi APP 接入暂未开启");
+  }
+
+  const allowedModes = Array.isArray(bridgeConfig.allowedModes)
+    ? bridgeConfig.allowedModes
+    : ["quick_battle", "points_battle", "poc_battle", "pi_battle"];
+
+  if (!allowedModes.includes(normalizeBattleMode(mode))) {
+    throw new Error("HashPi APP 暂不支持该场次");
+  }
+}
+
 async function assertInviteBindingAccess(user, mode, config) {
   const inviteConfig = config.inviteRewards || {};
   const modes = Array.isArray(inviteConfig.bindRequiredModes) ? inviteConfig.bindRequiredModes : [];
@@ -1165,6 +1187,7 @@ async function joinQueueWithLock(user, mode) {
   const requestStartedAt = Date.now();
   const config = await readGameConfig();
   const timing = getTimingConfig(config);
+  assertHashPiAppBridgeModeAccess(user, mode, config);
   assertModeRankAccess(user, mode, config);
   await assertInviteBindingAccess(user, mode, config);
   isAssetGatewayModeAllowed(mode, user, config);

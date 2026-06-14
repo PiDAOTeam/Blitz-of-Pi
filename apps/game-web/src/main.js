@@ -2015,6 +2015,29 @@ function Fe(e = n("errorDefault")) {
     window.location.reload();
   });
 }
+function showHashPiBridgeError(e = n("errorDefault")) {
+  R.innerHTML = `
+    <main class="shell">
+      <section class="hero">
+        <div class="brand-mark" aria-hidden="true">${BRAND_MARK_HTML}</div>
+        <p class="eyebrow">HashPi APP</p>
+        <h1>${i(n("home") === "\u9996\u9875" ? "\u95EA\u7535\u6218" : "Blitz of Pi")}</h1>
+        <p class="brand-subtitle">Blitz of Pi</p>
+        <p class="summary">${i(e)}</p>
+        <div class="actions">
+          <button type="button" id="retry-hashpi-bridge">${i("\u91CD\u8BD5")}</button>
+          <button type="button" class="secondary" id="back-hashpi-home">${i("\u8FD4\u56DE HashPi")}</button>
+        </div>
+      </section>
+    </main>
+  `;
+  document.querySelector("#retry-hashpi-bridge")?.addEventListener("click", () => {
+    window.location.href = "https://hashpi.app/blitz-bridge/";
+  });
+  document.querySelector("#back-hashpi-home")?.addEventListener("click", () => {
+    window.location.href = "https://hashpi.app/";
+  });
+}
 function Ir() {
   const e = wn();
   return `
@@ -2535,7 +2558,7 @@ function L() {
 }
 function Xa() {
   const e = F(), t = !ia(), r = B(e.richBattleMinRankKey || "platinum"), o = ["quick_battle", "points_battle", "poc_battle", "pi_battle"], s = o.map((d) => {
-    const u = pt(d) || {}, h = d === "pi_battle" && t, p = u.enabled === false || isAssetGatewayModeClosed(d), f = d === "quick_battle", g = getModeBalanceState(d), P = h || p, C = p ? "\u6682\u672A\u5F00\u653E" : h ? n("richUnlock", { rank: r }) : "", T = f ? "\u514D\u8D39\u7EC3\u624B" : `\u95E8\u7968 ${formatModeAmount(d, X(d))} \xB7 \u80DC\u5956 ${formatModeAmount(d, ie(d))}`, U = f ? "\u4E45\u7B49\u8865\u673A\u5668\u4EBA" : `\u4F59\u989D ${g.label} \xB7 \u771F\u4EBA`;
+    const u = pt(d) || {}, h = d === "pi_battle" && t, p = u.enabled === false || isAssetGatewayModeClosed(d), f = d === "quick_battle", g = getModeBalanceState(d), Pn = isHashPiAppLogin() && !(a.gameConfig?.hashPiAppBridge?.allowedModes || ["quick_battle", "points_battle", "poc_battle", "pi_battle"]).includes(d), P = h || p || Pn, C = p ? "\u6682\u672A\u5F00\u653E" : Pn ? "HashPi APP \u6682\u4E0D\u652F\u6301\u8BE5\u573A\u6B21" : h ? n("richUnlock", { rank: r }) : "", T = f ? "\u514D\u8D39\u7EC3\u624B" : `\u95E8\u7968 ${formatModeAmount(d, X(d))} \xB7 \u80DC\u5956 ${formatModeAmount(d, ie(d))}`, U = f ? "\u4E45\u7B49\u8865\u673A\u5668\u4EBA" : `\u4F59\u989D ${g.label} \xB7 \u771F\u4EBA`;
     return `
           <button type="button" class="mode-card ${f ? "" : "premium"} ${d === "points_battle" ? "recommended" : ""} ${d === "poc_battle" || d === "pi_battle" ? "rich" : ""} ${P ? "locked" : ""}" data-start-mode="${d}" data-locked="${P ? "true" : "false"}" data-lock-reason="${i(C)}" aria-disabled="${P ? "true" : "false"}">
             <i class="mode-icon ${modeAssetMeta(d).icon}" aria-hidden="true"></i>
@@ -2658,6 +2681,10 @@ function Qa(e = "edit") {
   });
 }
 function jr() {
+  if (isHashPiAppLogin()) {
+    S(getHashPiAppRechargeHint(), "warning");
+    return;
+  }
   const e = window.location.hostname === "sandbox.minepi.com" || a.piConfig?.frontendSandbox ? n("sandboxDebug") : n("mainnet"), t = Number(a.gameConfig?.rechargeBonus?.presets?.find((d) => Number(d.amount || 0) > 0)?.amount || 1), r = qt(t);
   R.innerHTML = `
     <main class="shell">
@@ -4214,6 +4241,32 @@ function fallbackWallet(e = "") {
 function keepWalletOnSlowRefresh(e = "") {
   return a.wallet ? { ...a.wallet, remoteAssetsError: e || a.wallet.remoteAssetsError || n("requestTimeout") } : fallbackWallet(e);
 }
+function isHashPiAppLogin() {
+  return localStorage.getItem("blitz_login_source") === "hashpi_app";
+}
+function getHashPiAppRechargeHint() {
+  return a.gameConfig?.hashPiAppBridge?.piRechargeHint || "APP \u5185\u6682\u4E0D\u652F\u6301 Pi \u5145\u503C\uFF0C\u8BF7\u7528 Pi Browser \u6253\u5F00 Pi\u95EA\u7535\u6218\u5B8C\u6210\u5145\u503C\u3002";
+}
+function getHashPiBridgeTicket() {
+  try {
+    const e = new URL(window.location.href), t = String(e.searchParams.get("ticket") || "").trim();
+    return t && (e.pathname === "/app-bridge" || e.searchParams.has("ticket")) ? t : "";
+  } catch {
+    return "";
+  }
+}
+function clearHashPiBridgeTicketFromUrl() {
+  try {
+    const e = new URL(window.location.href);
+    if (!e.searchParams.has("ticket") && e.pathname !== "/app-bridge") return;
+    e.searchParams.delete("ticket"), e.pathname === "/app-bridge" && (e.pathname = "/"), window.history.replaceState({}, document.title, e.pathname + e.search + e.hash);
+  } catch {
+  }
+}
+async function loginWithHashPiBridge(e) {
+  const t = await w("/api/auth/hashpi-bridge-login", { method: "POST", body: JSON.stringify({ ticket: e }), timeoutMs: 8e3 });
+  localStorage.setItem("blitz_user_token", t.accessToken), localStorage.setItem("blitz_login_source", "hashpi_app"), localStorage.setItem("blitz_hashpi_bridge_auth", JSON.stringify({ loggedAt: Date.now(), hashpiUserId: t.hashpiUserId || "" })), clearHashPiBridgeTicketFromUrl();
+}
 async function safeLoad(e, t, r = "") {
   try {
     return await e();
@@ -4367,6 +4420,16 @@ async function to(e, t) {
 async function ao() {
   try {
     Qe(), ua(n("loginLoading"));
+    const e = getHashPiBridgeTicket();
+    if (e) {
+      try {
+        await loginWithHashPiBridge(e), await D({ tolerant: true }), await tryAutoBindInvite(), a.screen = "home", Xi();
+        return;
+      } catch (t) {
+        console.error("HashPi APP \u6865\u63A5\u767B\u5F55\u5931\u8D25", t), showHashPiBridgeError(`HashPi APP \u767B\u5F55\u5931\u8D25\uFF1A${N(t)}`);
+        return;
+      }
+    }
     if (tokenLooksUsable()) {
       try {
         await D({ tolerant: true }), await tryAutoBindInvite(), a.screen = "home", Xi(), shouldRefreshPiLogin() && refreshLoginInBackground();

@@ -38,6 +38,17 @@ async function getPublicGameConfig() {
       pointsEnabled: Boolean(config.assetGateway?.pointsEnabled),
       pocEnabled: Boolean(config.assetGateway?.pocEnabled)
     },
+    hashPiAppBridge: {
+      enabled: config.hashPiAppBridge?.enabled !== false,
+      allowedModes: Array.isArray(config.hashPiAppBridge?.allowedModes)
+        ? config.hashPiAppBridge.allowedModes
+        : ["quick_battle", "points_battle", "poc_battle", "pi_battle"],
+      ticketTtlSeconds: Number(config.hashPiAppBridge?.ticketTtlSeconds || 120),
+      failureMessage: config.hashPiAppBridge?.failureMessage || "HashPi APP 登录失败，请返回 HashPi 后重试。",
+      piRechargeHint:
+        config.hashPiAppBridge?.piRechargeHint ||
+        "APP 内暂不支持 Pi 充值，请用 Pi Browser 打开 Pi闪电战完成充值。"
+    },
     timing: config.timing || {},
     capacity: config.capacity || {},
     extremeRealtime: {

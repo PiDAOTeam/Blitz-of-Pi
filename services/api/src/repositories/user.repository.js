@@ -34,6 +34,18 @@ async function findUserByUid(uid) {
   return rows[0] || null;
 }
 
+async function findUserByHashPiUserId(hashpiUserId) {
+  const rows = await query(
+    `SELECT u.*, COALESCE(r.rank_name, u.rank_name) AS rank_name, COALESCE(r.rank_score, 1000) AS rank_score
+     FROM users u
+     LEFT JOIN user_ranks r ON r.uid = u.uid
+     WHERE u.uid = ?
+     LIMIT 1`,
+    [`hashpi_${hashpiUserId}`]
+  );
+  return rows[0] || null;
+}
+
 const DEFAULT_AVATAR_KEY = "avatar_1";
 const DEFAULT_PROFILE_AVATARS = [
   { key: "avatar_1", name: "闪电红" },
@@ -129,6 +141,52 @@ async function upsertUser({ piUserId, piUsername, nickname, avatarUrl, avatarKey
   return findUserByUid(uid);
 }
 
+async function upsertHashPiBridgeUser({ hashpiUserId, piUserId, piUsername, nickname, avatarUrl, avatarKey }) {
+  const safeHashPiUserId = String(hashpiUserId || "").trim();
+  if (!safeHashPiUserId) {
+    throw new Error("缺少 HashPi 用户ID，无法创建桥接用户");
+  }
+
+  const safePiUserId = String(piUserId || "").trim();
+  if (safePiUserId) {
+    return upsertUser({
+      piUserId: safePiUserId,
+      piUsername,
+      nickname,
+      avatarUrl,
+      avatarKey
+    });
+  }
+
+  const uid = `hashpi_${safeHashPiUserId}`;
+  const safeNickname = await normalizeNickname(nickname || `HashPi${safeHashPiUserId}`);
+  const safeAvatarKey = (await isValidAvatarKey(avatarKey)) ? avatarKey : DEFAULT_AVATAR_KEY;
+
+  await query(
+    `INSERT INTO users
+       (uid, pi_user_id, pi_username, nickname, avatar_url, avatar_key, profile_completed, rank_name, status, last_login_at)
+     VALUES (?, ?, ?, ?, ?, ?, 0, '青铜', 1, NOW())
+     ON DUPLICATE KEY UPDATE
+       nickname = CASE
+         WHEN nickname = '' OR nickname = 'Pi玩家' OR nickname = pi_username THEN VALUES(nickname)
+         ELSE nickname
+       END,
+       avatar_url = CASE
+         WHEN VALUES(avatar_url) <> '' THEN VALUES(avatar_url)
+         ELSE avatar_url
+       END,
+       avatar_key = CASE
+         WHEN avatar_key = '' THEN VALUES(avatar_key)
+         ELSE avatar_key
+       END,
+       last_login_at = NOW()`,
+    [uid, `hashpi_${safeHashPiUserId}`, "", safeNickname, avatarUrl || "", safeAvatarKey]
+  );
+  await ensureUserRank(uid);
+
+  return findUserByUid(uid);
+}
+
 async function updateUserProfile(uid, { nickname, avatarKey }) {
   const safeNickname = await normalizeNickname(nickname);
   const safeAvatarKey = (await isValidAvatarKey(avatarKey)) ? avatarKey : DEFAULT_AVATAR_KEY;
@@ -189,7 +247,9 @@ module.exports = {
   getProfileAvatars,
   findUserByPiUserId,
   findUserByUid,
+  findUserByHashPiUserId,
   upsertUser,
+  upsertHashPiBridgeUser,
   updateUserProfile,
   adminUpdateUserProfile,
   adminSetUserStatus,

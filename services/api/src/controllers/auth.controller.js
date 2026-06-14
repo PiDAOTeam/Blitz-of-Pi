@@ -1,5 +1,6 @@
 const {
   createUserSession,
+  createHashPiBridgeSession,
   createAdminSession,
   changeAdminPassword,
   getSessionByToken,
@@ -8,6 +9,10 @@ const {
 
 async function loginUser(payload) {
   return createUserSession(payload);
+}
+
+async function loginHashPiBridge(payload) {
+  return createHashPiBridgeSession(payload);
 }
 
 async function getUserProfile() {
@@ -57,6 +62,7 @@ async function getSessionProfile(token, scope) {
 
 module.exports = {
   loginUser,
+  loginHashPiBridge,
   getUserProfile,
   loginAdmin,
   getAdminProfile,

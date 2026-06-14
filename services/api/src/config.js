@@ -55,6 +55,12 @@ const ASSET_GATEWAY_BASE_URL = env(
 const ASSET_GATEWAY_APP_KEY = env("ASSET_GATEWAY_APP_KEY", "");
 const ASSET_GATEWAY_APP_SECRET = env("ASSET_GATEWAY_APP_SECRET", "");
 const ASSET_GATEWAY_TIMEOUT_MS = Number(env("ASSET_GATEWAY_TIMEOUT_MS", "8000"));
+const HASHPI_BRIDGE_ENABLED = String(env("HASHPI_BRIDGE_ENABLED", "true")) === "true";
+const HASHPI_BRIDGE_BASE_URL = env(
+  "HASHPI_BRIDGE_BASE_URL",
+  "https://hash.pios.co/api.php?s=plugins/index/pluginsname/piscore/pluginscontrol/user/pluginsaction"
+);
+const HASHPI_BRIDGE_TIMEOUT_MS = Number(env("HASHPI_BRIDGE_TIMEOUT_MS", "5000"));
 const ALLOWED_ORIGINS = env(
   "ALLOWED_ORIGINS",
   "https://blitz.hashpi.app,https://blitzadmin.hashpi.app,https://blitzapi.hashpi.app,https://sandbox.minepi.com,http://localhost:5173,http://localhost:5174"
@@ -87,5 +93,8 @@ module.exports = {
   ASSET_GATEWAY_APP_KEY,
   ASSET_GATEWAY_APP_SECRET,
   ASSET_GATEWAY_TIMEOUT_MS,
+  HASHPI_BRIDGE_ENABLED,
+  HASHPI_BRIDGE_BASE_URL,
+  HASHPI_BRIDGE_TIMEOUT_MS,
   ALLOWED_ORIGINS
 };

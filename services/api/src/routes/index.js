@@ -1,4 +1,10 @@
-const { loginUser, loginAdmin, updateAdminPassword, getSessionProfile } = require("../controllers/auth.controller");
+const {
+  loginUser,
+  loginHashPiBridge,
+  loginAdmin,
+  updateAdminPassword,
+  getSessionProfile
+} = require("../controllers/auth.controller");
 const { getAdminDashboard } = require("../controllers/dashboard.controller");
 const { getAdminReconciliationReport } = require("../controllers/reconciliation.controller");
 const { getAdminRiskAuditReport } = require("../controllers/risk-audit.controller");
@@ -148,6 +154,11 @@ const EXPECTED_BUSINESS_ERROR_MESSAGES = new Set([
   "不能绑定自己",
   "暂无可领取邀请奖励",
   "请先登录",
+  "缺少 HashPi 登录票据",
+  "HashPi APP 接入暂未开启",
+  "HashPi APP 暂不支持该场次",
+  "HashPi 登录票据校验失败",
+  "HashPi 登录校验超时，请重试",
   "请先登录后台",
   "后台账号不存在或已禁用",
   "后台账号或密码错误",
@@ -258,6 +269,12 @@ async function handleRoutes(req, res) {
   if (url === "/api/auth/pi-login" && method === "POST") {
     const payload = await readJsonBody(req);
     ok(res, await loginUser(payload));
+    return;
+  }
+
+  if (url === "/api/auth/hashpi-bridge-login" && method === "POST") {
+    const payload = await readJsonBody(req);
+    ok(res, await loginHashPiBridge(payload));
     return;
   }
 

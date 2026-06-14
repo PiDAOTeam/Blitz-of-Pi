@@ -1,6 +1,7 @@
 const { saveSession, findSession, revokeSubjectSessions } = require("../repositories/session.repository");
 const {
   upsertUser,
+  upsertHashPiBridgeUser,
   findUserByUid,
   toUserProfile
 } = require("../repositories/user.repository");
@@ -10,8 +11,21 @@ const {
   toAdminProfile
 } = require("../repositories/admin-user.repository");
 const { verifyPiAccessToken } = require("./pi-platform.service");
+const { verifyHashPiBridgeTicket } = require("./hashpi-bridge.service");
 const { hashPassword, verifyPassword } = require("../utils/password");
 const { signToken } = require("../utils/auth-token");
+
+function createSignedUserSession(user, extra = {}) {
+  const session = {
+    accessToken: signToken("user", user.uid),
+    user,
+    scope: "user",
+    ...extra
+  };
+
+  saveSession(session.accessToken, session);
+  return session;
+}
 
 async function createUserSession(payload = {}) {
   let user;
@@ -46,14 +60,25 @@ async function createUserSession(payload = {}) {
     throw error;
   }
 
-  const session = {
-    accessToken: signToken("user", user.uid),
-    user,
-    scope: "user"
-  };
+  return createSignedUserSession(user);
+}
 
-  saveSession(session.accessToken, session);
-  return session;
+async function createHashPiBridgeSession(payload = {}) {
+  const bridgeUser = await verifyHashPiBridgeTicket(payload.ticket);
+  const row = await upsertHashPiBridgeUser({
+    hashpiUserId: bridgeUser.hashpiUserId,
+    piUserId: bridgeUser.piUserId,
+    piUsername: bridgeUser.piUsername,
+    nickname: bridgeUser.nickname,
+    avatarUrl: bridgeUser.avatarUrl,
+    avatarKey: payload.avatarKey || payload.avatar_key || "avatar_1"
+  });
+  const user = toUserProfile(row);
+
+  return createSignedUserSession(user, {
+    loginSource: "hashpi_app",
+    hashpiUserId: bridgeUser.hashpiUserId
+  });
 }
 
 async function createAdminSession(payload = {}) {
@@ -128,6 +153,7 @@ async function getActiveUserFromToken(token) {
 
 module.exports = {
   createUserSession,
+  createHashPiBridgeSession,
   createAdminSession,
   changeAdminPassword,
   getSessionByToken,

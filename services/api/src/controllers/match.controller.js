@@ -6,14 +6,23 @@ const {
   getBattleResult,
   getRoomsSnapshot
 } = require("../services/match.service");
-const { getActiveUserFromToken } = require("../services/auth.service");
+const { getActiveUserFromToken, getSessionByToken } = require("../services/auth.service");
 const { enqueueRealtimeSettlement } = require("../services/settlement-worker.service");
 const { REALTIME_SETTLEMENT_SECRET } = require("../config");
 const { countUserBattleRooms, listUserBattleRooms } = require("../repositories/battle.repository");
 
 async function getRequestUser(req) {
   const token = req?.headers?.authorization?.replace("Bearer ", "") || "";
-  return getActiveUserFromToken(token);
+  const [user, session] = await Promise.all([
+    getActiveUserFromToken(token),
+    getSessionByToken(token)
+  ]);
+
+  return {
+    ...user,
+    loginSource: session?.loginSource || "",
+    hashpiUserId: session?.hashpiUserId || ""
+  };
 }
 
 async function joinMatchQueue(req, payload = {}) {

@@ -361,6 +361,18 @@ const DEFAULT_GAME_CONFIG = {
     "grayUserPiUsernames": [],
     "opsNote": "小富豪使用积分，大富豪使用POC；积分门票只能填写整数。"
   },
+  "hashPiAppBridge": {
+    "enabled": true,
+    "allowedModes": [
+      "quick_battle",
+      "points_battle",
+      "poc_battle",
+      "pi_battle"
+    ],
+    "ticketTtlSeconds": 120,
+    "failureMessage": "HashPi APP 登录失败，请返回 HashPi 后重试。",
+    "piRechargeHint": "APP 内暂不支持 Pi 充值，请用 Pi Browser 打开 Pi闪电战完成充值。"
+  },
   "timing": {
     "quickBotFallbackSeconds": 25,
     "matchCancelWaitSeconds": 20,
@@ -1050,6 +1062,25 @@ function normalizeAssetGatewayConfig(assetGateway = {}) {
     grayUserPiUids: splitLines(assetGateway.grayUserPiUids || assetGateway.gray_user_pi_uids || []),
     grayUserPiUsernames: splitLines(assetGateway.grayUserPiUsernames || assetGateway.gray_user_pi_usernames || []),
     opsNote: String(assetGateway.opsNote || DEFAULT_GAME_CONFIG.assetGateway.opsNote).trim().slice(0, 240)
+  };
+}
+
+function normalizeHashPiAppBridgeConfig(hashPiAppBridge = {}) {
+  const defaults = DEFAULT_GAME_CONFIG.hashPiAppBridge;
+  const allowedModes = Array.isArray(hashPiAppBridge.allowedModes)
+    ? hashPiAppBridge.allowedModes.filter((mode) => ["quick_battle", "points_battle", "poc_battle", "pi_battle"].includes(mode))
+    : defaults.allowedModes;
+
+  return {
+    enabled: hashPiAppBridge.enabled !== false,
+    allowedModes: allowedModes.length ? allowedModes : defaults.allowedModes,
+    ticketTtlSeconds: defaults.ticketTtlSeconds,
+    failureMessage:
+      String(hashPiAppBridge.failureMessage || defaults.failureMessage).trim().slice(0, 120) ||
+      defaults.failureMessage,
+    piRechargeHint:
+      String(hashPiAppBridge.piRechargeHint || defaults.piRechargeHint).trim().slice(0, 160) ||
+      defaults.piRechargeHint
   };
 }
 
@@ -1747,6 +1778,7 @@ async function readGameConfig() {
         pocBattle: normalizeBattleModeConfig("poc_battle", value.pocBattle || {}, DEFAULT_GAME_CONFIG.pocBattle),
         piBattle: normalizeBattleModeConfig("pi_battle", value.piBattle || {}, DEFAULT_GAME_CONFIG.piBattle),
         assetGateway: normalizeAssetGatewayConfig(value.assetGateway),
+        hashPiAppBridge: normalizeHashPiAppBridgeConfig(value.hashPiAppBridge),
         withdrawRisk: normalizeWithdrawRiskConfig(value.withdrawRisk),
         rechargeBonus: normalizeRechargeBonusConfig(value.rechargeBonus),
         transfer: normalizeTransferConfig(value.transfer),
@@ -1786,6 +1818,7 @@ function normalizeConfig(payload) {
   const watchShareholder = normalizeWatchShareholderConfig(payload.watchShareholder);
   const visualEffects = normalizeVisualEffectsConfig(payload.visualEffects);
   const assetGateway = normalizeAssetGatewayConfig(payload.assetGateway);
+  const hashPiAppBridge = normalizeHashPiAppBridgeConfig(payload.hashPiAppBridge);
   const extremeRealtime = normalizeExtremeRealtimeConfig(payload.extremeRealtime);
   const operation = {
     ...DEFAULT_GAME_CONFIG.operation,
@@ -1802,6 +1835,7 @@ function normalizeConfig(payload) {
     pocBattle,
     piBattle,
     assetGateway,
+    hashPiAppBridge,
     timing: normalizeTimingConfig(payload.timing),
     capacity: normalizeCapacityConfig(payload.capacity),
     extremeRealtime,
