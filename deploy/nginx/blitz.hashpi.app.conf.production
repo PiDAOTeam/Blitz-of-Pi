@@ -1,17 +1,28 @@
 server {
     listen 80;
+    listen 443 ssl ;
+    http2 on;
     server_name blitz.hashpi.app;
 
     root /www/wwwroot/blitz.hashpi.app;
     index index.html;
 
+    ssl_certificate /www/server/panel/vhost/cert/blitz.hashpi.app/fullchain.pem;
+    ssl_certificate_key /www/server/panel/vhost/cert/blitz.hashpi.app/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+
+    location = /index.html {
+        add_header Cache-Control "no-cache, must-revalidate" always;
+    }
+
     location / {
+        add_header Cache-Control "no-cache, must-revalidate" always;
         try_files $uri $uri/ /index.html;
     }
 
     location ~* \.(js|css|png|jpg|jpeg|gif|svg|woff|woff2)$ {
-        expires 7d;
-        add_header Cache-Control "public, max-age=604800";
+        expires 30d;
+        add_header Cache-Control "public, max-age=2592000, immutable";
     }
 }
-

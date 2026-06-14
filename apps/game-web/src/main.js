@@ -112,6 +112,15 @@ function clearStalledPendingSwaps(e = Date.now()) {
   v("client_pending_swap_unblocked", { roomNo: a.roomNo, mode: a.realtimeRoom?.mode || a.selectedMode, result: String(t.length), latencyMs: a.networkLatencyMs }, 4e3);
   return true;
 }
+function recoverStaleRealtimeConnection(e = Date.now()) {
+  if (a.screen !== "battle" || !a.roomNo || a.realtimeRoom?.status !== "playing") return false;
+  if (document.visibilityState === "hidden") return false;
+  if (e - lastStaleRealtimeRecoverAt < 3200) return false;
+  const t = Number(a.lastRoomStateAt || 0);
+  if (!t || e - t < 6500) return false;
+  lastStaleRealtimeRecoverAt = e, a.networkStatus = "reconnecting", zt(), v("client_realtime_stale_reconnect", { roomNo: a.roomNo, mode: a.realtimeRoom?.mode || a.selectedMode, latencyMs: e - t }, 5e3), kt(n("reconnecting"));
+  return true;
+}
 function Oa(e) {
   const t = ve(), r = Zt() ? t.piBrowserDefaultMode : t.defaultMode;
   return (ot.includes(e) ? e : r) === "high" ? "high" : "balanced";
@@ -142,7 +151,7 @@ function lt(e) {
   }
   return true;
 }
-let Nt = "", j = null, V = null, Be = null, ee = null, y = null, x = null, k = null, Ne = null, Yt = 0, Et = 0, Lt = "", xt = 0, Ee = "", te = 0, pe = -1, Xe = "", le = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPerfLockedLow = false, clientPerfFrameCount = 0, clientPerfLongFrameCount = 0, clientPerfSampleStartedAt = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0, canvasFxFrame = null, canvasBreathTimer = null;
+let Nt = "", j = null, V = null, Be = null, ee = null, y = null, x = null, k = null, Ne = null, Yt = 0, Et = 0, Lt = "", xt = 0, Ee = "", te = 0, pe = -1, Xe = "", le = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPerfLockedLow = false, clientPerfFrameCount = 0, clientPerfLongFrameCount = 0, clientPerfSampleStartedAt = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0, lastStaleRealtimeRecoverAt = 0, canvasFxFrame = null, canvasBreathTimer = null;
 a.canvasSpecialFx = [];
 a.canvasSpecialBirths = [];
 let cleanupBoardInputListeners = null;
@@ -167,7 +176,7 @@ function cleanupBoardInputs() {
   Ne = null;
 }
 function ce() {
-  stopBattleBgm(), be && (window.cancelAnimationFrame(be), be = null), ee && (window.clearTimeout(ee), ee = null), le && (window.cancelAnimationFrame(le), le = null), j && (window.cancelAnimationFrame(j), j = null), V && (window.cancelAnimationFrame(V), V = null), z = null, W = null, At = 0, q = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPerfLockedLow = false, clientPerfFrameCount = 0, clientPerfLongFrameCount = 0, clientPerfSampleStartedAt = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0, document.documentElement.classList.remove("low-performance"), we(), Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", burstLayerKey = "", impactLayerKey = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, finishFeedbackKey = "", Se = null, me.clear(), Nt = "", y = null, Et = 0, Lt = "", xt = 0, a.pendingSwapSeq = 0, a.pendingSwapPositions = [], a.pendingSwapQueue = [], cleanupBoardInputs(), x = null, k = null, Yt = 0, a.battleBursts = [], a.battleImpacts = [], a.localBattleEvents = [], a.localSwapFx = null, a.canvasSpecialFx = [], a.canvasSpecialBirths = [], stopBattleCleanupLoop();
+  stopBattleBgm(), be && (window.cancelAnimationFrame(be), be = null), ee && (window.clearTimeout(ee), ee = null), le && (window.cancelAnimationFrame(le), le = null), j && (window.cancelAnimationFrame(j), j = null), V && (window.cancelAnimationFrame(V), V = null), z = null, W = null, At = 0, q = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPerfLockedLow = false, clientPerfFrameCount = 0, clientPerfLongFrameCount = 0, clientPerfSampleStartedAt = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0, lastStaleRealtimeRecoverAt = 0, document.documentElement.classList.remove("low-performance"), we(), Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", burstLayerKey = "", impactLayerKey = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, finishFeedbackKey = "", Se = null, me.clear(), Nt = "", y = null, Et = 0, Lt = "", xt = 0, a.pendingSwapSeq = 0, a.pendingSwapPositions = [], a.pendingSwapQueue = [], cleanupBoardInputs(), x = null, k = null, Yt = 0, a.battleBursts = [], a.battleImpacts = [], a.localBattleEvents = [], a.localSwapFx = null, a.canvasSpecialFx = [], a.canvasSpecialBirths = [], stopBattleCleanupLoop();
 }
 function ge() {
   ze && (window.clearTimeout(ze), ze = null);
@@ -187,7 +196,7 @@ function ensureBattleCleanupLoop() {
       stopBattleCleanupLoop();
       return;
     }
-    (cleanupExpiredPendingSwaps() || clearStalledPendingSwaps() || cleanupExpiredFeedback()) && $();
+    (cleanupExpiredPendingSwaps() || clearStalledPendingSwaps() || cleanupExpiredFeedback() || recoverStaleRealtimeConnection()) && $();
   }, 420));
 }
 function flashClass(e, t, r) {
@@ -3050,15 +3059,18 @@ function canvasHasActiveFx(e = Date.now()) {
 }
 function renderCurrentCanvasBoard() {
   const e = oe(), t = Zr()?.self;
+  if (document.visibilityState === "hidden") return false;
   e && t && renderCanvasBoard(e, t);
 }
 function scheduleCanvasFxFrame() {
+  if (document.visibilityState === "hidden") return;
   if (canvasFxFrame || !canvasHasActiveFx()) return;
   canvasFxFrame = window.requestAnimationFrame(() => {
     canvasFxFrame = null, renderCurrentCanvasBoard(), canvasHasActiveFx() && scheduleCanvasFxFrame();
   });
 }
 function canvasHasSpecialBreath() {
+  if (document.visibilityState === "hidden") return false;
   if (a.screen !== "battle" || a.realtimeRoom?.status !== "playing") return false;
   if (a.effectiveVisualEffectMode === "low" || document.documentElement.classList.contains("low-performance")) return false;
   if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return false;
@@ -3066,10 +3078,11 @@ function canvasHasSpecialBreath() {
   return e.some((t) => (t || []).some((r) => clientIsSpecialTile(r)));
 }
 function scheduleCanvasBreathFrame() {
+  if (document.visibilityState === "hidden") return;
   if (canvasBreathTimer || canvasFxFrame || !canvasHasSpecialBreath()) return;
   canvasBreathTimer = window.setTimeout(() => {
     canvasBreathTimer = null, renderCurrentCanvasBoard(), scheduleCanvasBreathFrame();
-  }, a.effectiveVisualEffectMode === "high" ? 120 : 180);
+  }, a.effectiveVisualEffectMode === "high" ? 220 : 320);
 }
 function canvasEffectForCell(e, t, r, o, m = null) {
   const s = { scale: 1, dx: 0, dy: 0, glow: 0, tone: "normal" };
@@ -3174,7 +3187,8 @@ function renderCanvasBoard(e, t) {
   if (!r || !o.length || !s) return false;
   const l = Math.max(1, Math.min(2, window.devicePixelRatio || 1)), c = Math.max(1, Math.floor(s.rect.width * l)), d = Math.max(1, Math.floor(s.rect.height * l));
   (r.width !== c || r.height !== d) && (r.width = c, r.height = d);
-  r.style.width = `${s.rect.width}px`, r.style.height = `${s.rect.height}px`;
+  const rWidth = `${s.rect.width}px`, rHeight = `${s.rect.height}px`;
+  r.style.width !== rWidth && (r.style.width = rWidth), r.style.height !== rHeight && (r.style.height = rHeight);
   const u = r.getContext("2d");
   if (!u) return false;
   u.setTransform(l, 0, 0, l, 0, 0), u.clearRect(0, 0, s.rect.width, s.rect.height);
@@ -3705,6 +3719,7 @@ async function handleBattleFinishAction(e, t) {
   const o = Date.now();
   if (o < finishActionLockUntil) return true;
   finishActionLockUntil = o + 700;
+  r.disabled = true, r.classList.add("is-busy");
   const s = r.dataset.battleFinishAction || (r.id === "battle-back-home" ? "home" : r.id === "battle-restart" ? "restart" : r.id === "battle-paid-next" ? "paid-next" : "");
   if (s === "home") {
     resetBattleViewState(), _(), refreshHomeDataInBackground();
@@ -4326,6 +4341,16 @@ async function ao() {
     console.error("\u521D\u59CB\u5316\u5931\u8D25", e), Fe(n("initFailed", { message: N(e) }));
   }
 }
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") {
+    canvasFxFrame && (window.cancelAnimationFrame(canvasFxFrame), canvasFxFrame = null);
+    canvasBreathTimer && (window.clearTimeout(canvasBreathTimer), canvasBreathTimer = null);
+    return;
+  }
+  if (a.screen === "battle") {
+    renderCurrentCanvasBoard(), scheduleCanvasFxFrame(), scheduleCanvasBreathFrame(), recoverStaleRealtimeConnection();
+  }
+});
 setupBattleAudioUnlock();
 ao();
 
