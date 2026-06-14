@@ -398,7 +398,7 @@ function applyPredictedSwap(e, t, r, o = null) {
   }
 }
 function Ft(e) {
-  return e.isBot ? "\u95EA\u6218Bot" : e.nickname;
+  return e.nickname || e.piUsername || n("opponent");
 }
 function Wn() {
   return a.networkStatus === "online" ? n("networkOnline") : a.networkStatus === "slow" ? n("networkSlow") : a.networkStatus === "reconnecting" ? n("networkReconnecting") : a.networkStatus === "offline" ? n("networkOffline") : n("networkConnecting");
@@ -1187,7 +1187,7 @@ function wr(e) {
                 <div class="history-main">
                   <div>
                     <strong>${i(I(c.mode))}</strong>
-                    <small>${i(n("opponent"))}\uFF1A${i(u)}${c.isBotRoom ? ` \xB7 ${i(n("bot"))}` : ""}</small>
+                    <small>${i(n("opponent"))}\uFF1A${i(u)}</small>
                   </div>
                   <span class="history-result ${d}">${Xn(c.result)}</span>
                 </div>

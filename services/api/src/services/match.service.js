@@ -88,6 +88,10 @@ const DEFAULT_TIMING = {
 };
 const MATCH_LOCK_WAIT_MS = 2500;
 const MATCH_LOCK_RETRY_BASE_MS = 25;
+const DEFAULT_POINTS_BOT_NAME_POOL = [
+  "星河玩家", "闪电高手", "三消达人", "幸运玩家", "连击王者",
+  "风暴选手", "金芒玩家", "极速挑战者", "甜心玩家", "不服再战"
+];
 
 function observeMatchStage(stage, detail = {}) {
   observeBattleStage(stage, detail).catch((error) => {
@@ -145,10 +149,23 @@ function createBoardState(seed, mode = "quick_battle", timing = DEFAULT_TIMING) 
   };
 }
 
-function createBotPlayer() {
+function getBotNamePool(modeConfig = {}) {
+  return (Array.isArray(modeConfig.botNamePool) ? modeConfig.botNamePool : [])
+    .map((name) => String(name || "").trim())
+    .filter(Boolean)
+    .slice(0, 200);
+}
+
+function pickBotName(modeConfig = {}) {
+  const pool = getBotNamePool(modeConfig);
+  const source = pool.length ? pool : DEFAULT_POINTS_BOT_NAME_POOL;
+  return source[Math.floor(Math.random() * source.length)] || "Pi玩家";
+}
+
+function createBotPlayer(modeConfig = {}) {
   return {
-    uid: `bot_${Date.now()}`,
-    nickname: "闪战Bot",
+    uid: `bot_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`,
+    nickname: pickBotName(modeConfig),
     avatarUrl: "",
     avatarKey: "bot",
     rankName: "青铜"
@@ -1272,7 +1289,7 @@ async function joinQueueWithLock(user, mode) {
     let room;
 
     try {
-      room = await createRoomInStore(user, createBotPlayer(), mode);
+      room = await createRoomInStore(user, createBotPlayer(modeConfig), mode);
     } catch (error) {
       requeueHumanPlayers(redisQueue, [user], mode);
       await writeJson(queueKey, redisQueue, 3600);
@@ -1518,7 +1535,7 @@ async function getMatchStatusWithoutLock(user) {
         let room;
 
         try {
-          room = await createRoomInStore(user, createBotPlayer(), mode);
+          room = await createRoomInStore(user, createBotPlayer(modeConfig), mode);
         } catch (error) {
           requeueHumanPlayers(nextQueue, [user], mode);
           await writeJson(getQueueKey(mode), nextQueue, 3600);

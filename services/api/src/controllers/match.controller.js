@@ -62,7 +62,7 @@ function getBattleHistoryOpponent(row, uid) {
     return {
       uid: opponentUid,
       piUsername: "",
-      nickname: "闪战Bot"
+      nickname: opponentNickname || "对手"
     };
   }
 

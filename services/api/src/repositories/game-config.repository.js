@@ -12,6 +12,48 @@ const SUPPORTED_BATTLE_MODES = [
 ];
 const DEFAULT_RANKED_MODES = ["points_battle", "poc_battle", "pi_battle"];
 const DEFAULT_ENGAGEMENT_TASK_MODES = ["points_battle", "poc_battle", "pi_battle"];
+const DEFAULT_POINTS_BOT_NAME_POOL = [
+  "星河玩家", "闪电高手", "三消达人", "幸运玩家", "连击王者",
+  "风暴选手", "金芒玩家", "极速挑战者", "甜心玩家", "不服再战",
+  "追光少年", "彩虹棋手", "闪耀小星", "爆消大师", "雷霆玩家",
+  "清风过关", "星火连击", "快乐消消", "金色闪电", "稳稳上分",
+  "满分冲刺", "小宇宙", "彩糖高手", "电光一闪", "胜利微笑",
+  "蓝海玩家", "紫晶骑士", "红心挑战", "绿野高手", "橙光勇者",
+  "晨光选手", "夜空旅人", "晴天玩家", "好运连连", "小小冠军",
+  "闪电先锋", "宝石猎人", "飞速消除", "甜蜜连线", "星愿玩家",
+  "黄金手速", "稳健棋手", "开心赢家", "能量满格", "一路高分",
+  "圆梦玩家", "微风选手", "光速滑动", "连胜小将", "高分伙伴",
+  "星辰大海", "快乐高手", "幸运之星", "闪闪发光", "破局达人",
+  "紫电玩家", "糖果猎手", "王牌选手", "稳如磐石", "冲榜达人",
+  "闪耀达人", "轻松过关", "火花玩家", "节奏大师", "超能棋手",
+  "梦想玩家", "明亮星光", "连击小能手", "宝藏玩家", "勇敢挑战",
+  "金牌选手", "闪电伙伴", "彩石玩家", "蓝焰高手", "星月同辉",
+  "快乐冲锋", "灵巧手指", "幸运挑战", "满能玩家", "胜利之光",
+  "甜橙玩家", "绿光旅人", "蓝莓高手", "紫霞玩家", "红宝挑战",
+  "开心连消", "星光猎手", "神速玩家", "热血棋手", "高能时刻",
+  "轻快选手", "稳准高手", "闪击玩家", "奇迹连击", "闪耀冠军",
+  "顺风玩家", "彩云选手", "金风玩家", "银月高手", "火焰挑战",
+  "绿洲玩家", "蓝星旅人", "紫藤高手", "红枫玩家", "橙子选手",
+  "星际玩家", "流光高手", "飞扬棋手", "高分冲击", "幸运一击",
+  "快乐出发", "轻盈滑动", "闪亮登场", "稳步前进", "连消高手",
+  "彩虹冲刺", "金光玩家", "能量选手", "活力玩家", "胜利冲锋",
+  "星河闪耀", "雷光棋手", "闪电冲刺", "糖心玩家", "宝石之光",
+  "小小闪电", "高能玩家", "欢乐棋手", "幸运高手", "满屏连击",
+  "星光冲榜", "黄金挑战", "快乐上分", "神奇手速", "闪耀对手",
+  "风驰玩家", "电掣高手", "彩石达人", "金牌伙伴", "开心挑战",
+  "晴空玩家", "月光棋手", "晨星高手", "火力全开", "连胜伙伴",
+  "高分之路", "甜蜜高手", "能量冲刺", "星火达人", "闪电连线",
+  "轻松赢家", "好运选手", "快乐闪击", "宝石玩家", "彩光挑战",
+  "星云高手", "雷霆冲榜", "金色伙伴", "紫光玩家", "蓝钻高手",
+  "红钻玩家", "绿宝选手", "橙星挑战", "飞星玩家", "闪亮棋手",
+  "快乐冠军", "小胜一局", "连击风暴", "高分雷达", "星光小将",
+  "黄金指尖", "彩虹小队", "闪电小队", "幸运连线", "甜心高手",
+  "追风玩家", "破风选手", "光芒棋手", "暖阳玩家", "星辉挑战",
+  "闪耀出击", "连消小王", "能量小站", "胜利节奏", "彩糖冲刺",
+  "极速高手", "稳赢玩家", "快乐对局", "星河冲锋", "金芒高手",
+  "流星玩家", "星愿高手", "飞光挑战", "小小赢家", "闪电时刻",
+  "宝石冲锋", "彩色心情", "热力玩家", "高能连消", "胜利玩家"
+];
 
 const DEFAULT_GAME_CONFIG = {
   quickBattle: {
@@ -65,6 +107,7 @@ const DEFAULT_GAME_CONFIG = {
       hard: { minScore: 3600, maxScore: 4600, moveIntervalSeconds: 1 },
       expert: { minScore: 4600, maxScore: 5600, moveIntervalSeconds: 0.85 }
     },
+    botNamePool: DEFAULT_POINTS_BOT_NAME_POOL,
     botCountInRank: true,
     botCountInWeekly: true,
     botCountInWatchShareholder: true
@@ -425,6 +468,16 @@ function splitLines(value, fallback = []) {
     .slice(0, 50) || fallback;
 }
 
+function normalizeBotNamePool(value, fallback = DEFAULT_POINTS_BOT_NAME_POOL) {
+  const names = (Array.isArray(value) ? value : String(value || "").split(/\r?\n|,/))
+    .map((item) => String(item || "").trim().replace(/\s+/g, " ").slice(0, 12))
+    .filter(Boolean)
+    .filter((item, index, list) => list.indexOf(item) === index)
+    .slice(0, 200);
+
+  return names.length ? names : fallback;
+}
+
 function normalizeTextValue(value, fallback = "") {
   if (typeof value === "string" || typeof value === "number") {
     const text = String(value).trim();
@@ -552,6 +605,10 @@ function normalizeBattleModeConfig(modeKey, incoming = {}, defaults = {}) {
     normalized.botCountInRank = incoming.botCountInRank !== false;
     normalized.botCountInWeekly = incoming.botCountInWeekly !== false;
     normalized.botCountInWatchShareholder = incoming.botCountInWatchShareholder !== false;
+    normalized.botNamePool = normalizeBotNamePool(
+      incoming.botNamePool || incoming.botNames,
+      defaults.botNamePool || DEFAULT_POINTS_BOT_NAME_POOL
+    );
   }
 
   return normalized;
