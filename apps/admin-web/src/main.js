@@ -761,13 +761,13 @@ function at(e) {
 }
 function isObserverActionable(e = {}) {
   const t = e.stage || "";
-  return t === "settlement_retry" || t === "client_realtime_retry_failed";
+  return t === "settlement_retry";
 }
 function getObserverActionCount(e = {}) {
-  return Number(e.settlement_retry || 0) + Number(e.client_realtime_retry_failed || 0);
+  return Number(e.settlement_retry || 0);
 }
 function getObserverWatchCount(e = {}) {
-  return Number(e.client_match_poll_failed || 0) + Number(e.client_realtime_connect_slow || 0) + Number(e.match_watch_failed || 0) + Number(e.realtime_tick_slow || 0) + Number(e.realtime_tick_skipped || 0) + Number(e.realtime_broadcast_slow || 0);
+  return Number(e.client_match_poll_failed || 0) + Number(e.client_realtime_connect_slow || 0) + Number(e.client_realtime_retry_failed || 0) + Number(e.match_watch_failed || 0) + Number(e.realtime_tick_slow || 0) + Number(e.realtime_tick_skipped || 0) + Number(e.realtime_broadcast_slow || 0);
 }
 function externalActionLabel(e = {}) {
   const t = `${e.provider || ""}:${e.action || ""}`;
@@ -808,7 +808,7 @@ function renderExternalHealth(e = {}, t = {}) {
         `).join("") || '<article class="observer-event empty"><b>暂无检测</b><span>等待接口调用后写入</span><small>-</small></article>'}
       </div>
       <div class="external-queue-grid">
-        ${f("每日奖励队列", Number(s.retryable || 0), `排队 ${Number(s.queued || 0)} · 失败 ${Number(s.failed || 0)} · 人工 ${Number(s.manualReview || 0)}`)}
+        ${f("每日奖励队列", Number(s.retryable || 0), `排队 ${Number(s.queued || 0)} · 失败 ${Number(s.failed || 0)} · 人工 ${Number(s.manualReview || 0)}${Number(s.hashpiUnbound || 0) ? ` · 未绑定HashPi ${Number(s.hashpiUnbound || 0)}` : ""}`)}
         ${f("腕表分红队列", Number(r.retryable || 0), `失败 ${Number(r.failed || 0)} · 人工 ${Number(r.manualReview || 0)} · 待发 ${Number(r.pendingPoints || 0)}积分`)}
       </div>
       ${n.length ? `<div class="external-failure-list">${n.slice(0, 4).map((m) => `<span>${i(externalActionLabel(m))} · ${i(tt(m.at))} · ${i(m.error || "-")}</span>`).join("")}</div>` : ""}
@@ -826,7 +826,7 @@ function nt(e) {
         </div>
         <span class="pill ${s ? "warning" : "ok"}">${s ? `${s} \u4E2A\u9700\u5173\u6CE8` : r ? `\u4ECA\u65E5\u7D2F\u8BA1 ${r} \u6761\u89C2\u5BDF` : "\u94FE\u8DEF\u6B63\u5E38"}</span>
       </div>
-      <p class="meta">\u8FD9\u91CC\u662F\u4ECA\u65E5\u7D2F\u8BA1\uFF0C\u5F31\u7F51\u3001\u964D\u7EA7\u548C\u6162 Tick \u4E0D\u7B49\u4E8E\u5F53\u524D\u6545\u969C\u3002</p>
+      <p class="meta">\u8FD9\u91CC\u662F\u5317\u4EAC\u65F6\u95F4\u4ECA\u65E5\u7D2F\u8BA1\uFF0C\u5F31\u7F51\u3001\u8FDB\u623F\u6162\u548C\u91CD\u8FDE\u5931\u8D25\u5C5E\u4E8E\u4F53\u9A8C\u89C2\u5BDF\uFF0C\u4E0D\u7B49\u4E8E\u5F53\u524D\u6545\u969C\u3002</p>
       <div class="observer-stats">
         ${n.map(([r, o, m]) => f(String(r), o, String(m))).join("")}
       </div>

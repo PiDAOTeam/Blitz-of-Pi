@@ -533,7 +533,8 @@ async function getEngagementRewardQueueStats() {
        SUM(CASE WHEN status = 'queued' THEN 1 ELSE 0 END) AS queued,
        SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) AS failed,
        SUM(CASE WHEN status = 'manual_review' THEN 1 ELSE 0 END) AS manual_review,
-       SUM(CASE WHEN status = 'processing' THEN 1 ELSE 0 END) AS processing
+       SUM(CASE WHEN status = 'processing' THEN 1 ELSE 0 END) AS processing,
+       SUM(CASE WHEN status IN ('failed', 'manual_review') AND last_error LIKE '%未绑定 HashPi 用户%' THEN 1 ELSE 0 END) AS hashpi_unbound
      FROM engagement_asset_reward_jobs`
   );
   const row = rows[0] || {};
@@ -544,7 +545,8 @@ async function getEngagementRewardQueueStats() {
     queued: Number(row.queued || 0),
     failed: Number(row.failed || 0),
     manualReview: Number(row.manual_review || 0),
-    processing: Number(row.processing || 0)
+    processing: Number(row.processing || 0),
+    hashpiUnbound: Number(row.hashpi_unbound || 0)
   };
 }
 
