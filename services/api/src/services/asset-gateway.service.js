@@ -12,6 +12,7 @@ const SUPPORTED_REMOTE_ASSETS = new Set(["POINTS", "POC"]);
 const SUMMARY_CACHE_TTL_MS = Math.max(5_000, Number(process.env.ASSET_GATEWAY_SUMMARY_CACHE_TTL_MS || 30_000));
 const SUMMARY_STALE_TTL_MS = Math.max(SUMMARY_CACHE_TTL_MS, Number(process.env.ASSET_GATEWAY_SUMMARY_STALE_TTL_MS || 5 * 60_000));
 const SUMMARY_REQUEST_TIMEOUT_MS = Math.max(1_000, Number(process.env.ASSET_GATEWAY_SUMMARY_TIMEOUT_MS || 2_500));
+const SUMMARY_MAX_ATTEMPTS = Math.max(1, Number(process.env.ASSET_GATEWAY_SUMMARY_MAX_ATTEMPTS || 1));
 const SUMMARY_CIRCUIT_OPEN_MS = Math.max(3_000, Number(process.env.ASSET_GATEWAY_SUMMARY_CIRCUIT_OPEN_MS || 15_000));
 const SUMMARY_CIRCUIT_FAILURE_THRESHOLD = Math.max(2, Number(process.env.ASSET_GATEWAY_SUMMARY_CIRCUIT_FAILURE_THRESHOLD || 3));
 const TRANSIENT_RETRY_LOG_INTERVAL_MS = 60_000;
@@ -174,15 +175,23 @@ function getGatewayTimeoutMs(action) {
   return Math.max(1000, Number(ASSET_GATEWAY_TIMEOUT_MS || 8000));
 }
 
+function getGatewayMaxAttempts(action) {
+  if (action === "summary") {
+    return Math.min(2, SUMMARY_MAX_ATTEMPTS);
+  }
+  return 2;
+}
+
 async function callGateway(action, payload) {
   const rawBody = JSON.stringify(payload || {});
   const url = getGatewayUrl(action);
   const parsedUrl = new URL(url);
   const requestPath = `${parsedUrl.pathname}${parsedUrl.search || ""}`;
   const timeoutMs = getGatewayTimeoutMs(action);
+  const maxAttempts = getGatewayMaxAttempts(action);
   let lastError = null;
 
-  for (let attempt = 1; attempt <= 2; attempt += 1) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     const startedAt = Date.now();
     const timestamp = String(Math.floor(Date.now() / 1000));
     const nonce = crypto.randomBytes(12).toString("hex");
@@ -233,7 +242,7 @@ async function callGateway(action, payload) {
     } catch (error) {
       lastError = error;
       const transient = isTransientGatewayError(error);
-      if (attempt >= 2 || !transient) {
+      if (attempt >= maxAttempts || !transient) {
         recordExternalDependencyResult({
           provider: "asset-gateway",
           action,
