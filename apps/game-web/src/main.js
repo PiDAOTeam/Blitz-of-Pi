@@ -33,6 +33,10 @@ function animationMs(e, t = 0) {
 function animationMsAtLeast(e, t, r = 0) {
   return Math.max(t, animationMs(e, r));
 }
+function burstDurationMs(e, t = 0) {
+  const r = a.effectiveVisualEffectMode === "high", o = a.effectiveVisualEffectMode === "low" || document.documentElement.classList.contains("low-performance");
+  return e?.localPending ? r ? animationMsAtLeast("localBurstHighSeconds", 1080, t) : animationMsAtLeast("localBurstSeconds", 940, t) : o ? animationMs("lowPerformanceBurstSeconds", t) : r ? animationMs("serverBurstHighSeconds", t) : animationMs("serverBurstSeconds", t);
+}
 function applyAnimationDurationVars() {
   const e = ve().animationDurations, t = document.documentElement.style, r = a.effectiveVisualEffectMode === "high";
   const o = r ? e.serverBurstHighSeconds : e.serverBurstSeconds, s = r ? e.localBurstHighSeconds : e.localBurstSeconds;
@@ -87,6 +91,17 @@ function isExtremeRealtimeActive(e = a.realtimeRoom) {
 }
 function resetPredictionState() {
   a.pendingSwapSeq = 0, a.pendingSwapPositions = [], a.pendingSwapQueue = [], a.clientPredictedBoard = null, a.clientRoomVersion = Number(a.realtimeRoom?.version || 0);
+}
+function pendingSwapTimeoutMs() {
+  return xn() ? 1600 : 2300;
+}
+function cleanupExpiredPendingSwaps(e = Date.now()) {
+  const t = pendingSwapTimeoutMs(), r = (a.pendingSwapQueue || []).length;
+  a.pendingSwapQueue = (a.pendingSwapQueue || []).filter((o) => e - Number(o.sentAt || 0) < t);
+  if (a.pendingSwapSeq && !a.pendingSwapQueue.some((o) => Number(o.seq || 0) === Number(a.pendingSwapSeq))) {
+    a.pendingSwapSeq = a.pendingSwapQueue[0]?.seq || 0, a.pendingSwapPositions = a.pendingSwapQueue[0]?.positions || [];
+  }
+  return r !== a.pendingSwapQueue.length;
 }
 function Oa(e) {
   const t = ve(), r = Zt() ? t.piBrowserDefaultMode : t.defaultMode;
@@ -143,7 +158,7 @@ function cleanupBoardInputs() {
   Ne = null;
 }
 function ce() {
-  stopBattleBgm(), be && (window.cancelAnimationFrame(be), be = null), ee && (window.clearTimeout(ee), ee = null), le && (window.cancelAnimationFrame(le), le = null), j && (window.cancelAnimationFrame(j), j = null), V && (window.cancelAnimationFrame(V), V = null), z = null, W = null, At = 0, q = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPerfLockedLow = false, clientPerfFrameCount = 0, clientPerfLongFrameCount = 0, clientPerfSampleStartedAt = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0, document.documentElement.classList.remove("low-performance"), we(), Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", burstLayerKey = "", impactLayerKey = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, finishFeedbackKey = "", Se = null, me.clear(), Nt = "", y = null, Et = 0, Lt = "", xt = 0, a.pendingSwapSeq = 0, a.pendingSwapPositions = [], cleanupBoardInputs(), x = null, k = null, Yt = 0, a.battleBursts = [], a.battleImpacts = [], a.localBattleEvents = [], a.localSwapFx = null, a.canvasSpecialFx = [], a.canvasSpecialBirths = [];
+  stopBattleBgm(), be && (window.cancelAnimationFrame(be), be = null), ee && (window.clearTimeout(ee), ee = null), le && (window.cancelAnimationFrame(le), le = null), j && (window.cancelAnimationFrame(j), j = null), V && (window.cancelAnimationFrame(V), V = null), z = null, W = null, At = 0, q = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPerfLockedLow = false, clientPerfFrameCount = 0, clientPerfLongFrameCount = 0, clientPerfSampleStartedAt = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0, document.documentElement.classList.remove("low-performance"), we(), Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", burstLayerKey = "", impactLayerKey = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, finishFeedbackKey = "", Se = null, me.clear(), Nt = "", y = null, Et = 0, Lt = "", xt = 0, a.pendingSwapSeq = 0, a.pendingSwapPositions = [], a.pendingSwapQueue = [], cleanupBoardInputs(), x = null, k = null, Yt = 0, a.battleBursts = [], a.battleImpacts = [], a.localBattleEvents = [], a.localSwapFx = null, a.canvasSpecialFx = [], a.canvasSpecialBirths = [], stopBattleCleanupLoop();
 }
 function ge() {
   ze && (window.clearTimeout(ze), ze = null);
@@ -152,6 +167,19 @@ function $() {
   be || (be = window.requestAnimationFrame(() => {
     be = null, Hi();
   }));
+}
+let battleCleanupTimer = null;
+function stopBattleCleanupLoop() {
+  battleCleanupTimer && (window.clearInterval(battleCleanupTimer), battleCleanupTimer = null);
+}
+function ensureBattleCleanupLoop() {
+  battleCleanupTimer || (battleCleanupTimer = window.setInterval(() => {
+    if (a.screen !== "battle") {
+      stopBattleCleanupLoop();
+      return;
+    }
+    (cleanupExpiredPendingSwaps() || cleanupExpiredFeedback()) && $();
+  }, 420));
 }
 function flashClass(e, t, r) {
   if (!e) return;
@@ -233,13 +261,18 @@ function Qe() {
 }
 function xn() {
   const e = new URLSearchParams(window.location.search);
-  let t = "";
+  let t = "", r = "";
   try {
     t = Array.from(window.location.ancestorOrigins || []).join(",");
   } catch {
     t = "";
   }
-  return window.location.hostname === "sandbox.minepi.com" || document.referrer.includes("sandbox.minepi.com") || t.includes("sandbox.minepi.com") || e.get("sandbox") === "true" || e.get("pi_sandbox") === "true" || !!window.__BLITZ_PI_SANDBOX__;
+  try {
+    r = window.top && window.top !== window ? window.top.location.href : window.location.href;
+  } catch {
+    r = "";
+  }
+  return window.location.hostname === "sandbox.minepi.com" || document.referrer.includes("sandbox.minepi.com") || t.includes("sandbox.minepi.com") || r.includes("sandbox.minepi.com") || e.get("sandbox") === "true" || e.get("pi_sandbox") === "true" || !!window.__BLITZ_PI_SANDBOX__;
 }
 function N(e) {
   if (e?.code === 1701 || e?.data?.reason === "asset_gateway_busy") return n("assetGatewayBusy");
@@ -3236,7 +3269,7 @@ function handleSwapReject(e) {
 }
 function handleRoomSnapshot(e) {
   if (!e.room) return;
-  a.pendingSwapQueue = (a.pendingSwapQueue || []).filter((t) => Date.now() - Number(t.sentAt || 0) < 3500);
+  a.pendingSwapQueue = (a.pendingSwapQueue || []).filter((t) => Date.now() - Number(t.sentAt || 0) < pendingSwapTimeoutMs());
   a.pendingSwapSeq = a.pendingSwapQueue[0]?.seq || 0, a.pendingSwapPositions = a.pendingSwapQueue[0]?.positions || [];
   syncAuthoritativeRoom(e.room, "snapshot"), $();
 }
@@ -3269,7 +3302,16 @@ function mi() {
   const e = a.battleBursts.map(pi).join(""), t = a.battleImpacts.map(fi).join("");
   return `${e}${t}`;
 }
+function cleanupExpiredFeedback(e = Date.now()) {
+  const t = a.battleBursts.length, r = a.battleImpacts.length;
+  a.battleBursts = a.battleBursts.filter((o) => !o.expiresAt || e < o.expiresAt);
+  a.battleImpacts = a.battleImpacts.filter((o) => !o.expiresAt || e < o.expiresAt);
+  if (t !== a.battleBursts.length) burstLayerKey = "";
+  if (r !== a.battleImpacts.length) impactLayerKey = "";
+  return t !== a.battleBursts.length || r !== a.battleImpacts.length;
+}
 function renderFeedbackLayers(e = st()) {
+  cleanupExpiredFeedback();
   if (e.feedbackLayer && (!e.burstLayer || !e.impactLayer)) {
     e.feedbackLayer.innerHTML = '<div id="battle-burst-layer"></div><div id="battle-impact-layer"></div>';
     Se = null, e = st(), burstLayerKey = "", impactLayerKey = "";
@@ -3340,7 +3382,7 @@ function showAttackWarning(e) {
   if (!lt(t) || a.battleBursts.some((h) => h.id === t)) return;
   const r = attackWarningText(e).trim();
   if (!r) return;
-  const o = a.effectiveVisualEffectMode === "low" || document.documentElement.classList.contains("low-performance"), s = Math.max(0.92, animationSeconds("hitWarningSeconds")), l = { id: t, text: r, tone: "attack", at: Date.now(), x: 50, y: 34, cleared: Number(e.cleared || 3), chain: Number(e.chain || 1), attack: Number(e.attack || 0), particles: o ? 0 : a.effectiveVisualEffectMode === "high" ? 4 : 2, durationSeconds: s };
+  const o = a.effectiveVisualEffectMode === "low" || document.documentElement.classList.contains("low-performance"), s = Math.max(0.92, animationSeconds("hitWarningSeconds")), c = Date.now(), l = { id: t, text: r, tone: "attack", at: c, expiresAt: c + Math.max(120, Math.round(s * 1e3)) + 120, x: 50, y: 34, cleared: Number(e.cleared || 3), chain: Number(e.chain || 1), attack: Number(e.attack || 0), particles: o ? 0 : a.effectiveVisualEffectMode === "high" ? 4 : 2, durationSeconds: s };
   a.battleBursts = [l], burstLayerKey = "", K = "", window.setTimeout(() => {
     a.battleBursts = a.battleBursts.filter((h) => h.id !== t), burstLayerKey = "", K = "", $();
   }, Math.max(120, Math.round(s * 1e3)));
@@ -3476,10 +3518,11 @@ function nn(e) {
     return;
   }
   l && (Rt = c, Mt = d, Bt = Date.now(), (e.specialTriggered || e.specialCreated || e.attack > 0) && v("client_burst_show", { roomNo: a.roomNo, mode: a.realtimeRoom?.mode || a.selectedMode, message: l, seq: e.seq || 0, result: ne(e), specialTriggered: e.specialTriggered || 0, specialCreated: e.specialCreated || 0, attack: e.attack || 0 }, 0));
-  const m = { id: t, text: l, tone: s, at: Date.now(), x: e.attack > 0 ? 63 : r ? 48 + Math.random() * 12 : 50, y: e.localPending ? 48 : e.attack > 0 ? 38 : r ? 46 + Math.random() * 10 : 50, cleared: Number(e.cleared || 3), chain: Number(e.chain || 1), attack: Number(e.attack || 0), bigChain: Number(e.chain || 1) >= 3 && !(Number(e.attack || 0) > 0) ? Number(e.chain || 1) : 0, particles: bi(e) };
+  const g = Date.now(), y = burstDurationMs(e);
+  const m = { id: t, text: l, tone: s, at: g, expiresAt: g + y + 180, x: e.attack > 0 ? 63 : r ? 48 + Math.random() * 12 : 50, y: e.localPending ? 48 : e.attack > 0 ? 38 : r ? 46 + Math.random() * 10 : 50, cleared: Number(e.cleared || 3), chain: Number(e.chain || 1), attack: Number(e.attack || 0), bigChain: Number(e.chain || 1) >= 3 && !(Number(e.attack || 0) > 0) ? Number(e.chain || 1) : 0, particles: bi(e) };
   a.battleBursts = l ? [m] : [...a.battleBursts, m].slice(-2), burstLayerKey = "", K = "", window.setTimeout(() => {
     a.battleBursts = a.battleBursts.filter((g) => g.id !== t), burstLayerKey = "", K = "", $();
-  }, e.localPending ? r ? animationMsAtLeast("localBurstHighSeconds", 1080) : animationMsAtLeast("localBurstSeconds", 940) : o ? animationMs("lowPerformanceBurstSeconds") : r ? animationMs("serverBurstHighSeconds") : animationMs("serverBurstSeconds"));
+  }, y);
 }
 function Bi(e, t) {
   const r = Date.now();
@@ -3490,11 +3533,12 @@ function Bi(e, t) {
 }
 function Ni(e) {
   if (a.battleImpacts.some((r) => r.id === e.id)) return;
-  a.battleImpacts = [...a.battleImpacts, e].slice(-4), impactLayerKey = "", K = "";
+  const r = Date.now(), o = a.effectiveVisualEffectMode === "high" ? animationMs("impactHighSeconds") : animationMs("impactSeconds");
+  a.battleImpacts = [...a.battleImpacts, { ...e, at: e.at || r, expiresAt: r + o + 160 }].slice(-4), impactLayerKey = "", K = "";
   const t = oe();
   e.type === "self-hit" && t && (t.classList.remove("board-under-attack"), t.offsetWidth, t.classList.add("board-under-attack"), window.setTimeout(() => t.classList.remove("board-under-attack"), animationMs("boardUnderAttackSeconds", 40))), window.setTimeout(() => {
     a.battleImpacts = a.battleImpacts.filter((r) => r.id !== e.id), impactLayerKey = "", K = "", $();
-  }, a.effectiveVisualEffectMode === "high" ? animationMs("impactHighSeconds") : animationMs("impactSeconds"));
+  }, o);
 }
 function rn(e) {
   if (e.status !== "playing") return 0;
@@ -3871,7 +3915,7 @@ function Hi() {
       <div id="battle-burst-layer"></div>
       <div id="battle-impact-layer"></div>
     </div>
-  `, Ui(), Ua()), l || gi(t, e);
+  `, Ui(), Ua()), ensureBattleCleanupLoop(), cleanupExpiredFeedback(), l || gi(t, e);
   const m = st(), g = (E, H) => {
     E && E.textContent !== H && (E.textContent = H);
   };
@@ -4022,6 +4066,7 @@ function ln(e = true) {
 }
 function cn() {
   const e = extremeRealtimeConfig();
+  cleanupExpiredPendingSwaps();
   return (a.pendingSwapQueue || []).length >= e.maxPendingSwaps ? false : a.realtimeRoom?.status === "waiting_ready" ? (a.battleMessage = n("waitBothReady"), $(), false) : a.realtimeRoom && ht(a.realtimeRoom) > 0 ? (a.battleMessage = n("waitReady"), $(), false) : !M || M.readyState !== WebSocket.OPEN ? (a.battleMessage = n("socketNotReady"), $(), false) : true;
 }
 function dn(e, t) {
