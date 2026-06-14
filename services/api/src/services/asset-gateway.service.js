@@ -9,11 +9,16 @@ const {
 const { recordExternalDependencyResult } = require("./external-health.service");
 
 const SUPPORTED_REMOTE_ASSETS = new Set(["POINTS", "POC"]);
-const SUMMARY_CACHE_TTL_MS = 15_000;
-const SUMMARY_STALE_TTL_MS = 2 * 60_000;
+const SUMMARY_CACHE_TTL_MS = Math.max(5_000, Number(process.env.ASSET_GATEWAY_SUMMARY_CACHE_TTL_MS || 30_000));
+const SUMMARY_STALE_TTL_MS = Math.max(SUMMARY_CACHE_TTL_MS, Number(process.env.ASSET_GATEWAY_SUMMARY_STALE_TTL_MS || 5 * 60_000));
+const SUMMARY_REQUEST_TIMEOUT_MS = Math.max(1_000, Number(process.env.ASSET_GATEWAY_SUMMARY_TIMEOUT_MS || 2_500));
+const SUMMARY_CIRCUIT_OPEN_MS = Math.max(3_000, Number(process.env.ASSET_GATEWAY_SUMMARY_CIRCUIT_OPEN_MS || 15_000));
+const SUMMARY_CIRCUIT_FAILURE_THRESHOLD = Math.max(2, Number(process.env.ASSET_GATEWAY_SUMMARY_CIRCUIT_FAILURE_THRESHOLD || 3));
 const TRANSIENT_RETRY_LOG_INTERVAL_MS = 60_000;
 const summaryCache = new Map();
+const summaryInFlight = new Map();
 const transientRetryLogState = new Map();
+const gatewayCircuitState = new Map();
 
 function normalizeAssetType(assetType = "") {
   return String(assetType || "").trim().toUpperCase();
@@ -66,6 +71,54 @@ function createGatewayBusyError(cause = null) {
   return error;
 }
 
+function getCircuitState(action) {
+  return gatewayCircuitState.get(action) || { consecutiveFailures: 0, openedUntil: 0 };
+}
+
+function isCircuitOpen(action) {
+  const state = getCircuitState(action);
+  return Number(state.openedUntil || 0) > Date.now();
+}
+
+function markCircuitSuccess(action) {
+  gatewayCircuitState.set(action, { consecutiveFailures: 0, openedUntil: 0 });
+}
+
+function markCircuitFailure(action, error) {
+  if (!isTransientGatewayError(error)) return;
+
+  const state = getCircuitState(action);
+  const consecutiveFailures = Number(state.consecutiveFailures || 0) + 1;
+  const openedUntil =
+    action === "summary" && consecutiveFailures >= SUMMARY_CIRCUIT_FAILURE_THRESHOLD
+      ? Date.now() + SUMMARY_CIRCUIT_OPEN_MS
+      : Number(state.openedUntil || 0);
+
+  gatewayCircuitState.set(action, { consecutiveFailures, openedUntil });
+}
+
+function getCachedSummary(cacheKey, maxAgeMs) {
+  const cached = summaryCache.get(cacheKey);
+  if (!cached || Date.now() - cached.cachedAt > maxAgeMs) return null;
+  return cached;
+}
+
+function toStaleSummary(cached) {
+  return {
+    ...cached.data,
+    stale: true,
+    cachedAt: cached.cachedAt,
+    remoteAssetsWarning: "资产同步稍慢，正在显示最近一次余额"
+  };
+}
+
+function invalidateSummaryCache(user = {}) {
+  try {
+    summaryCache.delete(getSummaryCacheKey(user));
+  } catch {
+  }
+}
+
 function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -114,12 +167,19 @@ function assertGatewayReady(assetType) {
   }
 }
 
+function getGatewayTimeoutMs(action) {
+  if (action === "summary") {
+    return Math.min(Math.max(1000, Number(ASSET_GATEWAY_TIMEOUT_MS || 8000)), SUMMARY_REQUEST_TIMEOUT_MS);
+  }
+  return Math.max(1000, Number(ASSET_GATEWAY_TIMEOUT_MS || 8000));
+}
+
 async function callGateway(action, payload) {
   const rawBody = JSON.stringify(payload || {});
   const url = getGatewayUrl(action);
   const parsedUrl = new URL(url);
   const requestPath = `${parsedUrl.pathname}${parsedUrl.search || ""}`;
-  const timeoutMs = Math.max(1000, Number(ASSET_GATEWAY_TIMEOUT_MS || 8000));
+  const timeoutMs = getGatewayTimeoutMs(action);
   let lastError = null;
 
   for (let attempt = 1; attempt <= 2; attempt += 1) {
@@ -168,6 +228,7 @@ async function callGateway(action, payload) {
         startedAt,
         detail: { attempt }
       }).catch(() => {});
+      markCircuitSuccess(action);
       return data.data || {};
     } catch (error) {
       lastError = error;
@@ -181,6 +242,7 @@ async function callGateway(action, payload) {
           error,
           detail: { attempt, transient }
         }).catch(() => {});
+        markCircuitFailure(action, error);
         if (transient) {
           throw createGatewayBusyError(error);
         }
@@ -218,31 +280,60 @@ function getSummaryCacheKey(user = {}) {
 async function summary(user) {
   assertGatewayReady("POINTS");
   const cacheKey = getSummaryCacheKey(user);
-  const cached = summaryCache.get(cacheKey);
-  if (cached && Date.now() - cached.cachedAt <= SUMMARY_CACHE_TTL_MS) {
+  const cached = getCachedSummary(cacheKey, SUMMARY_CACHE_TTL_MS);
+  if (cached) {
     return cached.data;
   }
 
-  let data;
-  try {
-    data = await callGateway("summary", buildIdentity(user));
-  } catch (error) {
-    if (cached && Date.now() - cached.cachedAt <= SUMMARY_STALE_TTL_MS && error?.businessCode === 1701) {
-      return {
-        ...cached.data,
-        stale: true,
-        cachedAt: cached.cachedAt,
-        remoteAssetsWarning: "资产同步稍慢，正在显示最近一次余额"
-      };
+  const staleCached = getCachedSummary(cacheKey, SUMMARY_STALE_TTL_MS);
+  if (isCircuitOpen("summary")) {
+    if (staleCached) {
+      return toStaleSummary(staleCached);
     }
+    const error = createGatewayBusyError(new Error("summary circuit open"));
+    recordExternalDependencyResult({
+      provider: "asset-gateway",
+      action: "summary",
+      ok: false,
+      startedAt: Date.now(),
+      error,
+      detail: { circuitOpen: true }
+    }).catch(() => {});
     throw error;
   }
-  summaryCache.set(cacheKey, { cachedAt: Date.now(), data });
-  if (summaryCache.size > 1000) {
-    const oldestKey = summaryCache.keys().next().value;
-    summaryCache.delete(oldestKey);
+
+  if (summaryInFlight.has(cacheKey)) {
+    try {
+      return await summaryInFlight.get(cacheKey);
+    } catch (error) {
+      if (staleCached && error?.businessCode === 1701) {
+        return toStaleSummary(staleCached);
+      }
+      throw error;
+    }
   }
-  return data;
+
+  const request = callGateway("summary", buildIdentity(user))
+    .then((data) => {
+      summaryCache.set(cacheKey, { cachedAt: Date.now(), data });
+      if (summaryCache.size > 2000) {
+        const oldestKey = summaryCache.keys().next().value;
+        summaryCache.delete(oldestKey);
+      }
+      return data;
+    })
+    .catch((error) => {
+      if (staleCached && error?.businessCode === 1701) {
+        return toStaleSummary(staleCached);
+      }
+      throw error;
+    })
+    .finally(() => {
+      summaryInFlight.delete(cacheKey);
+    });
+
+  summaryInFlight.set(cacheKey, request);
+  return request;
 }
 
 async function watchNodeSnapshot() {
@@ -259,7 +350,7 @@ async function freeze({ assetType, user, roomNo, amount, idempotencyKey, remark 
     throw new Error("冻结金额必须大于0");
   }
 
-  return callGateway("freeze", {
+  const result = await callGateway("freeze", {
     ...buildIdentity(user),
     asset_type: normalizedAssetType,
     external_order_no: roomNo,
@@ -267,13 +358,15 @@ async function freeze({ assetType, user, roomNo, amount, idempotencyKey, remark 
     amount: normalizedAmount,
     remark
   });
+  invalidateSummaryCache(user);
+  return result;
 }
 
 async function release({ assetType, user, roomNo, amount = 0, idempotencyKey, remark = "" }) {
   const normalizedAssetType = normalizeAssetType(assetType);
   assertGatewayReady(normalizedAssetType);
 
-  return callGateway("release", {
+  const result = await callGateway("release", {
     ...buildIdentity(user),
     asset_type: normalizedAssetType,
     external_order_no: roomNo,
@@ -281,6 +374,8 @@ async function release({ assetType, user, roomNo, amount = 0, idempotencyKey, re
     amount: normalizeAmount(normalizedAssetType, amount),
     remark
   });
+  invalidateSummaryCache(user);
+  return result;
 }
 
 async function settle({
@@ -299,7 +394,7 @@ async function settle({
   const winnerIdentity = buildIdentity(winner);
   const loserIdentity = buildIdentity(loser);
 
-  return callGateway("settle", {
+  const result = await callGateway("settle", {
     asset_type: normalizedAssetType,
     external_order_no: roomNo,
     idempotency_key: idempotencyKey,
@@ -312,6 +407,9 @@ async function settle({
     platform_fee_amount: normalizeAmount(normalizedAssetType, platformFeeAmount),
     remark
   });
+  invalidateSummaryCache(winner);
+  invalidateSummaryCache(loser);
+  return result;
 }
 
 async function botSettle({
@@ -329,7 +427,7 @@ async function botSettle({
   assertGatewayReady(normalizedAssetType);
   const userIdentity = buildIdentity(user);
 
-  return callGateway("botsettle", {
+  const result = await callGateway("botsettle", {
     asset_type: normalizedAssetType,
     external_order_no: roomNo,
     idempotency_key: idempotencyKey,
@@ -341,6 +439,8 @@ async function botSettle({
     platform_fee_amount: normalizeAmount(normalizedAssetType, platformFeeAmount),
     remark
   });
+  invalidateSummaryCache(user);
+  return result;
 }
 
 async function reward({ assetType, user, orderNo, amount, idempotencyKey, remark = "" }) {
@@ -352,7 +452,7 @@ async function reward({ assetType, user, orderNo, amount, idempotencyKey, remark
     throw new Error("发奖金额必须大于0");
   }
 
-  return callGateway("reward", {
+  const result = await callGateway("reward", {
     ...buildIdentity(user),
     asset_type: normalizedAssetType,
     external_order_no: orderNo,
@@ -360,6 +460,8 @@ async function reward({ assetType, user, orderNo, amount, idempotencyKey, remark
     amount: normalizedAmount,
     remark
   });
+  invalidateSummaryCache(user);
+  return result;
 }
 
 module.exports = {

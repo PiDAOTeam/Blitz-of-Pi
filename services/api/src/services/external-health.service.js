@@ -79,6 +79,7 @@ async function readExternalDependencyHealth() {
     ["asset-gateway", "summary"],
     ["asset-gateway", "freeze"],
     ["asset-gateway", "settle"],
+    ["asset-gateway", "botsettle"],
     ["asset-gateway", "release"],
     ["asset-gateway", "reward"],
     ["asset-gateway", "watchnodesnapshot"]

@@ -13,6 +13,7 @@ const assetGateway = require("./asset-gateway.service");
 const {
   createBattleRoomRecord,
   finishBattleRoomRecord,
+  findBattleRoom,
   findBattleRoomForUpdate,
   updateBattleRoomStatus,
   updateBattleAssetStatus,
@@ -967,6 +968,63 @@ async function settleFinishedRoom(room) {
     return null;
   }
 
+  const currentBattle = await findBattleRoom(room.roomNo);
+
+  if (!currentBattle || currentBattle.status === "finished") {
+    return currentBattle;
+  }
+
+  const entryFee = Number(currentBattle.entry_fee || 0);
+  const assetType = String(currentBattle.asset_type || getModeAssetType(currentBattle.mode || room.mode)).toUpperCase();
+  const hasBot = room.players.some((player) => isBotUid(player.uid));
+  const isBotWinner = winner ? isBotUid(winner.uid) : false;
+  const rewardAmount = isBotWinner ? 0 : Number(currentBattle.reward_amount || 0);
+
+  if (entryFee > 0 && isRemoteAssetType(assetType)) {
+    if (!room.winnerUid) {
+      const payers = sortPlayersByUid(room.players.filter((player) => !isBotUid(player.uid)));
+
+      for (const player of payers) {
+        await assetGateway.release({
+          assetType,
+          user: player,
+          roomNo: room.roomNo,
+          amount: entryFee,
+          idempotencyKey: `${room.roomNo}:${player.uid}:release:draw`,
+          remark: "Pi闪电战对局未分胜负，退回入场费"
+        });
+      }
+    } else if (!hasBot) {
+      await assetGateway.settle({
+        assetType,
+        roomNo: room.roomNo,
+        winner,
+        loser,
+        entryAmount: entryFee,
+        rewardAmount,
+        platformFeeAmount: Number(currentBattle.platform_fee_amount || getPlatformFeeAmount(entryFee, currentBattle.platform_fee_rate, assetType)),
+        idempotencyKey: `${room.roomNo}:settle`,
+        remark: "Pi闪电战付费对战结算"
+      });
+    } else {
+      const human = room.players.find((player) => !isBotUid(player.uid));
+      if (!human) {
+        throw new Error("机器人局缺少真实用户，不能结算");
+      }
+      await assetGateway.botSettle({
+        assetType,
+        roomNo: room.roomNo,
+        user: human,
+        userResult: isBotWinner ? "lose" : "win",
+        entryAmount: entryFee,
+        rewardAmount: isBotWinner ? 0 : rewardAmount,
+        platformFeeAmount: Number(currentBattle.platform_fee_amount || getPlatformFeeAmount(entryFee, currentBattle.platform_fee_rate, assetType, rewardAmount)),
+        idempotencyKey: `${room.roomNo}:${human.uid}:botsettle`,
+        remark: "Pi闪电战机器人补位局结算"
+      });
+    }
+  }
+
   return transaction(async (connection) => {
     const battle = await findBattleRoomForUpdate(room.roomNo, connection);
 
@@ -975,23 +1033,11 @@ async function settleFinishedRoom(room) {
     }
 
     if (!room.winnerUid) {
-      const entryFee = Number(battle.entry_fee || 0);
-      const assetType = String(battle.asset_type || getModeAssetType(battle.mode || room.mode)).toUpperCase();
-
       if (entryFee > 0) {
         const payers = sortPlayersByUid(room.players.filter((player) => !isBotUid(player.uid)));
 
         for (const player of payers) {
-          if (isRemoteAssetType(assetType)) {
-            await assetGateway.release({
-              assetType,
-              user: player,
-              roomNo: room.roomNo,
-              amount: entryFee,
-              idempotencyKey: `${room.roomNo}:${player.uid}:release:draw`,
-              remark: "Pi闪电战对局未分胜负，退回入场费"
-            });
-          } else {
+          if (!isRemoteAssetType(assetType)) {
             await unlockBalance(
               player.uid,
               entryFee,
@@ -1018,24 +1064,7 @@ async function settleFinishedRoom(room) {
       };
     }
 
-    const hasBot = room.players.some((player) => isBotUid(player.uid));
-    const isBotWinner = isBotUid(winner.uid);
-    const rewardAmount = isBotWinner ? 0 : Number(battle.reward_amount || 0);
-    const entryFee = Number(battle.entry_fee || 0);
-    const assetType = String(battle.asset_type || getModeAssetType(battle.mode || room.mode)).toUpperCase();
-
     if (entryFee > 0 && !hasBot && isRemoteAssetType(assetType)) {
-      await assetGateway.settle({
-        assetType,
-        roomNo: room.roomNo,
-        winner,
-        loser,
-        entryAmount: entryFee,
-        rewardAmount,
-        platformFeeAmount: Number(battle.platform_fee_amount || getPlatformFeeAmount(entryFee, battle.platform_fee_rate, assetType)),
-        idempotencyKey: `${room.roomNo}:settle`,
-        remark: "Pi闪电战付费对战结算"
-      });
       await updateBattleAssetStatus(room.roomNo, "settled", "", connection);
     }
 
@@ -1044,17 +1073,6 @@ async function settleFinishedRoom(room) {
       if (!human) {
         throw new Error("机器人局缺少真实用户，不能结算");
       }
-      await assetGateway.botSettle({
-        assetType,
-        roomNo: room.roomNo,
-        user: human,
-        userResult: isBotWinner ? "lose" : "win",
-        entryAmount: entryFee,
-        rewardAmount: isBotWinner ? 0 : rewardAmount,
-        platformFeeAmount: Number(battle.platform_fee_amount || getPlatformFeeAmount(entryFee, battle.platform_fee_rate, assetType, rewardAmount)),
-        idempotencyKey: `${room.roomNo}:${human.uid}:botsettle`,
-        remark: "Pi闪电战机器人补位局结算"
-      });
       await updateBattleAssetStatus(room.roomNo, "settled", "", connection);
     }
 
