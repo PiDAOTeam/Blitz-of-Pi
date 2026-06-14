@@ -4255,6 +4255,21 @@ function getHashPiBridgeTicket() {
     return "";
   }
 }
+function isHashPiBridgeEntry() {
+  try {
+    return new URL(window.location.href).pathname === "/app-bridge";
+  } catch {
+    return false;
+  }
+}
+function redirectToHashPiBridgeLogin() {
+  const e = "https://hashpi.app/blitz-bridge-app/?app=blitz_of_pi&force_ticket=1";
+  try {
+    window.location.replace(e);
+  } catch {
+    window.location.href = e;
+  }
+}
 function clearHashPiBridgeTicketFromUrl() {
   try {
     const e = new URL(window.location.href);
@@ -4438,6 +4453,10 @@ async function ao() {
         if (e?.code === 401 || e?.status === 401) localStorage.removeItem("blitz_user_token");
         console.warn("[init] stored token restore failed", N(e));
       }
+    }
+    if (isHashPiBridgeEntry()) {
+      ua("正在重新确认 HashPi 登录状态..."), redirectToHashPiBridgeLogin();
+      return;
     }
     await Yi(), Qe(), await D({ tolerant: true }), await tryAutoBindInvite(), a.screen = "home", Xi();
   } catch (e) {
