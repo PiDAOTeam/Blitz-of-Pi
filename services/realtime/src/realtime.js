@@ -84,7 +84,10 @@ function observeRealtimeStage(stage, detail = {}) {
 
 function getBotMoveIntervalMs(room) {
   const seconds = Number(room?.botConfig?.moveIntervalSeconds || room?.timing?.botMoveIntervalSeconds || 2.6);
-  return Math.max(1000, Math.min(10000, Math.round(seconds * 1000)));
+  const minJitter = Number(room?.botConfig?.moveIntervalJitterMin || 0.9);
+  const maxJitter = Math.max(minJitter, Number(room?.botConfig?.moveIntervalJitterMax || 1.2));
+  const jitter = minJitter + Math.random() * (maxJitter - minJitter);
+  return Math.max(900, Math.min(10000, Math.round(seconds * 1000 * jitter)));
 }
 
 function send(socket, payload) {

@@ -318,11 +318,11 @@ function xe(e, t = "large") {
   return `<div class="${ta(e.avatarKey)} ${t}" aria-hidden="true"><span class="avatar-label">${i(ea(e))}</span></div>`;
 }
 function qn(e, t) {
-  return { nickname: e.nickname || t?.nickname || "", piUsername: e.piUsername || t?.piUsername || "", avatarKey: e.avatarKey || t?.avatarKey || (e.isBot ? "bot" : "avatar_1") };
+  return { nickname: e.nickname || t?.nickname || "", piUsername: e.piUsername || t?.piUsername || "", avatarKey: e.avatarKey || t?.avatarKey || "avatar_1" };
 }
 function Ze(e, t, r) {
   const o = qn(e, r);
-  return `<span class="${e.isBot ? "battle-avatar bot" : `battle-avatar ${t}`} ${ta(o.avatarKey)}" aria-hidden="true"><span class="avatar-label">${i(ea(o))}</span></span>`;
+  return `<span class="battle-avatar ${t} ${ta(o.avatarKey)}" aria-hidden="true"><span class="avatar-label">${i(ea(o))}</span></span>`;
 }
 const Ca = [{ key: "ruby", label: "", color: "#d6262f", textColor: "#fff6bd", imageUrl: "" }, { key: "amber", label: "", color: "#f08a12", textColor: "#fff6bd", imageUrl: "" }, { key: "jade", label: "", color: "#169950", textColor: "#fff6bd", imageUrl: "" }, { key: "aqua", label: "", color: "#0098e8", textColor: "#fff6bd", imageUrl: "" }, { key: "slate", label: "", color: "#6f2cff", textColor: "#fff6bd", imageUrl: "" }, { key: "gold", label: "", color: "#d2a51a", textColor: "#fff6bd", imageUrl: "" }];
 function De(e, t) {
@@ -3574,7 +3574,7 @@ function Ai(e, t, r, o) {
       <p>${i(n("startAfterCountdown"))}</p>
     </section>`;
   if (s) {
-    const p = Fi(e, t, o), f = e.winnerUid ? e.winnerUid === t.uid ? n("win") : n("lose") : n("draw"), m = e.winnerUid === t.uid, g = Math.abs(r.score - o.score), P = X(e.mode), C = ie(e.mode), T = C > 0 && !!e.winnerUid && m, U = T ? "" : modeAssetType(e.mode) === "PI" ? n("settlementNoReward") : a.language === "zh-CN" ? "本局无奖励" : "No reward", Te = formatModeAmount(e.mode, C), qe = P > 0 ? (a.language === "zh-CN" ? `入场费 ${formatModeAmount(e.mode, P)}` : `Entry ${formatModeAmount(e.mode, P)}`) : n("freeMatch"), gt = m ? n("winUpsell") : g > 0 && g <= 250 ? n("closeLossHint", { gap: g }) : n("loseRetryHint"), fa = e.mode === "quick_battle" && m && !o.isBot;
+  const p = Fi(e, t, o), f = e.winnerUid ? e.winnerUid === t.uid ? n("win") : n("lose") : n("draw"), m = e.winnerUid === t.uid, g = Math.abs(r.score - o.score), P = X(e.mode), C = ie(e.mode), T = C > 0 && !!e.winnerUid && m, U = T ? "" : modeAssetType(e.mode) === "PI" ? n("settlementNoReward") : a.language === "zh-CN" ? "本局无奖励" : "No reward", Te = formatModeAmount(e.mode, C), qe = P > 0 ? (a.language === "zh-CN" ? `入场费 ${formatModeAmount(e.mode, P)}` : `Entry ${formatModeAmount(e.mode, P)}`) : n("freeMatch"), gt = m ? n("winUpsell") : g > 0 && g <= 250 ? n("closeLossHint", { gap: g }) : n("loseRetryHint"), fa = e.mode === "quick_battle" && m;
     const vn = e.winnerUid ? m ? "finish-win" : "finish-lose" : "finish-draw";
     return `<section class="finish-mask finish-reveal ${vn}">
       <div class="finish-card">
@@ -3632,9 +3632,9 @@ async function handleBattleFinishAction(e, t) {
   return false;
 }
 function Fi(e, t, r) {
-  const o = F(), s = Va(e.mode) && !r.isBot;
+  const o = F(), s = Va(e.mode);
   if (!e.winnerUid) return `<div class="rank-change-note neutral">${i(n("drawNoStar"))}</div>`;
-  if (!s) return e.mode === "quick_battle" && r.isBot ? `<div class="rank-change-note neutral">${i(n("botPracticeNotRanked", { rank: B(o.quickBattleMaxRankKey || "silver") }))}</div>` : `<div class="rank-change-note neutral">${i(n("notRankedBattle"))}</div>`;
+  if (!s) return `<div class="rank-change-note neutral">${i(n("notRankedBattle"))}</div>`;
   const l = e.winnerUid === t.uid, c = l ? cr(e.mode) ? n("modeAtCap", { mode: I(e.mode) }) : n("rankUpEstimate", { stars: o.winStars }) : Ae(t.rankName) === "bronze" && o.bronzeProtection ? n("bronzeNoLose") : n("rankDownEstimate", { stars: o.loseStars });
   return `<div class="rank-change-note ${l ? "up" : "down"}">${c}</div>`;
 }

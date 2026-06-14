@@ -241,16 +241,19 @@ function refillBoardIfStuck(board, room) {
 function createPlayerState(player, seed) {
   const isBot = String(player.uid).startsWith("bot_");
   const now = Date.now();
+  const random = createRandom(seed);
+  const botReadyDelayMs = 800 + Math.floor(random() * 1800);
 
   return {
     uid: player.uid,
     nickname: player.nickname,
     piUsername: player.piUsername || player.pi_username || "",
     avatarUrl: player.avatarUrl || player.avatar_url || "",
-    avatarKey: player.avatarKey || player.avatar_key || (isBot ? "bot" : "avatar_1"),
+    avatarKey: player.avatarKey || player.avatar_key || "avatar_1",
     isBot,
     joinedAt: isBot ? now : 0,
-    readyAt: isBot ? now : 0,
+    readyAt: 0,
+    botAutoReadyAt: isBot ? now + botReadyDelayMs : 0,
     disconnectedAt: 0,
     validMoveCount: 0,
     board: createBoard(seed),
@@ -298,6 +301,7 @@ function createRealtimeRoom(baseRoom) {
     roomNo: baseRoom.roomNo,
     mode,
     timing,
+    botConfig: baseRoom.botConfig || {},
     status: "waiting_ready",
     createdAt,
     waitingReadyEndsAt: createdAt + Number(timing.waitingReadyTimeoutSeconds || WAITING_READY_TIMEOUT_SECONDS) * 1000,
@@ -347,9 +351,12 @@ function normalizeRoomLifecycle(room) {
     player.validMoveCount = Number(player.validMoveCount || 0);
 
     if (player.isBot) {
-      const botReadyAt = player.readyAt || player.joinedAt || room.createdAt || Date.now();
-      player.joinedAt = player.joinedAt || botReadyAt;
-      player.readyAt = player.readyAt || botReadyAt;
+      const botJoinedAt = player.joinedAt || room.createdAt || Date.now();
+      player.joinedAt = player.joinedAt || botJoinedAt;
+      player.botAutoReadyAt = Number(player.botAutoReadyAt || botJoinedAt + 1200);
+      if (room.status === "waiting_ready" && !player.readyAt && Date.now() >= player.botAutoReadyAt) {
+        player.readyAt = player.botAutoReadyAt;
+      }
     }
   }
 
@@ -649,6 +656,10 @@ function finishIfNeeded(room) {
 }
 
 function tickRoom(room) {
+  normalizeRoomLifecycle(room);
+  if (room.status === "waiting_ready") {
+    startRoomIfReady(room);
+  }
   finishIfNeeded(room);
   return room;
 }
@@ -807,6 +818,9 @@ function toPublicRoom(room, viewerUid = "") {
   const readySeconds = getReadySeconds(room);
   const serverNow = Date.now();
   const shouldIncludeBoard = (player) => !viewerUid || player.uid === viewerUid;
+  const publicEvents = (room.events || []).map((event) =>
+    event?.type === "bot_move" ? { ...event, type: "score" } : event
+  );
 
   return {
     roomNo: room.roomNo,
@@ -827,8 +841,7 @@ function toPublicRoom(room, viewerUid = "") {
         nickname: player.nickname,
         piUsername: player.piUsername || "",
         avatarUrl: player.avatarUrl || "",
-        avatarKey: player.avatarKey || (player.isBot ? "bot" : "avatar_1"),
-        isBot: player.isBot,
+        avatarKey: player.avatarKey || "avatar_1",
         score: player.score,
         pressure: player.pressure,
         combo: player.combo,
@@ -845,7 +858,7 @@ function toPublicRoom(room, viewerUid = "") {
 
       return publicPlayer;
     }),
-    events: room.events
+    events: publicEvents
   };
 }
 

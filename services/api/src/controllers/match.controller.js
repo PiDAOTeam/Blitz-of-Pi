@@ -133,7 +133,7 @@ async function getMyBattleHistory(req, query = {}) {
       entryFee: Number(row.entry_fee) || 0,
       rewardAmount: row.winner_uid === user.uid ? Number(row.reward_amount) || 0 : 0,
       roomRewardAmount: Number(row.reward_amount) || 0,
-      isBotRoom: Boolean(row.is_bot_room),
+      isBotRoom: false,
       createdAt: row.created_at,
       finishedAt: row.finished_at
     };

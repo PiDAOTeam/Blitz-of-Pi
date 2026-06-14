@@ -162,12 +162,16 @@ function pickBotName(modeConfig = {}) {
   return source[Math.floor(Math.random() * source.length)] || "Pi玩家";
 }
 
+function pickBotAvatarKey() {
+  return `avatar_${1 + Math.floor(Math.random() * 6)}`;
+}
+
 function createBotPlayer(modeConfig = {}) {
   return {
     uid: `bot_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`,
     nickname: pickBotName(modeConfig),
     avatarUrl: "",
-    avatarKey: "bot",
+    avatarKey: pickBotAvatarKey(),
     rankName: "青铜"
   };
 }
@@ -210,6 +214,8 @@ function getRoomBotConfig(mode, modeConfig = {}) {
     targetScoreMin: botRange.minScore,
     targetScoreMax: botRange.maxScore,
     moveIntervalSeconds: botRange.moveIntervalSeconds,
+    moveIntervalJitterMin: 0.85,
+    moveIntervalJitterMax: 1.25,
     countInRank: modeConfig.botCountInRank !== false,
     countInWeekly: modeConfig.botCountInWeekly !== false,
     countInWatchShareholder: modeConfig.botCountInWatchShareholder !== false
@@ -334,7 +340,7 @@ function createRoom(playerA, playerB, mode = "quick_battle", timing = DEFAULT_TI
     piUsername: player.piUsername || player.pi_username || "",
     nickname: player.nickname,
     avatarUrl: player.avatarUrl || player.avatar_url || "",
-    avatarKey: player.avatarKey || player.avatar_key || (String(player.uid).startsWith("bot_") ? "bot" : "avatar_1"),
+    avatarKey: player.avatarKey || player.avatar_key || "avatar_1",
     board: createBoardState(seed, mode, timing)
   });
   const room = {

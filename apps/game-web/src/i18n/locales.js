@@ -260,6 +260,60 @@ Object.assign($t.en, {
   matchCleanupRetrying: "Retrying..."
 });
 
+Object.assign($t["zh-CN"], {
+  quickBattleDesc: "免费练手，久等智能补位。",
+  quickModeDetail: "免费练手，久等智能补位。",
+  ticketBattleDesc: "低门槛实时对战，计入周榜。",
+  richBattleDesc: "高奖池实时对战，{rank}解锁。",
+  ticketModeDetail: "低门槛实时对战，{weekly}",
+  richModeDetail: "高奖池实时对战，{rank}解锁。",
+  bot: "对手",
+  botPracticeNotRanked: "本局不影响段位",
+  realPlayerOnly: "优先快速匹配",
+  quickConfirmSummary: "免费练手，久等智能补位。",
+  ruleSwapShort: "优先快速匹配"
+});
+
+Object.assign($t.en, {
+  quickBattleDesc: "Free practice. Fast fill after long waits.",
+  quickModeDetail: "Free practice. Fast fill after long waits.",
+  ticketBattleDesc: "Low-entry realtime battle.",
+  richBattleDesc: "High-prize battle. Unlocks at {rank}.",
+  ticketModeDetail: "Low-entry realtime battle. {weekly}",
+  bot: "Opponent",
+  botPracticeNotRanked: "This battle does not affect rank",
+  realPlayerOnly: "Fast match priority",
+  quickConfirmSummary: "Free practice. Fast fill after long waits.",
+  ruleSwapShort: "Fast match priority"
+});
+
+Object.assign($t.vi, {
+  quickBattleDesc: "Luyện miễn phí. Chờ lâu sẽ được ghép nhanh.",
+  quickModeDetail: "Luyện miễn phí. Chờ lâu sẽ được ghép nhanh.",
+  botPracticeNotRanked: "Trận này không ảnh hưởng hạng",
+  realPlayerOnly: "Ưu tiên ghép nhanh",
+  quickConfirmSummary: "Luyện miễn phí. Chờ lâu sẽ được ghép nhanh.",
+  ruleSwapShort: "Ưu tiên ghép nhanh"
+});
+
+Object.assign($t.ko, {
+  quickBattleDesc: "무료 연습. 오래 기다리면 빠르게 매칭됩니다.",
+  quickModeDetail: "무료 연습. 오래 기다리면 빠르게 매칭됩니다.",
+  botPracticeNotRanked: "이번 대전은 랭크에 반영되지 않습니다",
+  realPlayerOnly: "빠른 매칭 우선",
+  quickConfirmSummary: "무료 연습. 오래 기다리면 빠르게 매칭됩니다.",
+  ruleSwapShort: "빠른 매칭 우선"
+});
+
+Object.assign($t.ja, {
+  quickBattleDesc: "無料練習。待ち時間が長い場合は素早くマッチします。",
+  quickModeDetail: "無料練習。待ち時間が長い場合は素早くマッチします。",
+  botPracticeNotRanked: "この対戦はランクに反映されません",
+  realPlayerOnly: "高速マッチ優先",
+  quickConfirmSummary: "無料練習。待ち時間が長い場合は素早くマッチします。",
+  ruleSwapShort: "高速マッチ優先"
+});
+
 export const translations = $t;
 export const languageMeta = St;
 export const languageCodes = Jt;
