@@ -373,7 +373,8 @@ async function handleRoutes(req, res) {
   }
 
   if (url === "/api/rank/daily-chest/claim" && method === "POST") {
-    ok(res, await claimMyDailyRankChest(req), "领取成功");
+    const result = await claimMyDailyRankChest(req);
+    ok(res, result, result.alreadyClaimed ? "今日已领取" : "领取成功");
     return;
   }
 

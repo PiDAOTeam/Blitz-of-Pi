@@ -283,6 +283,10 @@ function getRoundSeconds(mode, timing = DEFAULT_TIMING) {
     : Number(timing.paidRoundSeconds || DEFAULT_TIMING.paidRoundSeconds);
 }
 
+function getRoomRoundSeconds(room = {}) {
+  return Number(room.roundSeconds || getRoundSeconds(room.mode, getRoomTiming(room)));
+}
+
 function createRealtimeRoom(baseRoom) {
   const createdAt = Date.now();
   const seed = createdAt + baseRoom.roomNo.length * 131;
@@ -322,7 +326,7 @@ function getRemainSeconds(room) {
   }
 
   if (getReadySeconds(room) > 0) {
-    return Number(room.roundSeconds || getRoundSeconds(room.mode, getRoomTiming(room)));
+    return getRoomRoundSeconds(room);
   }
 
   return Math.max(0, Math.ceil((room.endsAt - Date.now()) / 1000));
@@ -759,7 +763,7 @@ function applyBotMove(room) {
   const targetMin = Math.max(0, Number(botConfig.targetScoreMin || 0));
   const targetMax = Math.max(targetMin, Number(botConfig.targetScoreMax || 0));
   const remainSeconds = getRemainSeconds(room);
-  const totalSeconds = Math.max(1, Number(getRoomTiming(room).paidRoundSeconds || getRoomTiming(room).quickRoundSeconds || 90));
+  const totalSeconds = Math.max(1, getRoomRoundSeconds(room));
   const elapsedRatio = Math.max(0, Math.min(1, (totalSeconds - remainSeconds) / totalSeconds));
   const targetNow = targetMax > 0
     ? targetMin + (targetMax - targetMin) * elapsedRatio
@@ -778,6 +782,7 @@ function applyBotMove(room) {
   bot.combo = chain;
   bot.lastGain = gain * chain;
   bot.validMoveCount = Number(bot.validMoveCount || 0) + 1;
+  bot.pressure = Math.max(0, Number(bot.pressure || 0) - 1);
   human.pressure += attack;
   room.version = Number(room.version || 1) + 1;
   room.events.unshift({

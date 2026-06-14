@@ -438,18 +438,32 @@ async function claimDailyRankChest(uid) {
     const status = await getRankStatus(uid);
 
     if (status.dailyChestClaimed) {
-      throw new Error("今日段位宝箱已领取");
+      return {
+        ...status,
+        dailyChestClaimed: true,
+        dailyChestEligible: false,
+        alreadyClaimed: true
+      };
     }
 
     if (!status.dailyChestEligible) {
       throw new Error(`今日还需完成 ${status.dailyChestRequiredBattles} 场有效段位对局才能领取`);
     }
 
-    await executor(connection).execute(
-      `INSERT INTO rank_daily_chests (uid, claim_date, rank_key, reward_amount)
+    const [insertResult] = await executor(connection).execute(
+      `INSERT IGNORE INTO rank_daily_chests (uid, claim_date, rank_key, reward_amount)
        VALUES (?, CURDATE(), ?, ?)`,
       [uid, status.rankKey, status.dailyChestRewardAmount]
     );
+
+    if (Number(insertResult?.affectedRows || 0) === 0) {
+      return {
+        ...status,
+        dailyChestClaimed: true,
+        dailyChestEligible: false,
+        alreadyClaimed: true
+      };
+    }
 
     if (status.dailyChestRewardAmount > 0) {
       await increaseBalance(

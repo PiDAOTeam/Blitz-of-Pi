@@ -14,12 +14,18 @@ function getPlayerScore(player) {
   return Number(player?.score ?? player?.board?.score ?? 0) || 0;
 }
 
+function getPlayerSnapshotNickname(player) {
+  return String(player?.nickname || player?.piUsername || player?.pi_username || "").trim().slice(0, 80);
+}
+
 let battleAssetColumnsEnsured = false;
 
 async function ensureBattleAssetColumns(connection = null) {
   if (battleAssetColumnsEnsured) return;
 
   const columns = [
+    "ADD COLUMN player_a_snapshot_nickname VARCHAR(80) NOT NULL DEFAULT '' AFTER player_a_uid",
+    "ADD COLUMN player_b_snapshot_nickname VARCHAR(80) NOT NULL DEFAULT '' AFTER player_b_uid",
     "ADD COLUMN asset_type VARCHAR(20) NOT NULL DEFAULT 'PI' AFTER is_bot_room",
     "ADD COLUMN platform_fee_amount DECIMAL(20,8) NOT NULL DEFAULT 0 AFTER reward_amount",
     "ADD COLUMN asset_settlement_status VARCHAR(30) NOT NULL DEFAULT '' AFTER platform_fee_amount",
@@ -45,16 +51,22 @@ async function createBattleRoomRecord(room, meta = {}, connection = null) {
 
   await executor(connection).execute(
     `INSERT INTO battle_rooms
-       (room_no, mode, status, player_a_uid, player_b_uid, entry_fee, platform_fee_rate, reward_amount, is_bot_room,
-        asset_type, platform_fee_amount, asset_settlement_status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-     ON DUPLICATE KEY UPDATE status = VALUES(status)`,
+       (room_no, mode, status, player_a_uid, player_a_snapshot_nickname, player_b_uid, player_b_snapshot_nickname,
+        entry_fee, platform_fee_rate, reward_amount, is_bot_room, asset_type, platform_fee_amount,
+        asset_settlement_status)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON DUPLICATE KEY UPDATE
+       status = VALUES(status),
+       player_a_snapshot_nickname = IF(player_a_snapshot_nickname = '', VALUES(player_a_snapshot_nickname), player_a_snapshot_nickname),
+       player_b_snapshot_nickname = IF(player_b_snapshot_nickname = '', VALUES(player_b_snapshot_nickname), player_b_snapshot_nickname)`,
     [
       room.roomNo,
       room.mode || "quick_battle",
       room.status || "playing",
       players[0]?.uid || "",
+      getPlayerSnapshotNickname(players[0]),
       players[1]?.uid || "",
+      getPlayerSnapshotNickname(players[1]),
       meta.entryFee || 0,
       meta.platformFeeRate || 0,
       meta.rewardAmount || 0,
@@ -116,8 +128,10 @@ async function listBattleRooms(limit = 50) {
 
   return query(
     `SELECT b.room_no, b.mode, b.status,
-            b.player_a_uid, ua.pi_username AS player_a_pi_username, ua.nickname AS player_a_nickname,
-            b.player_b_uid, ub.pi_username AS player_b_pi_username, ub.nickname AS player_b_nickname,
+            b.player_a_uid, ua.pi_username AS player_a_pi_username,
+            COALESCE(NULLIF(b.player_a_snapshot_nickname, ''), ua.nickname) AS player_a_nickname,
+            b.player_b_uid, ub.pi_username AS player_b_pi_username,
+            COALESCE(NULLIF(b.player_b_snapshot_nickname, ''), ub.nickname) AS player_b_nickname,
             b.winner_uid, uw.pi_username AS winner_pi_username, uw.nickname AS winner_nickname,
             b.loser_uid, ul.pi_username AS loser_pi_username, ul.nickname AS loser_nickname,
             b.entry_fee, b.reward_amount, b.platform_fee_rate, b.is_bot_room,
@@ -187,8 +201,10 @@ async function listUserBattleRooms(uid, { page = 1, pageSize = 15, mode = "" } =
 
   return query(
     `SELECT b.room_no, b.mode, b.status,
-            b.player_a_uid, ua.pi_username AS player_a_pi_username, ua.nickname AS player_a_nickname,
-            b.player_b_uid, ub.pi_username AS player_b_pi_username, ub.nickname AS player_b_nickname,
+            b.player_a_uid, ua.pi_username AS player_a_pi_username,
+            COALESCE(NULLIF(b.player_a_snapshot_nickname, ''), ua.nickname) AS player_a_nickname,
+            b.player_b_uid, ub.pi_username AS player_b_pi_username,
+            COALESCE(NULLIF(b.player_b_snapshot_nickname, ''), ub.nickname) AS player_b_nickname,
             b.winner_uid, b.loser_uid,
             b.player_a_score, b.player_b_score,
             b.entry_fee, b.reward_amount, b.is_bot_room, b.asset_type, b.platform_fee_amount,

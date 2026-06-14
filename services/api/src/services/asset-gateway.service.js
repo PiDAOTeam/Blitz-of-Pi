@@ -10,7 +10,9 @@ const { recordExternalDependencyResult } = require("./external-health.service");
 
 const SUPPORTED_REMOTE_ASSETS = new Set(["POINTS", "POC"]);
 const SUMMARY_CACHE_TTL_MS = 15_000;
+const TRANSIENT_RETRY_LOG_INTERVAL_MS = 60_000;
 const summaryCache = new Map();
+const transientRetryLogState = new Map();
 
 function normalizeAssetType(assetType = "") {
   return String(assetType || "").trim().toUpperCase();
@@ -63,6 +65,36 @@ function createGatewayBusyError(cause = null) {
 
 function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function normalizeGatewayErrorMessage(error) {
+  const name = String(error?.name || "");
+  const message = String(error?.message || "");
+  if (name === "AbortError" || /aborted|timeout|timed out/i.test(message)) {
+    return "timeout";
+  }
+  if (/ECONNRESET|ETIMEDOUT|EAI_AGAIN|network|fetch failed/i.test(message)) {
+    return "network";
+  }
+  return message || name || "network";
+}
+
+function logTransientRetry(action, attempt, error) {
+  const key = `${action}:${normalizeGatewayErrorMessage(error)}`;
+  const now = Date.now();
+  const state = transientRetryLogState.get(key) || { lastAt: 0, suppressed: 0 };
+
+  if (now - state.lastAt >= TRANSIENT_RETRY_LOG_INTERVAL_MS) {
+    const suppressedText = state.suppressed > 0 ? `, suppressed=${state.suppressed}` : "";
+    console.warn(
+      `[asset-gateway] ${action} transient failure, retrying (${attempt}/2): ${normalizeGatewayErrorMessage(error)}${suppressedText}`
+    );
+    transientRetryLogState.set(key, { lastAt: now, suppressed: 0 });
+    return;
+  }
+
+  state.suppressed += 1;
+  transientRetryLogState.set(key, state);
 }
 
 function assertGatewayReady(assetType) {
@@ -151,7 +183,7 @@ async function callGateway(action, payload) {
         }
         throw error;
       }
-      console.warn(`[asset-gateway] ${action} transient failure, retrying (${attempt}/2): ${error.message || error.name || "network"}`);
+      logTransientRetry(action, attempt, error);
       await wait(300);
     } finally {
       clearTimeout(timer);

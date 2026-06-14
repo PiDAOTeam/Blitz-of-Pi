@@ -52,6 +52,30 @@ function getBattleHistoryResult(row, uid) {
   return "unfinished";
 }
 
+const BOT_HISTORY_FALLBACK_NAMES = [
+  "星河玩家",
+  "闪电高手",
+  "三消达人",
+  "幸运玩家",
+  "连击王者",
+  "风暴选手",
+  "金芒玩家",
+  "极速挑战者",
+  "追光少年",
+  "爆消大师",
+  "雷霆玩家",
+  "稳稳上分"
+];
+
+function getStableBotHistoryName(row, opponentUid) {
+  const source = `${row.room_no || ""}:${opponentUid || ""}`;
+  let hash = 0;
+  for (let index = 0; index < source.length; index += 1) {
+    hash = (hash * 31 + source.charCodeAt(index)) >>> 0;
+  }
+  return BOT_HISTORY_FALLBACK_NAMES[hash % BOT_HISTORY_FALLBACK_NAMES.length] || "Pi玩家";
+}
+
 function getBattleHistoryOpponent(row, uid) {
   const isPlayerA = row.player_a_uid === uid;
   const opponentUid = isPlayerA ? row.player_b_uid : row.player_a_uid;
@@ -62,7 +86,7 @@ function getBattleHistoryOpponent(row, uid) {
     return {
       uid: opponentUid,
       piUsername: "",
-      nickname: opponentNickname || "对手"
+      nickname: opponentNickname || getStableBotHistoryName(row, opponentUid)
     };
   }
 
