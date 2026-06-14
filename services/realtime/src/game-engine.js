@@ -762,6 +762,87 @@ function applySwap(room, uid, from, to, seq = 0) {
   };
 }
 
+function getBotDifficultyProfile(difficulty) {
+  const profiles = {
+    easy: {
+      idleGainMin: 18,
+      idleGainMax: 42,
+      mistakeGainMin: 8,
+      mistakeGainMax: 20,
+      mistakeChance: 0.14,
+      chainChance: 0.14,
+      burstChance: 0.06,
+      attackChance: 0.42,
+      varianceMin: 0.72,
+      varianceMax: 1.2,
+      allowedBehindMin: 260,
+      allowedBehindMax: 520,
+      overTargetAllowance: 220
+    },
+    normal: {
+      idleGainMin: 24,
+      idleGainMax: 55,
+      mistakeGainMin: 10,
+      mistakeGainMax: 24,
+      mistakeChance: 0.1,
+      chainChance: 0.22,
+      burstChance: 0.1,
+      attackChance: 0.52,
+      varianceMin: 0.78,
+      varianceMax: 1.28,
+      allowedBehindMin: 180,
+      allowedBehindMax: 420,
+      overTargetAllowance: 320
+    },
+    hard: {
+      idleGainMin: 30,
+      idleGainMax: 68,
+      mistakeGainMin: 12,
+      mistakeGainMax: 28,
+      mistakeChance: 0.07,
+      chainChance: 0.3,
+      burstChance: 0.14,
+      attackChance: 0.6,
+      varianceMin: 0.84,
+      varianceMax: 1.34,
+      allowedBehindMin: 120,
+      allowedBehindMax: 320,
+      overTargetAllowance: 420
+    },
+    expert: {
+      idleGainMin: 36,
+      idleGainMax: 78,
+      mistakeGainMin: 14,
+      mistakeGainMax: 32,
+      mistakeChance: 0.05,
+      chainChance: 0.38,
+      burstChance: 0.18,
+      attackChance: 0.68,
+      varianceMin: 0.88,
+      varianceMax: 1.42,
+      allowedBehindMin: 80,
+      allowedBehindMax: 260,
+      overTargetAllowance: 520
+    }
+  };
+
+  return profiles[difficulty] || profiles.normal;
+}
+
+function getBotScoreCurveProgress(elapsedRatio) {
+  if (elapsedRatio <= 0) return 0;
+  if (elapsedRatio < 0.16) {
+    return 0.08 + elapsedRatio * 0.9;
+  }
+  if (elapsedRatio < 0.68) {
+    return 0.22 + (elapsedRatio - 0.16) * 1.03;
+  }
+  if (elapsedRatio < 0.9) {
+    return 0.76 + (elapsedRatio - 0.68) * 0.86;
+  }
+  return Math.min(1, 0.95 + (elapsedRatio - 0.9) * 0.5);
+}
+
 function applyBotMove(room) {
   normalizeRoomLifecycle(room);
   const bot = room.players.find((player) => player.isBot);
@@ -771,27 +852,77 @@ function applyBotMove(room) {
   if (getReadySeconds(room) > 0) return null;
 
   const botConfig = room.botConfig || {};
+  const difficulty = String(botConfig.difficulty || "normal");
+  const profile = getBotDifficultyProfile(difficulty);
   const targetMin = Math.max(0, Number(botConfig.targetScoreMin || 0));
   const targetMax = Math.max(targetMin, Number(botConfig.targetScoreMax || 0));
   const remainSeconds = getRemainSeconds(room);
+  if (!Number(room.endsAt || 0) || remainSeconds <= 0) {
+    finishIfNeeded(room);
+    return null;
+  }
   const totalSeconds = Math.max(1, getRoomRoundSeconds(room));
   const elapsedRatio = Math.max(0, Math.min(1, (totalSeconds - remainSeconds) / totalSeconds));
-  const targetNow = targetMax > 0
-    ? targetMin + (targetMax - targetMin) * elapsedRatio
-    : 0;
-  const behindTarget = targetNow > 0 ? targetNow - Number(bot.score || 0) : 0;
-  const baseGain = targetMax > 0
-    ? Math.max(18, Math.min(95, behindTarget / Math.max(1, remainSeconds / Math.max(0.5, Number(botConfig.moveIntervalSeconds || 1.2)))))
-    : 20 + Math.floor(nextRoomRandom(room) * 45);
-  const variance = 0.78 + nextRoomRandom(room) * 0.44;
-  const gain = Math.max(12, Math.round(baseGain * variance));
-  const chainChance = botConfig.difficulty === "expert" ? 0.38 : botConfig.difficulty === "hard" ? 0.31 : botConfig.difficulty === "easy" ? 0.16 : 0.24;
-  const chain = nextRoomRandom(room) < chainChance ? 2 : 1;
-  const attack = chain > 1 && nextRoomRandom(room) > 0.35 ? 1 : 0;
+  const moveIntervalSeconds = Math.max(0.5, Number(botConfig.moveIntervalSeconds || 1.2));
 
-  bot.score += gain * chain;
+  if (!Number.isFinite(bot.botTargetScore)) {
+    const targetRange = Math.max(0, targetMax - targetMin);
+    bot.botTargetScore = targetMax > 0
+      ? targetMin + Math.round(targetRange * nextRoomRandom(room))
+      : 2800 + Math.round(nextRoomRandom(room) * 900);
+    bot.botTempoBias = 0.92 + nextRoomRandom(room) * 0.2;
+  }
+
+  const curveTarget = Number(bot.botTargetScore || targetMax || 0) * getBotScoreCurveProgress(elapsedRatio);
+  const humanScore = Number(human.score || 0);
+  const botScore = Number(bot.score || 0);
+  const allowedBehind = profile.allowedBehindMin +
+    (profile.allowedBehindMax - profile.allowedBehindMin) * nextRoomRandom(room);
+  const pressureBoost = Math.min(0.18, Math.max(0, Number(bot.pressure || 0) - 8) * 0.012);
+  const humanFollowTarget = humanScore > botScore + allowedBehind
+    ? humanScore - allowedBehind * (0.7 + nextRoomRandom(room) * 0.45)
+    : 0;
+  const targetNow = Math.max(curveTarget, humanFollowTarget);
+  const movesLeft = Math.max(1, remainSeconds / moveIntervalSeconds);
+  const behindTarget = targetNow - botScore;
+  const catchupGain = behindTarget > 0 ? behindTarget / Math.max(1, movesLeft * 0.72) : 0;
+  const idleGain = profile.idleGainMin + nextRoomRandom(room) * (profile.idleGainMax - profile.idleGainMin);
+  const tempo = Number(bot.botTempoBias || 1) + pressureBoost;
+  const variance = profile.varianceMin + nextRoomRandom(room) * (profile.varianceMax - profile.varianceMin);
+  let gain = Math.round(Math.max(idleGain, catchupGain) * tempo * variance);
+  let chain = 1;
+  let cleared = 3;
+  let attack = 0;
+
+  if (nextRoomRandom(room) < profile.mistakeChance) {
+    gain = Math.round(profile.mistakeGainMin + nextRoomRandom(room) * (profile.mistakeGainMax - profile.mistakeGainMin));
+  } else {
+    const burst = nextRoomRandom(room) < profile.burstChance;
+    const chainRoll = nextRoomRandom(room);
+    if (burst) {
+      chain = chainRoll > 0.35 ? 3 : 2;
+      gain = Math.round(gain * (chain === 3 ? 1.18 : 1.08));
+      cleared = chain === 3 ? 9 : 6;
+    } else if (chainRoll < profile.chainChance) {
+      chain = 2;
+      cleared = 6;
+    }
+    attack = chain > 1 && nextRoomRandom(room) < profile.attackChance
+      ? Math.min(MAX_ATTACK_PER_MOVE, chain === 3 ? 2 : 1)
+      : 0;
+  }
+
+  const softCap = Number(bot.botTargetScore || 0) + profile.overTargetAllowance;
+  if (softCap > 0 && botScore + gain * chain > softCap && humanScore < botScore) {
+    gain = Math.max(profile.mistakeGainMin, Math.round((softCap - botScore) / Math.max(1, chain)));
+    attack = Math.min(attack, 1);
+  }
+
+  const scoreGain = Math.max(profile.mistakeGainMin, gain) * chain;
+
+  bot.score += scoreGain;
   bot.combo = chain;
-  bot.lastGain = gain * chain;
+  bot.lastGain = scoreGain;
   bot.validMoveCount = Number(bot.validMoveCount || 0) + 1;
   bot.pressure = Math.max(0, Number(bot.pressure || 0) - 1);
   human.pressure += attack;
@@ -799,9 +930,9 @@ function applyBotMove(room) {
   room.events.unshift({
     uid: bot.uid,
     type: "bot_move",
-    cleared: chain === 2 ? 6 : 3,
+    cleared,
     chain,
-    scoreGain: gain * chain,
+    scoreGain,
     attack,
     at: Date.now()
   });
