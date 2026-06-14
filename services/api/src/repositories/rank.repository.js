@@ -104,6 +104,16 @@ function scoreFromRank(config, rankKey, stars) {
   return 1000 + getRankIndex(config, rankKey) * 200 + Number(stars || 0) * 20;
 }
 
+function getModeMaxRankKey(mode, rules = {}) {
+  if (mode === "quick_battle") {
+    return rules.quickBattleMaxRankKey || "silver";
+  }
+  if (mode === "ticket_battle" || mode === "points_battle") {
+    return rules.ticketBattleMaxRankKey || "platinum";
+  }
+  return "";
+}
+
 async function ensureRank(uid, connection = null) {
   await ensureRankSchema();
   await executor(connection).execute(
@@ -182,12 +192,7 @@ function applyRankResult(rank, config, result, mode = "quick_battle") {
     stars = starsPerRank + stars;
   }
 
-  const modeMaxRankKey =
-    mode === "quick_battle"
-      ? rules.quickBattleMaxRankKey || "silver"
-      : mode === "ticket_battle" || mode === "points_battle" || mode === "poc_battle"
-        ? rules.ticketBattleMaxRankKey || "platinum"
-        : "";
+  const modeMaxRankKey = getModeMaxRankKey(mode, rules);
 
   if (modeMaxRankKey && result === "win") {
     const capRankKey = modeMaxRankKey;

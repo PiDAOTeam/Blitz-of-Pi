@@ -1133,7 +1133,7 @@ function ke(e) {
   return { name: r?.name || e || "\u9752\u94DC", icon: r?.icon || "\u25C6", color: r?.color || "#f2c84b" };
 }
 function F() {
-  return a.gameConfig?.operation?.rankRules || { starsPerRank: 8, winStars: 1, loseStars: 1, winStreakBonusEnabled: true, winStreakRequired: 5, winStreakBonusStars: 1, bronzeProtection: true, rankedModes: ["quick_battle", "points_battle", "poc_battle", "pi_battle"], weeklyLeaderboardModes: ["points_battle", "poc_battle", "pi_battle"], quickBattleMaxRankKey: "silver", ticketBattleMaxRankKey: "platinum", richBattleMinRankKey: "platinum", dailyChestRequiredBattles: 3, ruleSummary: "\u5FEB\u901F\u5F00\u6218\u771F\u4EBA\u5C40\u53EF\u5347\u5230\u767D\u94F6\uFF1B\u5C0F\u5BCC\u8C6A\u3001\u5927\u5BCC\u8C6A\u548C\u8D85\u7EA7\u5BCC\u8C6A\u7EE7\u7EED\u51B2\u66F4\u9AD8\u6BB5\u4F4D\u3002" };
+  return a.gameConfig?.operation?.rankRules || { starsPerRank: 5, winStars: 1, loseStars: 1, winStreakBonusEnabled: true, winStreakRequired: 5, winStreakBonusStars: 1, bronzeProtection: true, rankedModes: ["points_battle", "poc_battle", "pi_battle"], weeklyLeaderboardModes: ["points_battle", "poc_battle", "pi_battle"], quickBattleMaxRankKey: "silver", ticketBattleMaxRankKey: "platinum", richBattleMinRankKey: "bronze", dailyChestRequiredBattles: 3, ruleSummary: "\u5C0F\u5BCC\u8C6A\u53EF\u7A33\u5B9A\u51B2\u6BB5\uFF1B\u5927\u5BCC\u8C6A\u548C\u8D85\u7EA7\u5BCC\u8C6A\u7EE7\u7EED\u51B2\u66F4\u9AD8\u6BB5\u4F4D\u3002" };
 }
 function ja() {
   return (a.gameConfig?.operation?.ranks || []).map((e) => e.key);
