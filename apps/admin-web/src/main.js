@@ -1,4 +1,4 @@
-const Ae = ["localhost", "127.0.0.1"].includes(window.location.hostname), Ee = Ae ? "http://localhost:3000" : "https://blitzapi.hashpi.app", Be = Ee, le = document.querySelector("#app");
+const Ae = ["localhost", "127.0.0.1"].includes(window.location.hostname), Ee = Ae ? "http://localhost:3000" : "", Be = Ee, le = document.querySelector("#app");
 const BRAND_LOGO_HTML = '<img class="brand-logo" src="/assets/brand/blitz-logo-128.jpg" alt="" loading="eager" decoding="async" />';
 if (!le) throw new Error("\u672A\u627E\u5230\u540E\u53F0\u6302\u8F7D\u8282\u70B9");
 let _ = "overview", W = null, re = "", I = "all", G = "all", te = null, battleModeFilter = "all", paymentStatusFilter = "all", userListFilter = "all", ledgerListFilter = "all", withdrawListFilter = "all", growthRewardFilter = "all", watchRewardFilter = "all", logListFilter = "all";
@@ -40,6 +40,15 @@ async function safeAdminLoad(e, t, a = {}) {
   } catch (n) {
     console.warn("[admin] optional load failed", e, g(n));
     return typeof t == "function" ? t(n) : t;
+  }
+}
+async function loadAdminProfile() {
+  try {
+    return await d("/admin-api/auth/me", { timeoutMs: 10000 });
+  } catch (e) {
+    if (e?.status === 401 || e?.status === 403) throw e;
+    await new Promise((t) => setTimeout(t, 600));
+    return d("/admin-api/auth/me", { timeoutMs: 15000 });
   }
 }
 function g(e) {
@@ -2792,7 +2801,7 @@ async function q() {
       return;
     }
     st();
-    const e = await d("/admin-api/auth/me", { timeoutMs: 10000 });
+    const e = await loadAdminProfile();
     const [t, a, n, s, r, o, m, R, y, x, j, A, B, w, L, T, C, M, U, J, k, z, watchOps] = await Promise.all([
       safeAdminLoad("/admin-api/home-config", null),
       safeAdminLoad("/admin-api/pi-config", null),
