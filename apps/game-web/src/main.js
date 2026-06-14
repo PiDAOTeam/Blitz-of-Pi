@@ -321,10 +321,11 @@ async function An(e = 6e3) {
   return null;
 }
 async function w(e, t) {
-  const r = new AbortController(), o = window.setTimeout(() => r.abort(), Cn);
+  const { timeoutMs = Cn, ...requestOptions } = t || {};
+  const r = new AbortController(), o = window.setTimeout(() => r.abort(), Math.max(1500, Number(timeoutMs || Cn)));
   let s;
   try {
-    s = await fetch(`${Gt}${e}`, { ...t, signal: t?.signal || r.signal, headers: { "Content-Type": "application/json", Authorization: `Bearer ${dt()}`, ...t?.headers || {} } });
+    s = await fetch(`${Gt}${e}`, { ...requestOptions, signal: requestOptions.signal || r.signal, headers: { "Content-Type": "application/json", Authorization: `Bearer ${dt()}`, ...requestOptions.headers || {} } });
   } catch (c) {
     const d = c instanceof DOMException && c.name === "AbortError" ? n("requestTimeout") : n("networkRequestFailed");
     throw new Error(d);
@@ -1693,7 +1694,11 @@ function openWatchShareholderSheet() {
     f.disabled = true, f.classList.add("is-loading"), h && (h.textContent = n("claiming"));
     try {
       const m = await w("/api/watch-shareholder/claim", { method: "POST", body: JSON.stringify({}) });
-      a.watchShareholder = m.status || await w("/api/watch-shareholder/me"), a.wallet = await w("/api/wallet/me"), h && (h.textContent = n("claimSuccess")), S(n("claimSuccess"), "success"), window.setTimeout(() => {
+      a.watchShareholder = m.status || await w("/api/watch-shareholder/me", { timeoutMs: 6500 }), h && (h.textContent = n("claimSuccess")), S(n("claimSuccess"), "success"), w("/api/wallet/me", { timeoutMs: 4200 }).then((g) => {
+        a.wallet = g, a.screen === "home" && _();
+      }).catch((g) => {
+        a.wallet = keepWalletOnSlowRefresh(N(g));
+      }), window.setTimeout(() => {
         document.querySelector("#watch-shareholder-sheet-mask")?.remove(), _();
       }, 450);
     } catch (m) {
@@ -1755,7 +1760,11 @@ function openDailyRewards() {
     if (p?.disabled) return;
     p && (p.disabled = true, p.classList.add("is-loading")), s && (s.textContent = n("claiming"));
     try {
-      a.engagement = await w(u, { method: "POST", body: h ? JSON.stringify({ taskKey: h.dataset.claimTask || "" }) : JSON.stringify({}) }), a.wallet = await w("/api/wallet/me"), s && (s.textContent = n("claimSuccess")), S(n("claimSuccess"), "success"), window.setTimeout(() => {
+      a.engagement = await w(u, { method: "POST", body: h ? JSON.stringify({ taskKey: h.dataset.claimTask || "" }) : JSON.stringify({}), timeoutMs: 6500 }), s && (s.textContent = n("claimSuccess")), S(n("claimSuccess"), "success"), w("/api/wallet/me", { timeoutMs: 4200 }).then((p) => {
+        a.wallet = p, a.screen === "home" && _();
+      }).catch((p) => {
+        a.wallet = keepWalletOnSlowRefresh(N(p));
+      }), window.setTimeout(() => {
         document.querySelector("#daily-reward-sheet-mask")?.remove(), _();
       }, 450);
     } catch (f) {
@@ -4174,6 +4183,9 @@ function shouldRefreshPiLogin() {
 function fallbackWallet(e = "") {
   return { balance: 0, availableBalance: 0, lockedBalance: 0, ledgers: [], assetLedgers: [], allLedgers: [], remoteAssets: null, remoteAssetsError: e || n("requestTimeout") };
 }
+function keepWalletOnSlowRefresh(e = "") {
+  return a.wallet ? { ...a.wallet, remoteAssetsError: e || a.wallet.remoteAssetsError || n("requestTimeout") } : fallbackWallet(e);
+}
 async function safeLoad(e, t, r = "") {
   try {
     return await e();
@@ -4183,7 +4195,7 @@ async function safeLoad(e, t, r = "") {
   }
 }
 async function D(e = {}) {
-  const t = e.tolerant === true, r = w("/api/home/index"), o = w("/api/auth/profile"), s = w("/api/game/config"), l = w("/api/pi/config"), c = t ? safeLoad(() => w("/api/wallet/me"), (T) => fallbackWallet(N(T)), "wallet") : w("/api/wallet/me"), d = safeLoad(() => w("/api/rank/me"), null, "rank"), u = safeLoad(() => w("/api/rank/leaderboard?page=1&pageSize=15&type=weekly"), null, "leaderboard"), h = safeLoad(() => w("/api/profile/options"), null, "profile-options"), p = safeLoad(() => w(`/api/battle/history?page=${a.battleHistoryPage}&pageSize=5&mode=${encodeURIComponent(a.battleHistoryFilter === "all" ? "" : a.battleHistoryFilter)}`), { items: [], page: 1, total: 0, totalPages: 1 }, "battle-history"), f = safeLoad(() => w("/api/withdraw/wallets"), [], "withdraw-wallets"), m = safeLoad(() => w("/api/invite/me"), null, "invite"), g = safeLoad(() => w("/api/engagement/me"), null, "engagement"), C = safeLoad(() => w("/api/watch-shareholder/me"), null, "watch-shareholder");
+  const t = e.tolerant === true, r = w("/api/home/index", { timeoutMs: 6500 }), o = w("/api/auth/profile", { timeoutMs: 6500 }), s = w("/api/game/config", { timeoutMs: 6500 }), l = w("/api/pi/config", { timeoutMs: 6500 }), c = t ? safeLoad(() => w("/api/wallet/me", { timeoutMs: 4200 }), (T) => keepWalletOnSlowRefresh(N(T)), "wallet") : w("/api/wallet/me", { timeoutMs: 5200 }), d = safeLoad(() => w("/api/rank/me", { timeoutMs: 6500 }), null, "rank"), u = safeLoad(() => w("/api/rank/leaderboard?page=1&pageSize=15&type=weekly", { timeoutMs: 6500 }), null, "leaderboard"), h = safeLoad(() => w("/api/profile/options", { timeoutMs: 6500 }), null, "profile-options"), p = safeLoad(() => w(`/api/battle/history?page=${a.battleHistoryPage}&pageSize=5&mode=${encodeURIComponent(a.battleHistoryFilter === "all" ? "" : a.battleHistoryFilter)}`, { timeoutMs: 6500 }), { items: [], page: 1, total: 0, totalPages: 1 }, "battle-history"), f = safeLoad(() => w("/api/withdraw/wallets", { timeoutMs: 6500 }), [], "withdraw-wallets"), m = safeLoad(() => w("/api/invite/me", { timeoutMs: 6500 }), null, "invite"), g = safeLoad(() => w("/api/engagement/me", { timeoutMs: 6500 }), null, "engagement"), C = safeLoad(() => w("/api/watch-shareholder/me", { timeoutMs: 6500 }), null, "watch-shareholder");
   const [T, y, P, A, E, b, L, x, I, M, U, W, J] = await Promise.all([r, o, c, d, u, l, h, s, p, f, m, g, C]);
   a.home = T, a.user = y, a.wallet = P || fallbackWallet(), a.rankStatus = A, a.rankLeaderboard = E, a.piConfig = b, a.profileOptions = L, a.gameConfig = x, a.inviteInfo = U, a.engagement = W, a.watchShareholder = J, Qe(), a.withdrawWallets = M || [], a.battleHistory = I?.items || [], a.battleHistoryPage = I?.page || 1, a.battleHistoryTotal = I?.total || 0, a.battleHistoryTotalPages = I?.totalPages || 1;
 }

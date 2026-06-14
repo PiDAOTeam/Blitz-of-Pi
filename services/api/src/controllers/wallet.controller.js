@@ -6,6 +6,8 @@ const { listUserRewards: listUserWatchShareholderRewards } = require("../reposit
 const { readGameConfig } = require("../repositories/game-config.repository");
 const assetGateway = require("../services/asset-gateway.service");
 
+const REMOTE_ASSET_SUMMARY_FAST_TIMEOUT_MS = 1800;
+
 async function getUserFromRequest(req) {
   const token = req.headers.authorization?.replace("Bearer ", "") || "";
   return getActiveUserFromToken(token);
@@ -193,6 +195,23 @@ function sortLedgersByTime(ledgers) {
   });
 }
 
+function withTimeout(promise, timeoutMs, timeoutMessage = "资产同步稍慢，请稍后刷新") {
+  let timer = null;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      const error = new Error(timeoutMessage);
+      error.expectedBusinessError = true;
+      error.businessCode = 1701;
+      error.gatewayBusy = true;
+      reject(error);
+    }, Math.max(500, Number(timeoutMs || 0)));
+  });
+
+  return Promise.race([promise, timeout]).finally(() => {
+    if (timer) clearTimeout(timer);
+  });
+}
+
 async function getMyWallet(req) {
   const user = await getUserFromRequest(req);
   const wallet = await getWallet(user.uid);
@@ -214,9 +233,15 @@ async function getMyWallet(req) {
 
   if (config.assetGateway?.enabled && config.assetGateway?.summaryEnabled !== false) {
     try {
-      remoteAssets = await assetGateway.summary(user);
+      remoteAssets = await withTimeout(
+        assetGateway.summary(user),
+        REMOTE_ASSET_SUMMARY_FAST_TIMEOUT_MS,
+        "资产同步稍慢，正在显示本地明细"
+      );
     } catch (error) {
-      remoteAssetsError = error.message || "资产网关查询失败";
+      remoteAssetsError = error.gatewayBusy
+        ? error.message || "资产同步稍慢，正在显示本地明细"
+        : error.message || "资产网关查询失败";
     }
   }
 
