@@ -159,6 +159,7 @@ const EXPECTED_BUSINESS_ERROR_MESSAGES = new Set([
   "HashPi APP 暂不支持该场次",
   "HashPi 登录票据校验失败",
   "HashPi 登录校验超时，请重试",
+  "登录票据不存在或已使用",
   "请先登录后台",
   "后台账号不存在或已禁用",
   "后台账号或密码错误",
