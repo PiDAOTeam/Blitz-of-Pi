@@ -1,6 +1,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { query } = require("../db/mysql");
+const defaultAdminConfig = require("../defaults/default-admin-config.json");
 
 const HOME_CONFIG_FILE = path.resolve(
   __dirname,
@@ -76,7 +77,7 @@ function normalizeHomeConfig(value = {}) {
 
 function readHomeConfigFromFile() {
   if (!fs.existsSync(HOME_CONFIG_FILE)) {
-    return normalizeHomeConfig();
+    return normalizeHomeConfig(defaultAdminConfig.home?.homePageConfig);
   }
 
   const raw = fs.readFileSync(HOME_CONFIG_FILE, "utf8");

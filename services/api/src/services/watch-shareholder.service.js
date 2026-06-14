@@ -1,5 +1,6 @@
 const assetGateway = require("./asset-gateway.service");
 const { readGameConfig } = require("../repositories/game-config.repository");
+const defaultAdminConfig = require("../defaults/default-admin-config.json");
 const {
   allocateIntegerRewards,
   createOrReplacePeriodWithRewards,
@@ -34,6 +35,10 @@ const DEFAULT_WATCH_SHAREHOLDER_CONFIG = {
   title: "腕表节点股东分红",
   subtitle: "每周可领分红"
 };
+Object.assign(
+  DEFAULT_WATCH_SHAREHOLDER_CONFIG,
+  defaultAdminConfig.game?.operationConfig?.watchShareholder || {}
+);
 
 const LEGACY_WATCH_SHAREHOLDER_TEXT = {
   subtitle: new Set(["腕表节点用户可领每周分红"]),

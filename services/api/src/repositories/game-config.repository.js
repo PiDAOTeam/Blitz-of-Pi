@@ -1,5 +1,6 @@
 const { query } = require("../db/mysql");
 const { redisSet } = require("../db/redis");
+const defaultAdminConfig = require("../defaults/default-admin-config.json");
 
 const REALTIME_CONFIG_REDIS_KEY = "blitz:realtime:config";
 const SUPPORTED_BATTLE_MODES = [
@@ -1763,7 +1764,7 @@ async function readGameConfig() {
     console.error("[game-config] MySQL read failed:", error.message);
   }
 
-  return DEFAULT_GAME_CONFIG;
+  return normalizeConfig(defaultAdminConfig.game?.operationConfig || DEFAULT_GAME_CONFIG);
 }
 
 function normalizeConfig(payload) {
@@ -1871,7 +1872,7 @@ async function writeGameConfig(payload) {
 }
 
 module.exports = {
-  DEFAULT_GAME_CONFIG,
+  DEFAULT_GAME_CONFIG: normalizeConfig(defaultAdminConfig.game?.operationConfig || DEFAULT_GAME_CONFIG),
   DEFAULT_RANKED_MODES,
   SUPPORTED_BATTLE_MODES,
   readGameConfig,

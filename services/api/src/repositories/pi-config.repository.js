@@ -1,10 +1,15 @@
 const { query } = require("../db/mysql");
+const defaultAdminConfig = require("../defaults/default-admin-config.json");
 
 const DEFAULT_PI_CONFIG = {
   runtimeMode: "production",
   frontendSandbox: false,
   sandboxUrl: "https://sandbox.minepi.com/app/blitz-of-pi",
   productionUrl: "https://blitz.hashpi.app"
+};
+const DEFAULT_ADMIN_PI_CONFIG = {
+  ...DEFAULT_PI_CONFIG,
+  ...(defaultAdminConfig.pi?.runtimeConfig || {})
 };
 
 async function readPiConfig() {
@@ -20,7 +25,7 @@ async function readPiConfig() {
           ? JSON.parse(rows[0].config_value)
           : rows[0].config_value;
       return {
-        ...DEFAULT_PI_CONFIG,
+        ...DEFAULT_ADMIN_PI_CONFIG,
         ...value
       };
     }
@@ -28,12 +33,12 @@ async function readPiConfig() {
     console.error("[pi-config] MySQL read failed:", error.message);
   }
 
-  return DEFAULT_PI_CONFIG;
+  return DEFAULT_ADMIN_PI_CONFIG;
 }
 
 async function writePiConfig(payload) {
   const next = {
-    ...DEFAULT_PI_CONFIG,
+    ...DEFAULT_ADMIN_PI_CONFIG,
     ...payload,
     frontendSandbox: payload.runtimeMode === "sandbox" || Boolean(payload.frontendSandbox)
   };
@@ -73,7 +78,7 @@ async function writePiConfig(payload) {
 }
 
 module.exports = {
-  DEFAULT_PI_CONFIG,
+  DEFAULT_PI_CONFIG: DEFAULT_ADMIN_PI_CONFIG,
   readPiConfig,
   writePiConfig
 };

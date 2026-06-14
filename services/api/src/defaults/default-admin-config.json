@@ -1,0 +1,877 @@
+{
+  "game": {
+    "operationConfig": {
+      "timing": {
+        "vsIntroSeconds": 3,
+        "paidRoundSeconds": 120,
+        "quickRoundSeconds": 90,
+        "readyCountdownSeconds": 5,
+        "botMoveIntervalSeconds": 2.6,
+        "matchCancelWaitSeconds": 20,
+        "quickBotFallbackSeconds": 25,
+        "matchCancelCooldownSeconds": 2,
+        "waitingReadyTimeoutSeconds": 30
+      },
+      "capacity": {
+        "maxActiveRooms": 500,
+        "maxQueueLengthPerMode": 2000,
+        "realtimeMaxPayloadBytes": 2048,
+        "realtimeHeartbeatSeconds": 30,
+        "realtimeIdleTimeoutSeconds": 180,
+        "realtimeMaxConnectionsPerUser": 4,
+        "realtimeMaxConnectionsPerInstance": 1200
+      },
+      "piBattle": {
+        "key": "pi_battle",
+        "name": "超级富豪",
+        "enabled": true,
+        "entryFee": 1,
+        "assetType": "PI",
+        "rewardRate": 0.7,
+        "botMatchEnabled": false,
+        "platformFeeRate": 0.3,
+        "botRewardsEnabled": false
+      },
+      "transfer": {
+        "enabled": true,
+        "feeRate": 0,
+        "maxAmount": 1000,
+        "minAmount": 0.5,
+        "feeMinAmount": 0,
+        "cooldownSeconds": 10,
+        "dailyLimitAmount": 3000
+      },
+      "operation": {
+        "ranks": [
+          {
+            "key": "bronze",
+            "icon": "◆",
+            "name": "青铜",
+            "color": "#b87a45",
+            "enabled": true
+          },
+          {
+            "key": "silver",
+            "icon": "◇",
+            "name": "白银",
+            "color": "#c7d2e2",
+            "enabled": true
+          },
+          {
+            "key": "gold",
+            "icon": "✦",
+            "name": "黄金",
+            "color": "#f2c84b",
+            "enabled": true
+          },
+          {
+            "key": "platinum",
+            "icon": "✧",
+            "name": "铂金",
+            "color": "#7fe6ff",
+            "enabled": true
+          },
+          {
+            "key": "diamond",
+            "icon": "✹",
+            "name": "钻石",
+            "color": "#b58cff",
+            "enabled": true
+          },
+          {
+            "key": "starlight",
+            "icon": "✷",
+            "name": "星耀",
+            "color": "#e7a6ff",
+            "enabled": true
+          },
+          {
+            "key": "king",
+            "icon": "♛",
+            "name": "王者",
+            "color": "#ffdc73",
+            "enabled": true
+          }
+        ],
+        "avatars": [
+          {
+            "key": "avatar_1",
+            "name": "闪电红",
+            "enabled": true
+          },
+          {
+            "key": "avatar_2",
+            "name": "金币橙",
+            "enabled": true
+          },
+          {
+            "key": "avatar_3",
+            "name": "翡翠绿",
+            "enabled": true
+          },
+          {
+            "key": "avatar_4",
+            "name": "海浪蓝",
+            "enabled": true
+          },
+          {
+            "key": "avatar_5",
+            "name": "星夜灰",
+            "enabled": true
+          },
+          {
+            "key": "avatar_6",
+            "name": "冠军金",
+            "enabled": true
+          }
+        ],
+        "rankRules": {
+          "winStars": 1,
+          "loseStars": 1,
+          "rankedModes": [
+            "points_battle",
+            "poc_battle",
+            "pi_battle"
+          ],
+          "ruleSummary": "小富豪、大富豪、超级富豪计入段位和周榜。",
+          "chestRewards": {
+            "gold": 0.1,
+            "king": 1.6,
+            "bronze": 0.02,
+            "silver": 0.05,
+            "diamond": 0.4,
+            "platinum": 0.2,
+            "starlight": 0.8
+          },
+          "starsPerRank": 5,
+          "weeklyRewards": {
+            "top1": 5,
+            "top2": 3,
+            "top3": 3,
+            "top10": 1
+          },
+          "bronzeProtection": true,
+          "weeklyRewardTiers": [
+            {
+              "amount": 5,
+              "toRank": 1,
+              "fromRank": 1
+            },
+            {
+              "amount": 3,
+              "toRank": 2,
+              "fromRank": 2
+            },
+            {
+              "amount": 3,
+              "toRank": 3,
+              "fromRank": 3
+            },
+            {
+              "amount": 1,
+              "toRank": 10,
+              "fromRank": 4
+            },
+            {
+              "amount": 0.4,
+              "toRank": 100,
+              "fromRank": 11
+            }
+          ],
+          "winStreakRequired": 5,
+          "winStreakBonusStars": 1,
+          "richBattleMinRankKey": "bronze",
+          "quickBattleMaxRankKey": "silver",
+          "winStreakBonusEnabled": true,
+          "ticketBattleMaxRankKey": "king",
+          "weeklyLeaderboardModes": [
+            "points_battle",
+            "poc_battle",
+            "pi_battle"
+          ],
+          "weeklyAutoSettleEnabled": true,
+          "dailyChestRequiredBattles": 2
+        },
+        "tileTheme": {
+          "enabled": false,
+          "normalTiles": [
+            {
+              "key": "ruby",
+              "name": "红宝石",
+              "color": "#d6262f",
+              "label": "",
+              "imageUrl": "",
+              "textColor": "#fff6bd"
+            },
+            {
+              "key": "amber",
+              "name": "金币",
+              "color": "#f08a12",
+              "label": "",
+              "imageUrl": "",
+              "textColor": "#fff6bd"
+            },
+            {
+              "key": "jade",
+              "name": "翡翠",
+              "color": "#169950",
+              "label": "",
+              "imageUrl": "",
+              "textColor": "#fff6bd"
+            },
+            {
+              "key": "aqua",
+              "name": "海浪",
+              "color": "#0098e8",
+              "label": "",
+              "imageUrl": "",
+              "textColor": "#fff6bd"
+            },
+            {
+              "key": "slate",
+              "name": "紫晶",
+              "color": "#6f2cff",
+              "label": "",
+              "imageUrl": "",
+              "textColor": "#fff6bd"
+            },
+            {
+              "key": "gold",
+              "name": "冠军金",
+              "color": "#d2a51a",
+              "label": "",
+              "imageUrl": "",
+              "textColor": "#fff6bd"
+            }
+          ],
+          "specialTiles": {
+            "bomb": {
+              "name": "爆炸方块",
+              "color": "#ffe56d",
+              "label": "爆",
+              "imageUrl": "",
+              "textColor": "#ffe56d"
+            },
+            "vertical": {
+              "name": "纵向闪电",
+              "color": "#ffe56d",
+              "label": "纵",
+              "imageUrl": "",
+              "textColor": "#ffe56d"
+            },
+            "horizontal": {
+              "name": "横向闪电",
+              "color": "#ffe56d",
+              "label": "横",
+              "imageUrl": "",
+              "textColor": "#ffe56d"
+            }
+          }
+        },
+        "banReasons": [
+          "异常刷分",
+          "恶意退款",
+          "多账号套利",
+          "昵称违规",
+          "疑似作弊"
+        ],
+        "bannedWords": [],
+        "nicknamePattern": "中文、英文、数字均可，禁止特殊符号和敏感词",
+        "localizedContent": {
+          "en": {
+            "ruleSummary": "Quick Battle is for practice. Paid real-player rooms are better for ranking.",
+            "rechargeNotice": "Enter the Pi amount. The platform wallet ledger updates after payment.",
+            "withdrawNotice": "After submission, the balance is locked until admin review and payout.",
+            "maintenanceNotice": ""
+          },
+          "ja": {
+            "ruleSummary": "クイック対戦は練習用です。ランク上げには有料の対人ルームが適しています。",
+            "rechargeNotice": "チャージする Pi 数量を入力してください。支払い後にウォレット履歴へ反映されます。",
+            "withdrawNotice": "申請後、残高は審査と支払い完了までロックされます。",
+            "maintenanceNotice": ""
+          },
+          "ko": {
+            "ruleSummary": "빠른 대전은 연습용입니다. 유료 실시간 방이 랭크 상승에 더 적합합니다.",
+            "rechargeNotice": "충전할 Pi 수량을 입력하세요. 결제 후 지갑 내역이 업데이트됩니다.",
+            "withdrawNotice": "제출 후 잔액은 관리자 검토와 지급 전까지 잠깁니다.",
+            "maintenanceNotice": ""
+          },
+          "vi": {
+            "ruleSummary": "Đấu nhanh dùng để luyện tập. Phòng trả phí phù hợp hơn để leo hạng.",
+            "rechargeNotice": "Nhập số Pi cần nạp. Ví sẽ cập nhật sau khi thanh toán.",
+            "withdrawNotice": "Sau khi gửi, số dư sẽ bị khóa để chờ xét duyệt và thanh toán.",
+            "maintenanceNotice": ""
+          },
+          "zh-CN": {
+            "ruleSummary": "小富豪、大富豪、超级富豪计入段位和周榜。",
+            "rechargeNotice": "请输入充值 Pi 数量，支付完成后会写入平台钱包流水。",
+            "withdrawNotice": "提交后余额会先冻结，等待平台后台审核与打款。",
+            "maintenanceNotice": ""
+          }
+        },
+        "maintenanceNotice": "",
+        "nicknameMaxLength": 12,
+        "nicknameMinLength": 2,
+        "maintenanceEnabled": false
+      },
+      "pocBattle": {
+        "key": "poc_battle",
+        "name": "大富豪",
+        "enabled": true,
+        "entryFee": 1,
+        "assetType": "POC",
+        "rewardRate": 0.7,
+        "botMatchEnabled": false,
+        "platformFeeRate": 0.3,
+        "botRewardsEnabled": false
+      },
+      "engagement": {
+        "tasks": [
+          {
+            "key": "play_3",
+            "modes": [
+              "points_battle",
+              "poc_battle",
+              "pi_battle"
+            ],
+            "title": "完成3局",
+            "enabled": true,
+            "condition": "battle_count",
+            "rewardAmount": 0.02,
+            "requiredCount": 3
+          },
+          {
+            "key": "win_1",
+            "modes": [
+              "poc_battle",
+              "pi_battle"
+            ],
+            "title": "赢1局",
+            "enabled": true,
+            "condition": "win_count",
+            "rewardAmount": 0.02,
+            "requiredCount": 1
+          }
+        ],
+        "enabled": true,
+        "dailySignIn": {
+          "title": "每日签到",
+          "enabled": true,
+          "rewardAmount": 0.01,
+          "piRewardEnabled": true,
+          "pocRewardAmount": 0,
+          "pocRewardEnabled": false,
+          "pointsRewardAmount": 2,
+          "pointsRewardEnabled": true
+        }
+      },
+      "richBattle": {
+        "key": "rich_battle",
+        "name": "超级富豪（Pi）",
+        "enabled": true,
+        "entryFee": 1,
+        "assetType": "PI",
+        "rewardRate": 0.7,
+        "botMatchEnabled": false,
+        "platformFeeRate": 0.3,
+        "botRewardsEnabled": false
+      },
+      "quickBattle": {
+        "key": "quick_battle",
+        "name": "快速开战",
+        "enabled": true,
+        "entryFee": 0,
+        "assetType": "FREE",
+        "rewardRate": 0,
+        "botMatchEnabled": true,
+        "platformFeeRate": 0,
+        "botRewardsEnabled": false
+      },
+      "assetGateway": {
+        "enabled": true,
+        "opsNote": "小富豪使用积分，大富豪使用POC；积分门票只能填写整数。",
+        "pocEnabled": true,
+        "pointsEnabled": true,
+        "grayUserPiUids": [],
+        "summaryEnabled": true,
+        "grayUserPiUsernames": []
+      },
+      "pointsBattle": {
+        "key": "points_battle",
+        "name": "小富豪",
+        "enabled": true,
+        "entryFee": 10,
+        "assetType": "POINTS",
+        "rewardRate": 0.7,
+        "botNamePool": [
+          "星河玩家",
+          "闪电高手",
+          "三消达人",
+          "幸运玩家",
+          "连击王者",
+          "风暴选手",
+          "金芒玩家",
+          "极速挑战者",
+          "甜心玩家",
+          "不服再战",
+          "追光少年",
+          "彩虹棋手",
+          "闪耀小星",
+          "爆消大师",
+          "雷霆玩家",
+          "清风过关",
+          "星火连击",
+          "快乐消消",
+          "金色闪电",
+          "稳稳上分",
+          "满分冲刺",
+          "小宇宙",
+          "彩糖高手",
+          "电光一闪",
+          "胜利微笑",
+          "蓝海玩家",
+          "紫晶骑士",
+          "红心挑战",
+          "绿野高手",
+          "橙光勇者",
+          "晨光选手",
+          "夜空旅人",
+          "晴天玩家",
+          "好运连连",
+          "小小冠军",
+          "闪电先锋",
+          "宝石猎人",
+          "飞速消除",
+          "甜蜜连线",
+          "星愿玩家",
+          "黄金手速",
+          "稳健棋手",
+          "开心赢家",
+          "能量满格",
+          "一路高分",
+          "圆梦玩家",
+          "微风选手",
+          "光速滑动",
+          "连胜小将",
+          "高分伙伴",
+          "星辰大海",
+          "快乐高手",
+          "幸运之星",
+          "闪闪发光",
+          "破局达人",
+          "紫电玩家",
+          "糖果猎手",
+          "王牌选手",
+          "稳如磐石",
+          "冲榜达人",
+          "闪耀达人",
+          "轻松过关",
+          "火花玩家",
+          "节奏大师",
+          "超能棋手",
+          "梦想玩家",
+          "明亮星光",
+          "连击小能手",
+          "宝藏玩家",
+          "勇敢挑战",
+          "金牌选手",
+          "闪电伙伴",
+          "彩石玩家",
+          "蓝焰高手",
+          "星月同辉",
+          "快乐冲锋",
+          "灵巧手指",
+          "幸运挑战",
+          "满能玩家",
+          "胜利之光",
+          "甜橙玩家",
+          "绿光旅人",
+          "蓝莓高手",
+          "紫霞玩家",
+          "红宝挑战",
+          "开心连消",
+          "星光猎手",
+          "神速玩家",
+          "热血棋手",
+          "高能时刻",
+          "轻快选手",
+          "稳准高手",
+          "闪击玩家",
+          "奇迹连击",
+          "闪耀冠军",
+          "顺风玩家",
+          "彩云选手",
+          "金风玩家",
+          "银月高手",
+          "火焰挑战",
+          "绿洲玩家",
+          "蓝星旅人",
+          "紫藤高手",
+          "红枫玩家",
+          "橙子选手",
+          "星际玩家",
+          "流光高手",
+          "飞扬棋手",
+          "高分冲击",
+          "幸运一击",
+          "快乐出发",
+          "轻盈滑动",
+          "闪亮登场",
+          "稳步前进",
+          "连消高手",
+          "彩虹冲刺",
+          "金光玩家",
+          "能量选手",
+          "活力玩家",
+          "胜利冲锋",
+          "星河闪耀",
+          "雷光棋手",
+          "闪电冲刺",
+          "糖心玩家",
+          "宝石之光",
+          "小小闪电",
+          "高能玩家",
+          "欢乐棋手",
+          "幸运高手",
+          "满屏连击",
+          "星光冲榜",
+          "黄金挑战",
+          "快乐上分",
+          "神奇手速",
+          "闪耀对手",
+          "风驰玩家",
+          "电掣高手",
+          "彩石达人",
+          "金牌伙伴",
+          "开心挑战",
+          "晴空玩家",
+          "月光棋手",
+          "晨星高手",
+          "火力全开",
+          "连胜伙伴",
+          "高分之路",
+          "甜蜜高手",
+          "能量冲刺",
+          "星火达人",
+          "闪电连线",
+          "轻松赢家",
+          "好运选手",
+          "快乐闪击",
+          "宝石玩家",
+          "彩光挑战",
+          "星云高手",
+          "雷霆冲榜",
+          "金色伙伴",
+          "紫光玩家",
+          "蓝钻高手",
+          "红钻玩家",
+          "绿宝选手",
+          "橙星挑战",
+          "飞星玩家",
+          "闪亮棋手",
+          "快乐冠军",
+          "小胜一局",
+          "连击风暴",
+          "高分雷达",
+          "星光小将",
+          "黄金指尖",
+          "彩虹小队",
+          "闪电小队",
+          "幸运连线",
+          "甜心高手",
+          "追风玩家",
+          "破风选手",
+          "光芒棋手",
+          "暖阳玩家",
+          "星辉挑战",
+          "闪耀出击",
+          "连消小王",
+          "能量小站",
+          "胜利节奏",
+          "彩糖冲刺",
+          "极速高手",
+          "稳赢玩家",
+          "快乐对局",
+          "星河冲锋",
+          "金芒高手",
+          "流星玩家",
+          "星愿高手",
+          "飞光挑战",
+          "小小赢家",
+          "闪电时刻",
+          "宝石冲锋",
+          "彩色心情",
+          "热力玩家",
+          "高能连消",
+          "胜利玩家"
+        ],
+        "botDifficulty": "normal",
+        "botCountInRank": true,
+        "botMatchEnabled": true,
+        "platformFeeRate": 0.3,
+        "botCountInWeekly": true,
+        "botRewardsEnabled": true,
+        "botFallbackSeconds": 15,
+        "botDifficultyRanges": {
+          "easy": {
+            "maxScore": 2600,
+            "minScore": 1800,
+            "moveIntervalSeconds": 1.5
+          },
+          "hard": {
+            "maxScore": 4600,
+            "minScore": 3600,
+            "moveIntervalSeconds": 1
+          },
+          "expert": {
+            "maxScore": 5600,
+            "minScore": 4600,
+            "moveIntervalSeconds": 0.85
+          },
+          "normal": {
+            "maxScore": 3600,
+            "minScore": 2600,
+            "moveIntervalSeconds": 1.2
+          }
+        },
+        "botCountInWatchShareholder": true
+      },
+      "ticketBattle": {
+        "key": "ticket_battle",
+        "name": "超级富豪（Pi）",
+        "enabled": true,
+        "entryFee": 0.3,
+        "assetType": "PI",
+        "rewardRate": 0.7,
+        "botMatchEnabled": false,
+        "platformFeeRate": 0.3,
+        "botRewardsEnabled": false
+      },
+      "withdrawRisk": {
+        "feeRate": 0.05,
+        "minAmount": 0.1,
+        "maxRetryCount": 0,
+        "payoutChannel": "stellar_direct",
+        "dailyLimitAmount": 200,
+        "autoPayoutEnabled": false,
+        "autoApproveEnabled": false,
+        "manualReviewAmount": 50,
+        "autoPayoutMaxAmount": 0,
+        "walletValidationRequired": true,
+        "autoPayoutDailyLimitAmount": 0
+      },
+      "inviteRewards": {
+        "levels": [
+          {
+            "key": "starter",
+            "name": "闪电伙伴",
+            "enabled": true,
+            "minBalance": 0,
+            "commissionRate": 0.03,
+            "minDirectInvites": 2
+          },
+          {
+            "key": "silver",
+            "name": "银牌队长",
+            "enabled": true,
+            "minBalance": 50,
+            "commissionRate": 0.05,
+            "minDirectInvites": 8
+          },
+          {
+            "key": "gold",
+            "name": "金牌队长",
+            "enabled": true,
+            "minBalance": 500,
+            "commissionRate": 0.08,
+            "minDirectInvites": 50
+          }
+        ],
+        "enabled": true,
+        "bindEnabled": true,
+        "commissionBase": "entry_fee",
+        "bindRequiredModes": [
+          "quick_battle",
+          "points_battle",
+          "poc_battle",
+          "pi_battle"
+        ],
+        "maxCommissionRate": 0.2,
+        "bindRequiredEnabled": true,
+        "bindRequiredMessage": "请先绑定邀请人，再继续对战。",
+        "qualificationEnabled": true,
+        "battleCommissionEnabled": true,
+        "bindRequiredAfterBattles": 5,
+        "officialInviterPiUsername": "",
+        "qualificationRewardAmount": 0.02,
+        "qualificationRequiredBattles": 2
+      },
+      "rechargeBonus": {
+        "enabled": true,
+        "presets": [
+          {
+            "label": "送0.5",
+            "amount": 50,
+            "enabled": true,
+            "bonusAmount": 0.5
+          },
+          {
+            "label": "送1",
+            "amount": 100,
+            "enabled": true,
+            "bonusAmount": 1
+          },
+          {
+            "label": "送2",
+            "amount": 200,
+            "enabled": true,
+            "bonusAmount": 2
+          },
+          {
+            "label": "送10",
+            "amount": 500,
+            "enabled": true,
+            "bonusAmount": 10
+          }
+        ],
+        "bonusRate": 0,
+        "maxBonusAmount": 0
+      },
+      "visualEffects": {
+        "bgmVolume": 1,
+        "bgmEnabled": true,
+        "defaultMode": "balanced",
+        "soundVolume": 1.5,
+        "soundEnabled": true,
+        "allowHighMode": true,
+        "hapticEnabled": true,
+        "allowUserChoice": true,
+        "dragTrailEnabled": true,
+        "attackWarningText": "被攻击 压力+{attack}",
+        "animationDurations": {
+          "impactSeconds": 0.72,
+          "tileFallSeconds": 0.1,
+          "localSwapSeconds": 0.15,
+          "tileBurstSeconds": 0.28,
+          "attackLineSeconds": 0.78,
+          "hitWarningSeconds": 0.92,
+          "impactHighSeconds": 0.92,
+          "localBurstSeconds": 1.08,
+          "boardEffectSeconds": 0.12,
+          "invalidSwapSeconds": 0.2,
+          "pressureHitSeconds": 0.72,
+          "serverBurstSeconds": 1.18,
+          "serverSettleSeconds": 0.16,
+          "tileFallHighSeconds": 0.2,
+          "tileBurstHighSeconds": 0.38,
+          "localBurstHighSeconds": 1.26,
+          "boardEffectHighSeconds": 0.2,
+          "serverBurstHighSeconds": 1.28,
+          "boardUnderAttackSeconds": 0.58,
+          "lowPerformanceBurstSeconds": 0.9
+        },
+        "attackWarningEnabled": true,
+        "autoDowngradeEnabled": true,
+        "piBrowserDefaultMode": "balanced"
+      },
+      "extremeRealtime": {
+        "enabled": true,
+        "grayPercent": 100,
+        "enabledModes": [
+          "quick_battle",
+          "points_battle",
+          "poc_battle",
+          "pi_battle"
+        ],
+        "grayUserPiUids": [],
+        "maxPendingSwaps": 3,
+        "rollbackToLegacy": false,
+        "metricsSampleRate": 0.05,
+        "swapMinIntervalMs": 120,
+        "snapshotIntervalMs": 2000,
+        "grayUserPiUsernames": []
+      },
+      "watchShareholder": {
+        "title": "腕表节点股东分红",
+        "enabled": true,
+        "subtitle": "每周可领分红",
+        "shareRate": 0.5,
+        "sourceMode": "points_battle",
+        "settlementText": "周一结算",
+        "subsidyEnabled": true,
+        "minRewardPoints": 1,
+        "autoSettleEnabled": true,
+        "frontendEntryEnabled": true,
+        "subsidyPointsPerUser": 10
+      }
+    }
+  },
+  "home": {
+    "homePageConfig": {
+      "banners": [
+        {
+          "id": 1,
+          "title": "Pi 闪电战",
+          "subtitle": "Blitz of Pi",
+          "description": "Pi Network首款PVP打金链游"
+        }
+      ],
+      "englishName": "Blitz of Pi",
+      "heroButtons": [
+        {
+          "code": "quick_battle",
+          "label": "快速开战"
+        },
+        {
+          "code": "points_battle",
+          "label": "小富豪"
+        },
+        {
+          "code": "poc_battle",
+          "label": "大富豪"
+        },
+        {
+          "code": "pi_battle",
+          "label": "超级富豪"
+        }
+      ],
+      "projectName": "Pi 闪电战",
+      "announcements": [],
+      "localizedContent": {
+        "en": {
+          "englishName": "BLITZ OF PI",
+          "projectName": "Blitz of Pi",
+          "bannerDescription": "Real-time mobile match-3 battle game"
+        },
+        "ja": {
+          "englishName": "BLITZ OF PI",
+          "projectName": "Blitz of Pi",
+          "bannerDescription": "リアルタイム・モバイル3マッチPVPゲーム"
+        },
+        "ko": {
+          "englishName": "BLITZ OF PI",
+          "projectName": "Blitz of Pi",
+          "bannerDescription": "실시간 모바일 매치3 PVP 게임"
+        },
+        "vi": {
+          "englishName": "BLITZ OF PI",
+          "projectName": "Blitz of Pi",
+          "bannerDescription": "Game ghép 3 PVP thời gian thực trên di động"
+        },
+        "zh-CN": {
+          "englishName": "BLITZ OF PI",
+          "projectName": "Pi闪电战",
+          "bannerDescription": "Pi Network首款PVP打金链游"
+        }
+      }
+    }
+  },
+  "pi": {
+    "runtimeConfig": {
+      "sandboxUrl": "https://sandbox.minepi.com/app/blitz-of-pi",
+      "runtimeMode": "production",
+      "productionUrl": "https://blitz.hashpi.app",
+      "frontendSandbox": false
+    }
+  }
+}
