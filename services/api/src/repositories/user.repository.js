@@ -22,6 +22,26 @@ async function findUserByPiUserId(piUserId) {
   return rows[0] || null;
 }
 
+async function findUserByPiUsername(piUsername) {
+  const safePiUsername = String(piUsername || "").trim();
+  if (!safePiUsername) return null;
+
+  const rows = await query(
+    `SELECT u.*, COALESCE(r.rank_name, u.rank_name) AS rank_name, COALESCE(r.rank_score, 1000) AS rank_score
+     FROM users u
+     LEFT JOIN user_ranks r ON r.uid = u.uid
+     WHERE u.pi_username <> '' AND LOWER(u.pi_username) = LOWER(?)
+     ORDER BY
+       CASE WHEN u.profile_completed = 1 THEN 0 ELSE 1 END,
+       CASE WHEN u.uid LIKE 'pi_%' THEN 0 ELSE 1 END,
+       u.created_at ASC,
+       u.id ASC
+     LIMIT 1`,
+    [safePiUsername]
+  );
+  return rows[0] || null;
+}
+
 async function findUserByUid(uid) {
   const rows = await query(
     `SELECT u.*, COALESCE(r.rank_name, u.rank_name) AS rank_name, COALESCE(r.rank_score, 1000) AS rank_score
@@ -111,6 +131,43 @@ async function upsertUser({ piUserId, piUsername, nickname, avatarUrl, avatarKey
   const safePiUsername = String(piUsername || nickname || "").trim().slice(0, 64);
   const safeNickname = await normalizeNickname(nickname || safePiUsername);
   const safeAvatarKey = (await isValidAvatarKey(avatarKey)) ? avatarKey : DEFAULT_AVATAR_KEY;
+  const existingByUsername = await findUserByPiUsername(safePiUsername);
+
+  if (existingByUsername) {
+    await query(
+      `UPDATE users
+       SET
+         pi_username = CASE
+           WHEN ? <> '' THEN ?
+           ELSE pi_username
+         END,
+         nickname = CASE
+           WHEN nickname = '' OR nickname = 'Pi玩家' OR nickname = pi_username THEN ?
+           ELSE nickname
+         END,
+         avatar_url = CASE
+           WHEN ? <> '' THEN ?
+           ELSE avatar_url
+         END,
+         avatar_key = CASE
+           WHEN avatar_key = '' THEN ?
+           ELSE avatar_key
+         END,
+         last_login_at = NOW()
+       WHERE uid = ?`,
+      [
+        safePiUsername,
+        safePiUsername,
+        safeNickname,
+        avatarUrl || "",
+        avatarUrl || "",
+        safeAvatarKey,
+        existingByUsername.uid
+      ]
+    );
+    await ensureUserRank(existingByUsername.uid);
+    return findUserByUid(existingByUsername.uid);
+  }
 
   await query(
     `INSERT INTO users
@@ -246,6 +303,7 @@ module.exports = {
   PROFILE_AVATARS,
   getProfileAvatars,
   findUserByPiUserId,
+  findUserByPiUsername,
   findUserByUid,
   findUserByHashPiUserId,
   upsertUser,
