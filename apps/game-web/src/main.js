@@ -2201,9 +2201,9 @@ function Ot() {
           <div class="leaderboard-scroll-body">
             <section class="leaderboard-my-rank">
               ${r ? `<div><span>${i(n("myWeeklyRank"))}</span><strong>#${r.rankNo}</strong></div>
-                     <div><span>${i(n("weeklyRecord"))}</span><strong>${i(n("rankMeta", { stars: r.weeklyStarGain || 0, wins: r.weeklyWinCount || 0 }))}</strong></div>
+                     <div><span>${i(n("weeklyRecord"))}</span><strong>${i(formatWeeklyRankMeta(r.weeklyStarGain, r.weeklyWinCount))}</strong></div>
                      <div><span>${i(n("expectedReward"))}</span><strong>${b(r.rewardAmount || 0)}</strong></div>` : `<div><span>${i(n("myWeeklyRank"))}</span><strong>${i(n("notRanked"))}</strong></div>
-                     <div><span>${i(n("weeklyRecord"))}</span><strong>${i(n("rankMeta", { stars: 0, wins: 0 }))}</strong></div>
+                     <div><span>${i(n("weeklyRecord"))}</span><strong>${i(formatWeeklyRankMeta(0, 0))}</strong></div>
                      <div><span>${i(n("rankHow"))}</span><strong>${i(n("winPaidMatch"))}</strong></div>`}
             </section>
             ${Or(e?.rewardTiers || [])}
@@ -2235,9 +2235,9 @@ function renderLeaderboardPageBody() {
   return `
     <section class="leaderboard-my-rank">
       ${r ? `<div><span>${i(n("myWeeklyRank"))}</span><strong>#${r.rankNo}</strong></div>
-             <div><span>${i(n("weeklyRecord"))}</span><strong>${i(n("rankMeta", { stars: r.weeklyStarGain || 0, wins: r.weeklyWinCount || 0 }))}</strong></div>
+             <div><span>${i(n("weeklyRecord"))}</span><strong>${i(formatWeeklyRankMeta(r.weeklyStarGain, r.weeklyWinCount))}</strong></div>
              <div><span>${i(n("expectedReward"))}</span><strong>${b(r.rewardAmount || 0)}</strong></div>` : `<div><span>${i(n("myWeeklyRank"))}</span><strong>${i(n("notRanked"))}</strong></div>
-             <div><span>${i(n("weeklyRecord"))}</span><strong>${i(n("rankMeta", { stars: 0, wins: 0 }))}</strong></div>
+             <div><span>${i(n("weeklyRecord"))}</span><strong>${i(formatWeeklyRankMeta(0, 0))}</strong></div>
              <div><span>${i(n("rankHow"))}</span><strong>${i(n("winPaidMatch"))}</strong></div>`}
     </section>
     ${Or(e?.rewardTiers || [])}
@@ -2250,6 +2250,16 @@ function renderLeaderboardPageBody() {
       <button type="button" class="secondary" id="leaderboard-next" ${!e || e.page >= e.totalPages ? "disabled" : ""}>${i(n("nextPage"))}</button>
     </div>
   `;
+}
+function formatWeeklyRankMeta(e = 0, t = 0) {
+  const r = Number(e || 0);
+  const o = Number(t || 0);
+  return a.language === "zh-CN" ? `本周+${r}星 · ${o}胜` : `Weekly +${r} stars · ${o} wins`;
+}
+function formatWeeklyRewardMeta(e = 0, t = 0, r = 0) {
+  const o = Number(e || 0);
+  const s = Number(t || 0);
+  return a.language === "zh-CN" ? `本周+${o}星 · ${s}胜 · 奖${b(r)}` : `Weekly +${o} stars · ${s} wins · Reward ${b(r)}`;
 }
 async function updateLeaderboardPage(e) {
   const t = document.querySelector(".leaderboard-scroll-body"), r = document.querySelector(".leaderboard-pager");
@@ -2281,7 +2291,7 @@ function Or(e) {
   ` : `<section class="reward-tier-board empty">${i(n("rewardNotConfigured"))}</section>`;
 }
 function Ur(e) {
-  const t = { nickname: e.nickname || e.piUsername || n("piPlayer"), piUsername: e.piUsername || "", avatarKey: e.avatarKey }, r = ke(e.rankKey || e.rankName), o = e.rankNo <= 3 ? [n("champion"), n("runnerUp"), n("thirdPlace")][e.rankNo - 1] : n("rankNo", { rank: e.rankNo }), s = e.weeklyBattleCount !== void 0 ? n("weeklyMetaReward", { stars: e.weeklyStarGain || 0, wins: e.weeklyWinCount || 0, amount: b(e.rewardAmount || 0) }) : n("rankMeta", { stars: e.stars, wins: e.winCount });
+  const t = { nickname: e.nickname || e.piUsername || n("piPlayer"), piUsername: e.piUsername || "", avatarKey: e.avatarKey }, r = ke(e.rankKey || e.rankName), o = e.rankNo <= 3 ? [n("champion"), n("runnerUp"), n("thirdPlace")][e.rankNo - 1] : n("rankNo", { rank: e.rankNo }), s = e.weeklyBattleCount !== void 0 ? formatWeeklyRewardMeta(e.weeklyStarGain, e.weeklyWinCount, e.rewardAmount || 0) : n("rankMeta", { stars: e.stars, wins: e.winCount });
   return `
     <article class="leaderboard-item ${e.rankNo <= 3 ? "top" : ""}">
       <b>${i(o)}</b>
