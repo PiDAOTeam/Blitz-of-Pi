@@ -2057,7 +2057,7 @@ function showHashPiBridgeError(e = n("errorDefault")) {
     </main>
   `;
   document.querySelector("#retry-hashpi-bridge")?.addEventListener("click", () => {
-    window.location.href = "https://hashpi.app/blitz-bridge/";
+    window.location.href = HASHPI_BRIDGE_ENTRY_URL;
   });
   document.querySelector("#back-hashpi-home")?.addEventListener("click", () => {
     window.location.href = "https://hashpi.app/";
@@ -4297,8 +4297,9 @@ function isHashPiBridgeEntry() {
     return false;
   }
 }
+const HASHPI_BRIDGE_ENTRY_URL = "https://hashpi.app/blitz-bridge-app/?app=blitz_of_pi&force_ticket=1&v=202606152040";
 function redirectToHashPiBridgeLogin() {
-  const e = "https://hashpi.app/blitz-bridge-app/?app=blitz_of_pi&force_ticket=1";
+  const e = HASHPI_BRIDGE_ENTRY_URL;
   try {
     window.location.replace(e);
   } catch {
