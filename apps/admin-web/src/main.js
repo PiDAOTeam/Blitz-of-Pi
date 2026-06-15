@@ -443,7 +443,7 @@ function Ge(e) {
   return ee.reduce((t, a) => (t[a.code] = { projectName: String(e.get(`home_i18n_${a.code}_projectName`) || ""), englishName: String(e.get(`home_i18n_${a.code}_englishName`) || ""), bannerDescription: String(e.get(`home_i18n_${a.code}_bannerDescription`) || "") }, t), {});
 }
 function Xe(e) {
-  const t = e.operation?.rankRules || {}, a = Array.isArray(t.rankedModes) ? t.rankedModes : ["points_battle", "poc_battle", "pi_battle"], n = Array.isArray(t.weeklyLeaderboardModes) ? t.weeklyLeaderboardModes : ["points_battle", "poc_battle", "pi_battle"], s = Se(t), r = e.operation?.ranks?.length ? e.operation.ranks : [{ key: "bronze", name: "\u9752\u94DC" }, { key: "silver", name: "\u767D\u94F6" }, { key: "gold", name: "\u9EC4\u91D1" }, { key: "platinum", name: "\u94C2\u91D1" }, { key: "diamond", name: "\u94BB\u77F3" }, { key: "starlight", name: "\u661F\u8000" }, { key: "king", name: "\u738B\u8005" }];
+  const t = e.operation?.rankRules || {}, a = Array.isArray(t.rankedModes) ? t.rankedModes : ["points_battle", "poc_battle", "pi_battle"], n = Array.isArray(t.weeklyLeaderboardModes) ? t.weeklyLeaderboardModes : ["points_battle", "poc_battle", "pi_battle"], s = Se(t), r = getSeasonRewardTiersEditorData(t), o = getKingTitleEditorData(t), m = getSeasonResetRulesEditorData(t), R = e.operation?.ranks?.length ? e.operation.ranks : [{ key: "bronze", name: "\u9752\u94DC" }, { key: "silver", name: "\u767D\u94F6" }, { key: "gold", name: "\u9EC4\u91D1" }, { key: "platinum", name: "\u94C2\u91D1" }, { key: "diamond", name: "\u94BB\u77F3" }, { key: "starlight", name: "\u661F\u8000" }, { key: "king", name: "\u738B\u8005" }];
   return `
     <div class="rank-rule-grid">
       <label><span>\u6BCF\u6BB5\u661F\u6570</span><input name="rankStarsPerRank" type="number" inputmode="decimal" min="1" max="10" step="1" value="${t.starsPerRank ?? 5}" /></label>
@@ -474,21 +474,36 @@ function Xe(e) {
         </select>
       </label>
       <label>
+        <span>\u6708\u8D5B\u5B63\u603B\u5F00\u5173</span>
+        <select name="rankMonthlySeasonEnabled">
+          <option value="true" ${t.monthlySeasonEnabled !== false ? "selected" : ""}>\u5F00\u542F</option>
+          <option value="false" ${t.monthlySeasonEnabled === false ? "selected" : ""}>\u5173\u95ED</option>
+        </select>
+      </label>
+      <label>
+        <span>\u6708\u8D5B\u5B63\u81EA\u52A8\u7ED3\u7B97</span>
+        <select name="rankMonthlyAutoSettleEnabled">
+          <option value="true" ${t.monthlyAutoSettleEnabled !== false ? "selected" : ""}>\u5F00\u542F</option>
+          <option value="false" ${t.monthlyAutoSettleEnabled === false ? "selected" : ""}>\u5173\u95ED</option>
+        </select>
+      </label>
+      <label><span>\u8D5B\u5B63\u6587\u6848</span><input name="rankSeasonLabel" maxlength="20" value="${E(t.seasonLabel || "\u81EA\u7136\u6708\u8D5B\u5B63")}" /></label>
+      <label>
         <span>\u8D85\u7EA7\u5BCC\u8C6A\u6700\u4F4E\u6BB5\u4F4D</span>
         <select name="rankRichBattleMinRankKey">
-          ${r.map((o) => `<option value="${o.key}" ${(t.richBattleMinRankKey || "bronze") === o.key ? "selected" : ""}>${i(o.name)}</option>`).join("")}
+          ${R.map((v) => `<option value="${v.key}" ${(t.richBattleMinRankKey || "bronze") === v.key ? "selected" : ""}>${i(v.name)}</option>`).join("")}
         </select>
       </label>
       <label>
         <span>\u5FEB\u901F\u5F00\u6218\u6700\u9AD8\u5347\u5230</span>
         <select name="rankQuickBattleMaxRankKey">
-          ${r.map((o) => `<option value="${o.key}" ${(t.quickBattleMaxRankKey || "silver") === o.key ? "selected" : ""}>${i(o.name)}</option>`).join("")}
+          ${R.map((v) => `<option value="${v.key}" ${(t.quickBattleMaxRankKey || "silver") === v.key ? "selected" : ""}>${i(v.name)}</option>`).join("")}
         </select>
       </label>
       <label>
         <span>\u5C0F\u5BCC\u8C6A/\u5927\u5BCC\u8C6A\u6700\u9AD8\u5347\u5230</span>
         <select name="rankTicketBattleMaxRankKey">
-          ${r.map((o) => `<option value="${o.key}" ${(t.ticketBattleMaxRankKey || "platinum") === o.key ? "selected" : ""}>${i(o.name)}</option>`).join("")}
+          ${R.map((v) => `<option value="${v.key}" ${(t.ticketBattleMaxRankKey || "platinum") === v.key ? "selected" : ""}>${i(v.name)}</option>`).join("")}
         </select>
       </label>
     </div>
@@ -500,6 +515,70 @@ function Xe(e) {
       <p class="meta">\u6309\u540D\u6B21\u914D\u5956\u52B1\uFF0C\u5468\u4E00\u81EA\u52A8\u53D1\u653E\u3002</p>
       <div id="weekly-tier-list">
         ${s.map(_e).join("")}
+      </div>
+    </div>
+    <div class="weekly-tier-editor">
+      <div class="weekly-tier-head">
+        <strong>\u6708\u8D5B\u5B63 POINTS \u5956\u52B1\u6863\u4F4D</strong>
+        <button type="button" id="add-season-reward-tier">\u65B0\u589E\u6863\u4F4D</button>
+      </div>
+      <p class="meta">\u6309\u540D\u6B21\u53D1\u653E POINTS\uFF0C\u4F1A\u5728\u6BCF\u6708 1 \u53F7\u7ED3\u7B97\u4E0A\u6708\u8D5B\u5B63\u3002</p>
+      <div id="season-reward-tier-list">
+        ${r.map(renderSeasonRewardTierRow).join("")}
+      </div>
+    </div>
+    <div class="weekly-tier-editor">
+      <div class="weekly-tier-head">
+        <strong>\u738B\u8005\u79F0\u53F7\u6863\u4F4D</strong>
+        <button type="button" id="add-king-title-tier">\u65B0\u589E\u79F0\u53F7</button>
+      </div>
+      <p class="meta">\u738B\u8005\u540E\u4E0D\u518D\u5C01\u9876\uFF0C\u6309\u661F\u6570\u663E\u793A\u540D\u53F7\u3002</p>
+      <div id="king-title-tier-list">
+        ${o.map(renderKingTitleRow).join("")}
+      </div>
+    </div>
+    <div class="weekly-tier-editor">
+      <div class="weekly-tier-head">
+        <strong>\u6708\u8D5B\u5B63\u8F6F\u91CD\u7F6E\u89C4\u5219</strong>
+      </div>
+      <p class="meta">\u8D5B\u5B63\u7ED3\u675F\u540E\u4F1A\u4FDD\u7559\u5386\u53F2\u8363\u8A89\uFF0C\u518D\u6309\u4E0B\u5217\u89C4\u5219\u56DE\u843D\u5F53\u524D\u6BB5\u4F4D\u3002</p>
+      <div class="rank-rule-grid">
+        <label>
+          <span>\u738B\u8005 50+ \u661F\u56DE\u843D</span>
+          <select name="rankSeasonResetKing50RankKey">
+            ${R.map((v) => `<option value="${v.key}" ${m.king50Plus.rankKey === v.key ? "selected" : ""}>${i(v.name)}</option>`).join("")}
+          </select>
+        </label>
+        <label><span>\u738B\u8005 50+ \u4FDD\u7559\u661F\u6570</span><input name="rankSeasonResetKing50Stars" type="number" inputmode="decimal" min="0" max="10" step="1" value="${m.king50Plus.stars}" /></label>
+        <label>
+          <span>\u738B\u8005 10-49 \u661F\u56DE\u843D</span>
+          <select name="rankSeasonResetKing10RankKey">
+            ${R.map((v) => `<option value="${v.key}" ${m.king10To49.rankKey === v.key ? "selected" : ""}>${i(v.name)}</option>`).join("")}
+          </select>
+        </label>
+        <label><span>\u738B\u8005 10-49 \u4FDD\u7559\u661F\u6570</span><input name="rankSeasonResetKing10Stars" type="number" inputmode="decimal" min="0" max="10" step="1" value="${m.king10To49.stars}" /></label>
+        <label>
+          <span>\u738B\u8005 0-9 \u661F\u56DE\u843D</span>
+          <select name="rankSeasonResetKing0RankKey">
+            ${R.map((v) => `<option value="${v.key}" ${m.king0To9.rankKey === v.key ? "selected" : ""}>${i(v.name)}</option>`).join("")}
+          </select>
+        </label>
+        <label><span>\u738B\u8005 0-9 \u4FDD\u7559\u661F\u6570</span><input name="rankSeasonResetKing0Stars" type="number" inputmode="decimal" min="0" max="10" step="1" value="${m.king0To9.stars}" /></label>
+        <label>
+          <span>\u661F\u8000\u56DE\u843D</span>
+          <select name="rankSeasonResetStarlightRankKey">
+            ${R.map((v) => `<option value="${v.key}" ${m.starlight.rankKey === v.key ? "selected" : ""}>${i(v.name)}</option>`).join("")}
+          </select>
+        </label>
+        <label><span>\u661F\u8000\u4FDD\u7559\u661F\u6570</span><input name="rankSeasonResetStarlightStars" type="number" inputmode="decimal" min="0" max="10" step="1" value="${m.starlight.stars}" /></label>
+        <label>
+          <span>\u94BB\u77F3\u56DE\u843D</span>
+          <select name="rankSeasonResetDiamondRankKey">
+            ${R.map((v) => `<option value="${v.key}" ${m.diamond.rankKey === v.key ? "selected" : ""}>${i(v.name)}</option>`).join("")}
+          </select>
+        </label>
+        <label><span>\u94BB\u77F3\u4FDD\u7559\u661F\u6570</span><input name="rankSeasonResetDiamondStars" type="number" inputmode="decimal" min="0" max="10" step="1" value="${m.diamond.stars}" /></label>
+        <label><span>\u5176\u4ED6\u6BB5\u4F4D\u6700\u591A\u56DE\u843D\u51E0\u6863</span><input name="rankSeasonResetDefaultDropTiers" type="number" inputmode="decimal" min="0" max="3" step="1" value="${m.defaultDropTiers}" /></label>
       </div>
     </div>
     <div class="ranked-mode-checks">
@@ -515,10 +594,10 @@ function Xe(e) {
       <label><input type="checkbox" name="weeklyModePi" value="pi_battle" ${n.includes("pi_battle") ? "checked" : ""} /> \u8D85\u7EA7\u5BCC\u8C6A\uFF08Pi\uFF09\u8BA1\u5165\u5468\u699C</label>
     </div>
     <div class="rank-reward-grid">
-      ${r.map((o) => `
+      ${R.map((v) => `
             <label>
-              <span>${i(o.name)}\u5B9D\u7BB1\u5956\u52B1 Pi</span>
-              <input name="rankChestReward_${o.key}" type="number" inputmode="decimal" min="0" max="100" step="0.0001" value="${t.chestRewards?.[o.key] ?? 0}" />
+              <span>${i(v.name)}\u5B9D\u7BB1\u5956\u52B1 Pi</span>
+              <input name="rankChestReward_${v.key}" type="number" inputmode="decimal" min="0" max="100" step="0.0001" value="${t.chestRewards?.[v.key] ?? 0}" />
             </label>
           `).join("")}
     </div>
@@ -528,6 +607,25 @@ function Xe(e) {
 function Se(e = {}) {
   return (Array.isArray(e.weeklyRewardTiers) && e.weeklyRewardTiers.length ? e.weeklyRewardTiers : [{ fromRank: 1, toRank: 1, amount: e.weeklyRewards?.top1 ?? 0.05 }, { fromRank: 2, toRank: 2, amount: e.weeklyRewards?.top2 ?? 0.03 }, { fromRank: 3, toRank: 3, amount: e.weeklyRewards?.top3 ?? 0.02 }, { fromRank: 4, toRank: 10, amount: e.weeklyRewards?.top10 ?? 5e-3 }]).map((a) => ({ fromRank: Number(a.fromRank || 1), toRank: Number(a.toRank || a.fromRank || 1), amount: Number(a.amount || 0) })).filter((a) => a.amount > 0).sort((a, n) => a.fromRank - n.fromRank || a.toRank - n.toRank);
 }
+function getSeasonRewardTiersEditorData(e = {}) {
+  const t = Array.isArray(e.seasonRewardTiers) && e.seasonRewardTiers.length ? e.seasonRewardTiers : [{ fromRank: 1, toRank: 1, points: 300 }, { fromRank: 2, toRank: 3, points: 180 }, { fromRank: 4, toRank: 10, points: 80 }, { fromRank: 11, toRank: 50, points: 30 }];
+  return t.map((a) => ({ fromRank: Number(a.fromRank || 1), toRank: Number(a.toRank || a.fromRank || 1), points: Number(a.points || 0) })).filter((a) => a.points > 0).sort((a, n) => a.fromRank - n.fromRank || a.toRank - n.toRank);
+}
+function getKingTitleEditorData(e = {}) {
+  const t = Array.isArray(e.kingTitles) && e.kingTitles.length ? e.kingTitles : [{ minStars: 0, title: "\u738B\u8005" }, { minStars: 10, title: "\u8363\u8000\u738B\u8005" }, { minStars: 25, title: "\u4F20\u5947\u738B\u8005" }, { minStars: 50, title: "\u65E0\u53CC\u738B\u8005" }, { minStars: 100, title: "\u5DC5\u5CF0\u738B\u8005" }];
+  return t.map((a) => ({ minStars: Number(a.minStars || 0), title: String(a.title || "").trim() })).filter((a) => a.title).sort((a, n) => a.minStars - n.minStars);
+}
+function getSeasonResetRulesEditorData(e = {}) {
+  const t = e.seasonResetRules || {};
+  return {
+    king50Plus: { rankKey: String(t.king50Plus?.rankKey || "starlight"), stars: Number(t.king50Plus?.stars ?? 3) },
+    king10To49: { rankKey: String(t.king10To49?.rankKey || "starlight"), stars: Number(t.king10To49?.stars ?? 1) },
+    king0To9: { rankKey: String(t.king0To9?.rankKey || "diamond"), stars: Number(t.king0To9?.stars ?? 3) },
+    starlight: { rankKey: String(t.starlight?.rankKey || "diamond"), stars: Number(t.starlight?.stars ?? 0) },
+    diamond: { rankKey: String(t.diamond?.rankKey || "platinum"), stars: Number(t.diamond?.stars ?? 0) },
+    defaultDropTiers: Number(t.defaultDropTiers ?? 1)
+  };
+}
 function _e(e = { fromRank: 1, toRank: 1, amount: 0 }) {
   return `
     <div class="weekly-tier-row" data-weekly-tier-row>
@@ -535,6 +633,25 @@ function _e(e = { fromRank: 1, toRank: 1, amount: 0 }) {
       <label><span>\u7ED3\u675F\u540D\u6B21</span><input name="weeklyTierToRank" type="number" inputmode="decimal" min="1" max="500" step="1" value="${e.toRank}" /></label>
       <label><span>\u6BCF\u4EBA\u5956\u52B1 Pi</span><input name="weeklyTierAmount" type="number" inputmode="decimal" min="0" max="100" step="0.0001" value="${e.amount}" /></label>
       <button type="button" data-remove-weekly-tier>\u5220\u9664</button>
+    </div>
+  `;
+}
+function renderSeasonRewardTierRow(e = { fromRank: 1, toRank: 1, points: 0 }) {
+  return `
+    <div class="weekly-tier-row" data-season-reward-tier-row>
+      <label><span>\u8D77\u59CB\u540D\u6B21</span><input name="seasonRewardTierFromRank" type="number" inputmode="decimal" min="1" max="10000" step="1" value="${e.fromRank}" /></label>
+      <label><span>\u7ED3\u675F\u540D\u6B21</span><input name="seasonRewardTierToRank" type="number" inputmode="decimal" min="1" max="10000" step="1" value="${e.toRank}" /></label>
+      <label><span>\u6BCF\u4EBA POINTS</span><input name="seasonRewardTierPoints" type="number" inputmode="decimal" min="0" max="1000000" step="1" value="${e.points}" /></label>
+      <button type="button" data-remove-season-reward-tier>\u5220\u9664</button>
+    </div>
+  `;
+}
+function renderKingTitleRow(e = { minStars: 0, title: "\u738B\u8005" }) {
+  return `
+    <div class="weekly-tier-row" data-king-title-row>
+      <label><span>\u6700\u4F4E\u661F\u6570</span><input name="kingTitleMinStars" type="number" inputmode="decimal" min="0" max="9999" step="1" value="${e.minStars}" /></label>
+      <label><span>\u79F0\u53F7</span><input name="kingTitleLabel" maxlength="12" value="${E(e.title)}" /></label>
+      <button type="button" data-remove-king-title>\u5220\u9664</button>
     </div>
   `;
 }
@@ -631,6 +748,17 @@ function Re(e) {
         s && (s.textContent = g(r)), n.disabled = false;
       }
     }
+  }), document.querySelector("#rank-monthly-settle")?.addEventListener("click", async (a) => {
+    const n = a.currentTarget, s = document.querySelector("#rank-weekly-status");
+    if (confirm("\u786E\u8BA4\u6267\u884C\u4E0A\u6708\u8D5B\u5B63\u7ED3\u7B97\uFF1F\u7CFB\u7EDF\u4F1A\u81EA\u52A8\u9632\u91CD\u590D\u53D1\u653E\uFF0C\u5E76\u6309\u89C4\u5219\u8F6F\u91CD\u7F6E\u6BB5\u4F4D\u3002")) {
+      n.disabled = true, s && (s.textContent = "\u6B63\u5728\u6267\u884C\u6708\u8D5B\u5B63\u7ED3\u7B97...");
+      try {
+        const r = await d("/admin-api/ranks/settle-monthly", { method: "POST" });
+        s && (s.textContent = r.alreadySettled ? `${r.seasonNo} \u5DF2\u7ED3\u7B97\uFF0C\u65E0\u9700\u91CD\u590D\u53D1\u653E` : `${r.seasonNo} \u7ED3\u7B97\u5B8C\u6210\uFF0C\u5904\u7406 ${r.rewards.length} \u4EBA`), await q();
+      } catch (r) {
+        s && (s.textContent = g(r)), n.disabled = false;
+      }
+    }
   }), document.querySelector("#risk-refresh")?.addEventListener("click", async (a) => {
     const n = a.currentTarget, s = document.querySelector("#risk-status");
     n.disabled = true, s && (s.textContent = "\u6B63\u5728\u91CD\u65B0\u5DE1\u68C0...");
@@ -696,6 +824,10 @@ function Re(e) {
     he();
   }), document.querySelector("#add-weekly-tier")?.addEventListener("click", () => {
     document.querySelector("#weekly-tier-list")?.insertAdjacentHTML("beforeend", _e({ fromRank: 1, toRank: 1, amount: 0 })), he();
+  }), document.querySelector("#add-season-reward-tier")?.addEventListener("click", () => {
+    document.querySelector("#season-reward-tier-list")?.insertAdjacentHTML("beforeend", renderSeasonRewardTierRow({ fromRank: 1, toRank: 1, points: 0 })), he();
+  }), document.querySelector("#add-king-title-tier")?.addEventListener("click", () => {
+    document.querySelector("#king-title-tier-list")?.insertAdjacentHTML("beforeend", renderKingTitleRow({ minStars: 0, title: "王者" })), he();
   }), he();
 }
 function he() {
@@ -707,6 +839,16 @@ function he() {
   document.querySelectorAll("[data-remove-weekly-tier]").forEach((e) => {
     e.dataset.bound !== "true" && (e.dataset.bound = "true", e.addEventListener("click", () => {
       e.closest("[data-weekly-tier-row]")?.remove();
+    }));
+  });
+  document.querySelectorAll("[data-remove-season-reward-tier]").forEach((e) => {
+    e.dataset.bound !== "true" && (e.dataset.bound = "true", e.addEventListener("click", () => {
+      e.closest("[data-season-reward-tier-row]")?.remove();
+    }));
+  });
+  document.querySelectorAll("[data-remove-king-title]").forEach((e) => {
+    e.dataset.bound !== "true" && (e.dataset.bound = "true", e.addEventListener("click", () => {
+      e.closest("[data-king-title-row]")?.remove();
     }));
   });
 }
@@ -1451,7 +1593,7 @@ function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, roo
     `;
   }
   if (_ === "ranks") {
-    const k = n.operation?.ranks?.length ? n.operation.ranks : [], c = G === "all" ? userItems : userItems.filter((v) => v.rankKey === G || v.rankName === G), l = N("ranks-users", c), p = N("ranks-stars", w), u = N("ranks-chests", L), b = N("ranks-weekly", C), se = L.reduce((v, ie) => v + Number(ie.rewardAmount || 0), 0), z = C.reduce((v, ie) => v + Number(ie.rewardAmount || 0), 0), de = n.operation?.rankRules, xe = Se(de);
+    const k = n.operation?.ranks?.length ? n.operation.ranks : [], c = G === "all" ? userItems : userItems.filter((v) => v.rankKey === G || v.rankName === G), l = N("ranks-users", c), p = N("ranks-stars", w), u = N("ranks-chests", L), b = N("ranks-weekly", C), monthlySettlements = n.operation?.monthlySettlements || [], monthlyPage = N("ranks-monthly", monthlySettlements), se = L.reduce((v, ie) => v + Number(ie.rewardAmount || 0), 0), z = C.reduce((v, ie) => v + Number(ie.rewardAmount || 0), 0), monthlyPoints = monthlySettlements.reduce((v, ie) => v + Number(ie.rewardPoints || 0), 0), de = n.operation?.rankRules, xe = Se(de);
     const rankModeText = (Array.isArray(de?.rankedModes) ? de.rankedModes.map(oe) : []).join("\u3001") || "\u672A\u5F00\u542F";
     const weeklyModeText = (Array.isArray(de?.weeklyLeaderboardModes) ? de.weeklyLeaderboardModes.map(oe) : []).join("\u3001") || "\u672A\u5F00\u542F";
     const weeklyRewardText = xe.length ? `\u7B2C${xe[0].fromRank}-${xe[xe.length - 1].toRank}\u540D` : "\u672A\u914D\u7F6E";
@@ -1477,6 +1619,13 @@ function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, roo
             <span>\u6BCF\u5468\u4E00\u81EA\u52A8\u53D1\u653E\uFF0C\u6309\u94AE\u4EC5\u7528\u4E8E\u5E94\u6025\u8865\u53D1\u3002</span>
           </div>
           <button type="button" id="rank-weekly-settle">\u5E94\u6025\u8865\u53D1\u4E0A\u4E00\u5468</button>
+        </div>
+        <div class="rank-auto-panel">
+          <div>
+            <strong>\u6708\u8D5B\u5B63\uFF1A${de?.monthlySeasonEnabled !== false ? "\u5DF2\u5F00\u542F" : "\u5DF2\u5173\u95ED"} \xB7 ${de?.monthlyAutoSettleEnabled !== false ? "\u81EA\u52A8\u7ED3\u7B97" : "\u624B\u52A8\u7ED3\u7B97"}</strong>
+            <span>\u6BCF\u67081\u65E500:05\u7ED3\u7B97\u4E0A\u6708\uFF0C\u5956\u52B1 POINTS\uFF0C\u7ED3\u7B97\u540E\u8F6F\u91CD\u7F6E\u6BB5\u4F4D\u3002</span>
+          </div>
+          <button type="button" id="rank-monthly-settle">\u5E94\u6025\u7ED3\u7B97\u4E0A\u6708</button>
         </div>
         <p id="rank-weekly-status" class="status"></p>
         <div class="rank-weekly-rewards">
@@ -1514,6 +1663,14 @@ function it({ admin: e, config: t, piConfig: a, gameConfig: n, dashboard: s, roo
           ${b.items.map((v) => ct(v, n)).join("") || '<p class="meta">\u6682\u65E0\u5468\u699C\u53D1\u5956\u8BB0\u5F55</p>'}
         </div>
         ${P("ranks-weekly", C.length)}
+      </section>
+      <section class="panel">
+        <h2>\u6708\u8D5B\u5B63\u7ED3\u7B97\u8BB0\u5F55</h2>
+        <p class="meta">\u5DF2\u53D1\u653E ${monthlyPoints} POINTS\uFF0C\u4FDD\u7559\u5386\u53F2\u6700\u9AD8\u6BB5\u4F4D\uFF0C\u65B0\u8D5B\u5B63\u8F6F\u91CD\u7F6E\u3002</p>
+        <div class="table-list">
+          ${monthlyPage.items.map((v) => renderMonthlySeasonRecord(v, n)).join("") || '<p class="meta">\u6682\u65E0\u6708\u8D5B\u5B63\u7ED3\u7B97\u8BB0\u5F55</p>'}
+        </div>
+        ${P("ranks-monthly", monthlySettlements.length)}
       </section>
       <section class="panel">
         <h2>\u6BB5\u4F4D\u661F\u7EA7\u6D41\u6C34</h2>
@@ -1657,6 +1814,25 @@ function ct(e, t) {
       </div>
       <div>
         <strong>\u5DF2\u81EA\u52A8\u53D1\u653E</strong>
+        <span>${i(O(e.createdAt))}</span>
+      </div>
+    </article>
+  `;
+}
+function renderMonthlySeasonRecord(e, t) {
+  const a = e.nickname || e.piUsername || h(e.uid);
+  return `
+    <article class="rank-row rank-record">
+      <div>
+        <strong>${i(e.seasonNo)} \xB7 \u7B2C${e.rankNo}\u540D</strong>
+        <span>${i(a)} \xB7 ${i(K(e))}</span>
+      </div>
+      <div>
+        <strong>${Number(e.rewardPoints || 0)} POINTS</strong>
+        <span>${i(ne(t, e.rankKey))} \xB7 ${e.stars || 0}\u661F</span>
+      </div>
+      <div>
+        <strong>\u65B0\u8D5B\u5B63\uFF1A${i(e.resetRankName || ne(t, e.resetRankKey))} ${e.resetStars || 0}\u661F</strong>
         <span>${i(O(e.createdAt))}</span>
       </div>
     </article>
@@ -2578,6 +2754,28 @@ function Mt(e) {
     return { fromRank: Math.min(a, n), toRank: Math.max(a, n), amount: s };
   }).filter((t) => t.fromRank > 0 && t.toRank > 0 && t.amount > 0).sort((t, a) => t.fromRank - a.fromRank || t.toRank - a.toRank);
 }
+function buildSeasonRewardTiers(e) {
+  return Array.from(e.querySelectorAll("[data-season-reward-tier-row]")).map((t) => {
+    const a = Number(t.querySelector('[name="seasonRewardTierFromRank"]')?.value || 0), n = Number(t.querySelector('[name="seasonRewardTierToRank"]')?.value || 0), s = Number(t.querySelector('[name="seasonRewardTierPoints"]')?.value || 0);
+    return { fromRank: Math.min(a, n), toRank: Math.max(a, n), points: Math.round(s) };
+  }).filter((t) => t.fromRank > 0 && t.toRank > 0 && t.points > 0).sort((t, a) => t.fromRank - a.fromRank || t.toRank - a.toRank);
+}
+function buildKingTitles(e) {
+  return Array.from(e.querySelectorAll("[data-king-title-row]")).map((t) => ({
+    minStars: Number(t.querySelector('[name="kingTitleMinStars"]')?.value || 0),
+    title: String(t.querySelector('[name="kingTitleLabel"]')?.value || "").trim()
+  })).filter((t) => t.title).sort((t, a) => t.minStars - a.minStars);
+}
+function buildSeasonResetRules(e) {
+  return {
+    king50Plus: { rankKey: String(e.get("rankSeasonResetKing50RankKey") || "starlight"), stars: Number(e.get("rankSeasonResetKing50Stars") || 3) },
+    king10To49: { rankKey: String(e.get("rankSeasonResetKing10RankKey") || "starlight"), stars: Number(e.get("rankSeasonResetKing10Stars") || 1) },
+    king0To9: { rankKey: String(e.get("rankSeasonResetKing0RankKey") || "diamond"), stars: Number(e.get("rankSeasonResetKing0Stars") || 3) },
+    starlight: { rankKey: String(e.get("rankSeasonResetStarlightRankKey") || "diamond"), stars: Number(e.get("rankSeasonResetStarlightStars") || 0) },
+    diamond: { rankKey: String(e.get("rankSeasonResetDiamondRankKey") || "platinum"), stars: Number(e.get("rankSeasonResetDiamondStars") || 0) },
+    defaultDropTiers: Number(e.get("rankSeasonResetDefaultDropTiers") || 1)
+  };
+}
 function qt(e) {
   const t = e.winnerUid ? X({ nickname: e.winnerNickname, piUsername: e.winnerPiUsername, uid: e.winnerUid }) : e.status === "expired" ? "\u7CFB\u7EDF\u8D85\u65F6\u7ED3\u675F" : "\u672A\u7ED3\u675F", a = ce(e), n = e.status !== "finished" && e.status !== "expired" && e.entryFee === 0 && String(e.assetType || "FREE").toUpperCase() === "FREE", s = e.status !== "finished" && e.status !== "manual_review" && e.status !== "expired" && (e.entryFee > 0 || String(e.assetType || "FREE").toUpperCase() !== "FREE");
   return `
@@ -2717,10 +2915,10 @@ function Ut(e, t, a) {
     }
   }), C?.addEventListener("submit", async (c) => {
     c.preventDefault();
-    const l = new FormData(C), p = Mt(C);
+    const l = new FormData(C), p = Mt(C), seasonRewardTiers = buildSeasonRewardTiers(C), kingTitles = buildKingTitles(C), seasonResetRules = buildSeasonResetRules(l);
     M && (M.textContent = "\u4FDD\u5B58\u4E2D...");
     try {
-      await d("/admin-api/game-config", { method: "POST", body: JSON.stringify(U({ operation: { maintenanceEnabled: String(l.get("maintenanceEnabled")) === "true", maintenanceNotice: String(l.get("maintenanceNotice") || ""), localizedContent: Ve(l), nicknameMinLength: Number(l.get("nicknameMinLength") || 2), nicknameMaxLength: Number(l.get("nicknameMaxLength") || 12), nicknamePattern: String(l.get("nicknamePattern") || ""), bannedWords: String(l.get("bannedWords") || "").split(/\r?\n|,/).map((u) => u.trim()).filter(Boolean), banReasons: String(l.get("banReasons") || "").split(/\r?\n|,/).map((u) => u.trim()).filter(Boolean), avatars: [1, 2, 3, 4, 5, 6].map((u) => ({ key: `avatar_${u}`, name: String(l.get(`avatarName${u}`) || `\u5934\u50CF${u}`), enabled: String(l.get(`avatarEnabled${u}`)) === "true" })), tileTheme: k(l), ranks: [{ key: "bronze", fallbackName: "\u9752\u94DC", fallbackIcon: "\u25C6", fallbackColor: "#b87a45" }, { key: "silver", fallbackName: "\u767D\u94F6", fallbackIcon: "\u25C7", fallbackColor: "#c7d2e2" }, { key: "gold", fallbackName: "\u9EC4\u91D1", fallbackIcon: "\u2726", fallbackColor: "#f2c84b" }, { key: "platinum", fallbackName: "\u94C2\u91D1", fallbackIcon: "\u2727", fallbackColor: "#7fe6ff" }, { key: "diamond", fallbackName: "\u94BB\u77F3", fallbackIcon: "\u2739", fallbackColor: "#b58cff" }, { key: "starlight", fallbackName: "\u661F\u8000", fallbackIcon: "\u2737", fallbackColor: "#e7a6ff" }, { key: "king", fallbackName: "\u738B\u8005", fallbackIcon: "\u265B", fallbackColor: "#ffdc73" }].map((u, b) => ({ key: u.key, name: String(l.get(`rankName${b + 1}`) || u.fallbackName), icon: String(l.get(`rankIcon${b + 1}`) || u.fallbackIcon), color: String(l.get(`rankColor${b + 1}`) || u.fallbackColor), enabled: String(l.get(`rankEnabled${b + 1}`)) === "true" })), rankRules: { starsPerRank: Number(l.get("rankStarsPerRank") || 5), winStars: Number(l.get("rankWinStars") || 1), loseStars: Number(l.get("rankLoseStars") || 1), winStreakBonusEnabled: String(l.get("rankWinStreakBonusEnabled")) === "true", winStreakRequired: Number(l.get("rankWinStreakRequired") || 3), winStreakBonusStars: Number(l.get("rankWinStreakBonusStars") || 1), bronzeProtection: String(l.get("rankBronzeProtection")) === "true", rankedModes: [l.get("rankedModeQuick") ? "quick_battle" : "", l.get("rankedModePoints") ? "points_battle" : "", l.get("rankedModePoc") ? "poc_battle" : "", l.get("rankedModePi") ? "pi_battle" : ""].filter(Boolean), weeklyLeaderboardModes: [l.get("weeklyModeQuick") ? "quick_battle" : "", l.get("weeklyModePoints") ? "points_battle" : "", l.get("weeklyModePoc") ? "poc_battle" : "", l.get("weeklyModePi") ? "pi_battle" : ""].filter(Boolean), quickBattleMaxRankKey: String(l.get("rankQuickBattleMaxRankKey") || "silver"), ticketBattleMaxRankKey: String(l.get("rankTicketBattleMaxRankKey") || "platinum"), richBattleMinRankKey: String(l.get("rankRichBattleMinRankKey") || "platinum"), dailyChestRequiredBattles: Number(l.get("rankDailyChestRequiredBattles") || 3), weeklyAutoSettleEnabled: String(l.get("rankWeeklyAutoSettleEnabled")) === "true", chestRewards: { bronze: Number(l.get("rankChestReward_bronze") || 0), silver: Number(l.get("rankChestReward_silver") || 0), gold: Number(l.get("rankChestReward_gold") || 0), platinum: Number(l.get("rankChestReward_platinum") || 0), diamond: Number(l.get("rankChestReward_diamond") || 0), starlight: Number(l.get("rankChestReward_starlight") || 0), king: Number(l.get("rankChestReward_king") || 0) }, weeklyRewards: { top1: p.find((u) => u.fromRank <= 1 && u.toRank >= 1)?.amount || 0, top2: p.find((u) => u.fromRank <= 2 && u.toRank >= 2)?.amount || 0, top3: p.find((u) => u.fromRank <= 3 && u.toRank >= 3)?.amount || 0, top10: p.find((u) => u.fromRank <= 10 && u.toRank >= 10)?.amount || 0 }, weeklyRewardTiers: p, ruleSummary: String(l.get("rankRuleSummary") || "") } } })) }), M && (M.textContent = "\u4FDD\u5B58\u6210\u529F\uFF0C\u6B63\u5728\u5237\u65B0..."), await q();
+      await d("/admin-api/game-config", { method: "POST", body: JSON.stringify(U({ operation: { maintenanceEnabled: String(l.get("maintenanceEnabled")) === "true", maintenanceNotice: String(l.get("maintenanceNotice") || ""), localizedContent: Ve(l), nicknameMinLength: Number(l.get("nicknameMinLength") || 2), nicknameMaxLength: Number(l.get("nicknameMaxLength") || 12), nicknamePattern: String(l.get("nicknamePattern") || ""), bannedWords: String(l.get("bannedWords") || "").split(/\r?\n|,/).map((u) => u.trim()).filter(Boolean), banReasons: String(l.get("banReasons") || "").split(/\r?\n|,/).map((u) => u.trim()).filter(Boolean), avatars: [1, 2, 3, 4, 5, 6].map((u) => ({ key: `avatar_${u}`, name: String(l.get(`avatarName${u}`) || `\u5934\u50CF${u}`), enabled: String(l.get(`avatarEnabled${u}`)) === "true" })), tileTheme: k(l), ranks: [{ key: "bronze", fallbackName: "\u9752\u94DC", fallbackIcon: "\u25C6", fallbackColor: "#b87a45" }, { key: "silver", fallbackName: "\u767D\u94F6", fallbackIcon: "\u25C7", fallbackColor: "#c7d2e2" }, { key: "gold", fallbackName: "\u9EC4\u91D1", fallbackIcon: "\u2726", fallbackColor: "#f2c84b" }, { key: "platinum", fallbackName: "\u94C2\u91D1", fallbackIcon: "\u2727", fallbackColor: "#7fe6ff" }, { key: "diamond", fallbackName: "\u94BB\u77F3", fallbackIcon: "\u2739", fallbackColor: "#b58cff" }, { key: "starlight", fallbackName: "\u661F\u8000", fallbackIcon: "\u2737", fallbackColor: "#e7a6ff" }, { key: "king", fallbackName: "\u738B\u8005", fallbackIcon: "\u265B", fallbackColor: "#ffdc73" }].map((u, b) => ({ key: u.key, name: String(l.get(`rankName${b + 1}`) || u.fallbackName), icon: String(l.get(`rankIcon${b + 1}`) || u.fallbackIcon), color: String(l.get(`rankColor${b + 1}`) || u.fallbackColor), enabled: String(l.get(`rankEnabled${b + 1}`)) === "true" })), rankRules: { starsPerRank: Number(l.get("rankStarsPerRank") || 5), winStars: Number(l.get("rankWinStars") || 1), loseStars: Number(l.get("rankLoseStars") || 1), winStreakBonusEnabled: String(l.get("rankWinStreakBonusEnabled")) === "true", winStreakRequired: Number(l.get("rankWinStreakRequired") || 3), winStreakBonusStars: Number(l.get("rankWinStreakBonusStars") || 1), bronzeProtection: String(l.get("rankBronzeProtection")) === "true", rankedModes: [l.get("rankedModeQuick") ? "quick_battle" : "", l.get("rankedModePoints") ? "points_battle" : "", l.get("rankedModePoc") ? "poc_battle" : "", l.get("rankedModePi") ? "pi_battle" : ""].filter(Boolean), weeklyLeaderboardModes: [l.get("weeklyModeQuick") ? "quick_battle" : "", l.get("weeklyModePoints") ? "points_battle" : "", l.get("weeklyModePoc") ? "poc_battle" : "", l.get("weeklyModePi") ? "pi_battle" : ""].filter(Boolean), quickBattleMaxRankKey: String(l.get("rankQuickBattleMaxRankKey") || "silver"), ticketBattleMaxRankKey: String(l.get("rankTicketBattleMaxRankKey") || "platinum"), richBattleMinRankKey: String(l.get("rankRichBattleMinRankKey") || "platinum"), dailyChestRequiredBattles: Number(l.get("rankDailyChestRequiredBattles") || 3), weeklyAutoSettleEnabled: String(l.get("rankWeeklyAutoSettleEnabled")) === "true", monthlySeasonEnabled: String(l.get("rankMonthlySeasonEnabled")) === "true", monthlyAutoSettleEnabled: String(l.get("rankMonthlyAutoSettleEnabled")) === "true", seasonLabel: String(l.get("rankSeasonLabel") || "自然月赛季").trim(), kingTitles, seasonRewardTiers, seasonResetRules, chestRewards: { bronze: Number(l.get("rankChestReward_bronze") || 0), silver: Number(l.get("rankChestReward_silver") || 0), gold: Number(l.get("rankChestReward_gold") || 0), platinum: Number(l.get("rankChestReward_platinum") || 0), diamond: Number(l.get("rankChestReward_diamond") || 0), starlight: Number(l.get("rankChestReward_starlight") || 0), king: Number(l.get("rankChestReward_king") || 0) }, weeklyRewards: { top1: p.find((u) => u.fromRank <= 1 && u.toRank >= 1)?.amount || 0, top2: p.find((u) => u.fromRank <= 2 && u.toRank >= 2)?.amount || 0, top3: p.find((u) => u.fromRank <= 3 && u.toRank >= 3)?.amount || 0, top10: p.find((u) => u.fromRank <= 10 && u.toRank >= 10)?.amount || 0 }, weeklyRewardTiers: p, ruleSummary: String(l.get("rankRuleSummary") || "") } } })) }), M && (M.textContent = "\u4FDD\u5B58\u6210\u529F\uFF0C\u6B63\u5728\u5237\u65B0..."), await q();
     } catch (u) {
       M && (M.textContent = g(u));
     }
@@ -2915,7 +3113,7 @@ async function q() {
     }
     st();
     const e = await loadAdminProfile();
-    const [t, a, n, s, r, o, m, R, y, x, j, A, B, w, L, T, C, M, U, J, k, z, watchOps] = await Promise.all([
+    const [t, a, n, s, r, o, m, R, y, x, j, A, B, w, L, T, C, rankWeeklySettlements, monthlySettlements, withdrawOps, growthOps, engagementClaims, engagementRewardJobs, watchOps] = await Promise.all([
       safeAdminLoad("/admin-api/home-config", null),
       safeAdminLoad("/admin-api/pi-config", null),
       safeAdminLoad("/admin-api/game-config", null),
@@ -2934,13 +3132,14 @@ async function q() {
       safeAdminLoad("/admin-api/ranks/daily-chests", []),
       safeAdminLoad("/admin-api/ranks/leaderboard", []),
       safeAdminLoad("/admin-api/ranks/weekly-settlements", []),
+      safeAdminLoad("/admin-api/ranks/monthly-settlements", []),
       safeAdminLoad("/admin-api/withdraw/ops", null),
       safeAdminLoad("/admin-api/growth/ops", null),
       safeAdminLoad("/admin-api/engagement/claims", []),
       safeAdminLoad("/admin-api/engagement/reward-jobs", []),
       safeAdminLoad("/admin-api/watch-shareholder/overview", null, { timeoutMs: 25000 })
     ]);
-    te = U, Ne(e, t, a, n, s, r, o, m, R, y, x, j, A, B, w, L, T, C, M, { ...(J || {}), engagementClaims: k || [], engagementRewardJobs: z || [] }, watchOps);
+    te = withdrawOps, n.operation = { ...(n.operation || {}), monthlySettlements: monthlySettlements || [] }, Ne(e, t, a, n, s, r, o, m, R, y, x, j, A, B, w, L, T, C, rankWeeklySettlements || [], { ...(growthOps || {}), engagementClaims: engagementClaims || [], engagementRewardJobs: engagementRewardJobs || [] }, watchOps);
   } catch (e) {
     if (e?.status === 401 || e?.status === 403) {
       localStorage.removeItem("blitz_admin_token"), ae(`\u540E\u53F0\u52A0\u8F7D\u5931\u8D25\uFF1A${g(e)}`);

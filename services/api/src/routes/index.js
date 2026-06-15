@@ -35,9 +35,11 @@ const {
   getAdminRankStarRecords,
   getAdminRankDailyChests,
   getAdminRankWeeklySettlements,
+  getAdminRankMonthlySettlements,
   getRankLeaderboard,
   getAdminRankLeaderboard,
-  settleAdminWeeklyRank
+  settleAdminWeeklyRank,
+  settleAdminMonthlySeason
 } = require("../controllers/rank.controller");
 const {
   getPiRuntimeConfig,
@@ -550,6 +552,11 @@ async function handleRoutes(req, res) {
     return;
   }
 
+  if (url === "/admin-api/ranks/monthly-settlements" && method === "GET") {
+    ok(res, await getAdminRankMonthlySettlements());
+    return;
+  }
+
   if (url === "/admin-api/ranks/leaderboard" && method === "GET") {
     ok(res, await getAdminRankLeaderboard());
     return;
@@ -557,6 +564,11 @@ async function handleRoutes(req, res) {
 
   if (url === "/admin-api/ranks/settle-weekly" && method === "POST") {
     ok(res, await settleAdminWeeklyRank(), "周赛季结算完成");
+    return;
+  }
+
+  if (url === "/admin-api/ranks/settle-monthly" && method === "POST") {
+    ok(res, await settleAdminMonthlySeason(), "月赛季结算完成");
     return;
   }
 

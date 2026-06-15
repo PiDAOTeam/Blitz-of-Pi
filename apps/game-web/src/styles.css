@@ -864,6 +864,54 @@ button:disabled {
       #f7c84b33,
       #f7c84bd1);
 }
+.rank-king-stars {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 232, 151, .32);
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 30% 12%, rgba(255, 245, 179, .3), transparent 36%),
+    linear-gradient(135deg, rgba(255, 205, 58, .26), rgba(164, 58, 255, .22));
+  color: #ffe28a;
+  box-shadow: inset 0 1px rgba(255,255,255,.12), 0 10px 24px rgba(45,0,120,.16);
+}
+.rank-king-stars strong {
+  font-size: 24px;
+  line-height: 1;
+}
+.rank-king-stars span {
+  font-size: 13px;
+  font-weight: 1000;
+}
+.rank-season-strip {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 10px;
+  align-items: center;
+  margin: 10px 0 4px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 232, 151, .22);
+  border-radius: 16px;
+  background: rgba(255,255,255,.12);
+}
+.rank-season-strip span,
+.rank-season-strip small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+}
+.rank-season-strip strong {
+  color: #fff1a6;
+  font-size: 13px;
+  text-align: right;
+}
+.rank-season-strip small {
+  grid-column: 1 / -1;
+}
 .rule-preview span {
   padding: 10px 12px;
   border: 1px solid rgba(255, 232, 151, .2);

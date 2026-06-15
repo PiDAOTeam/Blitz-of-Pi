@@ -190,6 +190,76 @@
             "pi_battle"
           ],
           "weeklyAutoSettleEnabled": true,
+          "monthlySeasonEnabled": true,
+          "monthlyAutoSettleEnabled": true,
+          "seasonLabel": "自然月赛季",
+          "kingTitles": [
+            {
+              "minStars": 0,
+              "title": "王者"
+            },
+            {
+              "minStars": 10,
+              "title": "荣耀王者"
+            },
+            {
+              "minStars": 25,
+              "title": "传奇王者"
+            },
+            {
+              "minStars": 50,
+              "title": "无双王者"
+            },
+            {
+              "minStars": 100,
+              "title": "巅峰王者"
+            }
+          ],
+          "seasonRewardTiers": [
+            {
+              "fromRank": 1,
+              "toRank": 1,
+              "points": 300
+            },
+            {
+              "fromRank": 2,
+              "toRank": 3,
+              "points": 180
+            },
+            {
+              "fromRank": 4,
+              "toRank": 10,
+              "points": 80
+            },
+            {
+              "fromRank": 11,
+              "toRank": 50,
+              "points": 30
+            }
+          ],
+          "seasonResetRules": {
+            "king50Plus": {
+              "rankKey": "starlight",
+              "stars": 3
+            },
+            "king10To49": {
+              "rankKey": "starlight",
+              "stars": 1
+            },
+            "king0To9": {
+              "rankKey": "diamond",
+              "stars": 3
+            },
+            "starlight": {
+              "rankKey": "diamond",
+              "stars": 0
+            },
+            "diamond": {
+              "rankKey": "platinum",
+              "stars": 0
+            },
+            "defaultDropTiers": 1
+          },
           "dailyChestRequiredBattles": 2
         },
         "tileTheme": {

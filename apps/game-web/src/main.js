@@ -1148,6 +1148,30 @@ function Ae(e) {
 function We(e) {
   return (a.gameConfig?.operation?.ranks || []).find((r) => r.key === e)?.name || "\u9752\u94DC";
 }
+function isKingRank(e) {
+  const t = a.gameConfig?.operation?.ranks || [];
+  return e && t.length ? e === t[t.length - 1]?.key : e === "king";
+}
+function rankDisplayName(e, t = 0) {
+  const r = a.rankStatus;
+  if (r && (e === r.rankKey || e === r.rankName) && r.rankTitle) return r.rankTitle;
+  if (isKingRank(e)) {
+    const o = (F().kingTitles || []).filter((s) => s?.title).sort((s, l) => Number(s.minStars || 0) - Number(l.minStars || 0));
+    let s = o[0]?.title || We(e);
+    o.forEach((l) => {
+      Number(t || 0) >= Number(l.minStars || 0) && (s = l.title);
+    });
+    return s;
+  }
+  return G(e);
+}
+function rankStarsHtml(e, t, r = "") {
+  if (isKingRank(e)) return `<div class="rank-king-stars ${i(r)}"><strong>${Number(t || 0)}</strong><span>\u661F</span></div>`;
+  const o = Number(a.rankStatus?.starsPerRank || F().starsPerRank || 5);
+  return `<div class="rank-stars ${i(r)}" aria-label="\u5F53\u524D\u6BB5\u4F4D\u661F\u7EA7">
+          ${Array.from({ length: o }).map((s, l) => `<i class="${l < Number(t || 0) ? "active" : ""}">\u2605</i>`).join("")}
+        </div>`;
+}
 function ia() {
   const e = F().richBattleMinRankKey || "bronze", t = ja(), r = t.indexOf(e), o = t.indexOf(Ae(a.user?.rankName));
   return r <= 0 || o >= r;
@@ -1408,8 +1432,8 @@ function Sr() {
       <span class="profile-rank-icon">${i(o.icon)}</span>
       <div>
         <small>${i(n("playerRank"))}</small>
-        <strong>${i(G(r))}</strong>
-        <em>${i(n("starProgress", { stars: s, starsPerRank: l, left: c || l }))}</em>
+        <strong>${i(rankDisplayName(r, s))}</strong>
+        <em>${i(isKingRank(r) ? `\u738B\u8005 ${s}\u661F` : n("starProgress", { stars: s, starsPerRank: l, left: c || l }))}</em>
       </div>
     </div>
   `;
@@ -1427,9 +1451,7 @@ function $r() {
         </div>
         <span>${i(n("matchCount", { count: `${e.todayRankedBattles}/${e.dailyChestRequiredBattles}` }))}</span>
       </div>
-      <div class="rank-stars" aria-label="\u5F53\u524D\u6BB5\u4F4D\u661F\u7EA7">
-        ${Array.from({ length: e.starsPerRank }).map((o, s) => `<i class="${s < e.stars ? "active" : ""}">\u2605</i>`).join("")}
-      </div>
+      ${rankStarsHtml(e.rankKey, e.stars)}
       <div class="chest-progress"><i style="width: ${t}%"></i></div>
       <p>${i(n("chestRuleText", { required: e.dailyChestRequiredBattles, amount: e.dailyChestRewardAmount.toFixed(4) }))}</p>
       <button type="button" id="claim-rank-chest" ${e.dailyChestEligible ? "" : "disabled"}>${r}</button>
@@ -1467,12 +1489,15 @@ function Cr() {
           <div class="rank-growth-emblem">${i(l.icon)}</div>
           <div>
             <span>${i(n("currentRank"))}</span>
-            <strong>${i(G(o))}</strong>
-            <small>${i(n("starProgress", { stars: e.stars, starsPerRank: e.starsPerRank, left: c || e.starsPerRank }))}</small>
+            <strong>${i(rankDisplayName(o, e.stars))}</strong>
+            <small>${i(isKingRank(o) ? `S${(e.season?.currentSeasonNo || "").replace("-", ".")} \xB7 \u8DDD\u7ED3\u7B97 ${e.season?.seasonRemainDays ?? 0}\u5929` : n("starProgress", { stars: e.stars, starsPerRank: e.starsPerRank, left: c || e.starsPerRank }))}</small>
           </div>
         </div>
-        <div class="rank-stars compact" aria-label="\u5F53\u524D\u6BB5\u4F4D\u661F\u7EA7">
-          ${Array.from({ length: e.starsPerRank }).map((m, g) => `<i class="${g < e.stars ? "active" : ""}">\u2605</i>`).join("")}
+        ${rankStarsHtml(o, e.stars, "compact")}
+        <div class="rank-season-strip">
+          <span>${i(e.season?.seasonTitle || "\u5F53\u524D\u8D5B\u5B63")}</span>
+          <strong>${i(e.bestRankTitle || e.bestRankName || "\u9752\u94DC")} ${Number(e.bestStars || 0)}\u661F</strong>
+          <small>\u5386\u53F2\u6700\u9AD8</small>
         </div>
         <div class="chest-progress"><i style="width: ${d}%"></i></div>
         <p>${i(n("todayChestProgress", { done: e.todayRankedBattles, required: e.dailyChestRequiredBattles, amount: e.dailyChestRewardAmount.toFixed(4) }))}</p>
@@ -2282,7 +2307,7 @@ function Or(e) {
     return `
             <article class="${o < 3 ? `top top-${o + 1}` : "wide"}">
               <span>${i(s)}</span>
-              <strong>${b(r.amount)}</strong>
+              <strong>${a.rankLeaderboard?.type === "season" ? `${Math.round(Number(r.points || r.amount || 0))} POINTS` : b(r.amount)}</strong>
               <small>${i(o === 0 ? n("championPool") : o < 3 ? n("leaderboardReward") : n("listedReward"))}</small>
             </article>
           `;
@@ -2291,16 +2316,16 @@ function Or(e) {
   ` : `<section class="reward-tier-board empty">${i(n("rewardNotConfigured"))}</section>`;
 }
 function Ur(e) {
-  const t = { nickname: e.nickname || e.piUsername || n("piPlayer"), piUsername: e.piUsername || "", avatarKey: e.avatarKey }, r = ke(e.rankKey || e.rankName), o = e.rankNo <= 3 ? [n("champion"), n("runnerUp"), n("thirdPlace")][e.rankNo - 1] : n("rankNo", { rank: e.rankNo }), s = e.weeklyBattleCount !== void 0 ? formatWeeklyRewardMeta(e.weeklyStarGain, e.weeklyWinCount, e.rewardAmount || 0) : n("rankMeta", { stars: e.stars, wins: e.winCount });
+  const t = { nickname: e.nickname || e.piUsername || n("piPlayer"), piUsername: e.piUsername || "", avatarKey: e.avatarKey }, r = ke(e.rankKey || e.rankName), o = e.rankNo <= 3 ? [n("champion"), n("runnerUp"), n("thirdPlace")][e.rankNo - 1] : n("rankNo", { rank: e.rankNo }), s = e.weeklyBattleCount !== void 0 ? formatWeeklyRewardMeta(e.weeklyStarGain, e.weeklyWinCount, e.rewardAmount || 0) : e.seasonBattleCount !== void 0 ? `${e.seasonStarGain || 0}\u661F \xB7 ${e.seasonWinCount || 0}\u80DC \xB7 ${Math.round(Number(e.rewardAmount || 0))} POINTS` : n("rankMeta", { stars: e.stars, wins: e.winCount });
   return `
     <article class="leaderboard-item ${e.rankNo <= 3 ? "top" : ""}">
       <b>${i(o)}</b>
       ${xe(t, "medium")}
       <div>
         <strong>${i(t.nickname)}</strong>
-        <span style="--rank-color: ${i(r.color)}">${i(r.icon)} ${i(G(e.rankKey || e.rankName))} \xB7 ${i(s)}</span>
+        <span style="--rank-color: ${i(r.color)}">${i(r.icon)} ${i(e.rankTitle || rankDisplayName(e.rankKey || e.rankName, e.stars))} \xB7 ${i(s)}</span>
       </div>
-      <em>${i(e.weeklyBattleCount !== void 0 ? n("matchCount", { count: e.weeklyBattleCount }) : n("winStreakCount", { count: e.winStreak }))}</em>
+      <em>${i(e.seasonBattleCount !== void 0 ? n("matchCount", { count: e.seasonBattleCount }) : e.weeklyBattleCount !== void 0 ? n("matchCount", { count: e.weeklyBattleCount }) : n("winStreakCount", { count: e.winStreak }))}</em>
     </article>
   `;
 }

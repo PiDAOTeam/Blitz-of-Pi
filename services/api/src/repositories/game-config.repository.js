@@ -1706,6 +1706,67 @@ function normalizeRankRules(rankRules = {}) {
       .sort((a, b) => a.fromRank - b.fromRank || a.toRank - b.toRank)
       .slice(0, 30);
   }
+  function normalizeKingTitles(value) {
+    const source = Array.isArray(value) && value.length ? value : defaults.kingTitles || [];
+    const normalized = source
+      .map((title) => ({
+        minStars: safeInt(title?.minStars, 0, 0, 9999),
+        title: String(title?.title || "").trim().slice(0, 12)
+      }))
+      .filter((title) => title.title)
+      .sort((a, b) => a.minStars - b.minStars)
+      .slice(0, 20);
+
+    return normalized.length ? normalized : [
+      { minStars: 0, title: "王者" },
+      { minStars: 10, title: "荣耀王者" },
+      { minStars: 25, title: "传奇王者" },
+      { minStars: 50, title: "无双王者" },
+      { minStars: 100, title: "巅峰王者" }
+    ];
+  }
+  function normalizeSeasonRewardTiers(value) {
+    const source = Array.isArray(value) && value.length ? value : defaults.seasonRewardTiers || [];
+    return source
+      .map((tier) => {
+        const fromRank = safeInt(tier?.fromRank, 1, 1, 10000);
+        const toRank = safeInt(tier?.toRank, fromRank, 1, 10000);
+        const points = safeInt(tier?.points, 0, 0, 1000000);
+        return {
+          fromRank: Math.min(fromRank, toRank),
+          toRank: Math.max(fromRank, toRank),
+          points
+        };
+      })
+      .filter((tier) => tier.points > 0)
+      .sort((a, b) => a.fromRank - b.fromRank || a.toRank - b.toRank)
+      .slice(0, 50);
+  }
+  function normalizeSeasonResetRules(value) {
+    const source = value && typeof value === "object" ? value : {};
+    const fallback = defaults.seasonResetRules || {};
+    function resetTarget(key, fallbackKey, fallbackStars) {
+      const item = source[key] && typeof source[key] === "object" ? source[key] : {};
+      const fallbackItem = fallback[key] || {};
+      const rankKey = enabledRankKeys.includes(item.rankKey)
+        ? item.rankKey
+        : enabledRankKeys.includes(fallbackItem.rankKey)
+        ? fallbackItem.rankKey
+        : fallbackKey;
+      return {
+        rankKey,
+        stars: safeInt(item.stars, Number(fallbackItem.stars ?? fallbackStars), 0, 10)
+      };
+    }
+    return {
+      king50Plus: resetTarget("king50Plus", "starlight", 3),
+      king10To49: resetTarget("king10To49", "starlight", 1),
+      king0To9: resetTarget("king0To9", "diamond", 3),
+      starlight: resetTarget("starlight", "diamond", 0),
+      diamond: resetTarget("diamond", "platinum", 0),
+      defaultDropTiers: safeInt(source.defaultDropTiers, Number(fallback.defaultDropTiers ?? 1), 0, 3)
+    };
+  }
   const chestRewards = DEFAULT_GAME_CONFIG.operation.ranks.reduce((acc, rank) => {
     acc[rank.key] = safeAmount(rankRules.chestRewards?.[rank.key], defaults.chestRewards[rank.key] || 0, 100);
     return acc;
@@ -1738,6 +1799,12 @@ function normalizeRankRules(rankRules = {}) {
       20
     ),
     weeklyAutoSettleEnabled: rankRules.weeklyAutoSettleEnabled !== false,
+    monthlySeasonEnabled: rankRules.monthlySeasonEnabled !== false,
+    monthlyAutoSettleEnabled: rankRules.monthlyAutoSettleEnabled !== false,
+    seasonLabel: String(rankRules.seasonLabel || defaults.seasonLabel || "自然月赛季").trim().slice(0, 20),
+    kingTitles: normalizeKingTitles(rankRules.kingTitles),
+    seasonRewardTiers: normalizeSeasonRewardTiers(rankRules.seasonRewardTiers),
+    seasonResetRules: normalizeSeasonResetRules(rankRules.seasonResetRules),
     chestRewards,
     weeklyRewards,
     weeklyRewardTiers,

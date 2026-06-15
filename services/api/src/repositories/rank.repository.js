@@ -28,6 +28,10 @@ async function ensureRankSchema() {
   await ignoreDuplicateColumn("ALTER TABLE user_ranks ADD COLUMN stars INT NOT NULL DEFAULT 0");
   await ignoreDuplicateColumn("ALTER TABLE user_ranks ADD COLUMN win_streak INT NOT NULL DEFAULT 0");
   await ignoreDuplicateColumn("ALTER TABLE user_ranks ADD COLUMN season_no VARCHAR(32) NOT NULL DEFAULT 'S1'");
+  await ignoreDuplicateColumn("ALTER TABLE user_ranks ADD COLUMN best_rank_key VARCHAR(32) NOT NULL DEFAULT 'bronze'");
+  await ignoreDuplicateColumn("ALTER TABLE user_ranks ADD COLUMN best_stars INT NOT NULL DEFAULT 0");
+  await ignoreDuplicateColumn("ALTER TABLE user_ranks ADD COLUMN best_rank_score INT NOT NULL DEFAULT 1000");
+  await ignoreDuplicateColumn("ALTER TABLE user_ranks ADD COLUMN last_ranked_at DATETIME DEFAULT NULL");
   await query(
     `CREATE TABLE IF NOT EXISTS rank_star_records (
       id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -81,6 +85,37 @@ async function ensureRankSchema() {
       UNIQUE KEY uk_rank_weekly_run_season (season_no)
     )`
   );
+  await query(
+    `CREATE TABLE IF NOT EXISTS rank_monthly_season_settlements (
+      id BIGINT PRIMARY KEY AUTO_INCREMENT,
+      season_no VARCHAR(32) NOT NULL,
+      uid VARCHAR(64) NOT NULL,
+      rank_no INT NOT NULL,
+      rank_key VARCHAR(32) NOT NULL,
+      rank_name VARCHAR(32) NOT NULL,
+      stars INT NOT NULL DEFAULT 0,
+      win_count INT NOT NULL DEFAULT 0,
+      lose_count INT NOT NULL DEFAULT 0,
+      reward_points INT NOT NULL DEFAULT 0,
+      reset_rank_key VARCHAR(32) NOT NULL DEFAULT 'bronze',
+      reset_rank_name VARCHAR(32) NOT NULL DEFAULT '青铜',
+      reset_stars INT NOT NULL DEFAULT 0,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY uk_rank_monthly_season_uid (season_no, uid),
+      KEY idx_rank_monthly_season_rank (season_no, rank_no)
+    )`
+  );
+  await query(
+    `CREATE TABLE IF NOT EXISTS rank_monthly_season_runs (
+      id BIGINT PRIMARY KEY AUTO_INCREMENT,
+      season_no VARCHAR(32) NOT NULL,
+      reward_count INT NOT NULL DEFAULT 0,
+      total_reward_points INT NOT NULL DEFAULT 0,
+      reset_count INT NOT NULL DEFAULT 0,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY uk_rank_monthly_run_season (season_no)
+    )`
+  );
 
   schemaReady = true;
 }
@@ -104,6 +139,45 @@ function scoreFromRank(config, rankKey, stars) {
   return 1000 + getRankIndex(config, rankKey) * 200 + Number(stars || 0) * 20;
 }
 
+function getWinRate(winCount = 0, loseCount = 0) {
+  const wins = Number(winCount || 0);
+  const total = wins + Number(loseCount || 0);
+  return total > 0 ? wins / total : 0;
+}
+
+function getRankSortValue(config, item = {}) {
+  return getRankIndex(config, item.rankKey || item.rank_key || item.rankName || item.rank_name) * 100000 + Number(item.stars || 0);
+}
+
+function sortRankItems(config, a, b) {
+  const rankDiff = getRankIndex(config, b.rankKey) - getRankIndex(config, a.rankKey);
+  if (rankDiff) return rankDiff;
+  if (Number(b.stars || 0) !== Number(a.stars || 0)) return Number(b.stars || 0) - Number(a.stars || 0);
+  if (Number(b.winCount || 0) !== Number(a.winCount || 0)) return Number(b.winCount || 0) - Number(a.winCount || 0);
+  const winRateDiff = getWinRate(b.winCount, b.loseCount) - getWinRate(a.winCount, a.loseCount);
+  if (Math.abs(winRateDiff) > 0.000001) return winRateDiff > 0 ? 1 : -1;
+  const bActive = new Date(b.lastRankedAt || b.updatedAt || b.createdAt || 0).getTime() || 0;
+  const aActive = new Date(a.lastRankedAt || a.updatedAt || a.createdAt || 0).getTime() || 0;
+  if (bActive !== aActive) return bActive - aActive;
+  return Number(b.rankScore || 1000) - Number(a.rankScore || 1000);
+}
+
+function getKingTitle(config, rankKey, stars = 0) {
+  const ranks = getRanks(config);
+  const kingKey = ranks[ranks.length - 1]?.key || "king";
+  if (rankKey !== kingKey) return getRankMeta(config, rankKey).name;
+
+  const titles = (config.operation?.rankRules?.kingTitles || [])
+    .map((item) => ({ minStars: Number(item.minStars || 0), title: String(item.title || "").trim() }))
+    .filter((item) => item.title)
+    .sort((a, b) => a.minStars - b.minStars);
+  let matched = titles[0]?.title || "王者";
+  for (const title of titles) {
+    if (Number(stars || 0) >= title.minStars) matched = title.title;
+  }
+  return matched;
+}
+
 function getModeMaxRankKey(mode, rules = {}) {
   if (mode === "quick_battle") {
     return rules.quickBattleMaxRankKey || "silver";
@@ -119,7 +193,7 @@ async function ensureRank(uid, connection = null) {
   await executor(connection).execute(
     `INSERT INTO user_ranks (uid, rank_score, rank_name, rank_key, stars, win_count, lose_count, win_streak)
      VALUES (?, 1000, '青铜', 'bronze', 0, 0, 0, 0)
-     ON DUPLICATE KEY UPDATE uid = VALUES(uid)`,
+     ON DUPLICATE KEY UPDATE uid = VALUES(uid), best_rank_score = GREATEST(best_rank_score, rank_score)`,
     [uid]
   );
 
@@ -135,7 +209,7 @@ async function ensureRanksForUpdate(uids, connection) {
     await executor(connection).execute(
       `INSERT INTO user_ranks (uid, rank_score, rank_name, rank_key, stars, win_count, lose_count, win_streak)
        VALUES (?, 1000, '青铜', 'bronze', 0, 0, 0, 0)
-       ON DUPLICATE KEY UPDATE uid = VALUES(uid)`,
+       ON DUPLICATE KEY UPDATE uid = VALUES(uid), best_rank_score = GREATEST(best_rank_score, rank_score)`,
       [uid]
     );
   }
@@ -209,7 +283,7 @@ function applyRankResult(rank, config, result, mode = "quick_battle") {
   }
 
   if (rankIndex === ranks.length - 1) {
-    stars = Math.min(stars, starsPerRank);
+    stars = Math.max(0, stars);
   }
 
   stars = Math.max(0, stars);
@@ -235,6 +309,10 @@ async function updateRank(uid, next, result, connection) {
          rank_key = ?,
          stars = ?,
          win_streak = ?,
+         best_rank_key = IF(? > best_rank_score, ?, best_rank_key),
+         best_stars = IF(? > best_rank_score, ?, best_stars),
+         best_rank_score = GREATEST(best_rank_score, ?),
+         last_ranked_at = NOW(),
          win_count = win_count + ?,
          lose_count = lose_count + ?
      WHERE uid = ?`,
@@ -244,6 +322,11 @@ async function updateRank(uid, next, result, connection) {
       next.rankKey,
       next.stars,
       next.winStreak,
+      next.score,
+      next.rankKey,
+      next.score,
+      next.stars,
+      next.score,
       result === "win" ? 1 : 0,
       result === "lose" ? 1 : 0,
       uid
@@ -426,10 +509,18 @@ async function getRankStatus(uid) {
   return {
     rankKey: current.key,
     rankName: current.name,
+    rankTitle: getKingTitle(config, current.key, Number(rank.stars || 0)),
     stars: Number(rank.stars || 0),
     starsPerRank: Number(rules.starsPerRank || 5),
     winStreak: Number(rank.win_streak || 0),
     rankScore: Number(rank.rank_score || 1000),
+    bestRankKey: rank.best_rank_key || current.key,
+    bestRankName: getRankMeta(config, rank.best_rank_key || current.key).name,
+    bestStars: Number(rank.best_stars || 0),
+    bestRankTitle: getKingTitle(config, rank.best_rank_key || current.key, Number(rank.best_stars || 0)),
+    season: getSeasonTimeInfo(),
+    seasonRewards: getSeasonRewardTiers(rules),
+    kingTitles: rules.kingTitles || [],
     todayRankedBattles,
     dailyChestRequiredBattles: required,
     dailyChestClaimed: Boolean(claimed),
@@ -558,15 +649,12 @@ async function listRankLeaderboard(limit = 50) {
       winCount: Number(row.win_count || 0),
       loseCount: Number(row.lose_count || 0),
       winStreak: Number(row.win_streak || 0),
-      rankScore: Number(row.rank_score || 1000)
+      rankScore: Number(row.rank_score || 1000),
+      lastRankedAt: row.last_ranked_at || "",
+      updatedAt: row.updated_at || "",
+      rankTitle: getKingTitle(config, row.rank_key || getRankMeta(config, row.rank_name).key, Number(row.stars || 0))
     }))
-    .sort((a, b) => {
-      const rankDiff = getRankIndex(config, b.rankKey) - getRankIndex(config, a.rankKey);
-      if (rankDiff) return rankDiff;
-      if (b.stars !== a.stars) return b.stars - a.stars;
-      if (b.winCount !== a.winCount) return b.winCount - a.winCount;
-      return b.rankScore - a.rankScore;
-    })
+    .sort((a, b) => sortRankItems(config, a, b))
     .slice(0, safeLimit)
     .map((item, index) => ({
       ...item,
@@ -637,6 +725,119 @@ function getPreviousWeekSeasonNo(referenceDate = new Date()) {
   const previousWeek = new Date(referenceDate);
   previousWeek.setDate(previousWeek.getDate() - 7);
   return getWeekSeasonNo(previousWeek);
+}
+
+function getMonthSeasonNo(date = new Date()) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function getPreviousMonthSeasonNo(referenceDate = new Date()) {
+  return getMonthSeasonNo(new Date(referenceDate.getFullYear(), referenceDate.getMonth() - 1, 1));
+}
+
+function getMonthRangeFromSeasonNo(seasonNo = "") {
+  const matched = /^(\d{4})-(\d{2})$/.exec(String(seasonNo).trim());
+  if (!matched) {
+    throw new Error("月赛季编号格式错误，应为 2026-06");
+  }
+  const year = Number(matched[1]);
+  const month = Number(matched[2]);
+  if (month < 1 || month > 12) {
+    throw new Error("月赛季编号月份无效");
+  }
+  const start = new Date(year, month - 1, 1);
+  const end = new Date(year, month, 1);
+  return {
+    seasonNo: `${year}-${String(month).padStart(2, "0")}`,
+    startAt: `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}-01 00:00:00`,
+    endAt: `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-01 00:00:00`
+  };
+}
+
+function getSeasonTimeInfo(date = new Date()) {
+  const currentSeasonNo = getMonthSeasonNo(date);
+  const range = getMonthRangeFromSeasonNo(currentSeasonNo);
+  const end = new Date(range.endAt.replace(" ", "T"));
+  const remainDays = Math.max(0, Math.ceil((end.getTime() - date.getTime()) / 86400000));
+  return {
+    currentSeasonNo,
+    seasonTitle: `S${currentSeasonNo.replace("-", ".")} 赛季`,
+    seasonStartAt: range.startAt,
+    seasonEndAt: range.endAt,
+    seasonRemainDays: remainDays,
+    previousSeasonNo: getPreviousMonthSeasonNo(date)
+  };
+}
+
+function getSeasonRewardTiers(rankRules = {}) {
+  return (Array.isArray(rankRules.seasonRewardTiers) ? rankRules.seasonRewardTiers : [])
+    .map((tier) => ({
+      fromRank: Math.max(1, Number.parseInt(String(tier.fromRank), 10) || 1),
+      toRank: Math.max(1, Number.parseInt(String(tier.toRank), 10) || 1),
+      points: Math.max(0, Math.round(Number(tier.points || 0)))
+    }))
+    .filter((tier) => tier.points > 0)
+    .sort((a, b) => a.fromRank - b.fromRank || a.toRank - b.toRank);
+}
+
+function getSeasonReward(rankNo, rewardTiers = []) {
+  const matched = rewardTiers.find((tier) => rankNo >= tier.fromRank && rankNo <= tier.toRank);
+  return matched ? Math.round(Number(matched.points || 0)) : 0;
+}
+
+function getSeasonResetTarget(config, rankKey, stars) {
+  const ranks = getRanks(config);
+  const starsPerRank = Number(config.operation?.rankRules?.starsPerRank || 5);
+  const resetRules = config.operation?.rankRules?.seasonResetRules || {};
+  const currentIndex = getRankIndex(config, rankKey);
+  const kingIndex = ranks.length - 1;
+  const starlight = ranks.find((rank) => rank.key === "starlight")?.key || ranks[Math.max(0, kingIndex - 1)]?.key || "diamond";
+  const diamond = ranks.find((rank) => rank.key === "diamond")?.key || ranks[Math.max(0, kingIndex - 2)]?.key || "platinum";
+  const platinum = ranks.find((rank) => rank.key === "platinum")?.key || ranks[Math.max(0, kingIndex - 3)]?.key || "gold";
+  function ruleTarget(key, fallbackKey, fallbackStars) {
+    const rule = resetRules[key] && typeof resetRules[key] === "object" ? resetRules[key] : {};
+    return {
+      rankKey: getRankMeta(config, rule.rankKey || fallbackKey).key,
+      stars: Math.min(Math.max(0, Number.parseInt(String(rule.stars ?? fallbackStars), 10) || 0), starsPerRank)
+    };
+  }
+
+  let resetKey = rankKey;
+  let resetStars = Math.min(Number(stars || 0), starsPerRank);
+  if (currentIndex >= kingIndex) {
+    if (Number(stars || 0) >= 50) {
+      const target = ruleTarget("king50Plus", starlight, 3);
+      resetKey = target.rankKey;
+      resetStars = target.stars;
+    } else if (Number(stars || 0) >= 10) {
+      const target = ruleTarget("king10To49", starlight, 1);
+      resetKey = target.rankKey;
+      resetStars = target.stars;
+    } else {
+      const target = ruleTarget("king0To9", diamond, 3);
+      resetKey = target.rankKey;
+      resetStars = target.stars;
+    }
+  } else if (rankKey === "starlight") {
+    const target = ruleTarget("starlight", diamond, Math.min(resetStars, starsPerRank));
+    resetKey = target.rankKey;
+    resetStars = target.stars;
+  } else if (rankKey === "diamond") {
+    const target = ruleTarget("diamond", platinum, Math.min(resetStars, starsPerRank));
+    resetKey = target.rankKey;
+    resetStars = target.stars;
+  } else if (currentIndex > 0) {
+    const dropTiers = Math.min(Math.max(0, Number.parseInt(String(resetRules.defaultDropTiers ?? 1), 10) || 0), 3);
+    resetKey = ranks[Math.max(0, currentIndex - dropTiers)]?.key || "bronze";
+    resetStars = Math.min(resetStars, starsPerRank);
+  }
+  const rank = getRankMeta(config, resetKey);
+  return {
+    rankKey: rank.key,
+    rankName: rank.name,
+    stars: Math.max(0, resetStars),
+    score: scoreFromRank(config, rank.key, Math.max(0, resetStars))
+  };
 }
 
 function getWeeklyRewardTiers(rankRules = {}) {
@@ -727,6 +928,181 @@ async function listWeeklyRankLeaderboard(seasonNo, limit = 50, connection = null
       ...item,
       rankNo: index + 1
     }));
+}
+
+async function listMonthlySeasonLeaderboard(seasonNo, limit = 100, connection = null, configOverride = null) {
+  await ensureRankSchema();
+  const config = configOverride || await readGameConfig();
+  const safeLimit = Math.min(1000, Math.max(1, Number.parseInt(String(limit), 10) || 100));
+  const range = getMonthRangeFromSeasonNo(seasonNo);
+  const rankedModes = (config.operation?.rankRules?.rankedModes || RANKED_MODE_DEFAULTS)
+    .filter((mode) => RANK_SUPPORTED_MODES.includes(mode));
+
+  if (!rankedModes.length) return [];
+
+  const modePlaceholders = rankedModes.map(() => "?").join(",");
+  const [rows] = await executor(connection).execute(
+    `SELECT r.uid, u.pi_username, u.nickname, u.avatar_key,
+            r.rank_key, r.rank_name, r.stars, r.win_count, r.lose_count, r.win_streak, r.rank_score,
+            r.best_rank_key, r.best_stars, r.last_ranked_at, r.updated_at,
+            SUM(CASE WHEN s.result = 'win' THEN 1 ELSE 0 END) AS season_win_count,
+            SUM(CASE WHEN s.result = 'lose' THEN 1 ELSE 0 END) AS season_lose_count,
+            SUM(s.star_delta) AS season_star_gain,
+            COUNT(DISTINCT s.room_no) AS season_battle_count
+     FROM rank_star_records s
+     INNER JOIN user_ranks r ON r.uid = s.uid
+     LEFT JOIN users u ON u.uid = s.uid
+     WHERE s.created_at >= ?
+       AND s.created_at < ?
+       AND s.result IN ('win', 'lose')
+       AND s.mode IN (${modePlaceholders})
+     GROUP BY r.uid, u.pi_username, u.nickname, u.avatar_key,
+              r.rank_key, r.rank_name, r.stars, r.win_count, r.lose_count,
+              r.win_streak, r.rank_score, r.best_rank_key, r.best_stars, r.last_ranked_at, r.updated_at
+     HAVING season_win_count > 0 OR season_star_gain > 0`,
+    [range.startAt, range.endAt, ...rankedModes]
+  );
+
+  return rows
+    .map((row) => {
+      const rankKey = row.rank_key || getRankMeta(config, row.rank_name).key;
+      return {
+        uid: row.uid,
+        piUsername: row.pi_username || "",
+        nickname: row.nickname || "",
+        avatarKey: row.avatar_key || "avatar_1",
+        rankKey,
+        rankName: row.rank_name || getRankMeta(config, rankKey).name,
+        rankTitle: getKingTitle(config, rankKey, Number(row.stars || 0)),
+        stars: Number(row.stars || 0),
+        winCount: Number(row.win_count || 0),
+        loseCount: Number(row.lose_count || 0),
+        winStreak: Number(row.win_streak || 0),
+        rankScore: Number(row.rank_score || 1000),
+        lastRankedAt: row.last_ranked_at || "",
+        updatedAt: row.updated_at || "",
+        seasonWinCount: Number(row.season_win_count || 0),
+        seasonLoseCount: Number(row.season_lose_count || 0),
+        seasonStarGain: Number(row.season_star_gain || 0),
+        seasonBattleCount: Number(row.season_battle_count || 0)
+      };
+    })
+    .sort((a, b) => sortRankItems(config, a, b))
+    .slice(0, safeLimit)
+    .map((item, index) => ({
+      ...item,
+      rankNo: index + 1
+    }));
+}
+
+async function listAdminRankMonthlySettlements(limit = 200) {
+  await ensureRankSchema();
+  const safeLimit = Math.min(300, Math.max(1, Number.parseInt(String(limit), 10) || 200));
+
+  return query(
+    `SELECT s.id, s.season_no, s.uid, u.pi_username, u.nickname, u.avatar_key,
+            s.rank_no, s.rank_key, s.rank_name, s.stars, s.win_count, s.lose_count,
+            s.reward_points, s.reset_rank_key, s.reset_rank_name, s.reset_stars, s.created_at
+     FROM rank_monthly_season_settlements s
+     LEFT JOIN users u ON u.uid = s.uid
+     ORDER BY s.id DESC
+     LIMIT ${safeLimit}`
+  );
+}
+
+async function settleMonthlySeason(options = {}) {
+  await ensureRankSchema();
+  const config = await readGameConfig();
+  const rankRules = config.operation?.rankRules || {};
+  if (rankRules.monthlySeasonEnabled === false) {
+    return { seasonNo: options.seasonNo || getPreviousMonthSeasonNo(), disabled: true, rewards: [] };
+  }
+  const seasonNo = getMonthRangeFromSeasonNo(options.seasonNo || getPreviousMonthSeasonNo()).seasonNo;
+  const silentIfSettled = Boolean(options.silentIfSettled);
+
+  return transaction(async (connection) => {
+    const [existedRun] = await executor(connection).execute(
+      "SELECT id FROM rank_monthly_season_runs WHERE season_no = ? LIMIT 1",
+      [seasonNo]
+    );
+    const [existedSettlement] = await executor(connection).execute(
+      "SELECT id FROM rank_monthly_season_settlements WHERE season_no = ? LIMIT 1",
+      [seasonNo]
+    );
+
+    if (existedRun[0] || existedSettlement[0]) {
+      if (silentIfSettled) {
+        return { seasonNo, alreadySettled: true, rewards: [] };
+      }
+      throw new Error("该月赛季已结算，不能重复发放");
+    }
+
+    const rewardTiers = getSeasonRewardTiers(rankRules);
+    const maxRewardRank = Math.max(100, ...rewardTiers.map((tier) => tier.toRank));
+    const leaderboard = await listMonthlySeasonLeaderboard(seasonNo, maxRewardRank, connection, config);
+    let rewardCount = 0;
+    let totalRewardPoints = 0;
+    const rewards = [];
+
+    for (const item of leaderboard) {
+      const points = Math.round(getSeasonReward(item.rankNo, rewardTiers));
+      const reset = getSeasonResetTarget(config, item.rankKey, item.stars);
+
+      await executor(connection).execute(
+        `INSERT INTO rank_monthly_season_settlements
+           (season_no, uid, rank_no, rank_key, rank_name, stars, win_count, lose_count,
+            reward_points, reset_rank_key, reset_rank_name, reset_stars)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          seasonNo,
+          item.uid,
+          item.rankNo,
+          item.rankKey,
+          item.rankName,
+          item.stars,
+          item.seasonWinCount,
+          item.seasonLoseCount,
+          points,
+          reset.rankKey,
+          reset.rankName,
+          reset.stars
+        ]
+      );
+
+      await executor(connection).execute(
+        `UPDATE user_ranks
+         SET rank_key = ?, rank_name = ?, stars = ?, rank_score = ?, win_streak = 0, season_no = ?
+         WHERE uid = ?`,
+        [reset.rankKey, reset.rankName, reset.stars, reset.score, getMonthSeasonNo(), item.uid]
+      );
+
+      if (points > 0) {
+        rewardCount += 1;
+        totalRewardPoints += points;
+        await increaseBalance(
+          item.uid,
+          points,
+          {
+            type: "reward",
+            relatedType: "rank_monthly_season_reward",
+            relatedId: `${seasonNo}:${item.uid}`,
+            remark: `Pi闪电战${seasonNo}月赛季第${item.rankNo}名奖励`
+          },
+          connection
+        );
+      }
+
+      rewards.push({ ...item, seasonNo, rewardPoints: points, reset });
+    }
+
+    await executor(connection).execute(
+      `INSERT INTO rank_monthly_season_runs (season_no, reward_count, total_reward_points, reset_count)
+       VALUES (?, ?, ?, ?)`,
+      [seasonNo, rewardCount, totalRewardPoints, leaderboard.length]
+    );
+
+    return { seasonNo, alreadySettled: false, rewards };
+  });
 }
 
 async function settleWeeklyLeaderboard(options = {}) {
@@ -820,12 +1196,22 @@ module.exports = {
   listAdminRankStarRecords,
   listAdminRankDailyChests,
   listAdminRankWeeklySettlements,
+  listAdminRankMonthlySettlements,
   listRankLeaderboard,
   listWeeklyRankLeaderboard,
+  listMonthlySeasonLeaderboard,
   getWeekSeasonNo,
   getWeekRangeFromSeasonNo,
   getPreviousWeekSeasonNo,
+  getMonthSeasonNo,
+  getPreviousMonthSeasonNo,
+  getSeasonTimeInfo,
   getWeeklyRewardTiers,
   getWeeklyReward,
-  settleWeeklyLeaderboard
+  getSeasonRewardTiers,
+  getSeasonReward,
+  getKingTitle,
+  getSeasonResetTarget,
+  settleWeeklyLeaderboard,
+  settleMonthlySeason
 };

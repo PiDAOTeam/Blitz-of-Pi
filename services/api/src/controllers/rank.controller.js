@@ -5,13 +5,20 @@ const {
   listAdminRankStarRecords,
   listAdminRankDailyChests,
   listAdminRankWeeklySettlements,
+  listAdminRankMonthlySettlements,
   listRankLeaderboard,
   listWeeklyRankLeaderboard,
+  listMonthlySeasonLeaderboard,
   getWeekSeasonNo,
+  getMonthSeasonNo,
   getWeeklyRewardTiers,
   getWeeklyReward,
+  getSeasonRewardTiers,
+  getSeasonReward,
   getPreviousWeekSeasonNo,
-  settleWeeklyLeaderboard
+  getPreviousMonthSeasonNo,
+  settleWeeklyLeaderboard,
+  settleMonthlySeason
 } = require("../repositories/rank.repository");
 const { readGameConfig } = require("../repositories/game-config.repository");
 
@@ -85,6 +92,30 @@ async function getAdminRankWeeklySettlements() {
   }));
 }
 
+async function getAdminRankMonthlySettlements() {
+  const rows = await listAdminRankMonthlySettlements();
+
+  return rows.map((row) => ({
+    id: row.id,
+    seasonNo: row.season_no,
+    uid: row.uid,
+    piUsername: row.pi_username || "",
+    nickname: row.nickname || "",
+    avatarKey: row.avatar_key || "avatar_1",
+    rankNo: Number(row.rank_no || 0),
+    rankKey: row.rank_key,
+    rankName: row.rank_name,
+    stars: Number(row.stars || 0),
+    winCount: Number(row.win_count || 0),
+    loseCount: Number(row.lose_count || 0),
+    rewardPoints: Number(row.reward_points || 0),
+    resetRankKey: row.reset_rank_key,
+    resetRankName: row.reset_rank_name,
+    resetStars: Number(row.reset_stars || 0),
+    createdAt: row.created_at
+  }));
+}
+
 function normalizePageParams(params = {}) {
   const page = Math.max(1, Number.parseInt(String(params.page || 1), 10) || 1);
   const pageSize = Math.min(30, Math.max(5, Number.parseInt(String(params.pageSize || 15), 10) || 15));
@@ -99,12 +130,15 @@ async function getRankLeaderboard(req, params = {}) {
   const user = await getRequestUser(req);
   const config = await readGameConfig();
   const { page, pageSize } = normalizePageParams(params);
-  const type = params.type === "total" ? "total" : "weekly";
-  const seasonNo = getWeekSeasonNo();
+  const type = params.type === "total" ? "total" : params.type === "season" ? "season" : "weekly";
+  const seasonNo = type === "season" ? getMonthSeasonNo() : getWeekSeasonNo();
   const weeklyRewardTiers = getWeeklyRewardTiers(config.operation?.rankRules || {});
+  const seasonRewardTiers = getSeasonRewardTiers(config.operation?.rankRules || {});
   const leaderboard =
     type === "total"
       ? await listRankLeaderboard(10000)
+      : type === "season"
+      ? await listMonthlySeasonLeaderboard(seasonNo, 10000, null, config)
       : await listWeeklyRankLeaderboard(seasonNo, 10000, null, config);
   const total = leaderboard.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -112,7 +146,9 @@ async function getRankLeaderboard(req, params = {}) {
   const start = (safePage - 1) * pageSize;
   const withRewards = leaderboard.map((item) => ({
     ...item,
-    rewardAmount: Number(getWeeklyReward(item.rankNo, weeklyRewardTiers).toFixed(8))
+    rewardAmount: type === "season"
+      ? Number(getSeasonReward(item.rankNo, seasonRewardTiers))
+      : Number(getWeeklyReward(item.rankNo, weeklyRewardTiers).toFixed(8))
   }));
   const myRank = withRewards.find((item) => item.uid === user.uid) || null;
 
@@ -125,7 +161,7 @@ async function getRankLeaderboard(req, params = {}) {
     totalPages,
     items: withRewards.slice(start, start + pageSize),
     myRank,
-    rewardTiers: weeklyRewardTiers,
+    rewardTiers: type === "season" ? seasonRewardTiers : weeklyRewardTiers,
     weeklyModes: config.operation?.rankRules?.weeklyLeaderboardModes || ["points_battle", "poc_battle", "pi_battle"]
   };
 }
@@ -141,13 +177,22 @@ async function settleAdminWeeklyRank() {
   });
 }
 
+async function settleAdminMonthlySeason() {
+  return settleMonthlySeason({
+    seasonNo: getPreviousMonthSeasonNo(),
+    silentIfSettled: true
+  });
+}
+
 module.exports = {
   getMyRankStatus,
   claimMyDailyRankChest,
   getAdminRankStarRecords,
   getAdminRankDailyChests,
   getAdminRankWeeklySettlements,
+  getAdminRankMonthlySettlements,
   getRankLeaderboard,
   getAdminRankLeaderboard,
-  settleAdminWeeklyRank
+  settleAdminWeeklyRank,
+  settleAdminMonthlySeason
 };
