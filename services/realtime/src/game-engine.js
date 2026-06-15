@@ -25,6 +25,7 @@ const MAX_CHAIN_BONUS_LEVEL = 3;
 const MAX_RESOLVE_CHAINS = 4;
 const MAX_CREDITED_CLEARED = 18;
 const MAX_ATTACK_PER_MOVE = 4;
+const BOT_FINAL_SPRINT_SECONDS = 12;
 
 function createRandom(seed) {
   let value = seed % 2147483647;
@@ -777,7 +778,11 @@ function getBotDifficultyProfile(difficulty) {
       varianceMax: 1.2,
       allowedBehindMin: 260,
       allowedBehindMax: 520,
-      overTargetAllowance: 220
+      overTargetAllowance: 220,
+      finalSprintSingleCap: 120,
+      finalSprintTotalCap: 450,
+      finalSprintFollowFactor: 0.12,
+      finalSprintCatchupFactor: 0.38
     },
     normal: {
       idleGainMin: 24,
@@ -792,7 +797,11 @@ function getBotDifficultyProfile(difficulty) {
       varianceMax: 1.28,
       allowedBehindMin: 180,
       allowedBehindMax: 420,
-      overTargetAllowance: 320
+      overTargetAllowance: 320,
+      finalSprintSingleCap: 180,
+      finalSprintTotalCap: 700,
+      finalSprintFollowFactor: 0.18,
+      finalSprintCatchupFactor: 0.45
     },
     hard: {
       idleGainMin: 30,
@@ -807,7 +816,11 @@ function getBotDifficultyProfile(difficulty) {
       varianceMax: 1.34,
       allowedBehindMin: 120,
       allowedBehindMax: 320,
-      overTargetAllowance: 420
+      overTargetAllowance: 420,
+      finalSprintSingleCap: 240,
+      finalSprintTotalCap: 950,
+      finalSprintFollowFactor: 0.24,
+      finalSprintCatchupFactor: 0.52
     },
     expert: {
       idleGainMin: 36,
@@ -822,7 +835,11 @@ function getBotDifficultyProfile(difficulty) {
       varianceMax: 1.42,
       allowedBehindMin: 80,
       allowedBehindMax: 260,
-      overTargetAllowance: 520
+      overTargetAllowance: 520,
+      finalSprintSingleCap: 300,
+      finalSprintTotalCap: 1200,
+      finalSprintFollowFactor: 0.3,
+      finalSprintCatchupFactor: 0.58
     }
   };
 
@@ -864,6 +881,7 @@ function applyBotMove(room) {
   const totalSeconds = Math.max(1, getRoomRoundSeconds(room));
   const elapsedRatio = Math.max(0, Math.min(1, (totalSeconds - remainSeconds) / totalSeconds));
   const moveIntervalSeconds = Math.max(0.5, Number(botConfig.moveIntervalSeconds || 1.2));
+  const isFinalSprint = remainSeconds <= BOT_FINAL_SPRINT_SECONDS;
 
   if (!Number.isFinite(bot.botTargetScore)) {
     const targetRange = Math.max(0, targetMax - targetMin);
@@ -873,19 +891,31 @@ function applyBotMove(room) {
     bot.botTempoBias = 0.92 + nextRoomRandom(room) * 0.2;
   }
 
+  if (isFinalSprint) {
+    bot.botFinalSprintGain = Number(bot.botFinalSprintGain || 0);
+    bot.botFinalSprintStartedAt = Number(bot.botFinalSprintStartedAt || Date.now());
+  } else if (Number(bot.botFinalSprintGain || 0) > 0 || Number(bot.botFinalSprintStartedAt || 0) > 0) {
+    bot.botFinalSprintGain = 0;
+    bot.botFinalSprintStartedAt = 0;
+  }
+
   const curveTarget = Number(bot.botTargetScore || targetMax || 0) * getBotScoreCurveProgress(elapsedRatio);
   const humanScore = Number(human.score || 0);
   const botScore = Number(bot.score || 0);
   const allowedBehind = profile.allowedBehindMin +
     (profile.allowedBehindMax - profile.allowedBehindMin) * nextRoomRandom(room);
   const pressureBoost = Math.min(0.18, Math.max(0, Number(bot.pressure || 0) - 8) * 0.012);
-  const humanFollowTarget = humanScore > botScore + allowedBehind
+  const rawHumanFollowTarget = humanScore > botScore + allowedBehind
     ? humanScore - allowedBehind * (0.7 + nextRoomRandom(room) * 0.45)
     : 0;
+  const humanFollowTarget = isFinalSprint && rawHumanFollowTarget > botScore
+    ? botScore + (rawHumanFollowTarget - botScore) * profile.finalSprintFollowFactor
+    : rawHumanFollowTarget;
   const targetNow = Math.max(curveTarget, humanFollowTarget);
   const movesLeft = Math.max(1, remainSeconds / moveIntervalSeconds);
   const behindTarget = targetNow - botScore;
-  const catchupGain = behindTarget > 0 ? behindTarget / Math.max(1, movesLeft * 0.72) : 0;
+  const rawCatchupGain = behindTarget > 0 ? behindTarget / Math.max(1, movesLeft * 0.72) : 0;
+  const catchupGain = isFinalSprint ? rawCatchupGain * profile.finalSprintCatchupFactor : rawCatchupGain;
   const idleGain = profile.idleGainMin + nextRoomRandom(room) * (profile.idleGainMax - profile.idleGainMin);
   const tempo = Number(bot.botTempoBias || 1) + pressureBoost;
   const variance = profile.varianceMin + nextRoomRandom(room) * (profile.varianceMax - profile.varianceMin);
@@ -918,7 +948,26 @@ function applyBotMove(room) {
     attack = Math.min(attack, 1);
   }
 
-  const scoreGain = Math.max(profile.mistakeGainMin, gain) * chain;
+  let scoreGain = Math.max(profile.mistakeGainMin, gain) * chain;
+  if (isFinalSprint) {
+    const finalSprintAllowance = Math.max(0, profile.finalSprintTotalCap - Number(bot.botFinalSprintGain || 0));
+    if (finalSprintAllowance <= 0) {
+      bot.lastGain = 0;
+      bot.combo = 1;
+      return null;
+    }
+
+    const cappedScoreGain = Math.min(scoreGain, profile.finalSprintSingleCap, finalSprintAllowance);
+    if (cappedScoreGain < scoreGain) {
+      scoreGain = Math.max(0, Math.round(cappedScoreGain));
+      attack = scoreGain >= profile.finalSprintSingleCap ? Math.min(attack, 1) : 0;
+      if (scoreGain < profile.finalSprintSingleCap) {
+        chain = 1;
+        cleared = 3;
+      }
+    }
+    bot.botFinalSprintGain = Number(bot.botFinalSprintGain || 0) + scoreGain;
+  }
 
   bot.score += scoreGain;
   bot.combo = chain;
