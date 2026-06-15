@@ -133,7 +133,7 @@ async function getTodayBattleStats(uid) {
        SUM(CASE WHEN entry_fee > 0 THEN 1 ELSE 0 END) AS paid_battle_count
      FROM battle_rooms
      WHERE status = 'finished'
-       AND is_bot_room = 0
+       -- 机器人补位局对用户也是完整对局，需计入每日任务；是否计入由后台任务模式控制。
        AND DATE(finished_at) = CURDATE()
        AND (player_a_uid = ? OR player_b_uid = ?)
        AND mode IN (${placeholders})
