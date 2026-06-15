@@ -63,7 +63,7 @@ const HASHPI_BRIDGE_BASE_URL = env(
 const HASHPI_BRIDGE_TIMEOUT_MS = Number(env("HASHPI_BRIDGE_TIMEOUT_MS", "5000"));
 const ALLOWED_ORIGINS = env(
   "ALLOWED_ORIGINS",
-  "https://blitz.hashpi.app,https://hashpi.app,https://blitzadmin.hashpi.app,https://blitzapi.hashpi.app,https://sandbox.minepi.com,http://localhost:5173,http://localhost:5174"
+  "https://blitz.hashpi.app,https://blitzadmin.hashpi.app,https://blitzapi.hashpi.app,https://sandbox.minepi.com,http://localhost:5173,http://localhost:5174"
 );
 
 module.exports = {
