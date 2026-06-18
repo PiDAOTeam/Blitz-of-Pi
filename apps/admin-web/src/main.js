@@ -85,7 +85,7 @@ function Le(e = "") {
   return { in: "\u6536\u5165", out: "\u652F\u51FA", lock: "\u51BB\u7ED3", unlock: "\u89E3\u51BB" }[e] || e || "-";
 }
 function Ce(e = "") {
-  return { user_profile_update: "\u4FEE\u6539\u7528\u6237\u8D44\u6599", user_profile_reset: "\u91CD\u7F6E\u7528\u6237\u8D44\u6599", user_disable: "\u7981\u7528\u7528\u6237", user_enable: "\u542F\u7528\u7528\u6237", battle_expire_free_bot: "\u4F5C\u5E9F\u514D\u8D39\u5F02\u5E38\u5C40", battle_manual_review: "\u5BF9\u5C40\u8F6C\u4EBA\u5DE5\u590D\u6838", withdraw_approve: "\u63D0\u73B0\u5BA1\u6838\u901A\u8FC7", withdraw_reject: "\u63D0\u73B0\u5BA1\u6838\u62D2\u7EDD", withdraw_paid: "\u63D0\u73B0\u786E\u8BA4\u6253\u6B3E", auto_payout_paid: "\u81EA\u52A8\u51FA\u6B3E\u6210\u529F", auto_payout_failed: "\u81EA\u52A8\u51FA\u6B3E\u5931\u8D25" }[e] || e || "-";
+  return { user_profile_update: "\u4FEE\u6539\u7528\u6237\u8D44\u6599", user_profile_reset: "\u91CD\u7F6E\u7528\u6237\u8D44\u6599", user_disable: "\u7981\u7528\u7528\u6237", user_enable: "\u542F\u7528\u7528\u6237", battle_expire_free_bot: "\u4F5C\u5E9F\u514D\u8D39\u5F02\u5E38\u5C40", battle_manual_review: "\u5BF9\u5C40\u8F6C\u4EBA\u5DE5\u590D\u6838", withdraw_approve: "\u63D0\u73B0\u5BA1\u6838\u901A\u8FC7", withdraw_reject: "\u63D0\u73B0\u5BA1\u6838\u62D2\u7EDD", withdraw_paid: "\u63D0\u73B0\u786E\u8BA4\u6253\u6B3E", withdraw_auto_payout_queue: "\u63D0\u73B0\u81EA\u52A8\u8F6C\u8D26", auto_payout_paid: "\u81EA\u52A8\u51FA\u6B3E\u6210\u529F", auto_payout_failed: "\u81EA\u52A8\u51FA\u6B3E\u5931\u8D25" }[e] || e || "-";
 }
 function Ue(e = "") {
   return { manual_review: "\u4EBA\u5DE5\u5904\u7406", queued: "\u81EA\u52A8\u961F\u5217", processing: "\u51FA\u6B3E\u4E2D", failed: "\u81EA\u52A8\u5931\u8D25", paid: "\u5DF2\u5B8C\u6210" }[e] || e || "-";
@@ -1878,6 +1878,7 @@ function dt(e, t) {
 }
 function mt(e) {
   const t = E(e.orderNo), a = e.walletCheckStatus === "valid";
+  const n = e.status === "approved" && e.autoPayoutStatus === "manual_review" && !e.txid && a;
   return `
     <article class="room-item">
       <h3>${i(e.orderNo)} \xB7 ${i(H(e.status))}</h3>
@@ -1895,6 +1896,7 @@ function mt(e) {
             </div>` : ""}
       ${e.status === "approved" ? `<div class="inline-actions">
               <input placeholder="\u586B\u5199\u94FE\u4E0ATXID" data-withdraw-txid="${t}" />
+              ${n ? `<button type="button" data-withdraw-action="auto_payout" data-order-no="${t}" data-payout-amount="${$(e.payoutAmount || e.amount)}" data-wallet-address="${i(e.walletAddress)}">\u81EA\u52A8\u8F6C\u8D26</button>` : ""}
               <button type="button" data-withdraw-action="paid" data-order-no="${t}">\u6807\u8BB0\u5DF2\u6253\u6B3E</button>
             </div>` : ""}
     </article>
@@ -2990,7 +2992,7 @@ function jt() {
   const e = document.querySelector("#withdraw-status");
   document.querySelectorAll("[data-withdraw-action]").forEach((t) => {
     t.addEventListener("click", async () => {
-      const a = t.dataset.withdrawAction || "", n = t.dataset.orderNo || "", s = document.querySelector(`[data-withdraw-txid="${n}"]`), r = { approve: `/admin-api/withdraw/approve/${encodeURIComponent(n)}`, reject: `/admin-api/withdraw/reject/${encodeURIComponent(n)}`, paid: `/admin-api/withdraw/paid/${encodeURIComponent(n)}` };
+      const a = t.dataset.withdrawAction || "", n = t.dataset.orderNo || "", s = document.querySelector(`[data-withdraw-txid="${n}"]`), r = { approve: `/admin-api/withdraw/approve/${encodeURIComponent(n)}`, reject: `/admin-api/withdraw/reject/${encodeURIComponent(n)}`, paid: `/admin-api/withdraw/paid/${encodeURIComponent(n)}`, auto_payout: `/admin-api/withdraw/auto-payout/${encodeURIComponent(n)}` };
       if (r[a]) {
         if (a === "paid") {
           const o = String(s?.value || "").trim();
@@ -3002,10 +3004,20 @@ function jt() {
 \u8BA2\u5355\uFF1A${n}
 TXID\uFF1A${o}`)) return;
         }
+        if (a === "auto_payout" && !window.confirm(`\u786E\u8BA4\u5BF9\u8BE5\u63D0\u73B0\u8BA2\u5355\u6267\u884C\u81EA\u52A8\u94FE\u4E0A\u8F6C\u8D26\uFF1F
+\u8BA2\u5355\uFF1A${n}
+\u5230\u8D26\uFF1A${t.dataset.payoutAmount || "-"} Pi
+\u5730\u5740\uFF1A${t.dataset.walletAddress || "-"}
+
+\u6CE8\u610F\uFF1A\u94FE\u4E0A\u8F6C\u8D26\u6210\u529F\u540E\u4E0D\u53EF\u64A4\u56DE\u3002`)) return;
         if (!(a === "reject" && !window.confirm(`\u786E\u8BA4\u62D2\u7EDD\u63D0\u73B0\u8BA2\u5355 ${n} \u5E76\u89E3\u51BB\u7528\u6237\u4F59\u989D\uFF1F`))) {
           e && (e.textContent = "\u5904\u7406\u4E2D...");
           try {
-            await d(r[a], { method: "POST", body: JSON.stringify({ txid: s?.value || "", auditRemark: a === "approve" ? "\u540E\u53F0\u5BA1\u6838\u901A\u8FC7" : a === "reject" ? "\u540E\u53F0\u5BA1\u6838\u62D2\u7EDD" : "\u540E\u53F0\u786E\u8BA4\u5DF2\u6253\u6B3E" }) }), e && (e.textContent = "\u64CD\u4F5C\u6210\u529F\uFF0C\u6B63\u5728\u5237\u65B0..."), await q();
+            const o = await d(r[a], { method: "POST", body: JSON.stringify({ txid: s?.value || "", auditRemark: a === "approve" ? "\u540E\u53F0\u5BA1\u6838\u901A\u8FC7" : a === "reject" ? "\u540E\u53F0\u5BA1\u6838\u62D2\u7EDD" : a === "auto_payout" ? "\u540E\u53F0\u6267\u884C\u81EA\u52A8\u8F6C\u8D26" : "\u540E\u53F0\u786E\u8BA4\u5DF2\u6253\u6B3E" }) });
+            if (a === "auto_payout" && ["failed", "skipped"].includes(o?.result?.status)) {
+              throw new Error(o?.result?.error || o?.result?.message || "\u81EA\u52A8\u8F6C\u8D26\u672A\u5B8C\u6210");
+            }
+            e && (e.textContent = a === "auto_payout" ? "\u81EA\u52A8\u8F6C\u8D26\u5DF2\u5904\u7406\uFF0C\u6B63\u5728\u5237\u65B0..." : "\u64CD\u4F5C\u6210\u529F\uFF0C\u6B63\u5728\u5237\u65B0..."), await q();
           } catch (o) {
             e && (e.textContent = g(o));
           }

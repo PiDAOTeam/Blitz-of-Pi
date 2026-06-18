@@ -9,6 +9,7 @@ const {
   listWithdrawOrders,
   listAutoPayoutCandidates,
   markAutoPayoutProcessing,
+  queueManualWithdrawForAutoPayout,
   resetStaleAutoPayoutProcessing,
   markAutoPayoutFailed,
   markAutoPayoutManualReview,
@@ -26,7 +27,7 @@ const {
   listUserWithdrawWallets
 } = require("../repositories/withdraw-wallet.repository");
 const { inspectWithdrawWalletAddress } = require("../utils/withdraw-wallet");
-const { getPayoutRuntimeStatus } = require("../utils/payout-runtime");
+const { getPayoutRuntimeStatus, assertPayoutRuntimeReady } = require("../utils/payout-runtime");
 
 function createWithdrawOrderNo() {
   return `WD${Date.now()}${crypto.randomBytes(6).toString("hex").toUpperCase()}`;
@@ -457,6 +458,81 @@ async function markWithdrawAutoManualReview(orderNo, errorMessage) {
   return toWithdrawDto(await markAutoPayoutManualReview(orderNo, errorMessage));
 }
 
+async function queueManualWithdrawAutoPayout(req, orderNo) {
+  const order = await transaction(async (connection) => {
+    const locked = await findWithdrawOrderForUpdate(orderNo, connection);
+
+    if (!locked) {
+      throw new Error("提现订单不存在");
+    }
+
+    if (locked.status !== "approved") {
+      throw new Error("只有已审核订单可以自动转账");
+    }
+
+    if (locked.txid) {
+      throw new Error("该订单已有 TXID，不能重复自动转账");
+    }
+
+    if (locked.auto_payout_status !== "manual_review") {
+      throw new Error("只有人工处理状态可以重新自动转账");
+    }
+
+    const config = await readGameConfig();
+    const risk = config.withdrawRisk || {};
+    if (!risk.autoPayoutEnabled) {
+      throw new Error("自动出款未开启");
+    }
+
+    const walletInspection = inspectWithdrawWalletAddress(locked.wallet_address);
+    if (risk.walletValidationRequired !== false && !walletInspection.valid) {
+      throw new Error(walletInspection.message || "钱包地址未通过校验");
+    }
+
+    const amount = Number(locked.amount || 0);
+    const autoPayoutMaxAmount = Number(risk.autoPayoutMaxAmount || 0);
+    if (autoPayoutMaxAmount > 0 && amount > autoPayoutMaxAmount) {
+      throw new Error(`超过单笔自动上限 ${autoPayoutMaxAmount} Pi`);
+    }
+
+    const todayAmount = await sumTodayWithdrawAmount(locked.uid, connection);
+    const autoPayoutDailyLimitAmount = Number(risk.autoPayoutDailyLimitAmount || 0);
+    if (autoPayoutDailyLimitAmount > 0 && todayAmount > autoPayoutDailyLimitAmount) {
+      throw new Error(`超过自动出款日上限 ${autoPayoutDailyLimitAmount} Pi`);
+    }
+
+    assertPayoutRuntimeReady();
+
+    const queued = await queueManualWithdrawForAutoPayout(orderNo, connection);
+    if (!queued) {
+      throw new Error("订单状态已变化，请刷新后重试");
+    }
+
+    await addAdminAuditLog(
+      {
+        adminUsername: req.admin?.username,
+        action: "withdraw_auto_payout_queue",
+        targetType: "withdraw_order",
+        targetId: orderNo,
+        detail: {
+          amount: Number(locked.amount),
+          feeAmount: Number(locked.fee_amount || 0),
+          payoutAmount: Number(locked.payout_amount || locked.amount),
+          uid: locked.uid,
+          walletCheckStatus: locked.wallet_check_status || "",
+          beforeAutoPayoutStatus: locked.auto_payout_status
+        },
+        ip: req.socket?.remoteAddress || ""
+      },
+      connection
+    );
+
+    return queued;
+  });
+
+  return toWithdrawDto(order);
+}
+
 async function getAutoPayoutCandidates(limit = 20) {
   const config = await readGameConfig();
   const risk = config.withdrawRisk || {};
@@ -492,6 +568,7 @@ module.exports = {
   markWithdrawAutoProcessing,
   markWithdrawAutoFailed,
   markWithdrawAutoManualReview,
+  queueManualWithdrawAutoPayout,
   resetStaleAutoPayouts,
   completeAutoPaidWithdraw
 };

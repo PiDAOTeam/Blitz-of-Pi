@@ -101,7 +101,8 @@ const {
   getAdminWithdrawOps,
   approveWithdrawOrder,
   rejectWithdrawOrder,
-  markWithdrawPaid
+  markWithdrawPaid,
+  queueManualWithdrawAutoPayout
 } = require("../controllers/withdraw.controller");
 const { processAutoPayoutImmediately } = require("../services/auto-payout.service");
 const { observeBattleStage } = require("../services/battle-observer.service");
@@ -177,7 +178,12 @@ const EXPECTED_BUSINESS_ERROR_MESSAGES = new Set([
   "只有待审核订单可以通过",
   "只有待审核订单可以拒绝",
   "只有已审核订单可以标记打款",
-  "该 TXID 已被其他提现订单使用"
+  "该 TXID 已被其他提现订单使用",
+  "只有已审核订单可以自动转账",
+  "该订单已有 TXID，不能重复自动转账",
+  "只有人工处理状态可以重新自动转账",
+  "自动出款未开启",
+  "订单状态已变化，请刷新后重试"
 ]);
 
 const EXPECTED_BUSINESS_ERROR_PATTERNS = [
@@ -193,6 +199,8 @@ const EXPECTED_BUSINESS_ERROR_PATTERNS = [
   /^转账太频繁，请 \d+ 秒后再试$/,
   /^单笔提现不能低于 [\d.]+ Pi$/,
   /^今日提现额度不足，单日最多 [\d.]+ Pi$/,
+  /^超过单笔自动上限 [\d.]+ Pi$/,
+  /^超过自动出款日上限 [\d.]+ Pi$/,
   /^今日还需完成 \d+ 场有效段位对局才能领取$/,
   /^Pi 支付状态不可完成：.+$/
 ];
@@ -789,6 +797,19 @@ async function handleRoutes(req, res) {
     const orderNo = decodeURIComponent(url.replace("/admin-api/withdraw/paid/", ""));
     const payload = await readJsonBody(req);
     ok(res, await markWithdrawPaid(req, orderNo, payload), "已标记打款");
+    return;
+  }
+
+  if (url.startsWith("/admin-api/withdraw/auto-payout/") && method === "POST") {
+    const orderNo = decodeURIComponent(url.replace("/admin-api/withdraw/auto-payout/", ""));
+    await queueManualWithdrawAutoPayout(req, orderNo);
+    const result = await processAutoPayoutImmediately(orderNo);
+    const status = result?.result?.status || "";
+    ok(
+      res,
+      result,
+      status === "paid" ? "自动转账成功" : status === "review" ? "链上已提交，请人工核对" : "已提交自动转账"
+    );
     return;
   }
 

@@ -97,6 +97,28 @@ module.exports = {
       }
     },
     {
+      name: "blitz-auto-payout",
+      script: "./services/api/src/workers/auto-payout.worker.js",
+      cwd: __dirname + "/../..",
+      instances: 1,
+      exec_mode: "fork",
+      out_file: "./logs/auto-payout.out.log",
+      error_file: "./logs/auto-payout.error.log",
+      env: {
+        ...productionEnv,
+        NODE_ENV: "production",
+        MYSQL_HOST: "127.0.0.1",
+        MYSQL_PORT: 3306,
+        MYSQL_USER: "blitzhashpi",
+        MYSQL_PASSWORD: process.env.MYSQL_PASSWORD || productionEnv.MYSQL_PASSWORD || "change_me",
+        MYSQL_DATABASE: "blitzhashpi",
+        REDIS_HOST: "127.0.0.1",
+        REDIS_PORT: 6379,
+        AUTO_PAYOUT_INTERVAL_MS: 15000,
+        AUTO_PAYOUT_BATCH_SIZE: 10
+      }
+    },
+    {
       name: "blitz-realtime",
       script: "./services/realtime/src/main.js",
       cwd: __dirname + "/../..",

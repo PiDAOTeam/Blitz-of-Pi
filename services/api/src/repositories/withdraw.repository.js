@@ -152,6 +152,26 @@ async function markAutoPayoutProcessing(orderNo, connection = null) {
   return findWithdrawOrder(orderNo, connection);
 }
 
+async function queueManualWithdrawForAutoPayout(orderNo, connection = null) {
+  const [result] = await executor(connection).execute(
+    `UPDATE withdraw_orders
+     SET auto_payout_status = 'queued',
+         auto_payout_eligible = 1,
+         auto_payout_error = NULL
+     WHERE order_no = ?
+       AND status = 'approved'
+       AND auto_payout_status = 'manual_review'
+       AND (txid IS NULL OR txid = '')`,
+    [orderNo]
+  );
+
+  if (!result?.affectedRows) {
+    return null;
+  }
+
+  return findWithdrawOrder(orderNo, connection);
+}
+
 async function resetStaleAutoPayoutProcessing(staleMinutes = 10, connection = null) {
   const safeMinutes = Math.min(60, Math.max(3, Number.parseInt(String(staleMinutes), 10) || 10));
   const [result] = await executor(connection).execute(
@@ -212,6 +232,7 @@ module.exports = {
   listWithdrawOrders,
   listAutoPayoutCandidates,
   markAutoPayoutProcessing,
+  queueManualWithdrawForAutoPayout,
   resetStaleAutoPayoutProcessing,
   markAutoPayoutFailed,
   markAutoPayoutManualReview,
