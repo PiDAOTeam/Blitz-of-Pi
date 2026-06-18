@@ -124,7 +124,7 @@ function buildActionText(groupKey, type) {
     payment_missing_ledger: "立即核对该订单是否已给用户加余额，必要时手工补流水后再开放推广。",
     wallet_balance_mismatch: "暂停该用户提现，核对钱包流水和余额差异。",
     withdraw_pending_risk: "尽快审核或打款，超过 24 小时会明显影响信任。",
-    battle_room_risk: "资产场优先人工复核，免费异常局会自动作废。",
+    battle_room_risk: "资产机器人异常局会自动释放，真人资产局优先人工复核。",
     battle_missing_reward: "核对胜者奖励是否发放，避免用户赢了没到账。",
     battle_missing_entry: "核对双方入场费扣款，付费场缺流水会影响平台收入。",
     i18n_home_missing: "到配置页补齐首页多语言字段。",

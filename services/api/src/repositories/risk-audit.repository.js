@@ -137,7 +137,7 @@ async function checkBattleIntegrity(report) {
   }
 
   if (toNumber(summary.stale_playing_rooms) > 0) {
-    report.add("warning", "存在资产场超时房间", "超过 5 分钟仍处于 playing 的付费/资产房需要人工复核；免费快速局会自动作废。", summary);
+    report.add("warning", "存在资产场超时房间", "资产机器人异常局会自动释放入场费；真人资产局仍需人工复核。", summary);
     return;
   }
 

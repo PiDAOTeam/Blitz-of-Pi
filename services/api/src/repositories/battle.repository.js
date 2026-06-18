@@ -272,6 +272,53 @@ async function expireStaleFreeBotRooms(minutes = 5) {
   }
 }
 
+async function listStaleRemoteAssetBotRooms(minutes = 5, limit = 20) {
+  const safeMinutes = Math.min(1440, Math.max(2, Number.parseInt(String(minutes), 10) || 5));
+  const safeLimit = Math.min(100, Math.max(1, Number.parseInt(String(limit), 10) || 20));
+  await ensureBattleAssetColumns();
+
+  return query(
+    `SELECT b.room_no, b.mode, b.status,
+            b.player_a_uid, ua.pi_user_id AS player_a_pi_user_id, ua.pi_username AS player_a_pi_username,
+            COALESCE(NULLIF(b.player_a_snapshot_nickname, ''), ua.nickname) AS player_a_nickname,
+            b.player_b_uid, ub.pi_user_id AS player_b_pi_user_id, ub.pi_username AS player_b_pi_username,
+            COALESCE(NULLIF(b.player_b_snapshot_nickname, ''), ub.nickname) AS player_b_nickname,
+            b.entry_fee, b.reward_amount, b.asset_type, b.asset_settlement_status, b.asset_error,
+            b.is_bot_room, b.created_at, b.finished_at
+     FROM battle_rooms b
+     LEFT JOIN users ua ON ua.uid = b.player_a_uid
+     LEFT JOIN users ub ON ub.uid = b.player_b_uid
+     WHERE b.status = 'playing'
+       AND b.is_bot_room = 1
+       AND b.entry_fee > 0
+       AND b.asset_type IN ('POINTS', 'POC')
+       AND b.asset_settlement_status = 'frozen'
+       AND b.created_at < DATE_SUB(NOW(), INTERVAL ${safeMinutes} MINUTE)
+     ORDER BY b.created_at ASC
+     LIMIT ${safeLimit}`
+  );
+}
+
+async function markRemoteAssetBotRoomReleased(roomNo, reason = "", connection = null) {
+  await ensureBattleAssetColumns();
+  const [result] = await executor(connection).execute(
+    `UPDATE battle_rooms
+     SET status = 'expired',
+         finished_at = COALESCE(finished_at, NOW()),
+         asset_settlement_status = 'released',
+         asset_error = ?
+     WHERE room_no = ?
+       AND status = 'playing'
+       AND is_bot_room = 1
+       AND entry_fee > 0
+       AND asset_type IN ('POINTS', 'POC')
+       AND asset_settlement_status = 'frozen'`,
+    [String(reason || "stale asset bot room auto released").slice(0, 255), roomNo]
+  );
+
+  return Number(result?.affectedRows || 0);
+}
+
 async function updateBattleRoomStatus(roomNo, status, connection = null) {
   await executor(connection).execute(
     `UPDATE battle_rooms
@@ -304,6 +351,8 @@ module.exports = {
   listUserBattleRooms,
   listUserAssetBattleLedgerRows,
   expireStaleFreeBotRooms,
+  listStaleRemoteAssetBotRooms,
+  markRemoteAssetBotRoomReleased,
   updateBattleRoomStatus,
   updateBattleAssetStatus
 };

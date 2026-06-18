@@ -15,6 +15,8 @@ const {
   finishBattleRoomRecord,
   findBattleRoom,
   findBattleRoomForUpdate,
+  listStaleRemoteAssetBotRooms,
+  markRemoteAssetBotRoomReleased,
   updateBattleRoomStatus,
   updateBattleAssetStatus,
   countActiveBattleRooms,
@@ -854,6 +856,75 @@ async function expireTimedOutWaitingReadyRoom(room, uid, roomNo) {
 
   await clearRoomBindingForUser(uid, roomNo);
   return true;
+}
+
+function toPlayerIdentityFromBattle(row, side) {
+  return {
+    uid: row[`${side}_uid`] || "",
+    piUserId: row[`${side}_pi_user_id`] || "",
+    pi_user_id: row[`${side}_pi_user_id`] || "",
+    piUsername: row[`${side}_pi_username`] || "",
+    pi_username: row[`${side}_pi_username`] || "",
+    nickname: row[`${side}_nickname`] || ""
+  };
+}
+
+async function clearRoomBindings(roomNo, players = []) {
+  for (const player of players) {
+    if (player?.uid) {
+      matchState.userRoomMap.delete(player.uid);
+      await redisDel(`${REDIS_USER_ROOM_PREFIX}${player.uid}`);
+    }
+  }
+  matchState.rooms.delete(roomNo);
+  await redisDel(`${REDIS_ROOM_PREFIX}${roomNo}`);
+  await redisDel(`${REDIS_REALTIME_ROOM_PREFIX}${roomNo}`);
+}
+
+async function expireStaleRemoteAssetBotRooms(minutes = 5, limit = 20) {
+  const rooms = await listStaleRemoteAssetBotRooms(minutes, limit);
+  const results = [];
+
+  for (const battle of rooms) {
+    const playerA = toPlayerIdentityFromBattle(battle, "player_a");
+    const playerB = toPlayerIdentityFromBattle(battle, "player_b");
+    const human = isBotUid(playerA.uid) ? playerB : playerA;
+
+    if (!human?.uid || isBotUid(human.uid)) {
+      results.push({ roomNo: battle.room_no, status: "skipped", error: "missing human player" });
+      continue;
+    }
+
+    try {
+      await assetGateway.release({
+        assetType: battle.asset_type,
+        user: human,
+        roomNo: battle.room_no,
+        amount: Number(battle.entry_fee || 0),
+        idempotencyKey: `${battle.room_no}:${human.uid}:release:stale_bot`,
+        remark: "Pi闪电战小富豪机器人异常局超时，退回入场费"
+      });
+
+      const affectedRows = await markRemoteAssetBotRoomReleased(
+        battle.room_no,
+        "stale asset bot room auto released"
+      );
+      await clearRoomBindings(battle.room_no, [playerA, playerB]);
+
+      results.push({
+        roomNo: battle.room_no,
+        status: affectedRows > 0 ? "released" : "unchanged",
+        uid: human.uid,
+        assetType: battle.asset_type,
+        amount: Number(battle.entry_fee || 0)
+      });
+    } catch (error) {
+      console.error("[room-maintenance] stale asset bot room release failed:", battle.room_no, error.message);
+      results.push({ roomNo: battle.room_no, status: "failed", error: error.message || "release failed" });
+    }
+  }
+
+  return results;
 }
 
 async function resolveActiveRoomForMode(user, roomNo, requestedMode) {
@@ -1731,5 +1802,6 @@ module.exports = {
   getBattleResult,
   getRoomsSnapshot,
   settleFinishedRoom,
-  expireStaleFreeBotRooms
+  expireStaleFreeBotRooms,
+  expireStaleRemoteAssetBotRooms
 };
