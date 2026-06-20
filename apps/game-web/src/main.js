@@ -320,6 +320,55 @@ async function An(e = 6e3) {
   }
   return null;
 }
+function piSdkSleep(e) {
+  return new Promise((t) => window.setTimeout(t, e));
+}
+function isPiSdkNotInitializedError(e) {
+  const t = N(e);
+  return /not initialized|call init|sdk was not initialized/i.test(t);
+}
+function resetPiSdkInitializedState() {
+  window.__BLITZ_PI_INITIALIZED__ = false, window.__BLITZ_PI_INITIALIZED_SANDBOX__ = null, window.__BLITZ_PI_INIT_PROMISE__ = null, window.__BLITZ_PI_INIT_PROMISE_SANDBOX__ = null;
+}
+async function ensurePiSdkInitialized(e, t, r = {}) {
+  if (!e || typeof e.init != "function") throw new Error(n("piSdkMissing"));
+  const o = !!r.force;
+  if (!o && window.__BLITZ_PI_INITIALIZED__ && window.__BLITZ_PI_INITIALIZED_SANDBOX__ === t) return;
+  if (!o && window.__BLITZ_PI_INIT_PROMISE__ && window.__BLITZ_PI_INIT_PROMISE_SANDBOX__ === t) {
+    await window.__BLITZ_PI_INIT_PROMISE__;
+    return;
+  }
+  const s = (async () => {
+    try {
+      const l = e.init({ version: "2.0", sandbox: t });
+      l && typeof l.then == "function" && await l, await piSdkSleep(120), window.__BLITZ_PI_INITIALIZED__ = true, window.__BLITZ_PI_INITIALIZED_SANDBOX__ = t;
+    } catch (l) {
+      resetPiSdkInitializedState();
+      throw l;
+    }
+  })();
+  window.__BLITZ_PI_INIT_PROMISE__ = s, window.__BLITZ_PI_INIT_PROMISE_SANDBOX__ = t;
+  try {
+    await s;
+  } finally {
+    window.__BLITZ_PI_INIT_PROMISE__ === s && (window.__BLITZ_PI_INIT_PROMISE__ = null, window.__BLITZ_PI_INIT_PROMISE_SANDBOX__ = null);
+  }
+}
+async function authenticatePiWithRetry(e, t, r) {
+  await ensurePiSdkInitialized(e, r);
+  try {
+    return await e.authenticate(["username", "payments"], t);
+  } catch (o) {
+    if (!isPiSdkNotInitializedError(o)) throw o;
+    console.warn("[pi] SDK authenticate called before init was ready. Retrying init once.", o), resetPiSdkInitializedState(), await piSdkSleep(240), await ensurePiSdkInitialized(e, r, { force: true });
+    try {
+      return await e.authenticate(["username", "payments"], t);
+    } catch (s) {
+      if (isPiSdkNotInitializedError(s)) throw new Error(a.language === "zh-CN" ? "Pi 登录组件加载较慢，请点击重新进入，或关闭页面后再打开。" : "Pi login is still loading. Please re-enter or reopen the page.");
+      throw s;
+    }
+  }
+}
 async function w(e, t) {
   const { timeoutMs = Cn, ...requestOptions } = t || {};
   const r = new AbortController(), o = window.setTimeout(() => r.abort(), Math.max(1500, Number(timeoutMs || Cn)));
@@ -4252,10 +4301,9 @@ async function Yi() {
   const t = await w("/api/pi/config");
   a.piConfig = t;
   const r = xn() || t.frontendSandbox || hn;
-  (!window.__BLITZ_PI_INITIALIZED__ || window.__BLITZ_PI_INITIALIZED_SANDBOX__ !== r) && (e.init({ version: "2.0", sandbox: r }), window.__BLITZ_PI_INITIALIZED__ = true, window.__BLITZ_PI_INITIALIZED_SANDBOX__ = r);
-  const o = await e.authenticate(["username", "payments"], async (l) => {
+  const o = await authenticatePiWithRetry(e, async (l) => {
     console.warn("\u53D1\u73B0\u672A\u5B8C\u6210 Pi \u652F\u4ED8", l), await Jr(l);
-  }), s = await w("/api/auth/pi-login", { method: "POST", body: JSON.stringify({ piAccessToken: o.accessToken, piUserId: o.user.uid, piUsername: o.user.username || "", nickname: o.user.username || n("piPlayer") }) });
+  }, r), s = await w("/api/auth/pi-login", { method: "POST", body: JSON.stringify({ piAccessToken: o.accessToken, piUserId: o.user.uid, piUsername: o.user.username || "", nickname: o.user.username || n("piPlayer") }) });
   localStorage.setItem("blitz_user_token", s.accessToken), localStorage.setItem("blitz_pi_auth", JSON.stringify({ uid: o.user.uid, username: o.user.username || "", loggedAt: Date.now(), sandbox: r }));
 }
 function tokenLooksUsable() {
