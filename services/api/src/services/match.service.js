@@ -902,7 +902,7 @@ async function expireStaleRemoteAssetBotRooms(minutes = 5, limit = 20) {
         roomNo: battle.room_no,
         amount: Number(battle.entry_fee || 0),
         idempotencyKey: `${battle.room_no}:${human.uid}:release:stale_bot`,
-        remark: "Pi闪电战小富豪机器人异常局超时，退回入场费"
+        remark: "Pi闪电战小富豪异常对局超时，退回入场费"
       });
 
       const affectedRows = await markRemoteAssetBotRoomReleased(
@@ -1102,7 +1102,7 @@ async function settleFinishedRoom(room) {
     } else {
       const human = room.players.find((player) => !isBotUid(player.uid));
       if (!human) {
-        throw new Error("机器人局缺少真实用户，不能结算");
+        throw new Error("对局缺少真实用户，不能结算");
       }
       await assetGateway.botSettle({
         assetType,
@@ -1113,7 +1113,7 @@ async function settleFinishedRoom(room) {
         rewardAmount: isBotWinner ? 0 : rewardAmount,
         platformFeeAmount: Number(currentBattle.platform_fee_amount || getPlatformFeeAmount(entryFee, currentBattle.platform_fee_rate, assetType, rewardAmount)),
         idempotencyKey: `${room.roomNo}:${human.uid}:botsettle`,
-        remark: "Pi闪电战机器人补位局结算"
+        remark: "Pi闪电战对局结算"
       });
     }
   }
@@ -1164,7 +1164,7 @@ async function settleFinishedRoom(room) {
     if (entryFee > 0 && hasBot && isRemoteAssetType(assetType)) {
       const human = room.players.find((player) => !isBotUid(player.uid));
       if (!human) {
-        throw new Error("机器人局缺少真实用户，不能结算");
+        throw new Error("对局缺少真实用户，不能结算");
       }
       await updateBattleAssetStatus(room.roomNo, "settled", "", connection);
     }
