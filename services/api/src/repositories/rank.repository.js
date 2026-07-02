@@ -1214,6 +1214,7 @@ module.exports = {
   getSeasonRewardTiers,
   getSeasonReward,
   getKingTitle,
+  applyRankResult,
   getSeasonResetTarget,
   settleWeeklyLeaderboard,
   settleMonthlySeason

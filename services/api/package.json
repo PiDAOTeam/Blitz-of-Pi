@@ -6,6 +6,7 @@
     "start:dev": "node --watch src/main.js",
     "start:auto-payout": "node src/workers/auto-payout.worker.js",
     "start:auto-payout-once": "node src/workers/auto-payout.once.js",
+    "test": "node --test src/repositories/rank.repository.test.js",
     "build": "node -e \"console.log('api build placeholder')\""
   },
   "dependencies": {
