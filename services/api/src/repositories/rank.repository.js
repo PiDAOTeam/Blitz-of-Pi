@@ -272,13 +272,14 @@ function applyRankResult(rank, config, result, mode = "quick_battle") {
   if (modeMaxRankKey && result === "win") {
     const capRankKey = modeMaxRankKey;
     const capIndex = getRankIndex(config, capRankKey);
+    const capIsFinalRank = capIndex >= ranks.length - 1;
     if (rankIndexBefore > capIndex) {
       rankIndex = rankIndexBefore;
       stars = starsBefore;
     } else if (rankIndex > capIndex) {
       rankIndex = capIndex;
-      stars = starsPerRank;
-    } else if (rankIndex === capIndex) {
+      stars = capIsFinalRank ? stars : starsPerRank;
+    } else if (rankIndex === capIndex && !capIsFinalRank) {
       stars = Math.min(stars, starsPerRank);
     }
   }

@@ -1244,6 +1244,7 @@ function cr(e) {
   const t = F(), r = e === "quick_battle" ? t.quickBattleMaxRankKey || "silver" : e === "points_battle" || e === "poc_battle" ? t.ticketBattleMaxRankKey || "platinum" : "";
   if (!r) return false;
   const o = It(r), s = It(Ae(a.user?.rankName)), l = a.rankStatus;
+  if (isKingRank(r)) return s > o;
   return s > o || s === o && Number(l?.stars || 0) >= Number(l?.starsPerRank || 5);
 }
 function Wt(e) {
@@ -2445,11 +2446,12 @@ function Ya() {
   `;
 }
 function zr() {
+  const e = a.rankStatus, t = e?.rankKey || Ae(a.user?.rankName), r = e?.rankTitle || rankDisplayName(t, e?.stars || 0);
   ke(a.user?.rankName), R.insertAdjacentHTML("beforeend", `
       <div class="mode-sheet-mask" id="rank-rules-mask">
         <section class="mode-sheet rank-rules-sheet">
           <p class="eyebrow">${i(n("rankRules"))}</p>
-          <h2>${i(n("rankCurrentTitle", { rank: G(a.user?.rankName) }))}</h2>
+          <h2>${i(n("rankCurrentTitle", { rank: r }))}</h2>
           <div class="rank-rule-list">
             ${Ya()}
           </div>
