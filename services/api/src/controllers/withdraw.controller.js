@@ -252,7 +252,9 @@ async function getAdminWithdrawOps() {
   const risk = config.withdrawRisk || {};
   const runtime = getPayoutRuntimeStatus();
   const pending = withdraws.filter((order) => order.status === "pending").length;
-  const approved = withdraws.filter((order) => order.status === "approved").length;
+  const approved = withdraws.filter(
+    (order) => order.status === "approved" && ["queued", "processing"].includes(order.autoPayoutStatus)
+  ).length;
   const queued = withdraws.filter((order) => order.autoPayoutStatus === "queued").length;
   const failed = withdraws.filter((order) => order.autoPayoutStatus === "failed").length;
   const paidToday = withdraws

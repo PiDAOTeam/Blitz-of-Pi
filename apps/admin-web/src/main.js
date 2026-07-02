@@ -150,7 +150,7 @@ const LEDGER_LIST_FILTERS = [
 const WITHDRAW_LIST_FILTERS = [
   { key: "all", label: "全部", match: () => true },
   { key: "pending", label: "待审核", match: (e) => e.status === "pending" },
-  { key: "approved", label: "待打款", match: (e) => e.status === "approved" },
+  { key: "approved", label: "待打款", match: (e) => e.status === "approved" && ["queued", "processing"].includes(e.autoPayoutStatus) },
   { key: "paid", label: "已打款", match: (e) => e.status === "paid" },
   { key: "rejected", label: "已拒绝", match: (e) => e.status === "rejected" },
   { key: "auto_failed", label: "自动失败", match: (e) => e.autoPayoutStatus === "failed" }
@@ -1903,7 +1903,7 @@ function mt(e) {
   `;
 }
 function pt(e, t) {
-  const a = te, n = a?.summary || { pending: t.filter((m) => m.status === "pending").length, approved: t.filter((m) => m.status === "approved").length, queued: t.filter((m) => m.autoPayoutStatus === "queued").length, failed: t.filter((m) => m.autoPayoutStatus === "failed").length }, s = a?.config?.payoutRuntime, filteredWithdraws = filterList(t, WITHDRAW_LIST_FILTERS, withdrawListFilter), r = N("withdraw-orders", filteredWithdraws), o = e.withdrawRisk, activeWithdrawFilter = WITHDRAW_LIST_FILTERS.find((m) => m.key === withdrawListFilter) || WITHDRAW_LIST_FILTERS[0];
+  const a = te, n = a?.summary || { pending: t.filter((m) => m.status === "pending").length, approved: t.filter((m) => m.status === "approved" && ["queued", "processing"].includes(m.autoPayoutStatus)).length, queued: t.filter((m) => m.autoPayoutStatus === "queued").length, failed: t.filter((m) => m.autoPayoutStatus === "failed").length }, s = a?.config?.payoutRuntime, filteredWithdraws = filterList(t, WITHDRAW_LIST_FILTERS, withdrawListFilter), r = N("withdraw-orders", filteredWithdraws), o = e.withdrawRisk, activeWithdrawFilter = WITHDRAW_LIST_FILTERS.find((m) => m.key === withdrawListFilter) || WITHDRAW_LIST_FILTERS[0];
   return `
     <section class="panel">
       <div class="section-head">
@@ -1915,7 +1915,7 @@ function pt(e, t) {
       </div>
       <div class="dashboard-grid">
         ${S("\u5F85\u5BA1\u6838", n.pending, "\u9700\u8981\u4EBA\u5DE5\u5224\u65AD")}
-        ${S("\u5F85\u6253\u6B3E", n.approved, "\u5DF2\u5BA1\u6838\u672A\u5B8C\u6210")}
+        ${S("\u5F85\u6253\u6B3E", n.approved, "\u961F\u5217\u4E2D / \u51FA\u6B3E\u4E2D")}
         ${S("\u81EA\u52A8\u961F\u5217", n.queued, "worker \u4F1A\u5904\u7406")}
         ${S("\u81EA\u52A8\u5931\u8D25", n.failed, "\u9700\u8981\u6392\u67E5\u6216\u4EBA\u5DE5\u63A5\u7BA1", n.failed ? "danger" : "")}
       </div>

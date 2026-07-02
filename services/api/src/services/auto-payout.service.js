@@ -29,6 +29,14 @@ async function sendPiPayment({ destination, amount, memo }) {
     throw new Error("出款钱包私钥未配置");
   }
   const sourceAccount = await server.loadAccount(sourceKeypair.publicKey());
+  try {
+    await server.loadAccount(destination);
+  } catch (error) {
+    if (Number(error?.response?.status) === 404) {
+      throw new Error("收款钱包地址未激活，无法链上打款");
+    }
+    throw error;
+  }
   const fee = await server.fetchBaseFee();
   const transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
     fee: String(fee),
@@ -46,9 +54,23 @@ async function sendPiPayment({ destination, amount, memo }) {
     .build();
 
   transaction.sign(sourceKeypair);
+  const signedTxid = transaction.hash().toString("hex");
 
   const result = await server.submitTransaction(transaction);
-  return result.hash || result.id;
+  const txid = result.hash || result.id || result.transaction_hash || signedTxid;
+  if (!txid) {
+    throw new Error("链上交易提交后未返回 TXID，自动出款未完成");
+  }
+  if (result.successful === false) {
+    throw new Error(`链上交易提交失败，TXID：${txid}`);
+  }
+
+  const submitted = await server.transactions().transaction(txid).call();
+  if (submitted.successful !== true) {
+    throw new Error(`链上交易未成功，TXID：${txid}`);
+  }
+
+  return txid;
 }
 
 async function processAutoPayoutOnce(limit = 10) {
