@@ -256,12 +256,22 @@ async function insertClaim({ uid, claimType, taskKey = "", title, rewardAmount, 
   return Number(result?.affectedRows || 0) > 0 ? Number(result?.insertId || 0) : 0;
 }
 
-async function enqueueAssetRewardJobs({ uid, claimId, claimType, taskKey = "", title = "", rewards = [], today }, connection) {
+async function enqueueAssetRewardJobs({
+  uid,
+  claimId,
+  claimType,
+  taskKey = "",
+  title = "",
+  rewards = [],
+  today,
+  orderPrefix = "engagement",
+  remark = "Pi闪电战每日签到奖励"
+}, connection) {
   const remoteRewards = rewards.filter((reward) => ["POINTS", "POC"].includes(reward.assetType));
 
   for (const reward of remoteRewards) {
     const assetType = String(reward.assetType || "").toUpperCase();
-    const orderNo = `engagement:${claimType}:${uid}:${today}:${taskKey || "daily"}:${assetType}`;
+    const orderNo = `${orderPrefix}:${claimType}:${uid}:${today}:${taskKey || "daily"}:${assetType}`;
     await executor(connection).execute(
       `INSERT INTO engagement_asset_reward_jobs
          (uid, claim_id, claim_date, claim_type, task_key, title, asset_type, amount,
@@ -282,7 +292,7 @@ async function enqueueAssetRewardJobs({ uid, claimId, claimType, taskKey = "", t
         reward.amount,
         orderNo,
         orderNo,
-        "Pi闪电战每日签到奖励"
+        remark
       ]
     );
   }
@@ -569,11 +579,13 @@ async function listUserEngagementAssetRewardRows(uid, limit = 80) {
 module.exports = {
   claimDailySignIn,
   claimDailyTask,
+  ensureEngagementRewardJobSchema,
   getEngagementStatus,
   getEngagementRewardQueueStats,
   listAdminEngagementRewardJobs,
   listAdminEngagementClaims,
   listEngagementRewardCandidates,
+  enqueueAssetRewardJobs,
   markEngagementRewardFailed,
   markEngagementRewardPaid,
   markEngagementRewardProcessing,

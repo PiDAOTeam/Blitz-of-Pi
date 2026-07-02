@@ -1,6 +1,7 @@
 const { query, transaction } = require("../db/mysql");
 const { readGameConfig } = require("./game-config.repository");
 const { increaseBalance } = require("./wallet.repository");
+const { enqueueAssetRewardJobs, ensureEngagementRewardJobSchema } = require("./engagement.repository");
 
 const RANKED_MODE_DEFAULTS = ["points_battle", "poc_battle", "pi_battle"];
 const RANK_SUPPORTED_MODES = ["quick_battle", "points_battle", "poc_battle", "pi_battle", "ticket_battle", "rich_battle"];
@@ -1012,6 +1013,7 @@ async function listAdminRankMonthlySettlements(limit = 200) {
 
 async function settleMonthlySeason(options = {}) {
   await ensureRankSchema();
+  await ensureEngagementRewardJobSchema();
   const config = await readGameConfig();
   const rankRules = config.operation?.rankRules || {};
   if (rankRules.monthlySeasonEnabled === false) {
@@ -1079,17 +1081,17 @@ async function settleMonthlySeason(options = {}) {
       if (points > 0) {
         rewardCount += 1;
         totalRewardPoints += points;
-        await increaseBalance(
-          item.uid,
-          points,
-          {
-            type: "reward",
-            relatedType: "rank_monthly_season_reward",
-            relatedId: `${seasonNo}:${item.uid}`,
-            remark: `Pi闪电战${seasonNo}月赛季第${item.rankNo}名奖励`
-          },
-          connection
-        );
+        await enqueueAssetRewardJobs({
+          uid: item.uid,
+          claimId: 0,
+          claimType: "rank_monthly_season_reward",
+          taskKey: `${seasonNo}:${item.rankNo}`,
+          title: `${seasonNo}月赛季第${item.rankNo}名奖励`,
+          today: seasonNo,
+          orderPrefix: "rank",
+          remark: `Pi闪电战${seasonNo}月赛季第${item.rankNo}名奖励`,
+          rewards: [{ assetType: "POINTS", amount: points }]
+        }, connection);
       }
 
       rewards.push({ ...item, seasonNo, rewardPoints: points, reset });
