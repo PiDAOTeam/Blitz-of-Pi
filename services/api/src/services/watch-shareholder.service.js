@@ -321,7 +321,7 @@ async function getMyShareholderStatus(user) {
 
   const [summary, rewards, latestPeriod, weeklyEstimateBundle] = await Promise.all([
     getUserSummary(user.uid),
-    listUserRewards(user.uid, 30),
+    listUserRewards(user.uid, 60),
     getLatestPeriod(),
     getWeeklyEstimateBundle(config).catch(() => null)
   ]);
