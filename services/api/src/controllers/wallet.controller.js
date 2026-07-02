@@ -5,6 +5,8 @@ const { listUserEngagementAssetRewardRows } = require("../repositories/engagemen
 const { listUserRewards: listUserWatchShareholderRewards } = require("../repositories/watch-shareholder.repository");
 const { listUserInviteCommissionAssetRows } = require("../repositories/growth.repository");
 const { readGameConfig } = require("../repositories/game-config.repository");
+const { query } = require("../db/mysql");
+const { formatLedgerRemark } = require("../utils/ledger-display");
 const assetGateway = require("../services/asset-gateway.service");
 
 const REMOTE_ASSET_SUMMARY_FAST_TIMEOUT_MS = 1800;
@@ -24,8 +26,25 @@ function toPiLedgerDto(ledger) {
   return {
     ...ledger,
     asset_type: "PI",
+    remark: formatLedgerRemark(ledger),
     synthetic: false
   };
+}
+
+function isHiddenUserPiLedger(ledger = {}) {
+  const relatedType = String(ledger.related_type || ledger.relatedType || "");
+  const remark = String(ledger.remark || "");
+  if (
+    [
+      "rank_monthly_season_reward",
+      "rank_monthly_season_reward_reversal",
+      "rank_monthly_season_reward_remaining_reversal",
+      "rank_monthly_season_reward_remaining_restore"
+    ].includes(relatedType)
+  ) {
+    return true;
+  }
+  return relatedType === "withdraw_order_reject" && remark.includes("月赛季误发");
 }
 
 function buildAssetBattleLedgers(rows, uid) {
@@ -169,6 +188,44 @@ function buildEngagementAssetLedgers(rows, uid) {
   return ledgers;
 }
 
+async function listUserRankMonthlyAssetRewardRows(uid, limit = 80) {
+  const safeLimit = Math.min(120, Math.max(1, Number.parseInt(String(limit), 10) || 80));
+  return query(
+    `SELECT id, uid, claim_date, claim_type, task_key, title, asset_type, amount, remark, status, processed_at, created_at
+     FROM engagement_asset_reward_jobs
+     WHERE uid = ?
+       AND claim_type = 'rank_monthly_season_reward'
+       AND asset_type = 'POINTS'
+       AND status = 'paid'
+     ORDER BY id DESC
+     LIMIT ${safeLimit}`,
+    [uid]
+  );
+}
+
+function buildRankMonthlyAssetLedgers(rows, uid) {
+  return (Array.isArray(rows) ? rows : [])
+    .filter((row) => Number(row.amount || 0) > 0)
+    .map((row) => ({
+      id: `rank_monthly:${row.id}`,
+      uid,
+      type: "rank_monthly_season_reward",
+      direction: "in",
+      amount: Math.floor(Number(row.amount || 0)),
+      balance_after: null,
+      related_type: "rank_monthly_season_points_reward",
+      related_id: row.task_key || row.external_order_no || "",
+      remark: formatLedgerRemark({
+        related_type: "rank_monthly_season_points_reward",
+        related_id: row.task_key || "",
+        remark: row.remark || ""
+      }),
+      created_at: row.processed_at || row.created_at,
+      asset_type: "POINTS",
+      synthetic: true
+    }));
+}
+
 function buildWatchShareholderLedgers(rows, uid) {
   return (Array.isArray(rows) ? rows : [])
     .filter((row) => row.status === "paid" && Number(row.reward_points || 0) > 0)
@@ -238,10 +295,16 @@ function withTimeout(promise, timeoutMs, timeoutMessage = "资产同步稍慢，
 async function getMyWallet(req) {
   const user = await getUserFromRequest(req);
   const wallet = await getWallet(user.uid);
-  const ledgers = (await listLedgers(user.uid)).map(toPiLedgerDto);
+  const ledgers = (await listLedgers(user.uid))
+    .filter((ledger) => !isHiddenUserPiLedger(ledger))
+    .map(toPiLedgerDto);
   const battleAssetLedgers = buildAssetBattleLedgers(await listUserAssetBattleLedgerRows(user.uid), user.uid);
   const engagementAssetLedgers = buildEngagementAssetLedgers(
     await listUserEngagementAssetRewardRows(user.uid),
+    user.uid
+  );
+  const rankMonthlyAssetLedgers = buildRankMonthlyAssetLedgers(
+    await listUserRankMonthlyAssetRewardRows(user.uid),
     user.uid
   );
   const watchShareholderLedgers = buildWatchShareholderLedgers(
@@ -255,6 +318,7 @@ async function getMyWallet(req) {
   const assetLedgers = sortLedgersByTime([
     ...battleAssetLedgers,
     ...engagementAssetLedgers,
+    ...rankMonthlyAssetLedgers,
     ...watchShareholderLedgers,
     ...inviteCommissionAssetLedgers
   ]);

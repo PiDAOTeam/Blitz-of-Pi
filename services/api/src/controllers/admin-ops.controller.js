@@ -18,6 +18,7 @@ const {
   adminSetUserStatus,
   adminResetProfileOnboarding
 } = require("../repositories/user.repository");
+const { formatLedgerRemark } = require("../utils/ledger-display");
 
 function toAdminUserDto(row) {
   return {
@@ -90,7 +91,7 @@ async function getAdminLedgers() {
     balanceAfter: Number(row.balance_after),
     relatedType: row.related_type || "",
     relatedId: row.related_id || "",
-    remark: row.remark || "",
+    remark: formatLedgerRemark(row),
     createdAt: row.created_at
   }));
 }
@@ -151,7 +152,7 @@ async function getAdminUserDetail(uid) {
       balanceAfter: Number(ledger.balance_after),
       relatedType: ledger.related_type || "",
       relatedId: ledger.related_id || "",
-      remark: ledger.remark || "",
+      remark: formatLedgerRemark(ledger),
       createdAt: ledger.created_at
     }))
   };
