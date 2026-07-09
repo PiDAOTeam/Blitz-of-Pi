@@ -10,6 +10,7 @@ const { transaction } = require("../db/mysql");
 const { getPiPayment, completePiPayment } = require("./pi-platform.service");
 
 const CHECK_INTERVAL_MS = 10 * 60 * 1000;
+const STALE_OPEN_PAYMENT_MS = 6 * 60 * 60 * 1000;
 let schedulerStarted = false;
 let schedulerRunning = false;
 
@@ -51,6 +52,23 @@ function parseMetadata(value) {
   }
 }
 
+function isTerminalPaymentOrderStatus(status) {
+  return ["cancelled", "failed", "expired"].includes(String(status || "").toLowerCase());
+}
+
+function isStaleOpenPaymentOrder(order, txid = "", nowMs = Date.now()) {
+  if (!order || txid || isTerminalPaymentOrderStatus(order.status)) {
+    return false;
+  }
+
+  const createdAtMs = new Date(order.created_at || 0).getTime();
+  if (!Number.isFinite(createdAtMs) || createdAtMs <= 0) {
+    return false;
+  }
+
+  return nowMs - createdAtMs >= STALE_OPEN_PAYMENT_MS;
+}
+
 async function completeSyncedPayment(order, payment, txid) {
   return transaction(async (connection) => {
     const lockedOrder = await findPaymentOrderForUpdate(order.order_no, connection);
@@ -59,7 +77,8 @@ async function completeSyncedPayment(order, payment, txid) {
       return false;
     }
 
-    if (!["pending", "approved"].includes(lockedOrder.status)) {
+    const canRecoverTerminalOrder = isTerminalPaymentOrderStatus(lockedOrder.status) && Boolean(String(txid || "").trim());
+    if (!["pending", "approved"].includes(lockedOrder.status) && !canRecoverTerminalOrder) {
       return false;
     }
 
@@ -140,6 +159,21 @@ async function syncOnePaymentOrder(order) {
     return "failed";
   }
 
+  if (isStaleOpenPaymentOrder(order, txid)) {
+    await updatePaymentStatus(order.order_no, "failed", {
+      paymentId: order.pi_payment_id,
+      metadata: {
+        ...getPaymentMetadata(payment),
+        autoSyncedAt: new Date().toISOString(),
+        autoSyncedPaymentStatus: payment.status || "",
+        paymentRecoveryAllowed: true,
+        staleOpenTimedOutAt: new Date().toISOString(),
+        staleOpenReason: "pi_payment_not_completed_timeout"
+      }
+    });
+    return "failed";
+  }
+
   if (txid) {
     if (status !== "completed") {
       await completePiPayment(order.pi_payment_id, txid);
@@ -215,5 +249,7 @@ function startPaymentScheduler() {
 
 module.exports = {
   startPaymentScheduler,
-  runPaymentMaintenance
+  runPaymentMaintenance,
+  normalizePaymentStatus,
+  isStaleOpenPaymentOrder
 };

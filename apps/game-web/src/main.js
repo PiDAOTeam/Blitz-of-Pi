@@ -3112,19 +3112,67 @@ async function Jr(e) {
     console.warn("\u540C\u6B65\u672A\u5B8C\u6210 Pi \u652F\u4ED8\u5931\u8D25", o);
   }
 }
+function getRechargeResultPaymentId(e) {
+  return e?.identifier || e?.paymentId || "";
+}
+function getRechargeResultTxid(e) {
+  return e?.transaction?.txid || e?.txid || "";
+}
+async function cancelRechargeOrderSilently(e, t = "pi_payment_failed") {
+  if (!e) return;
+  try {
+    await w("/api/payments/cancel", { method: "POST", body: JSON.stringify({ orderNo: e, reason: t }) });
+  } catch (r) {
+    console.warn("\u53D6\u6D88\u5145\u503C\u8BA2\u5355\u540C\u6B65\u5931\u8D25", r);
+  }
+}
 async function Yr(e, t) {
   if (!Number.isFinite(e) || e <= 0) throw new Error(n("invalidRechargeAmount"));
-  if (!window.Pi) throw new Error(n("piPaymentInBrowser"));
-  const r = await w("/api/payments/recharge-order", { method: "POST", body: JSON.stringify({ amount: e }) });
-  t && (t.textContent = n("orderCreated", { orderNo: r.orderNo })), window.Pi.createPayment({ amount: r.amount, memo: r.memo, metadata: { orderNo: r.orderNo, type: "wallet_recharge" } }, { onReadyForServerApproval: async (o) => {
-    t && (t.textContent = n("approvingPayment")), await w("/api/payments/approve", { method: "POST", body: JSON.stringify({ orderNo: r.orderNo, paymentId: o }) });
-  }, onReadyForServerCompletion: async (o, s) => {
-    t && (t.textContent = n("completingPayment")), await w("/api/payments/complete", { method: "POST", body: JSON.stringify({ orderNo: r.orderNo, paymentId: o, txid: s }) }), await D(), t && (t.textContent = n("rechargeSuccess")), window.setTimeout(_, 900);
-  }, onCancel: () => {
-    t && (t.textContent = n("paymentCanceled")), w("/api/payments/cancel", { method: "POST", body: JSON.stringify({ orderNo: r.orderNo }) }).catch((o) => console.warn("\u53D6\u6D88\u8BA2\u5355\u540C\u6B65\u5931\u8D25", o));
-  }, onError: (o) => {
-    console.error("Pi \u652F\u4ED8\u5931\u8D25", o), t && (t.textContent = n("piPaymentFailed", { message: N(o) }));
-  } });
+  const r = await An();
+  if (!r) throw new Error(n("piPaymentInBrowser"));
+  await ensurePiSdkInitialized(r, xn());
+  const o = await w("/api/payments/recharge-order", { method: "POST", body: JSON.stringify({ amount: e }) });
+  let s = !1, l = !1, c = !1;
+  const d = async (u) => {
+    const h = getRechargeResultPaymentId(u), p = getRechargeResultTxid(u);
+    if (!h && !p) return !1;
+    try {
+      await Jr({ ...u, paymentId: h || void 0, txid: p || void 0, metadata: { ...(u?.metadata || {}), orderNo: o.orderNo } }), c = !0;
+      return !0;
+    } catch (f) {
+      console.warn("\u540C\u6B65\u5145\u503C\u652F\u4ED8\u72B6\u6001\u5931\u8D25", f);
+      return !1;
+    }
+  };
+  t && (t.textContent = n("orderCreated", { orderNo: o.orderNo }));
+  try {
+    const u = await Promise.resolve(r.createPayment({ amount: o.amount, memo: o.memo, metadata: { orderNo: o.orderNo, type: "wallet_recharge" } }, { onReadyForServerApproval: async (h) => {
+      s = !0, t && (t.textContent = n("approvingPayment")), await w("/api/payments/approve", { method: "POST", body: JSON.stringify({ orderNo: o.orderNo, paymentId: h }) });
+    }, onReadyForServerCompletion: async (h, p) => {
+      l = !0, t && (t.textContent = n("completingPayment")), await w("/api/payments/complete", { method: "POST", body: JSON.stringify({ orderNo: o.orderNo, paymentId: h, txid: p }) }), c = !0, await D(), t && (t.textContent = n("rechargeSuccess")), window.setTimeout(_, 900);
+    }, onCancel: () => {
+      t && (t.textContent = n("paymentCanceled")), cancelRechargeOrderSilently(o.orderNo, "user_cancelled");
+    }, onError: async (h) => {
+      console.error("Pi \u652F\u4ED8\u5931\u8D25", h);
+      const p = await d(h);
+      if (!p) {
+        await cancelRechargeOrderSilently(o.orderNo, "pi_create_payment_error");
+      }
+      t && (t.textContent = n("piPaymentFailed", { message: N(h) }));
+    } }));
+    if (!l && !c) {
+      const h = await d(u);
+      if (!h && !s) {
+        await cancelRechargeOrderSilently(o.orderNo, "pi_payment_not_started");
+      }
+    }
+  } catch (u) {
+    const h = await d(u);
+    if (!h && !s) {
+      await cancelRechargeOrderSilently(o.orderNo, "pi_create_payment_exception");
+    }
+    throw u;
+  }
 }
 function nt(e = n("matchingDefault")) {
   const t = Qt(), r = Ce(), o = a.matchCanCancel || t >= r, s = Math.max(0, r - t), l = a.matchCancelling ? n("canceling") : o ? n("cancelMatch") : n("cancelAfter", { seconds: s }), c = matchIsRecoverable(), d = c ? n("matchRecoverHint") : o ? n("canCancelHint") : n("cancelAfter", { seconds: s }), u = c ? `

@@ -117,6 +117,14 @@ function getPaymentTxid(payment, fallbackTxid = "") {
   );
 }
 
+function isTerminalPaymentOrderStatus(status) {
+  return ["cancelled", "failed", "expired"].includes(String(status || "").toLowerCase());
+}
+
+function canRecoverTerminalRechargeOrder(order, txid) {
+  return isTerminalPaymentOrderStatus(order?.status) && Boolean(String(txid || "").trim());
+}
+
 function validatePiPaymentMatchesOrder(payment, order) {
   const metadata = getPaymentMetadata(payment);
   const paymentAmount = normalizePaymentAmount(payment?.amount);
@@ -217,10 +225,6 @@ async function completeRechargePayment(req, payload) {
     return toPaymentDto(order);
   }
 
-  if (order.status === "cancelled" || order.status === "failed") {
-    throw new Error("订单状态不可完成");
-  }
-
   if (!payload.paymentId || !payload.txid) {
     throw new Error("缺少 Pi paymentId 或 txid");
   }
@@ -234,8 +238,14 @@ async function completeRechargePayment(req, payload) {
     throw new Error("缺少链上 TXID，无法完成到账");
   }
 
+  const recoverTerminalOrder = canRecoverTerminalRechargeOrder(order, txid);
+
   if (["cancelled", "failed", "error"].includes(paymentStatus)) {
     throw new Error(`Pi 支付状态不可完成：${payment.status || "unknown"}`);
+  }
+
+  if (!recoverTerminalOrder && isTerminalPaymentOrderStatus(order.status)) {
+    throw new Error("订单状态不可完成");
   }
 
   if (paymentStatus !== "completed") {
@@ -253,7 +263,7 @@ async function completeRechargePayment(req, payload) {
       return lockedOrder;
     }
 
-    if (lockedOrder.status === "cancelled" || lockedOrder.status === "failed") {
+    if (!canRecoverTerminalRechargeOrder(lockedOrder, txid) && isTerminalPaymentOrderStatus(lockedOrder.status)) {
       throw new Error("订单状态不可完成");
     }
 
@@ -401,5 +411,7 @@ module.exports = {
   completeRechargePayment,
   cancelRechargePayment,
   syncIncompletePayment,
-  getAdminPaymentOrders
+  getAdminPaymentOrders,
+  isTerminalPaymentOrderStatus,
+  canRecoverTerminalRechargeOrder
 };
