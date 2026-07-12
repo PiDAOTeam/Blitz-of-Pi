@@ -330,6 +330,23 @@ function isPiSdkNotInitializedError(e) {
 function resetPiSdkInitializedState() {
   window.__BLITZ_PI_INITIALIZED__ = false, window.__BLITZ_PI_INITIALIZED_SANDBOX__ = null, window.__BLITZ_PI_INIT_PROMISE__ = null, window.__BLITZ_PI_INIT_PROMISE_SANDBOX__ = null;
 }
+function getPiPaymentsScopeMarker() {
+  return window.__BLITZ_PI_PAYMENTS_SCOPE__ || null;
+}
+function hasPiPaymentsScopeForCurrentPage(e) {
+  const t = getPiPaymentsScopeMarker();
+  return !!t && t.sandbox === e;
+}
+function persistPiAuthSnapshot(e, t) {
+  if (!e?.user?.uid) return;
+  try {
+    localStorage.setItem("blitz_pi_auth", JSON.stringify({ uid: e.user.uid, username: e.user.username || "", loggedAt: Date.now(), sandbox: t }));
+  } catch {
+  }
+}
+function markPiPaymentsScopeReady(e, t) {
+  window.__BLITZ_PI_PAYMENTS_SCOPE__ = { sandbox: e, uid: t?.user?.uid || "", grantedAt: Date.now() }, persistPiAuthSnapshot(t, e);
+}
 async function ensurePiSdkInitialized(e, t, r = {}) {
   if (!e || typeof e.init != "function") throw new Error(n("piSdkMissing"));
   const o = !!r.force;
@@ -357,17 +374,25 @@ async function ensurePiSdkInitialized(e, t, r = {}) {
 async function authenticatePiWithRetry(e, t, r) {
   await ensurePiSdkInitialized(e, r);
   try {
-    return await e.authenticate(["username", "payments"], t);
+    const o = await e.authenticate(["username", "payments"], t);
+    return markPiPaymentsScopeReady(r, o), o;
   } catch (o) {
     if (!isPiSdkNotInitializedError(o)) throw o;
     console.warn("[pi] SDK authenticate called before init was ready. Retrying init once.", o), resetPiSdkInitializedState(), await piSdkSleep(240), await ensurePiSdkInitialized(e, r, { force: true });
     try {
-      return await e.authenticate(["username", "payments"], t);
+      const s = await e.authenticate(["username", "payments"], t);
+      return markPiPaymentsScopeReady(r, s), s;
     } catch (s) {
       if (isPiSdkNotInitializedError(s)) throw new Error(a.language === "zh-CN" ? "Pi 登录组件加载较慢，请点击重新进入，或关闭页面后再打开。" : "Pi login is still loading. Please re-enter or reopen the page.");
       throw s;
     }
   }
+}
+async function ensurePiPaymentsScope(e, t, r = {}) {
+  if (!r.force && hasPiPaymentsScopeForCurrentPage(t)) return null;
+  return await authenticatePiWithRetry(e, async (o) => {
+    console.warn("发现未完成 Pi 支付", o), await Jr(o);
+  }, t);
 }
 async function w(e, t) {
   const { timeoutMs = Cn, ...requestOptions } = t || {};
@@ -3130,48 +3155,59 @@ async function Yr(e, t) {
   if (!Number.isFinite(e) || e <= 0) throw new Error(n("invalidRechargeAmount"));
   const r = await An();
   if (!r) throw new Error(n("piPaymentInBrowser"));
-  await ensurePiSdkInitialized(r, xn());
-  const o = await w("/api/payments/recharge-order", { method: "POST", body: JSON.stringify({ amount: e }) });
-  let s = !1, l = !1, c = !1;
-  const d = async (u) => {
-    const h = getRechargeResultPaymentId(u), p = getRechargeResultTxid(u);
-    if (!h && !p) return !1;
+  const o = xn();
+  await ensurePiSdkInitialized(r, o), await ensurePiPaymentsScope(r, o);
+  const s = await w("/api/payments/recharge-order", { method: "POST", body: JSON.stringify({ amount: e }) });
+  let l = !1, c = !1, d = !1;
+  const u = async (h) => {
+    const p = getRechargeResultPaymentId(h), f = getRechargeResultTxid(h);
+    if (!p && !f) return !1;
     try {
-      await Jr({ ...u, paymentId: h || void 0, txid: p || void 0, metadata: { ...(u?.metadata || {}), orderNo: o.orderNo } }), c = !0;
+      await Jr({ ...h, paymentId: p || void 0, txid: f || void 0, metadata: { ...(h?.metadata || {}), orderNo: s.orderNo } }), d = !0;
       return !0;
-    } catch (f) {
-      console.warn("\u540C\u6B65\u5145\u503C\u652F\u4ED8\u72B6\u6001\u5931\u8D25", f);
+    } catch (m) {
+      console.warn("\u540C\u6B65\u5145\u503C\u652F\u4ED8\u72B6\u6001\u5931\u8D25", m);
       return !1;
     }
   };
-  t && (t.textContent = n("orderCreated", { orderNo: o.orderNo }));
+  t && (t.textContent = n("orderCreated", { orderNo: s.orderNo }));
+  const h = () => Promise.resolve(r.createPayment({ amount: s.amount, memo: s.memo, metadata: { orderNo: s.orderNo, type: "wallet_recharge" } }, { onReadyForServerApproval: async (p) => {
+    l = !0, t && (t.textContent = n("approvingPayment")), await w("/api/payments/approve", { method: "POST", body: JSON.stringify({ orderNo: s.orderNo, paymentId: p }) });
+  }, onReadyForServerCompletion: async (p, f) => {
+    c = !0, t && (t.textContent = n("completingPayment")), await w("/api/payments/complete", { method: "POST", body: JSON.stringify({ orderNo: s.orderNo, paymentId: p, txid: f }) }), d = !0, await D(), t && (t.textContent = n("rechargeSuccess")), window.setTimeout(_, 900);
+  }, onCancel: () => {
+    t && (t.textContent = n("paymentCanceled")), cancelRechargeOrderSilently(s.orderNo, "user_cancelled");
+  }, onError: async (p) => {
+    console.error("Pi \u652F\u4ED8\u5931\u8D25", p);
+    const f = await u(p);
+    if (!f) {
+      await cancelRechargeOrderSilently(s.orderNo, "pi_create_payment_error");
+    }
+    t && (t.textContent = n("piPaymentFailed", { message: N(p) }));
+  } }));
   try {
-    const u = await Promise.resolve(r.createPayment({ amount: o.amount, memo: o.memo, metadata: { orderNo: o.orderNo, type: "wallet_recharge" } }, { onReadyForServerApproval: async (h) => {
-      s = !0, t && (t.textContent = n("approvingPayment")), await w("/api/payments/approve", { method: "POST", body: JSON.stringify({ orderNo: o.orderNo, paymentId: h }) });
-    }, onReadyForServerCompletion: async (h, p) => {
-      l = !0, t && (t.textContent = n("completingPayment")), await w("/api/payments/complete", { method: "POST", body: JSON.stringify({ orderNo: o.orderNo, paymentId: h, txid: p }) }), c = !0, await D(), t && (t.textContent = n("rechargeSuccess")), window.setTimeout(_, 900);
-    }, onCancel: () => {
-      t && (t.textContent = n("paymentCanceled")), cancelRechargeOrderSilently(o.orderNo, "user_cancelled");
-    }, onError: async (h) => {
-      console.error("Pi \u652F\u4ED8\u5931\u8D25", h);
-      const p = await d(h);
-      if (!p) {
-        await cancelRechargeOrderSilently(o.orderNo, "pi_create_payment_error");
-      }
-      t && (t.textContent = n("piPaymentFailed", { message: N(h) }));
-    } }));
-    if (!l && !c) {
-      const h = await d(u);
-      if (!h && !s) {
-        await cancelRechargeOrderSilently(o.orderNo, "pi_payment_not_started");
+    let p;
+    try {
+      p = await h();
+    } catch (f) {
+      if (/without\s+["']?payments["']?\s+scope/i.test(N(f))) {
+        await ensurePiPaymentsScope(r, o, { force: true }), p = await h();
+      } else {
+        throw f;
       }
     }
-  } catch (u) {
-    const h = await d(u);
-    if (!h && !s) {
-      await cancelRechargeOrderSilently(o.orderNo, "pi_create_payment_exception");
+    if (!c && !d) {
+      const f = await u(p);
+      if (!f && !l) {
+        await cancelRechargeOrderSilently(s.orderNo, "pi_payment_not_started");
+      }
     }
-    throw u;
+  } catch (p) {
+    const f = await u(p);
+    if (!f && !l) {
+      await cancelRechargeOrderSilently(s.orderNo, "pi_create_payment_exception");
+    }
+    throw p;
   }
 }
 function nt(e = n("matchingDefault")) {
