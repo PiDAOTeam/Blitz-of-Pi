@@ -145,11 +145,13 @@ function toPublicWeeklyEstimate(bundle = {}) {
 function getEstimatedRewardForUser(bundle, user = {}) {
   const piUid = String(user.piUserId || user.pi_user_id || "").trim();
   const piUsername = String(user.piUsername || user.pi_username || "").trim().toLowerCase();
+  const hashpiUserId = String(user.hashpiUserId || user.hashpi_user_id || "").trim();
   const rewards = Array.isArray(bundle?.rewards) ? bundle.rewards : [];
   const reward = rewards.find((item) => {
     const itemPiUid = String(item.piUid || item.pi_uid || "").trim();
     const itemPiUsername = String(item.piUsername || item.pi_username || "").trim().toLowerCase();
-    return (piUid && itemPiUid === piUid) || (piUsername && itemPiUsername === piUsername);
+    const itemHashPiUserId = String(item.hashpiUserId || item.hashpi_user_id || "").trim();
+    return (piUid && itemPiUid === piUid) || (piUsername && itemPiUsername === piUsername) || (hashpiUserId && itemHashPiUserId === hashpiUserId);
   });
 
   if (!reward) {

@@ -209,11 +209,18 @@ async function getPointsBattleStats({ startAt, endAt, sourceMode = "points_battl
   };
 }
 
-async function mapUsersByPiIdentity(piUids = [], piUsernames = []) {
+function extractHashPiUserId(value = "") {
+  const safeValue = String(value || "").trim();
+  if (!safeValue) return "";
+  return safeValue.startsWith("hashpi_") ? safeValue.slice("hashpi_".length) : "";
+}
+
+async function mapUsersByPiIdentity(piUids = [], piUsernames = [], hashpiUserIds = []) {
   const uidList = [...new Set(piUids.map((item) => String(item || "").trim()).filter(Boolean))];
   const usernameList = [...new Set(piUsernames.map((item) => String(item || "").trim()).filter(Boolean))];
+  const hashpiList = [...new Set(hashpiUserIds.map((item) => String(item || "").trim()).filter(Boolean))];
 
-  if (!uidList.length && !usernameList.length) return new Map();
+  if (!uidList.length && !usernameList.length && !hashpiList.length) return new Map();
 
   const clauses = [];
   const params = [];
@@ -225,17 +232,35 @@ async function mapUsersByPiIdentity(piUids = [], piUsernames = []) {
     clauses.push(`pi_username IN (${usernameList.map(() => "?").join(",")})`);
     params.push(...usernameList);
   }
+  if (hashpiList.length) {
+    const placeholders = hashpiList.map(() => "?").join(",");
+    clauses.push(`uid IN (${placeholders})`);
+    params.push(...hashpiList.map((item) => `hashpi_${item}`));
+    clauses.push(`pi_user_id IN (${placeholders})`);
+    params.push(...hashpiList.map((item) => `hashpi_${item}`));
+  }
 
   const rows = await query(
-    `SELECT uid, pi_user_id, pi_username
+    `SELECT uid, pi_user_id, pi_username, profile_completed, created_at, last_login_at, id
      FROM users
-     WHERE ${clauses.join(" OR ")}`,
+     WHERE ${clauses.join(" OR ")}
+     ORDER BY
+       CASE WHEN last_login_at IS NULL THEN 1 ELSE 0 END,
+       last_login_at DESC,
+       CASE WHEN profile_completed = 1 THEN 0 ELSE 1 END,
+       CASE WHEN uid LIKE 'pi_%' THEN 0 ELSE 1 END,
+       created_at DESC,
+       id DESC`,
     params
   );
   const map = new Map();
   for (const row of rows) {
-    if (row.pi_user_id) map.set(`uid:${row.pi_user_id}`, row.uid);
-    if (row.pi_username) map.set(`name:${String(row.pi_username).toLowerCase()}`, row.uid);
+    if (row.pi_user_id && !map.has(`uid:${row.pi_user_id}`)) map.set(`uid:${row.pi_user_id}`, row.uid);
+    if (row.pi_username && !map.has(`name:${String(row.pi_username).toLowerCase()}`)) {
+      map.set(`name:${String(row.pi_username).toLowerCase()}`, row.uid);
+    }
+    const hashpiUserId = extractHashPiUserId(row.uid) || extractHashPiUserId(row.pi_user_id);
+    if (hashpiUserId && !map.has(`hashpi:${hashpiUserId}`)) map.set(`hashpi:${hashpiUserId}`, row.uid);
   }
   return map;
 }
@@ -248,7 +273,7 @@ function normalizeSnapshotUsers(users = []) {
       piUsername: String(user.pi_username || user.piUsername || user.username || "").trim(),
       nodeCount: Math.max(0, Math.floor(Number(user.node_count || user.nodeCount || 0)))
     }))
-    .filter((user) => user.piUid && user.nodeCount > 0);
+    .filter((user) => (user.piUid || user.hashpiUserId) && user.nodeCount > 0);
 }
 
 function allocateIntegerRewards({ poolPoints, users, minRewardPoints = 1, subsidyPointsPerUser = 0 }) {
@@ -398,12 +423,14 @@ async function createOrReplacePeriodWithRewards({
     const periodId = Number(periodResult.insertId || 0);
     const piUids = allocation.rewards.map((reward) => reward.piUid);
     const piUsernames = allocation.rewards.map((reward) => reward.piUsername);
-    const userMap = await mapUsersByPiIdentity(piUids, piUsernames);
+    const hashpiUserIds = allocation.rewards.map((reward) => reward.hashpiUserId);
+    const userMap = await mapUsersByPiIdentity(piUids, piUsernames, hashpiUserIds);
 
     for (const reward of allocation.rewards) {
       const uid =
         userMap.get(`uid:${reward.piUid}`) ||
         userMap.get(`name:${String(reward.piUsername || "").toLowerCase()}`) ||
+        userMap.get(`hashpi:${String(reward.hashpiUserId || "").trim()}`) ||
         "";
       const orderNo = `watch_shareholder:${seasonNo}:${reward.piUid}:POINTS`;
       await executor(connection).execute(
@@ -512,8 +539,9 @@ async function linkRewardsForUser(user = {}) {
   const uid = String(user.uid || "").trim();
   const piUid = String(user.piUserId || user.pi_user_id || "").trim();
   const piUsername = String(user.piUsername || user.pi_username || "").trim();
+  const hashpiUserId = String(user.hashpiUserId || user.hashpi_user_id || "").trim();
 
-  if (!uid || (!piUid && !piUsername)) return 0;
+  if (!uid || (!piUid && !piUsername && !hashpiUserId)) return 0;
 
   const clauses = [];
   const params = [];
@@ -525,15 +553,31 @@ async function linkRewardsForUser(user = {}) {
     clauses.push("LOWER(pi_username) = LOWER(?)");
     params.push(piUsername);
   }
+  if (hashpiUserId) {
+    clauses.push("hashpi_user_id = ?");
+    params.push(hashpiUserId);
+  }
 
-  const result = await query(
+  const emptyUidResult = await query(
     `UPDATE watch_shareholder_rewards
      SET uid = ?
      WHERE (uid = '' OR uid IS NULL)
        AND (${clauses.join(" OR ")})`,
     [uid, ...params]
   );
-  return Number(result?.affectedRows || 0);
+
+  const reassignedPendingResult = await query(
+    `UPDATE watch_shareholder_rewards
+     SET uid = ?
+     WHERE uid <> ?
+       AND uid <> ''
+       AND reward_points > 0
+       AND status IN ('pending', 'queued', 'failed', 'manual_review')
+       AND (${clauses.join(" OR ")})`,
+    [uid, uid, ...params]
+  );
+
+  return Number(emptyUidResult?.affectedRows || 0) + Number(reassignedPendingResult?.affectedRows || 0);
 }
 
 async function listUserRewards(uid, limit = 20) {

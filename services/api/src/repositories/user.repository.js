@@ -122,6 +122,12 @@ async function normalizeNickname(nickname) {
   return value;
 }
 
+function extractHashPiUserId(value = "") {
+  const safeValue = String(value || "").trim();
+  if (!safeValue) return "";
+  return safeValue.startsWith("hashpi_") ? safeValue.slice("hashpi_".length) : "";
+}
+
 async function upsertUser({ piUserId, piUsername, nickname, avatarUrl, avatarKey }) {
   if (!piUserId) {
     throw new Error("缺少 Pi 用户ID，无法创建真实用户");
@@ -286,9 +292,14 @@ async function adminResetProfileOnboarding(uid) {
 }
 
 function toUserProfile(row) {
+  const hashpiUserId =
+    extractHashPiUserId(row.uid) ||
+    extractHashPiUserId(row.pi_user_id) ||
+    "";
   return {
     uid: row.uid,
     piUserId: row.pi_user_id || "",
+    hashpiUserId,
     piUsername: row.pi_username || "",
     nickname: row.nickname,
     avatarUrl: row.avatar_url || "",
