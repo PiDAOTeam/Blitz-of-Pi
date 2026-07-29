@@ -122,6 +122,23 @@ async function normalizeNickname(nickname) {
   return value;
 }
 
+async function normalizeBridgeNickname({ nickname, piUsername, hashpiUserId }, normalize = normalizeNickname) {
+  const candidates = [nickname, piUsername, `HashPi${hashpiUserId}`]
+    .map((value) => String(value || "").trim())
+    .filter((value, index, values) => value && values.indexOf(value) === index);
+  let lastError;
+
+  for (const candidate of candidates) {
+    try {
+      return await normalize(candidate);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError || new Error("HashPi 昵称无法用于游戏资料");
+}
+
 function extractHashPiUserId(value = "") {
   const safeValue = String(value || "").trim();
   if (!safeValue) return "";
@@ -211,18 +228,22 @@ async function upsertHashPiBridgeUser({ hashpiUserId, piUserId, piUsername, nick
   }
 
   const safePiUserId = String(piUserId || "").trim();
+  const safeNickname = await normalizeBridgeNickname({
+    nickname,
+    piUsername,
+    hashpiUserId: safeHashPiUserId
+  });
   if (safePiUserId) {
     return upsertUser({
       piUserId: safePiUserId,
       piUsername,
-      nickname,
+      nickname: safeNickname,
       avatarUrl,
       avatarKey
     });
   }
 
   const uid = `hashpi_${safeHashPiUserId}`;
-  const safeNickname = await normalizeNickname(nickname || `HashPi${safeHashPiUserId}`);
   const safeAvatarKey = (await isValidAvatarKey(avatarKey)) ? avatarKey : DEFAULT_AVATAR_KEY;
 
   await query(
@@ -324,5 +345,6 @@ module.exports = {
   adminSetUserStatus,
   adminResetProfileOnboarding,
   isValidAvatarKey,
+  normalizeBridgeNickname,
   toUserProfile
 };
