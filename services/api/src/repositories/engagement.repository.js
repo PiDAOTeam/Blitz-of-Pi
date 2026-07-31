@@ -534,6 +534,9 @@ async function retryEngagementRewardJob(id) {
   const result = await query(
     `UPDATE engagement_asset_reward_jobs
      SET status = 'queued',
+         attempts = 0,
+         locked_at = NULL,
+         processed_at = NULL,
          next_retry_at = NOW(),
          last_error = ''
      WHERE id = ?
