@@ -83,10 +83,19 @@ async function ensureEngagementRewardJobSchema() {
   );
 }
 
+function formatBusinessDate(value = new Date()) {
+  if (!(value instanceof Date)) return String(value || "").slice(0, 10);
+
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  const day = String(value.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 async function getTodayString(connection = null) {
   const [rows] = await executor(connection).execute("SELECT CURDATE() AS today");
   const today = rows[0]?.today;
-  return today instanceof Date ? today.toISOString().slice(0, 10) : String(today).slice(0, 10);
+  return formatBusinessDate(today);
 }
 
 async function listTodayClaims(uid, connection = null) {
@@ -201,7 +210,7 @@ function buildStatus(config, claims, stats) {
 
   return {
     enabled: engagement.enabled !== false,
-    today: new Date().toISOString().slice(0, 10),
+    today: formatBusinessDate(),
     stats,
     dailySignIn: {
       enabled: engagement.enabled !== false && dailySignIn.enabled !== false,
@@ -580,6 +589,7 @@ module.exports = {
   claimDailySignIn,
   claimDailyTask,
   ensureEngagementRewardJobSchema,
+  formatBusinessDate,
   getEngagementStatus,
   getEngagementRewardQueueStats,
   listAdminEngagementRewardJobs,
