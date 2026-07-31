@@ -950,7 +950,7 @@ function renderExternalHealth(e = {}, t = {}) {
         `).join("") || '<article class="observer-event empty"><b>暂无检测</b><span>等待接口调用后写入</span><small>-</small></article>'}
       </div>
       <div class="external-queue-grid">
-        ${f("每日奖励队列", Number(s.retryable || 0), `排队 ${Number(s.queued || 0)} · 失败 ${Number(s.failed || 0)} · 人工 ${Number(s.manualReview || 0)}${Number(s.hashpiUnbound || 0) ? ` · 未绑定HashPi ${Number(s.hashpiUnbound || 0)}` : ""}`)}
+        ${f("每日奖励队列", Number(s.retryable || 0), `排队 ${Number(s.queued || 0)} · 失败 ${Number(s.failed || 0)} · 人工 ${Number(s.manualReview || 0)}${Number(s.waitingIdentity || 0) ? ` · 等待身份绑定 ${Number(s.waitingIdentity || 0)}` : ""}`)}
         ${f("腕表分红队列", Number(r.retryable || 0), `失败 ${Number(r.failed || 0)} · 人工 ${Number(r.manualReview || 0)} · 待发 ${Number(r.pendingPoints || 0)}积分`)}
       </div>
       ${n.length ? `<div class="external-failure-list">${n.slice(0, 4).map((m) => `<span>${i(externalActionLabel(m))} · ${i(tt(m.at))} · ${i(m.error || "-")}</span>`).join("")}</div>` : ""}
@@ -2031,7 +2031,7 @@ function renderEngagementClaim(e) {
   `;
 }
 function engagementRewardJobStatus(e = "") {
-  return { queued: "待发放", processing: "发放中", paid: "已发放", failed: "失败待重试", manual_review: "人工处理" }[e] || e || "-";
+  return { queued: "待发放", processing: "发放中", paid: "已发放", failed: "失败待重试", manual_review: "人工处理", waiting_identity: "等待 HashPi 身份绑定" }[e] || e || "-";
 }
 function renderInviteCommissionJob(e) {
   const t = ["failed", "manual_review", "processing"].includes(e.status);
@@ -2046,7 +2046,7 @@ function renderInviteCommissionJob(e) {
   `;
 }
 function renderEngagementRewardJob(e) {
-  const t = e.assetType === "POINTS" ? `${Math.floor(Number(e.amount || 0))} 积分` : `${Number(e.amount || 0).toFixed(2).replace(/\.?0+$/, "")} ${i(e.assetType || "")}`, a = ["failed", "manual_review", "processing"].includes(e.status);
+  const t = e.assetType === "POINTS" ? `${Math.floor(Number(e.amount || 0))} 积分` : `${Number(e.amount || 0).toFixed(2).replace(/\.?0+$/, "")} ${i(e.assetType || "")}`, a = ["failed", "manual_review", "processing", "waiting_identity"].includes(e.status);
   return `
     <article class="row-card growth-row">
       <strong>${i(engagementRewardJobStatus(e.status))}</strong>

@@ -5,13 +5,16 @@ const {
   markEngagementRewardFailed,
   markEngagementRewardPaid,
   markEngagementRewardProcessing,
-  resetStaleEngagementRewardProcessing
+  markEngagementRewardWaitingIdentity,
+  resetStaleEngagementRewardProcessing,
+  wakeEngagementIdentityJobs
 } = require("../repositories/engagement.repository");
 
 const DEFAULT_BATCH_SIZE = 20;
 const DEFAULT_STALE_MINUTES = 10;
 const DEFAULT_CONCURRENCY = 4;
 const DEFAULT_JOB_TIMEOUT_MS = 30_000;
+const DEFAULT_IDENTITY_RETRY_SECONDS = 86_400;
 
 function toGatewayUser(row = {}) {
   return {
@@ -22,9 +25,15 @@ function toGatewayUser(row = {}) {
   };
 }
 
-function getNextRetrySeconds(attempts) {
+function getNextRetrySeconds(attempts, random = Math.random) {
   const attempt = Math.max(1, Number(attempts || 1));
-  return Math.min(1800, 30 * 2 ** Math.min(5, attempt - 1));
+  const baseSeconds = Math.min(1800, 30 * 2 ** Math.min(5, attempt - 1));
+  const jitter = Math.floor(baseSeconds * 0.2 * Math.max(0, Math.min(1, Number(random()) || 0)));
+  return Math.min(1800, baseSeconds + jitter);
+}
+
+function isHashPiIdentityUnboundError(error) {
+  return String(error?.message || error || "").includes("未绑定 HashPi 用户");
 }
 
 async function withEngagementRewardRunLock(callback) {
@@ -87,14 +96,31 @@ async function processEngagementRewardJob(id) {
       remark: job.remark || "Pi闪电战每日奖励"
     }), Math.max(10_000, Number(process.env.ENGAGEMENT_REWARD_JOB_TIMEOUT_MS || DEFAULT_JOB_TIMEOUT_MS)), "资产奖励任务超时");
     await markEngagementRewardPaid(job.id);
+    const awakened = await wakeEngagementIdentityJobs(job.uid).catch((error) => {
+      console.warn(`[engagement-reward] wake identity jobs failed uid=${job.uid}: ${error.message}`);
+      return 0;
+    });
 
     return {
       id: job.id,
       status: "paid",
       assetType: job.asset_type,
-      amount: Number(job.amount || 0)
+      amount: Number(job.amount || 0),
+      awakened
     };
   } catch (error) {
+    if (isHashPiIdentityUnboundError(error)) {
+      const identityRetrySeconds = Number(
+        process.env.ENGAGEMENT_IDENTITY_RETRY_SECONDS || DEFAULT_IDENTITY_RETRY_SECONDS
+      );
+      await markEngagementRewardWaitingIdentity(job.id, error.message, identityRetrySeconds);
+      return {
+        id: job.id,
+        status: "waiting_identity",
+        error: error.message || "等待 HashPi 身份绑定"
+      };
+    }
+
     const attempts = Number(job.attempts || 1);
     const manualReview = attempts >= Number(job.max_attempts || 5);
     await markEngagementRewardFailed(job.id, error.message || "发放失败", {
@@ -128,6 +154,8 @@ async function processEngagementRewardOnce(limit = DEFAULT_BATCH_SIZE) {
 }
 
 module.exports = {
+  getNextRetrySeconds,
+  isHashPiIdentityUnboundError,
   mapWithConcurrency,
   processEngagementRewardJob,
   processEngagementRewardOnce

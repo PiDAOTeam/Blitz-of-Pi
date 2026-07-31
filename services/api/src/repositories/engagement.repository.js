@@ -457,10 +457,23 @@ async function listEngagementRewardCandidates(limit = 20) {
     `SELECT j.*, u.pi_user_id, u.pi_username, u.nickname, u.avatar_key
      FROM engagement_asset_reward_jobs j
      LEFT JOIN users u ON u.uid = j.uid
-     WHERE j.status IN ('queued', 'failed')
+     WHERE (
+       j.status IN ('queued', 'failed')
        AND j.attempts < j.max_attempts
        AND (j.next_retry_at IS NULL OR j.next_retry_at <= NOW())
-     ORDER BY j.id ASC
+     ) OR (
+       j.status = 'waiting_identity'
+       AND (j.next_retry_at IS NULL OR j.next_retry_at <= NOW())
+       AND NOT EXISTS (
+         SELECT 1
+         FROM engagement_asset_reward_jobs earlier
+         WHERE earlier.uid = j.uid
+           AND earlier.status = 'waiting_identity'
+           AND (earlier.next_retry_at IS NULL OR earlier.next_retry_at <= NOW())
+           AND earlier.id < j.id
+       )
+     )
+     ORDER BY CASE WHEN j.status = 'waiting_identity' THEN 1 ELSE 0 END, j.id ASC
      LIMIT ${safeLimit}`
   );
 }
@@ -474,8 +487,10 @@ async function markEngagementRewardProcessing(id) {
          locked_at = NOW(),
          last_error = ''
      WHERE id = ?
-       AND status IN ('queued', 'failed')
-       AND attempts < max_attempts`,
+       AND (
+         (status IN ('queued', 'failed') AND attempts < max_attempts)
+         OR status = 'waiting_identity'
+       )`,
     [id]
   );
 
@@ -497,6 +512,7 @@ async function markEngagementRewardPaid(id) {
     `UPDATE engagement_asset_reward_jobs
      SET status = 'paid',
          processed_at = NOW(),
+         locked_at = NULL,
          last_error = ''
      WHERE id = ?`,
     [id]
@@ -509,10 +525,47 @@ async function markEngagementRewardFailed(id, errorMessage, { manualReview = fal
     `UPDATE engagement_asset_reward_jobs
      SET status = ?,
          last_error = ?,
-         next_retry_at = DATE_ADD(NOW(), INTERVAL ? SECOND)
+         next_retry_at = DATE_ADD(NOW(), INTERVAL ? SECOND),
+         locked_at = NULL
      WHERE id = ?`,
     [status, String(errorMessage || "发放失败").slice(0, 255), Math.max(1, Number(nextRetrySeconds || 60)), id]
   );
+}
+
+async function markEngagementRewardWaitingIdentity(id, errorMessage, nextRetrySeconds = 86400) {
+  await ensureEngagementRewardJobSchema();
+  await query(
+    `UPDATE engagement_asset_reward_jobs
+     SET status = 'waiting_identity',
+         attempts = GREATEST(attempts - 1, 0),
+         next_retry_at = DATE_ADD(NOW(), INTERVAL ? SECOND),
+         locked_at = NULL,
+         processed_at = NULL,
+         last_error = ?
+     WHERE id = ?`,
+    [
+      Math.min(604800, Math.max(3600, Number(nextRetrySeconds || 86400))),
+      String(errorMessage || "等待 HashPi 身份绑定").slice(0, 255),
+      id
+    ]
+  );
+}
+
+async function wakeEngagementIdentityJobs(uid) {
+  await ensureEngagementRewardJobSchema();
+  const result = await query(
+    `UPDATE engagement_asset_reward_jobs
+     SET status = 'queued',
+         attempts = 0,
+         next_retry_at = NOW(),
+         locked_at = NULL,
+         processed_at = NULL,
+         last_error = ''
+     WHERE uid = ?
+       AND status = 'waiting_identity'`,
+    [uid]
+  );
+  return Number(result?.affectedRows || 0);
 }
 
 async function resetStaleEngagementRewardProcessing(staleMinutes = 10) {
@@ -540,7 +593,7 @@ async function retryEngagementRewardJob(id) {
          next_retry_at = NOW(),
          last_error = ''
      WHERE id = ?
-       AND status IN ('failed', 'manual_review', 'processing')`,
+       AND status IN ('failed', 'manual_review', 'processing', 'waiting_identity')`,
     [id]
   );
   return Number(result?.affectedRows || 0) > 0;
@@ -555,8 +608,9 @@ async function getEngagementRewardQueueStats() {
        SUM(CASE WHEN status = 'queued' THEN 1 ELSE 0 END) AS queued,
        SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) AS failed,
        SUM(CASE WHEN status = 'manual_review' THEN 1 ELSE 0 END) AS manual_review,
+       SUM(CASE WHEN status = 'waiting_identity' THEN 1 ELSE 0 END) AS waiting_identity,
        SUM(CASE WHEN status = 'processing' THEN 1 ELSE 0 END) AS processing,
-       SUM(CASE WHEN status IN ('failed', 'manual_review') AND last_error LIKE '%未绑定 HashPi 用户%' THEN 1 ELSE 0 END) AS hashpi_unbound
+       SUM(CASE WHEN status = 'waiting_identity' OR (status IN ('failed', 'manual_review') AND last_error LIKE '%未绑定 HashPi 用户%') THEN 1 ELSE 0 END) AS hashpi_unbound
      FROM engagement_asset_reward_jobs`
   );
   const row = rows[0] || {};
@@ -567,6 +621,7 @@ async function getEngagementRewardQueueStats() {
     queued: Number(row.queued || 0),
     failed: Number(row.failed || 0),
     manualReview: Number(row.manual_review || 0),
+    waitingIdentity: Number(row.waiting_identity || 0),
     processing: Number(row.processing || 0),
     hashpiUnbound: Number(row.hashpi_unbound || 0)
   };
@@ -602,6 +657,8 @@ module.exports = {
   markEngagementRewardFailed,
   markEngagementRewardPaid,
   markEngagementRewardProcessing,
+  markEngagementRewardWaitingIdentity,
+  wakeEngagementIdentityJobs,
   resetStaleEngagementRewardProcessing,
   retryEngagementRewardJob,
   listUserEngagementAssetRewardRows

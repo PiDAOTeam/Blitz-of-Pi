@@ -2,6 +2,8 @@ const { query, transaction } = require("../db/mysql");
 
 let schemaReady = false;
 let lockedByColumnReady = false;
+let maxAttemptsColumnReady = false;
+const DEFAULT_MAX_ATTEMPTS = 8;
 
 function executor(connection) {
   return connection || {
@@ -19,6 +21,7 @@ async function ensureSettlementTaskSchema() {
       mode VARCHAR(32) NOT NULL DEFAULT 'quick_battle',
       status VARCHAR(24) NOT NULL DEFAULT 'pending',
       attempts INT NOT NULL DEFAULT 0,
+      max_attempts INT NOT NULL DEFAULT 8,
       next_run_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       locked_at DATETIME NULL,
       locked_by VARCHAR(128) NOT NULL DEFAULT '',
@@ -34,6 +37,7 @@ async function ensureSettlementTaskSchema() {
   );
 
   await ensureLockedByColumn();
+  await ensureMaxAttemptsColumn();
   schemaReady = true;
 }
 
@@ -51,6 +55,23 @@ async function ensureLockedByColumn() {
   lockedByColumnReady = true;
 }
 
+async function ensureMaxAttemptsColumn() {
+  if (maxAttemptsColumnReady) return;
+
+  try {
+    await query(
+      `ALTER TABLE battle_settlement_tasks
+       ADD COLUMN max_attempts INT NOT NULL DEFAULT ${DEFAULT_MAX_ATTEMPTS} AFTER attempts`
+    );
+  } catch (error) {
+    if (error?.code !== "ER_DUP_FIELDNAME") {
+      throw error;
+    }
+  }
+
+  maxAttemptsColumnReady = true;
+}
+
 async function enqueueSettlementTask(room) {
   await ensureSettlementTaskSchema();
 
@@ -64,8 +85,8 @@ async function enqueueSettlementTask(room) {
        (room_no, mode, status, attempts, next_run_at, last_error, room_payload)
      VALUES (?, ?, 'pending', 0, NOW(), '', CAST(? AS JSON))
      ON DUPLICATE KEY UPDATE
-       mode = CASE WHEN status <> 'succeeded' THEN VALUES(mode) ELSE mode END,
-       room_payload = CASE WHEN status <> 'succeeded' THEN VALUES(room_payload) ELSE room_payload END,
+       mode = CASE WHEN status NOT IN ('succeeded', 'skipped', 'manual_review') THEN VALUES(mode) ELSE mode END,
+       room_payload = CASE WHEN status NOT IN ('succeeded', 'skipped', 'manual_review') THEN VALUES(room_payload) ELSE room_payload END,
        status = CASE WHEN status IN ('failed') THEN 'pending' ELSE status END,
        next_run_at = CASE WHEN status IN ('failed') THEN NOW() ELSE next_run_at END,
        last_error = CASE WHEN status IN ('failed') THEN '' ELSE last_error END,
@@ -100,10 +121,12 @@ async function claimDueSettlementTask(workerId) {
            FROM battle_settlement_tasks
            WHERE (
                status IN ('pending', 'failed')
+               AND attempts < max_attempts
                AND next_run_at <= NOW()
              )
              OR (
                status = 'processing'
+               AND attempts < max_attempts
                AND locked_at < DATE_SUB(NOW(), INTERVAL 2 MINUTE)
              )
            ORDER BY id ASC
@@ -113,10 +136,12 @@ async function claimDueSettlementTask(workerId) {
        AND (
          (
            status IN ('pending', 'failed')
+           AND attempts < max_attempts
            AND next_run_at <= NOW()
          )
          OR (
            status = 'processing'
+           AND attempts < max_attempts
            AND locked_at < DATE_SUB(NOW(), INTERVAL 2 MINUTE)
          )
        )`,
@@ -156,6 +181,21 @@ async function markSettlementTaskSucceeded(id) {
   );
 }
 
+async function markSettlementTaskSkipped(id, reason) {
+  await ensureSettlementTaskSchema();
+  const message = String(reason || "无需继续结算").slice(0, 500);
+  await query(
+    `UPDATE battle_settlement_tasks
+     SET status = 'skipped',
+         finished_at = NOW(),
+         locked_at = NULL,
+         locked_by = '',
+         last_error = ?
+     WHERE id = ?`,
+    [message, id]
+  );
+}
+
 async function markSettlementTaskFailed(id, error, retryDelaySeconds = 10) {
   await ensureSettlementTaskSchema();
   const message = String(error?.message || error || "结算失败").slice(0, 500);
@@ -163,7 +203,8 @@ async function markSettlementTaskFailed(id, error, retryDelaySeconds = 10) {
 
   await query(
     `UPDATE battle_settlement_tasks
-     SET status = 'failed',
+     SET status = CASE WHEN attempts + 1 >= max_attempts THEN 'manual_review' ELSE 'failed' END,
+         finished_at = CASE WHEN attempts + 1 >= max_attempts THEN NOW() ELSE finished_at END,
          attempts = attempts + 1,
          next_run_at = DATE_ADD(NOW(), INTERVAL ? SECOND),
          locked_at = NULL,
@@ -172,6 +213,13 @@ async function markSettlementTaskFailed(id, error, retryDelaySeconds = 10) {
      WHERE id = ?`,
     [safeDelay, message, id]
   );
+
+  return findSettlementTaskById(id);
+}
+
+async function findSettlementTaskById(id) {
+  const rows = await query("SELECT * FROM battle_settlement_tasks WHERE id = ? LIMIT 1", [id]);
+  return rows[0] || null;
 }
 
 async function getSettlementTaskStats() {
@@ -194,6 +242,7 @@ module.exports = {
   enqueueSettlementTask,
   findSettlementTaskByRoomNo,
   claimDueSettlementTask,
+  markSettlementTaskSkipped,
   markSettlementTaskSucceeded,
   markSettlementTaskFailed,
   getSettlementTaskStats

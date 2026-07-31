@@ -2,10 +2,12 @@ const {
   ensureSettlementTaskSchema,
   enqueueSettlementTask,
   claimDueSettlementTask,
+  markSettlementTaskSkipped,
   markSettlementTaskSucceeded,
   markSettlementTaskFailed,
   getSettlementTaskStats
 } = require("../repositories/settlement-task.repository");
+const { findBattleRoom } = require("../repositories/battle.repository");
 const { settleFinishedRoom } = require("./match.service");
 
 const WORKER_ID = `${process.pid}:${Date.now()}`;
@@ -26,7 +28,14 @@ function parseRoomPayload(payload) {
 }
 
 function getRetryDelaySeconds(attempts = 0) {
-  return Math.min(180, 3 * 2 ** Math.min(Number(attempts || 0), 5));
+  return Math.min(180, 3 * 2 ** Math.min(Number(attempts || 0), 6));
+}
+
+function isReleasedTerminalBattle(battle) {
+  return (
+    ["expired", "cancelled"].includes(String(battle?.status || "")) &&
+    String(battle?.asset_settlement_status || "") === "released"
+  );
 }
 
 async function enqueueRealtimeSettlement(room) {
@@ -76,15 +85,35 @@ async function processSettlementTask(task) {
       throw new Error("结算任务缺少房间快照");
     }
 
+    const battle = await findBattleRoom(room.roomNo);
+    if (isReleasedTerminalBattle(battle)) {
+      await markSettlementTaskSkipped(task.id, "房间已过期且资产已释放，无需再次结算");
+      console.log(`[settlement-worker] task skipped ${task.room_no}: released terminal room`);
+      return;
+    }
+
     await settleFinishedRoom(room);
     await markSettlementTaskSucceeded(task.id);
   } catch (error) {
+    const latestBattle = await findBattleRoom(task.room_no).catch(() => null);
+    if (isReleasedTerminalBattle(latestBattle)) {
+      await markSettlementTaskSkipped(task.id, "房间已过期且资产已释放，无需再次结算");
+      console.log(`[settlement-worker] task skipped ${task.room_no}: released after retry`);
+      return;
+    }
+
     const delaySeconds = getRetryDelaySeconds(task.attempts);
     const nextAttempt = Number(task.attempts || 0) + 1;
-    await markSettlementTaskFailed(task.id, error, delaySeconds);
-    console.log(
-      `[settlement-worker] task retry ${task.room_no}: ${error.message}; attempt=${nextAttempt}; next=${delaySeconds}s`
-    );
+    const updatedTask = await markSettlementTaskFailed(task.id, error, delaySeconds);
+    if (updatedTask?.status === "manual_review") {
+      console.warn(
+        `[settlement-worker] task manual review ${task.room_no}: ${error.message}; attempts=${nextAttempt}`
+      );
+    } else {
+      console.log(
+        `[settlement-worker] task retry ${task.room_no}: ${error.message}; attempt=${nextAttempt}; next=${delaySeconds}s`
+      );
+    }
   }
 }
 
@@ -109,5 +138,7 @@ module.exports = {
   enqueueRealtimeSettlement,
   startSettlementWorker,
   drainSettlementTasks,
-  getSettlementTaskStats
+  getSettlementTaskStats,
+  getRetryDelaySeconds,
+  isReleasedTerminalBattle
 };

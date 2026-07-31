@@ -127,6 +127,7 @@ const EXPECTED_BUSINESS_ERROR_MESSAGES = new Set([
   "本期已有用户领取，不能重新生成",
   "今日段位宝箱已领取",
   "Pi UID/用户名未绑定 HashPi 用户",
+  "登录票据已过期",
   "资产网关暂时不可用，请稍后重试",
   "资产网络繁忙，请稍后重试",
   "Pi网络繁忙，请稍后重试",
