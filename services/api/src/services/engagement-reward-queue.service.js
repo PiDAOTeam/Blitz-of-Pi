@@ -1,5 +1,5 @@
 const assetGateway = require("./asset-gateway.service");
-const { query } = require("../db/mysql");
+const { withNamedLock } = require("../db/mysql");
 const {
   listEngagementRewardCandidates,
   markEngagementRewardFailed,
@@ -10,6 +10,8 @@ const {
 
 const DEFAULT_BATCH_SIZE = 20;
 const DEFAULT_STALE_MINUTES = 10;
+const DEFAULT_CONCURRENCY = 4;
+const DEFAULT_JOB_TIMEOUT_MS = 30_000;
 
 function toGatewayUser(row = {}) {
   return {
@@ -26,25 +28,43 @@ function getNextRetrySeconds(attempts) {
 }
 
 async function withEngagementRewardRunLock(callback) {
-  const rows = await query("SELECT GET_LOCK(?, 0) AS locked", ["blitz_engagement_reward_queue"]);
-  const locked = Number(rows[0]?.locked || 0) === 1;
+  return withNamedLock("blitz_engagement_reward_queue", async () => ({
+    locked: true,
+    ...(await callback())
+  }), {
+    locked: false,
+    processed: 0,
+    message: "已有奖励补发任务运行，本次跳过"
+  });
+}
 
-  if (!locked) {
-    return {
-      locked: false,
-      processed: 0,
-      message: "已有奖励补发任务运行，本次跳过"
-    };
-  }
+function withTimeout(promise, timeoutMs, message) {
+  let timer;
 
-  try {
-    return {
-      locked: true,
-      ...(await callback())
-    };
-  } finally {
-    await query("SELECT RELEASE_LOCK(?) AS released", ["blitz_engagement_reward_queue"]);
-  }
+  return Promise.race([
+    promise,
+    new Promise((resolve, reject) => {
+      timer = setTimeout(() => reject(new Error(message)), timeoutMs);
+    })
+  ]).finally(() => clearTimeout(timer));
+}
+
+async function mapWithConcurrency(items, concurrency, callback) {
+  const results = new Array(items.length);
+  const workerCount = Math.min(Math.max(1, Number(concurrency || 1)), items.length || 1);
+  let nextIndex = 0;
+
+  await Promise.all(
+    Array.from({ length: workerCount }, async () => {
+      while (true) {
+        const index = nextIndex++;
+        if (index >= items.length) return;
+        results[index] = await callback(items[index], index);
+      }
+    })
+  );
+
+  return results;
 }
 
 async function processEngagementRewardJob(id) {
@@ -58,14 +78,14 @@ async function processEngagementRewardJob(id) {
   }
 
   try {
-    await assetGateway.reward({
+    await withTimeout(assetGateway.reward({
       assetType: job.asset_type,
       user: toGatewayUser(job),
       orderNo: job.external_order_no,
       amount: Number(job.amount || 0),
       idempotencyKey: job.idempotency_key,
       remark: job.remark || "Pi闪电战每日奖励"
-    });
+    }), Math.max(10_000, Number(process.env.ENGAGEMENT_REWARD_JOB_TIMEOUT_MS || DEFAULT_JOB_TIMEOUT_MS)), "资产奖励任务超时");
     await markEngagementRewardPaid(job.id);
 
     return {
@@ -96,11 +116,8 @@ async function processEngagementRewardOnce(limit = DEFAULT_BATCH_SIZE) {
   return withEngagementRewardRunLock(async () => {
     const resetCount = await resetStaleEngagementRewardProcessing(DEFAULT_STALE_MINUTES);
     const candidates = await listEngagementRewardCandidates(batchSize);
-    const results = [];
-
-    for (const job of candidates) {
-      results.push(await processEngagementRewardJob(job.id));
-    }
+    const concurrency = Math.min(8, Math.max(1, Number(process.env.ENGAGEMENT_REWARD_CONCURRENCY || DEFAULT_CONCURRENCY)));
+    const results = await mapWithConcurrency(candidates, concurrency, (job) => processEngagementRewardJob(job.id));
 
     return {
       resetCount,
@@ -111,6 +128,7 @@ async function processEngagementRewardOnce(limit = DEFAULT_BATCH_SIZE) {
 }
 
 module.exports = {
+  mapWithConcurrency,
   processEngagementRewardJob,
   processEngagementRewardOnce
 };

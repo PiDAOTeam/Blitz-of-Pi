@@ -48,6 +48,28 @@ async function query(sql, params = []) {
   return rows;
 }
 
+async function withNamedLock(name, callback, busyResult = null) {
+  const connection = await getPool().getConnection();
+  let locked = false;
+
+  try {
+    const [rows] = await connection.execute("SELECT GET_LOCK(?, 0) AS locked", [name]);
+    locked = Number(rows[0]?.locked || 0) === 1;
+    if (!locked) return busyResult;
+
+    return await callback(connection);
+  } finally {
+    if (locked) {
+      try {
+        await connection.execute("SELECT RELEASE_LOCK(?) AS released", [name]);
+      } catch (error) {
+        console.error(`[mysql] failed to release named lock ${name}:`, error.message);
+      }
+    }
+    connection.release();
+  }
+}
+
 async function transaction(callback, options = {}) {
   const retries = Math.max(0, Number(options.retries ?? DEFAULT_TRANSACTION_RETRIES));
   const label = options.label || callback.name || "anonymous";
@@ -90,5 +112,6 @@ async function runTransaction(callback) {
 module.exports = {
   query,
   transaction,
+  withNamedLock,
   isRetryableTransactionError
 };

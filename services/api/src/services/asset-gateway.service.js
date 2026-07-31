@@ -182,6 +182,26 @@ function getGatewayMaxAttempts(action) {
   return 2;
 }
 
+async function readGatewayResponseText(response, controller, timeoutMs) {
+  let timer;
+
+  try {
+    return await Promise.race([
+      response.text(),
+      new Promise((resolve, reject) => {
+        timer = setTimeout(() => {
+          controller.abort();
+          const error = new Error("资产网关响应超时");
+          error.name = "AbortError";
+          reject(error);
+        }, timeoutMs);
+      })
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function callGateway(action, payload) {
   const rawBody = JSON.stringify(payload || {});
   const url = getGatewayUrl(action);
@@ -213,7 +233,7 @@ async function callGateway(action, payload) {
         body: rawBody,
         signal: controller.signal
       });
-      const text = await response.text();
+      const text = await readGatewayResponseText(response, controller, timeoutMs);
       let data;
 
       try {
