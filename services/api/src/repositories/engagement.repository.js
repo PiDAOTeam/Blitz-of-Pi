@@ -469,7 +469,6 @@ async function listEngagementRewardCandidates(limit = 20) {
          FROM engagement_asset_reward_jobs earlier
          WHERE earlier.uid = j.uid
            AND earlier.status = 'waiting_identity'
-           AND (earlier.next_retry_at IS NULL OR earlier.next_retry_at <= NOW())
            AND earlier.id < j.id
        )
      )
