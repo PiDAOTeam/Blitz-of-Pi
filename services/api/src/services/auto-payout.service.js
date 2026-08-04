@@ -5,7 +5,7 @@ const {
   AUTO_PAYOUT_STALE_MINUTES
 } = require("../config");
 const { readGameConfig } = require("../repositories/game-config.repository");
-const { query } = require("../db/mysql");
+const { withNamedLock } = require("../db/mysql");
 const {
   getAutoPayoutCandidates,
   markWithdrawAutoProcessing,
@@ -20,24 +20,69 @@ const {
   assertPayoutRuntimeReady
 } = require("../utils/payout-runtime");
 
+const DEFAULT_HORIZON_READ_TIMEOUT_MS = 20_000;
+const DEFAULT_HORIZON_SUBMIT_TIMEOUT_MS = 45_000;
+
+function normalizeTimeout(value, fallback, maximum = 120_000) {
+  return Math.min(maximum, Math.max(5_000, Number(value || fallback)));
+}
+
+function withTimeout(promise, timeoutMs, errorFactory) {
+  let timer;
+  return Promise.race([
+    promise,
+    new Promise((resolve, reject) => {
+      timer = setTimeout(() => {
+        reject(typeof errorFactory === "function" ? errorFactory() : new Error(String(errorFactory || "请求超时")));
+      }, timeoutMs);
+    })
+  ]).finally(() => clearTimeout(timer));
+}
+
+function createSubmissionUncertainError(txid, message) {
+  const error = new Error(message || "链上提交结果暂时无法确认");
+  error.code = "PAYOUT_SUBMISSION_UNCERTAIN";
+  error.txid = String(txid || "");
+  error.submissionUncertain = true;
+  return error;
+}
+
+function isDefinitiveSubmissionRejection(error) {
+  const status = Number(error?.response?.status || 0);
+  return status === 400 || status === 422;
+}
+
 async function sendPiPayment({ destination, amount, memo }) {
   assertPayoutRuntimeReady();
 
   const server = new StellarSdk.Horizon.Server(PI_PAYOUT_HORIZON_URL);
   const sourceKeypair = getSourceKeypair();
+  const readTimeoutMs = normalizeTimeout(
+    process.env.PI_PAYOUT_HORIZON_READ_TIMEOUT_MS,
+    DEFAULT_HORIZON_READ_TIMEOUT_MS,
+    60_000
+  );
+  const submitTimeoutMs = normalizeTimeout(
+    process.env.PI_PAYOUT_HORIZON_SUBMIT_TIMEOUT_MS,
+    DEFAULT_HORIZON_SUBMIT_TIMEOUT_MS
+  );
   if (!sourceKeypair) {
     throw new Error("出款钱包私钥未配置");
   }
-  const sourceAccount = await server.loadAccount(sourceKeypair.publicKey());
+  const sourceAccount = await withTimeout(
+    server.loadAccount(sourceKeypair.publicKey()),
+    readTimeoutMs,
+    "读取出款钱包超时"
+  );
   try {
-    await server.loadAccount(destination);
+    await withTimeout(server.loadAccount(destination), readTimeoutMs, "校验收款钱包超时");
   } catch (error) {
     if (Number(error?.response?.status) === 404) {
       throw new Error("收款钱包地址未激活，无法链上打款");
     }
     throw error;
   }
-  const fee = await server.fetchBaseFee();
+  const fee = await withTimeout(server.fetchBaseFee(), readTimeoutMs, "读取链上手续费超时");
   const transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
     fee: String(fee),
     networkPassphrase: PI_PAYOUT_NETWORK_PASSPHRASE
@@ -56,7 +101,17 @@ async function sendPiPayment({ destination, amount, memo }) {
   transaction.sign(sourceKeypair);
   const signedTxid = transaction.hash().toString("hex");
 
-  const result = await server.submitTransaction(transaction);
+  let result;
+  try {
+    result = await withTimeout(
+      server.submitTransaction(transaction),
+      submitTimeoutMs,
+      () => createSubmissionUncertainError(signedTxid, `链上提交超时，TXID：${signedTxid}`)
+    );
+  } catch (error) {
+    if (error?.submissionUncertain || isDefinitiveSubmissionRejection(error)) throw error;
+    throw createSubmissionUncertainError(signedTxid, `链上提交结果异常，TXID：${signedTxid}`);
+  }
   const txid = result.hash || result.id || result.transaction_hash || signedTxid;
   if (!txid) {
     throw new Error("链上交易提交后未返回 TXID，自动出款未完成");
@@ -65,7 +120,17 @@ async function sendPiPayment({ destination, amount, memo }) {
     throw new Error(`链上交易提交失败，TXID：${txid}`);
   }
 
-  const submitted = await server.transactions().transaction(txid).call();
+  let submitted;
+  try {
+    submitted = await withTimeout(
+      server.transactions().transaction(txid).call(),
+      readTimeoutMs,
+      () => createSubmissionUncertainError(txid, `链上确认超时，TXID：${txid}`)
+    );
+  } catch (error) {
+    if (error?.submissionUncertain) throw error;
+    throw createSubmissionUncertainError(txid, `链上已提交但确认失败，TXID：${txid}`);
+  }
   if (submitted.successful !== true) {
     throw new Error(`链上交易未成功，TXID：${txid}`);
   }
@@ -133,16 +198,17 @@ async function processAutoPayoutOrder(orderNo) {
       order: paid
     };
   } catch (error) {
-    if (submittedTxid) {
+    const uncertainTxid = String(error?.txid || submittedTxid || "");
+    if (uncertainTxid) {
       const reviewOrder = await markWithdrawAutoManualReview(
         orderNo,
-        `链上交易已提交但系统确认失败，TXID：${submittedTxid}，请人工核对后标记`
+        `链上交易可能已提交但系统确认失败，TXID：${uncertainTxid}，请人工核对后标记`
       );
 
       return {
         orderNo,
         status: "review",
-        txid: submittedTxid,
+        txid: uncertainTxid,
         error: error.message || "链上已提交，需人工核对",
         order: reviewOrder
       };
@@ -182,31 +248,29 @@ async function processAutoPayoutImmediately(orderNo) {
 }
 
 async function withAutoPayoutRunLock(callback) {
-  const rows = await query("SELECT GET_LOCK(?, 0) AS locked", ["blitz_auto_payout"]);
-  const locked = Number(rows[0]?.locked || 0) === 1;
-
-  if (!locked) {
-    return {
+  return withNamedLock(
+    "blitz_auto_payout",
+    async () => ({
+      enabled: true,
+      locked: true,
+      ...(await callback())
+    }),
+    {
       enabled: true,
       locked: false,
       processed: 0,
       message: "已有自动出款任务运行，本次跳过"
-    };
-  }
-
-  try {
-    return {
-      locked: true,
-      ...(await callback())
-    };
-  } finally {
-    await query("SELECT RELEASE_LOCK(?) AS released", ["blitz_auto_payout"]);
-  }
+    }
+  );
 }
 
 module.exports = {
+  createSubmissionUncertainError,
   getPayoutRuntimeStatus,
+  isDefinitiveSubmissionRejection,
+  normalizeTimeout,
   processAutoPayoutOnce,
   processAutoPayoutImmediately,
-  sendPiPayment
+  sendPiPayment,
+  withTimeout
 };

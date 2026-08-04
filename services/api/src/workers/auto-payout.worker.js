@@ -5,6 +5,7 @@ const intervalMs = Math.max(5000, Number(process.env.AUTO_PAYOUT_INTERVAL_MS || 
 const batchSize = Math.min(50, Math.max(1, Number(AUTO_PAYOUT_BATCH_SIZE || 10)));
 
 let running = false;
+let lastLockBusyLogAt = 0;
 
 async function tick() {
   if (running) return;
@@ -14,6 +15,9 @@ async function tick() {
     const result = await processAutoPayoutOnce(batchSize);
     if (result.processed > 0) {
       console.log("[auto-payout] processed", JSON.stringify(result));
+    } else if (result.locked === false && Date.now() - lastLockBusyLogAt >= 300_000) {
+      lastLockBusyLogAt = Date.now();
+      console.warn("[auto-payout] lock busy, current tick skipped");
     }
   } catch (error) {
     console.error("[auto-payout] tick failed:", error.message || error);

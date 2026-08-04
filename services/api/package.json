@@ -6,7 +6,7 @@
     "start:dev": "node --watch src/main.js",
     "start:auto-payout": "node src/workers/auto-payout.worker.js",
     "start:auto-payout-once": "node src/workers/auto-payout.once.js",
-    "test": "node --test src/repositories/rank.repository.test.js src/repositories/user.repository.test.js src/repositories/engagement.repository.test.js src/services/engagement-reward-queue.service.test.js src/services/settlement-worker.service.test.js",
+    "test": "node --test src/repositories/rank.repository.test.js src/repositories/user.repository.test.js src/repositories/engagement.repository.test.js src/services/auto-payout.service.test.js src/services/engagement-reward-queue.service.test.js src/services/settlement-worker.service.test.js",
     "build": "node -e \"console.log('api build placeholder')\""
   },
   "dependencies": {
