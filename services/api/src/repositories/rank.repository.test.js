@@ -6,7 +6,8 @@ const {
   getWeeklyReward,
   getWeeklyRewardTiers,
   getSeasonReward,
-  getSeasonRewardTiers
+  getSeasonRewardTiers,
+  buildRankDailyChestRelatedId
 } = require("./rank.repository");
 
 function rankConfig(overrides = {}) {
@@ -113,4 +114,11 @@ test("monthly season rewards stay integer POINTS tiers", () => {
   assert.equal(getSeasonReward(11, tiers), 50);
   assert.equal(getSeasonReward(101, tiers), 0);
   assert.ok(tiers.every((tier) => Number.isInteger(tier.points)));
+});
+
+test("daily chest ledger id uses the database business date", () => {
+  assert.equal(
+    buildRankDailyChestRelatedId("pi-user-1", "2026-08-08"),
+    "pi-user-1:2026-08-08"
+  );
 });

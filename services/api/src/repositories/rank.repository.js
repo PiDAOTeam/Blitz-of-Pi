@@ -548,10 +548,19 @@ async function claimDailyRankChest(uid) {
       throw new Error(`今日还需完成 ${status.dailyChestRequiredBattles} 场有效段位对局才能领取`);
     }
 
+    // 领取记录和幂等流水必须使用同一次数据库业务日期，不能混用 UTC 日期。
+    const [[dateRow]] = await executor(connection).execute(
+      "SELECT DATE_FORMAT(CURDATE(), '%Y-%m-%d') AS today"
+    );
+    const businessDate = String(dateRow?.today || "").trim();
+    if (!businessDate) {
+      throw new Error("无法确定当前业务日期，请稍后重试");
+    }
+
     const [insertResult] = await executor(connection).execute(
       `INSERT IGNORE INTO rank_daily_chests (uid, claim_date, rank_key, reward_amount)
-       VALUES (?, CURDATE(), ?, ?)`,
-      [uid, status.rankKey, status.dailyChestRewardAmount]
+       VALUES (?, ?, ?, ?)`,
+      [uid, businessDate, status.rankKey, status.dailyChestRewardAmount]
     );
 
     if (Number(insertResult?.affectedRows || 0) === 0) {
@@ -570,7 +579,7 @@ async function claimDailyRankChest(uid) {
         {
           type: "reward",
           relatedType: "rank_daily_chest",
-          relatedId: `${uid}:${new Date().toISOString().slice(0, 10)}`,
+          relatedId: buildRankDailyChestRelatedId(uid, businessDate),
           remark: "Pi闪电战每日段位宝箱"
         },
         connection
@@ -583,6 +592,10 @@ async function claimDailyRankChest(uid) {
       dailyChestEligible: false
     };
   });
+}
+
+function buildRankDailyChestRelatedId(uid, businessDate) {
+  return `${uid}:${businessDate}`;
 }
 
 async function listAdminRankStarRecords(limit = 200) {
@@ -1196,6 +1209,7 @@ module.exports = {
   settleRankBotMatch,
   getRankStatus,
   claimDailyRankChest,
+  buildRankDailyChestRelatedId,
   listAdminRankStarRecords,
   listAdminRankDailyChests,
   listAdminRankWeeklySettlements,
