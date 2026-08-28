@@ -4460,7 +4460,7 @@ function isHashPiBridgeEntry() {
     return false;
   }
 }
-const HASHPI_BRIDGE_ENTRY_URL = "https://hashpi.app/blitz-bridge-app/?app=blitz_of_pi&force_ticket=1&v=202606152040";
+const HASHPI_BRIDGE_ENTRY_URL = "https://hashpi.app/blitz-bridge-app/?app=blitz_of_pi&force_ticket=1&renew=1&v=202606152040";
 function redirectToHashPiBridgeLogin() {
   const e = HASHPI_BRIDGE_ENTRY_URL;
   try {
