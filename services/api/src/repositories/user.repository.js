@@ -222,53 +222,21 @@ async function upsertUser({ piUserId, piUsername, nickname, avatarUrl, avatarKey
 }
 
 async function upsertHashPiBridgeUser({ hashpiUserId, piUserId, piUsername, nickname, avatarUrl, avatarKey }) {
-  const safeHashPiUserId = String(hashpiUserId || "").trim();
-  if (!safeHashPiUserId) {
-    throw new Error("缺少 HashPi 用户ID，无法创建桥接用户");
-  }
-
   const safePiUserId = String(piUserId || "").trim();
-  const safeNickname = await normalizeBridgeNickname({
-    nickname,
-    piUsername,
-    hashpiUserId: safeHashPiUserId
-  });
-  if (safePiUserId) {
-    return upsertUser({
-      piUserId: safePiUserId,
-      piUsername,
-      nickname: safeNickname,
-      avatarUrl,
-      avatarKey
-    });
+  if (!safePiUserId) {
+    throw new Error("请先用 Pi Browser 打开 https://blitz.hashpi.app 完成首次 Pi 注册，再回到 HashPi 进入闪电战");
   }
 
-  const uid = `hashpi_${safeHashPiUserId}`;
-  const safeAvatarKey = (await isValidAvatarKey(avatarKey)) ? avatarKey : DEFAULT_AVATAR_KEY;
+  const existing =
+    (await findUserByPiUserId(safePiUserId)) ||
+    (await findUserByUid(`pi_${safePiUserId}`));
 
-  await query(
-    `INSERT INTO users
-       (uid, pi_user_id, pi_username, nickname, avatar_url, avatar_key, profile_completed, rank_name, status, last_login_at)
-     VALUES (?, ?, ?, ?, ?, ?, 0, '青铜', 1, NOW())
-     ON DUPLICATE KEY UPDATE
-       nickname = CASE
-         WHEN nickname = '' OR nickname = 'Pi玩家' OR nickname = pi_username THEN VALUES(nickname)
-         ELSE nickname
-       END,
-       avatar_url = CASE
-         WHEN VALUES(avatar_url) <> '' THEN VALUES(avatar_url)
-         ELSE avatar_url
-       END,
-       avatar_key = CASE
-         WHEN avatar_key = '' THEN VALUES(avatar_key)
-         ELSE avatar_key
-       END,
-       last_login_at = NOW()`,
-    [uid, `hashpi_${safeHashPiUserId}`, "", safeNickname, avatarUrl || "", safeAvatarKey]
-  );
-  await ensureUserRank(uid);
+  if (!existing || Number(existing.status) !== 1) {
+    throw new Error("请先用 Pi Browser 打开 https://blitz.hashpi.app 完成首次 Pi 注册，再回到 HashPi 进入闪电战");
+  }
 
-  return findUserByUid(uid);
+  await query("UPDATE users SET last_login_at = NOW() WHERE uid = ?", [existing.uid]);
+  return findUserByUid(existing.uid);
 }
 
 async function updateUserProfile(uid, { nickname, avatarKey }) {
