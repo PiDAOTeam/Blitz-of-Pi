@@ -66,6 +66,66 @@ async function findUserByHashPiUserId(hashpiUserId) {
   return rows[0] || null;
 }
 
+async function ensureUserBridgeLinksTable() {
+  await query(`
+    CREATE TABLE IF NOT EXISTS user_bridge_links (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+      blitz_uid VARCHAR(64) NOT NULL,
+      hashpi_user_id BIGINT UNSIGNED NOT NULL,
+      hashpi_pi_uid VARCHAR(128) NOT NULL DEFAULT '',
+      blitz_pi_uid VARCHAR(128) NOT NULL DEFAULT '',
+      pi_username VARCHAR(64) NOT NULL DEFAULT '',
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      UNIQUE KEY uk_hashpi_user_id (hashpi_user_id),
+      KEY idx_blitz_uid (blitz_uid),
+      KEY idx_pi_username (pi_username)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+}
+
+async function findUserByBridgeHashPiUserId(hashpiUserId) {
+  const safeId = Number(hashpiUserId || 0);
+  if (!safeId) return null;
+  await ensureUserBridgeLinksTable();
+  const rows = await query(
+    `SELECT u.*, COALESCE(r.rank_name, u.rank_name) AS rank_name, COALESCE(r.rank_score, 1000) AS rank_score
+     FROM user_bridge_links l
+     INNER JOIN users u ON u.uid = l.blitz_uid
+     LEFT JOIN user_ranks r ON r.uid = u.uid
+     WHERE l.hashpi_user_id = ?
+     LIMIT 1`,
+    [safeId]
+  );
+  return rows[0] || null;
+}
+
+async function saveUserBridgeLink({ blitzUid, hashpiUserId, hashpiPiUid, blitzPiUid, piUsername }) {
+  const safeBlitzUid = String(blitzUid || "").trim();
+  const safeHashPiUserId = Number(hashpiUserId || 0);
+  if (!safeBlitzUid || !safeHashPiUserId) return;
+  await ensureUserBridgeLinksTable();
+  await query(
+    `INSERT INTO user_bridge_links
+       (blitz_uid, hashpi_user_id, hashpi_pi_uid, blitz_pi_uid, pi_username)
+     VALUES (?, ?, ?, ?, ?)
+     ON DUPLICATE KEY UPDATE
+       blitz_uid = VALUES(blitz_uid),
+       hashpi_pi_uid = CASE WHEN VALUES(hashpi_pi_uid) <> '' THEN VALUES(hashpi_pi_uid) ELSE hashpi_pi_uid END,
+       blitz_pi_uid = CASE WHEN VALUES(blitz_pi_uid) <> '' THEN VALUES(blitz_pi_uid) ELSE blitz_pi_uid END,
+       pi_username = CASE WHEN VALUES(pi_username) <> '' THEN VALUES(pi_username) ELSE pi_username END,
+       updated_at = NOW()`,
+    [
+      safeBlitzUid,
+      safeHashPiUserId,
+      String(hashpiPiUid || "").trim(),
+      String(blitzPiUid || "").trim(),
+      String(piUsername || "").trim()
+    ]
+  );
+}
+
 const DEFAULT_AVATAR_KEY = "avatar_1";
 const DEFAULT_PROFILE_AVATARS = [
   { key: "avatar_1", name: "闪电红" },
@@ -222,16 +282,13 @@ async function upsertUser({ piUserId, piUsername, nickname, avatarUrl, avatarKey
 }
 
 async function upsertHashPiBridgeUser({ hashpiUserId, piUserId, piUsername, nickname, avatarUrl, avatarKey }) {
-  const safePiUserId = String(piUserId || "").trim();
+  const safeHashPiUserId = Number(hashpiUserId || 0);
   const safePiUsername = String(piUsername || "").trim();
   const registerHint = "请先用 Pi Browser 打开 https://blitz.hashpi.app 完成首次 Pi 注册，再回到 HashPi 进入闪电战";
 
-  let existing = null;
-  if (safePiUserId) {
-    existing =
-      (await findUserByPiUserId(safePiUserId)) ||
-      (await findUserByUid(`pi_${safePiUserId}`));
-  }
+  await ensureUserBridgeLinksTable();
+
+  let existing = await findUserByBridgeHashPiUserId(safeHashPiUserId);
   if (!existing && safePiUsername) {
     existing = await findUserByPiUsername(safePiUsername);
   }
@@ -240,6 +297,13 @@ async function upsertHashPiBridgeUser({ hashpiUserId, piUserId, piUsername, nick
     throw new Error(registerHint);
   }
 
+  await saveUserBridgeLink({
+    blitzUid: existing.uid,
+    hashpiUserId: safeHashPiUserId,
+    hashpiPiUid: piUserId,
+    blitzPiUid: existing.pi_user_id,
+    piUsername: existing.pi_username || safePiUsername
+  });
   await query("UPDATE users SET last_login_at = NOW() WHERE uid = ?", [existing.uid]);
   return findUserByUid(existing.uid);
 }
@@ -311,6 +375,9 @@ module.exports = {
   findUserByPiUsername,
   findUserByUid,
   findUserByHashPiUserId,
+  findUserByBridgeHashPiUserId,
+  ensureUserBridgeLinksTable,
+  saveUserBridgeLink,
   upsertUser,
   upsertHashPiBridgeUser,
   updateUserProfile,

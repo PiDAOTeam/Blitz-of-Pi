@@ -16,6 +16,7 @@ function getBridgeUrl(action) {
 function normalizeBridgeUser(payload = {}) {
   const user = payload.user || payload;
   const hashpiUserId = String(user.hashpi_user_id || user.user_id || user.id || "").trim();
+  // HashPi 的 pi_uid 是 HashPi 应用内的 Pi UID，和闪电战应用 UID 不是同一个，不能当主键。
   const piUserId = String(user.pi_uid || user.pi_user_id || user.openid || "").trim();
   const piUsername = String(user.pi_username || user.username || user.user_name || "").trim();
   const nickname = String(user.nickname || user.name || piUsername || `HashPi${hashpiUserId}`).trim();
