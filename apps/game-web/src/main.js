@@ -2138,9 +2138,6 @@ function showHashPiBridgeError(e = n("errorDefault")) {
           </div>
         </div>
         <p class="bridge-error-hint">${i(e)}</p>
-        <div class="actions">
-          <button type="button" id="back-hashpi-home">返回 HashPi</button>
-        </div>
       </section>
     </main>
   `;
@@ -2169,51 +2166,6 @@ function showHashPiBridgeError(e = n("errorDefault")) {
     document.body.removeChild(ta);
     done();
   });
-  document.querySelector("#back-hashpi-home")?.addEventListener("click", () => {
-    goBackToHashPiApp();
-  });
-}
-function goBackToHashPiApp() {
-  const tryBack = () => {
-    try {
-      if (window.uni?.webView?.navigateBack) {
-        uni.webView.navigateBack();
-        return true;
-      }
-    } catch {}
-    try {
-      if (window.uni?.webView?.postMessage) {
-        uni.webView.postMessage({ data: [{ action: "message" }] });
-        return true;
-      }
-    } catch {}
-    try {
-      if (window.plus?.webview) {
-        plus.webview.currentWebview().close("auto");
-        return true;
-      }
-    } catch {}
-    if (window.history.length > 1) {
-      window.history.back();
-      return true;
-    }
-    return false;
-  };
-  if (tryBack()) return;
-  const ready = () => {
-    tryBack();
-  };
-  document.addEventListener("UniAppJSBridgeReady", ready, { once: true });
-  if (!document.querySelector("script[data-uni-webview]")) {
-    const script = document.createElement("script");
-    script.src = "https://js.cdn.aliyun.dcloud.net.cn/dev/uni-app/uni.webview.1.5.5.js";
-    script.setAttribute("data-uni-webview", "1");
-    script.onload = () => setTimeout(ready, 30);
-    script.onerror = () => {
-      if (window.history.length > 1) window.history.back();
-    };
-    document.head.appendChild(script);
-  }
 }
 function Ir() {
   const e = wn();

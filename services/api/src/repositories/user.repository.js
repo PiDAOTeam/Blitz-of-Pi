@@ -81,7 +81,7 @@ async function ensureUserBridgeLinksTable() {
       UNIQUE KEY uk_hashpi_user_id (hashpi_user_id),
       KEY idx_blitz_uid (blitz_uid),
       KEY idx_pi_username (pi_username)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
   `);
 }
 
@@ -92,7 +92,7 @@ async function findUserByBridgeHashPiUserId(hashpiUserId) {
   const rows = await query(
     `SELECT u.*, COALESCE(r.rank_name, u.rank_name) AS rank_name, COALESCE(r.rank_score, 1000) AS rank_score
      FROM user_bridge_links l
-     INNER JOIN users u ON u.uid = l.blitz_uid
+     INNER JOIN users u ON u.uid = l.blitz_uid COLLATE utf8mb4_general_ci
      LEFT JOIN user_ranks r ON r.uid = u.uid
      WHERE l.hashpi_user_id = ?
      LIMIT 1`,
