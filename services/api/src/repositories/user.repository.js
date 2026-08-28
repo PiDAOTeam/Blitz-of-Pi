@@ -223,16 +223,21 @@ async function upsertUser({ piUserId, piUsername, nickname, avatarUrl, avatarKey
 
 async function upsertHashPiBridgeUser({ hashpiUserId, piUserId, piUsername, nickname, avatarUrl, avatarKey }) {
   const safePiUserId = String(piUserId || "").trim();
-  if (!safePiUserId) {
-    throw new Error("请先用 Pi Browser 打开 https://blitz.hashpi.app 完成首次 Pi 注册，再回到 HashPi 进入闪电战");
+  const safePiUsername = String(piUsername || "").trim();
+  const registerHint = "请先用 Pi Browser 打开 https://blitz.hashpi.app 完成首次 Pi 注册，再回到 HashPi 进入闪电战";
+
+  let existing = null;
+  if (safePiUserId) {
+    existing =
+      (await findUserByPiUserId(safePiUserId)) ||
+      (await findUserByUid(`pi_${safePiUserId}`));
+  }
+  if (!existing && safePiUsername) {
+    existing = await findUserByPiUsername(safePiUsername);
   }
 
-  const existing =
-    (await findUserByPiUserId(safePiUserId)) ||
-    (await findUserByUid(`pi_${safePiUserId}`));
-
   if (!existing || Number(existing.status) !== 1) {
-    throw new Error("请先用 Pi Browser 打开 https://blitz.hashpi.app 完成首次 Pi 注册，再回到 HashPi 进入闪电战");
+    throw new Error(registerHint);
   }
 
   await query("UPDATE users SET last_login_at = NOW() WHERE uid = ?", [existing.uid]);

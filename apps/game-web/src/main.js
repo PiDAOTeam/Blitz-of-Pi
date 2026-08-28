@@ -2120,23 +2120,58 @@ function Fe(e = n("errorDefault")) {
   });
 }
 function showHashPiBridgeError(e = n("errorDefault")) {
+  const registerUrl = "https://blitz.hashpi.app";
   R.innerHTML = `
     <main class="shell">
-      <section class="hero">
+      <section class="hero hashpi-bridge-card">
         <div class="brand-mark" aria-hidden="true">${BRAND_MARK_HTML}</div>
         <p class="eyebrow">HashPi APP</p>
-        <h1>${i(n("home") === "\u9996\u9875" ? "\u95EA\u7535\u6218" : "Blitz of Pi")}</h1>
+        <h1>闪电战</h1>
         <p class="brand-subtitle">Blitz of Pi</p>
-        <p class="summary">${i(e)}</p>
+        <p class="bridge-error-title">还不能从 HashPi 进入</p>
+        <p class="bridge-error-text">请先用 <b>Pi Browser</b> 打开闪电战，完成首次 Pi 注册。注册成功后再回到 HashPi，点击「闪电战」即可进入。</p>
+        <div class="bridge-link-box">
+          <div class="bridge-link-label">注册地址</div>
+          <div class="bridge-link-row">
+            <span class="bridge-link-url" id="blitz-register-url">${i(registerUrl)}</span>
+            <button type="button" class="bridge-copy-btn" id="copy-blitz-url">复制</button>
+          </div>
+        </div>
+        <p class="bridge-error-hint">${i(e)}</p>
         <div class="actions">
-          <button type="button" id="retry-hashpi-bridge">${i("\u91CD\u8BD5")}</button>
-          <button type="button" class="secondary" id="back-hashpi-home">${i("\u8FD4\u56DE HashPi")}</button>
+          <button type="button" id="retry-hashpi-bridge">我已注册，回 HashPi 重试</button>
+          <button type="button" class="secondary" id="back-hashpi-home">返回 HashPi</button>
         </div>
       </section>
     </main>
   `;
+  document.querySelector("#copy-blitz-url")?.addEventListener("click", async () => {
+    const btn = document.querySelector("#copy-blitz-url");
+    const done = () => {
+      if (!btn) return;
+      const old = btn.textContent;
+      btn.textContent = "已复制";
+      setTimeout(() => {
+        btn.textContent = old;
+      }, 1200);
+    };
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(registerUrl);
+        done();
+        return;
+      }
+    } catch {}
+    const ta = document.createElement("textarea");
+    ta.value = registerUrl;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+    done();
+  });
   document.querySelector("#retry-hashpi-bridge")?.addEventListener("click", () => {
-    window.location.href = HASHPI_BRIDGE_ENTRY_URL;
+    window.location.href = "https://hashpi.app/";
   });
   document.querySelector("#back-hashpi-home")?.addEventListener("click", () => {
     window.location.href = "https://hashpi.app/";

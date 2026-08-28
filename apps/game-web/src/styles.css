@@ -669,6 +669,72 @@ h1 {
   color: #ecdeffdb;
   line-height: 1.65;
 }
+.hashpi-bridge-card .bridge-error-title {
+  margin: 22px 0 0;
+  color: #ffe7a5;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: .02em;
+  text-shadow: 0 2px 0 rgba(32, 8, 52, .45);
+}
+.hashpi-bridge-card .bridge-error-text {
+  margin: 12px 0 0;
+  color: #fff6de;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.7;
+}
+.hashpi-bridge-card .bridge-error-text b {
+  color: #ffe08a;
+}
+.hashpi-bridge-card .bridge-link-box {
+  margin-top: 18px;
+  padding: 14px 14px 12px;
+  border: 1px solid rgba(255, 226, 156, .38);
+  border-radius: 18px;
+  background: rgba(20, 0, 48, .35);
+  box-shadow: inset 0 1px rgba(255, 226, 156, .12);
+}
+.hashpi-bridge-card .bridge-link-label {
+  color: #ffd56e;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+.hashpi-bridge-card .bridge-link-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+.hashpi-bridge-card .bridge-link-url {
+  flex: 1;
+  min-width: 0;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.4;
+  word-break: break-all;
+}
+.hashpi-bridge-card .bridge-copy-btn {
+  flex: 0 0 auto;
+  min-width: 72px;
+  height: 40px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffe08a, #ffb638);
+  color: #2b1900;
+  font-size: 16px;
+  font-weight: 800;
+}
+.hashpi-bridge-card .bridge-error-hint {
+  margin: 14px 0 0;
+  color: #d7c4ff;
+  font-size: 13px;
+  line-height: 1.55;
+}
 .danger-text {
   color: #ffb4a8;
 }
