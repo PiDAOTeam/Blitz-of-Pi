@@ -55,11 +55,12 @@ test("有 pending 的 state 保留己方预测盘，对手仍跟服务器", () =
   assert.equal(room.remainSeconds, 40);
 });
 
-test("最后一步 ack、拒步、快照、终局都吃服务器房间", () => {
+test("最后一步 ack、拒步、终局吃服务器房间；快照有 pending 时保留预测", () => {
   assert.equal(shouldClearAllPending("reject", "playing"), true);
-  assert.equal(shouldClearAllPending("snapshot", "playing"), true);
+  assert.equal(shouldClearAllPending("snapshot", "playing"), false);
   assert.equal(shouldClearAllPending("ack", "finished"), true);
   assert.equal(shouldClearAllPending("ack", "playing"), false);
+  assert.equal(shouldPreservePredictedSelf({ reason: "snapshot", pendingCount: 1, status: "playing" }), true);
 
   const lastAck = mergeAuthoritativeRoom(current, incoming, "me", { reason: "ack", pendingCount: 0 });
   assert.equal(lastAck.preserved, false);
@@ -68,6 +69,15 @@ test("最后一步 ack、拒步、快照、终局都吃服务器房间", () => {
   const reject = mergeAuthoritativeRoom(current, incoming, "me", { reason: "reject", pendingCount: 2 });
   assert.equal(reject.preserved, false);
   assert.equal(reject.room.players[0].score, 40);
+
+  const snapKeep = mergeAuthoritativeRoom(current, incoming, "me", { reason: "snapshot", pendingCount: 1 });
+  assert.equal(snapKeep.preserved, true);
+  assert.deepEqual(snapKeep.room.players[0].board, [[1, 2], [3, 4]]);
+  assert.equal(snapKeep.room.remainSeconds, 40);
+
+  const snapDone = mergeAuthoritativeRoom(current, incoming, "me", { reason: "snapshot", pendingCount: 0 });
+  assert.equal(snapDone.preserved, false);
+  assert.deepEqual(snapDone.room.players[0].board, [[9, 9], [9, 9]]);
 });
 
 test("pending 必须覆盖到最后一步才算结束", () => {

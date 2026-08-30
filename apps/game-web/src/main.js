@@ -160,14 +160,14 @@ function lt(e) {
 let Nt = "", j = null, V = null, Be = null, ee = null, y = null, x = null, k = null, Ne = null, Yt = 0, Et = 0, Lt = "", xt = 0, Ee = "", te = 0, pe = -1, Xe = "", le = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPerfLockedLow = false, clientPerfFrameCount = 0, clientPerfLongFrameCount = 0, clientPerfSampleStartedAt = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0, lastStaleRealtimeRecoverAt = 0, canvasFxFrame = null, canvasBreathTimer = null;
 a.canvasSpecialFx = [];
 a.canvasSpecialBirths = [];
-let cleanupBoardInputListeners = null;
+let cleanupBoardInputListeners = null, boardGeoCache = null;
 const Sa = /* @__PURE__ */ new Map();
 const clientTraceDropStages = new Set(["client_swap_send", "client_prediction_ack", "client_prediction_reject", "client_snapshot_corrected", "client_burst_show", "client_burst_suppressed", "client_perf_sample"]);
 let z = null, W = null, At = 0, q = null;
 const $n = 8e3, Pn = 3, Cn = 9e3, Ha = 1200, Tn = 1800, Ie = 8, Rn = 5e3, Mn = 6, Xt = 8e3, fe = 3, Bn = 12, Nn = 6, $a = 30, $e = 8, Pe = 6, Pa = 0.18, En = 1200;
 function we() {
   Be && (window.clearInterval(Be), Be = null), Ee = "", te = 0, pe = -1;
-  canvasFxFrame && (window.cancelAnimationFrame(canvasFxFrame), canvasFxFrame = null), canvasBreathTimer && (window.clearTimeout(canvasBreathTimer), canvasBreathTimer = null), a.canvasSpecialFx = [], a.canvasSpecialBirths = [], a.canvasTileBursts = [], a.boardMotion = null;
+  canvasFxFrame && (window.cancelAnimationFrame(canvasFxFrame), canvasFxFrame = null), canvasBreathTimer && (window.clearTimeout(canvasBreathTimer), canvasBreathTimer = null), a.canvasSpecialFx = [], a.canvasSpecialBirths = [], a.canvasTileBursts = [], a.boardMotion = null, boardGeoCache = null;
 }
 function cleanupBoardInputs() {
   try {
@@ -3353,12 +3353,30 @@ function ei(e, t, r) {
   }
   return e.finishReason === "timeout" ? n("timeoutFinish") : e.finishReason === "ready_timeout" ? n("readyTimeoutFinish") : n("settledFinish");
 }
+function resetBoardGeometryCache() {
+  boardGeoCache = null;
+}
 function getBoardGeometry(e) {
   if (!e) return null;
-  const t = e.getBoundingClientRect();
-  if (t.width <= 0 || t.height <= 0) return null;
-  const r = window.getComputedStyle(e), o = Number.parseFloat(r.paddingLeft) || 0, s = Number.parseFloat(r.paddingRight) || o, l = Number.parseFloat(r.paddingTop) || o, c = Number.parseFloat(r.paddingBottom) || l, d = Number.parseFloat(r.gap) || 0, u = Math.max(1, t.width - o - s), h = Math.max(1, t.height - l - c), p = Math.max(1, (u - d * (Pe - 1)) / Pe), f = Math.max(1, (h - d * ($e - 1)) / $e);
-  return { rect: t, paddingLeft: o, paddingTop: l, gap: d, innerWidth: u, innerHeight: h, tileWidth: p, tileHeight: f, startX: t.left + o, startY: t.top + l };
+  const width = e.clientWidth, height = e.clientHeight;
+  if (width <= 0 || height <= 0) return null;
+  if (boardGeoCache?.el === e && Math.abs(boardGeoCache.layoutWidth - width) < 0.5 && Math.abs(boardGeoCache.layoutHeight - height) < 0.5) return boardGeoCache.geo;
+  const r = window.getComputedStyle(e), o = Number.parseFloat(r.paddingLeft) || 0, s = Number.parseFloat(r.paddingRight) || o, l = Number.parseFloat(r.paddingTop) || o, c = Number.parseFloat(r.paddingBottom) || l, d = Number.parseFloat(r.gap) || 0, u = Math.max(1, width - o - s), h = Math.max(1, height - l - c), p = Math.max(1, (u - d * (Pe - 1)) / Pe), f = Math.max(1, (h - d * ($e - 1)) / $e);
+  const geo = { rect: { width, height }, layoutWidth: width, layoutHeight: height, paddingLeft: o, paddingRight: s, paddingTop: l, paddingBottom: c, gap: d, innerWidth: u, innerHeight: h, tileWidth: p, tileHeight: f, startX: o, startY: l };
+  boardGeoCache = { el: e, layoutWidth: width, layoutHeight: height, geo };
+  return geo;
+}
+if (typeof window !== "undefined") {
+  window.addEventListener("resize", resetBoardGeometryCache);
+  window.visualViewport?.addEventListener("resize", resetBoardGeometryCache);
+}
+function getBoardHitGeometry(e) {
+  const t = getBoardGeometry(e);
+  if (!t || !e) return null;
+  const r = e.getBoundingClientRect();
+  if (r.width <= 0 || r.height <= 0) return t;
+  const o = r.width / t.layoutWidth, s = r.height / t.layoutHeight;
+  return { ...t, tileWidth: t.tileWidth * o, tileHeight: t.tileHeight * s, gap: t.gap * o, innerWidth: t.innerWidth * o, innerHeight: t.innerHeight * s, startX: r.left + t.paddingLeft * o, startY: r.top + t.paddingTop * s };
 }
 function canvasCellRect(e, t, r) {
   const o = e.paddingLeft + r * (e.tileWidth + e.gap), s = e.paddingTop + t * (e.tileHeight + e.gap);
@@ -3504,19 +3522,20 @@ function renderCanvasBoard(e, t) {
   const p = Date.now(), lite = canvasLiteMode();
   if (a.boardMotion && !boardMotionActive(a.boardMotion, p)) a.boardMotion = null;
   const o = pickMotionBoard(a.boardMotion, logicalBoard, p);
-  const l = lite ? 1 : Math.max(1, Math.min(2, window.devicePixelRatio || 1)), c = Math.max(1, Math.floor(s.rect.width * l)), d = Math.max(1, Math.floor(s.rect.height * l));
+  const boardW = s.layoutWidth || s.rect.width, boardH = s.layoutHeight || s.rect.height;
+  const l = lite ? 1 : Math.max(1, Math.min(2, window.devicePixelRatio || 1)), c = Math.max(1, Math.floor(boardW * l)), d = Math.max(1, Math.floor(boardH * l));
   (r.width !== c || r.height !== d) && (r.width = c, r.height = d);
-  const rWidth = `${s.rect.width}px`, rHeight = `${s.rect.height}px`;
+  const rWidth = `${boardW}px`, rHeight = `${boardH}px`;
   r.style.width !== rWidth && (r.style.width = rWidth), r.style.height !== rHeight && (r.style.height = rHeight);
   const u = r.getContext("2d");
   if (!u) return false;
-  u.setTransform(l, 0, 0, l, 0, 0), u.clearRect(0, 0, s.rect.width, s.rect.height);
+  u.setTransform(l, 0, 0, l, 0, 0), u.clearRect(0, 0, boardW, boardH);
   const h = Math.max(8, Math.min(s.tileWidth, s.tileHeight) * 0.2), f = richFxEnabled() && !lite;
   if (lite) {
-    u.fillStyle = "rgba(12, 2, 28, .16)", u.fillRect(0, 0, s.rect.width, s.rect.height);
+    u.fillStyle = "rgba(12, 2, 28, .16)", u.fillRect(0, 0, boardW, boardH);
   } else {
-    const m = u.createLinearGradient(0, 0, 0, s.rect.height);
-    m.addColorStop(0, "rgba(255, 231, 133, .08)"), m.addColorStop(0.45, "rgba(122, 76, 210, .08)"), m.addColorStop(1, "rgba(12, 2, 28, .18)"), u.fillStyle = m, u.fillRect(0, 0, s.rect.width, s.rect.height);
+    const m = u.createLinearGradient(0, 0, 0, boardH);
+    m.addColorStop(0, "rgba(255, 231, 133, .08)"), m.addColorStop(0.45, "rgba(122, 76, 210, .08)"), m.addColorStop(1, "rgba(12, 2, 28, .18)"), u.fillStyle = m, u.fillRect(0, 0, boardW, boardH);
     for (let g = 0; g < $e; g += 1) for (let P = 0; P < Pe; P += 1) {
       const C = canvasCellRect(s, g, P);
       u.save(), canvasRoundRect(u, C.x + 1, C.y + 1, C.w - 2, C.h - 2, h * 0.9), u.fillStyle = "rgba(255, 255, 255, .035)", u.fill(), u.restore();
@@ -4141,7 +4160,7 @@ function Di(e) {
 function Ye(e, t) {
   const r = oe();
   if (!r) return He(e, t);
-  const o = getBoardGeometry(r);
+  const o = getBoardHitGeometry(r);
   if (!o) return He(e, t);
   const s = o.tileWidth * Pa, l = o.tileHeight * Pa, c = o.startX, d = o.startY, u = o.innerWidth, h = o.innerHeight;
   if (e < c - s || e > c + u + s || t < d - l || t > d + h + l) return He(e, t);
@@ -4255,6 +4274,7 @@ function Hi() {
     return;
   }
   const p = t.roomNo.replace(/^room_/, "").slice(-8).toUpperCase(), f = Pt !== t.roomNo;
+  (f || !document.querySelector("#game-board")) && resetBoardGeometryCache();
   Ln(), (f || !document.querySelector("#game-board")) && (Pt = t.roomNo, Se = null, Re = "", je = "", se = Je(o.board || []), Ve = "", Ke = "", K = "", R.innerHTML = `
     <main class="battle-shell ${t.remainSeconds <= 10 && !l ? "battle-final-countdown" : ""}">
       <header class="battle-header">

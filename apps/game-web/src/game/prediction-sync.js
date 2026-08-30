@@ -1,5 +1,5 @@
-// 预测同步：ack / 1Hz room_state 有未确认步时，保留或叠回本地己方棋盘。
-// 不改结算权威：拒步、快照、终局一律用服务器房间。
+// 预测同步：ack / 1Hz room_state / 2s snapshot 有未确认步时，保留或叠回本地己方棋盘。
+// 不改结算权威：拒步、终局一律用服务器房间。
 
 import {
   clientCloneBoard,
@@ -12,11 +12,11 @@ import {
 } from "./match3-engine.js";
 
 export function shouldPreservePredictedSelf({ reason, pendingCount, status } = {}) {
-  return (reason === "ack" || reason === "state") && Number(pendingCount || 0) > 0 && status === "playing";
+  return (reason === "ack" || reason === "state" || reason === "snapshot") && Number(pendingCount || 0) > 0 && status === "playing";
 }
 
 export function shouldClearAllPending(reason, status) {
-  return reason === "reject" || reason === "snapshot" || status === "finished";
+  return reason === "reject" || status === "finished";
 }
 
 export function isPendingFullyResolved({ pendingSeqs = [], latestEventSeq = 0, finished = false } = {}) {
