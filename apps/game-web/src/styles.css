@@ -4010,69 +4010,51 @@ button:disabled {
     #ffffff2e;
 }
 .tile.tile-special span {
-  inset: 13%;
-  border-radius: 999px;
-  background:
-    radial-gradient(
-      circle at 50% 34%,
-      rgba(255, 255, 255, .2),
-      transparent 30%),
-    linear-gradient(
-      145deg,
-      #48117bf5,
-      #22054cf0);
-  color: var(--tile-text-color, #ffe56d);
-  font-size: clamp(23px, 7.4vw, 36px);
-  font-weight: 1000;
-  line-height: 1;
-  text-shadow:
-    0 1px 0 rgba(92, 47, 0, .48),
-    0 0 10px rgba(255, 228, 109, .84),
-    0 0 18px rgba(255, 188, 50, .48);
-  box-shadow:
-    inset 0 -5px 10px #47005147,
-    inset 0 1px #ffeda061,
-    0 0 18px #ffe27673;
+  color: transparent;
+  text-shadow: none;
+  background: none;
+  box-shadow: none;
+  font-size: 0;
 }
 .tile.tile-lightning-horizontal:after,
 .tile.tile-lightning-vertical:after {
-  left: 8%;
+  left: 12%;
   top: 50%;
-  width: 84%;
-  height: 16%;
+  width: 76%;
+  height: 18%;
   border-radius: 999px;
   background:
     linear-gradient(
       90deg,
-      transparent,
-      rgba(255, 244, 172, .98),
-      rgba(166, 85, 255, .88),
-      transparent);
-  filter: blur(.3px);
+      transparent 0%,
+      #ffe478 16%,
+      #fff 50%,
+      #ffc24a 84%,
+      transparent 100%);
+  box-shadow: 0 0 10px #ffe27e88;
+  filter: none;
   transform: translateY(-50%);
 }
 .tile.tile-lightning-vertical:after {
   left: 50%;
-  top: 8%;
-  width: 16%;
-  height: 84%;
-  transform: translate(-50%);
-}
-.tile.tile-lightning-horizontal span {
-  background:
-    linear-gradient(
-      90deg,
-      #450d79f5,
-      #2a065ef0 48%,
-      #5e209cf0);
-}
-.tile.tile-lightning-vertical span {
+  top: 12%;
+  width: 18%;
+  height: 76%;
   background:
     linear-gradient(
       180deg,
-      #450d79f5,
-      #2a065ef0 48%,
-      #5e209cf0);
+      transparent 0%,
+      #7cecff 16%,
+      #fff 50%,
+      #3eb6ff 84%,
+      transparent 100%);
+  box-shadow: 0 0 10px #7cecff88;
+  transform: translate(-50%, 0);
+}
+.tile.tile-lightning-horizontal span,
+.tile.tile-lightning-vertical span,
+.tile.tile-bomb span {
+  background: none;
 }
 .tile.tile-bomb {
   animation: special-bomb-idle 1.7s ease-in-out infinite;
@@ -4080,31 +4062,19 @@ button:disabled {
 .tile.tile-bomb:after {
   left: 50%;
   top: 50%;
-  width: 74%;
-  height: 74%;
-  border-radius: 50%;
+  width: 42%;
+  height: 42%;
+  border-radius: 30%;
   background:
     radial-gradient(
-      circle,
-      rgba(255, 248, 190, .98) 0 18%,
-      rgba(255, 105, 110, .82) 32% 52%,
-      rgba(145, 78, 255, .24) 70%,
-      transparent 74%);
-  box-shadow: 0 0 18px #ffda5c80, 0 0 28px #ff587057;
-  transform: translate(-50%, -50%);
-}
-.tile.tile-bomb span {
-  background:
-    radial-gradient(
-      circle at 50% 38%,
-      rgba(255, 228, 104, .24),
-      transparent 28%),
-    linear-gradient(
-      135deg,
-      #520c68fa,
-      #6b1560f0 44%,
-      #2d085ef0);
-  color: #ffe56d;
+      circle at 35% 32%,
+      #fff 0 18%,
+      #ffe56d 38%,
+      #ffb347 78%);
+  box-shadow:
+    0 0 0 3px #ffe9a8cc,
+    0 0 12px #ffd45c88;
+  transform: translate(-50%, -50%) rotate(45deg);
 }
 .tile:active,
 .tile.touching,

@@ -1,6 +1,6 @@
 import { translations as $t, languageMeta as St, languageCodes as Jt, LANGUAGE_STORAGE_KEY as Da } from "./i18n/locales.js";
 import { DEFAULT_ANIMATION_DURATIONS, DEFAULT_ATTACK_WARNING_TEXT, normalizeAnimationDurations } from "./config/animation.js";
-import { canvasRoundRect, canvasHexToRgba, canvasShadeColor, drawCanvasTileBody } from "./canvas/draw-utils.js";
+import { canvasRoundRect, canvasHexToRgba, canvasShadeColor, drawCanvasTileBody, drawCanvasSpecialMark } from "./canvas/draw-utils.js";
 import { clientTileColor, clientIsSpecialTile, clientSpecialKind, clientMakeSpecialTile, clientIsSameMatchTile, clientCreateRandom, clientRandomTile, clientWouldCreateMatchAt, clientSafeRandomTile, clientCloneBoard, clientIsInside, clientSwap, clientFindMatches, clientAddSpecialTargets, clientSpecialCreation, clientDirectSpecialMatches, clientCollapseBoard, clientHasValidMove, clientCreateCandidateBoard, clientRefillBoardIfStuck, clientResolveBoard, clientSettleRemainingMatches, battleClearCount, battleChainCount, battleFeedbackPower, battleIsMegaFeedback, battleBurstText, battlePraiseCue, waPreviewText, yaPreviewSemantic, clientPreviewTone } from "./game/match3-engine.js";
 import { mergeAuthoritativeRoom, shouldClearAllPending, previewSwapOnBoard, isPendingFullyResolved, isBenignSwapReject } from "./game/prediction-sync.js";
 import { buildBoardMotion, boardMotionPhase, boardMotionActive, pickMotionBoard, motionCellEffect, easeOutQuad } from "./game/board-motion.js";
@@ -3437,14 +3437,8 @@ function drawCanvasSpecial(e, t, r, o) {
     const d = (Math.sin(Date.now() / 430 + o.row * 0.7 + o.col * 0.45) + 1) / 2, u = t >= ka ? "rgba(255, 207, 72," : t >= ya ? "rgba(123, 236, 255," : "rgba(255, 237, 112,", h = 0.22 + d * 0.22;
     e.globalCompositeOperation = "lighter", e.strokeStyle = `${u} ${h})`, e.lineWidth = Math.max(1.4, s * (0.035 + d * 0.018)), e.shadowColor = `${u} ${0.42 + d * 0.18})`, e.shadowBlur = s * (0.12 + d * 0.07), canvasRoundRect(e, o.x + s * 0.06, o.y + s * 0.06, o.w - s * 0.12, o.h - s * 0.12, Math.max(5, s * 0.16)), e.stroke(), e.shadowBlur = 0, e.globalCompositeOperation = "source-over";
   }
-  if (t >= ka) {
-    const d = s * 0.2;
-    e.shadowColor = "rgba(255, 210, 82, .72)", e.shadowBlur = s * 0.2, e.fillStyle = "rgba(255, 246, 184, .95)", e.beginPath(), e.arc(l, c + s * 0.02, d, 0, Math.PI * 2), e.fill(), e.shadowBlur = 0, e.strokeStyle = "rgba(118, 69, 15, .42)", e.lineWidth = Math.max(1.5, s * 0.045), e.stroke(), e.strokeStyle = "rgba(255, 242, 158, .95)", e.lineWidth = Math.max(2, s * 0.055), e.beginPath(), e.moveTo(l + d * 0.5, c - d * 0.72), e.quadraticCurveTo(l + d * 1.2, c - d * 1.22, l + d * 1.48, c - d * 1.9), e.stroke(), e.strokeStyle = "rgba(255, 115, 84, .62)", e.lineWidth = Math.max(1, s * 0.026), e.beginPath(), e.arc(l, c + s * 0.02, d * 1.52, -0.5, Math.PI * 1.5), e.stroke(), e.fillStyle = "rgba(255, 255, 255, .95)", e.beginPath(), e.arc(l - d * 0.42, c - d * 0.32, Math.max(1.5, d * 0.22), 0, Math.PI * 2), e.fill();
-  } else if (t >= wa) {
-    const d = t >= ya;
-    const u = d ? e.createLinearGradient(l, o.y + s * 0.12, l, o.y + o.h - s * 0.12) : e.createLinearGradient(o.x + s * 0.12, c, o.x + o.w - s * 0.12, c);
-    u.addColorStop(0, "rgba(255, 251, 187, .08)"), u.addColorStop(0.45, "rgba(255, 245, 151, .72)"), u.addColorStop(0.5, "rgba(255, 255, 255, .96)"), u.addColorStop(0.55, "rgba(111, 225, 255, .58)"), u.addColorStop(1, "rgba(255, 251, 187, .08)"), e.shadowColor = "rgba(255, 232, 109, .78)", e.shadowBlur = s * 0.18, e.strokeStyle = u, e.lineWidth = Math.max(4, s * 0.16), e.beginPath(), d ? (e.moveTo(l, o.y + s * 0.1), e.lineTo(l, o.y + o.h - s * 0.1)) : (e.moveTo(o.x + s * 0.1, c), e.lineTo(o.x + o.w - s * 0.1, c)), e.stroke(), e.shadowBlur = 0, e.fillStyle = "rgba(255, 250, 184, .96)", e.strokeStyle = "rgba(85, 45, 8, .28)", e.lineWidth = Math.max(1, s * 0.035), e.beginPath();
-    d ? (e.moveTo(l + s * 0.05, c - s * 0.34), e.lineTo(l - s * 0.16, c + s * 0.03), e.lineTo(l + s * 0.02, c + s * 0.03), e.lineTo(l - s * 0.07, c + s * 0.36), e.lineTo(l + s * 0.22, c - s * 0.08), e.lineTo(l + s * 0.04, c - s * 0.08)) : (e.moveTo(l - s * 0.36, c - s * 0.02), e.lineTo(l - s * 0.04, c - s * 0.18), e.lineTo(l - s * 0.04, c), e.lineTo(l + s * 0.36, c - s * 0.08), e.lineTo(l + s * 0.02, c + s * 0.18), e.lineTo(l + s * 0.02, c)), e.closePath(), e.fill(), e.stroke();
+  if (t >= wa) {
+    drawCanvasSpecialMark(e, t, o, canvasLiteMode());
   } else if (r.label) {
     e.fillStyle = r.textColor || "#fff6bd", e.font = `700 ${Math.max(11, Math.floor(s * 0.28))}px system-ui, sans-serif`, e.textAlign = "center", e.textBaseline = "middle", e.fillText(r.label, l, c);
   }
@@ -3955,6 +3949,16 @@ function on(e) {
   }
   return Math.max(0, Math.ceil((e.waitingReadyEndsAt - Date.now()) / 1e3));
 }
+function patchReadyTimeoutHint(e) {
+  const t = document.querySelector("#ready-timeout-hint");
+  if (!t) return;
+  if (!e || e.status !== "waiting_ready") {
+    if (t.textContent) t.textContent = "";
+    return;
+  }
+  const r = on(e), o = la(e.mode) ? "readyTimeoutHint" : "readyAutoStartHint", s = r > 0 ? n(o, { seconds: r }) : "";
+  t.textContent !== s && (t.textContent = s);
+}
 function ht(e) {
   if (Xe === e.roomNo) return 0;
   const t = Li(e);
@@ -4008,7 +4012,7 @@ function Ai(e, t, r, o) {
           <span class="${f ? "ready" : ""}"><i>${f ? "\u2713" : "\u2022"}</i>${i(n(f ? "readyOpponent" : "readyOpponentPending"))}</span>
         </div>
         ${p ? `<strong class="ready-waiting-text">${i(n("readyWaitingOpponent"))}</strong>` : `<button type="button" id="battle-ready-confirm">${i(n("readyButton"))}</button>`}
-        ${m > 0 ? `<small class="ready-timeout-hint">${i(n(g, { seconds: m }))}</small>` : ""}
+        <small class="ready-timeout-hint" id="ready-timeout-hint">${m > 0 ? i(n(g, { seconds: m })) : ""}</small>
       </div>
     </section>`;
   }
@@ -4329,11 +4333,11 @@ function Hi() {
   }
   const qe = ft(t.events).slice(0, 4).map(ne).join("|");
   qe !== Ke && (hi(t, e), an(t, e), Ke = qe);
-  const gt = on(t), ha = `${c ? "waiting" : za() ? "vs" : !l && ht(t) > 0 ? "ready" : l ? "finished" : "none"}:${t.roomNo}:${t.winnerUid}:${o.score}:${s.score}:${o.pressure}:${s.pressure}:${t.finishReason || ""}:${gt}:${o.readyAt || 0}:${s.readyAt || 0}`;
+  const ha = `${c ? "waiting" : za() ? "vs" : !l && ht(t) > 0 ? "ready" : l ? "finished" : "none"}:${t.roomNo}:${t.winnerUid}:${o.score}:${s.score}:${o.pressure}:${s.pressure}:${t.finishReason || ""}:${o.readyAt || 0}:${s.readyAt || 0}`;
   ha !== Ve && (m.overlay && (m.overlay.innerHTML = Ai(t, e, o, s), (() => {
     const overlayChild = m.overlay.firstElementChild;
-    overlayChild && !overlayChild.classList.contains("finish-reveal") && !overlayChild.classList.contains("vs-intro-mask") && overlayChild.classList.add("overlay-flow-enter");
-  })()), Ve = ha), l && (hr(t, e), playFinishFeedback(t, e));
+    overlayChild && !overlayChild.classList.contains("finish-reveal") && !overlayChild.classList.contains("vs-intro-mask") && !overlayChild.classList.contains("ready-confirm-mask") && overlayChild.classList.add("overlay-flow-enter");
+  })()), Ve = ha), patchReadyTimeoutHint(t), l && (hr(t, e), playFinishFeedback(t, e));
   const ga = [a.battleBursts.map((E) => E.id).join("|"), a.battleImpacts.map((E) => E.id).join("|")].join("::");
   ga !== K && renderFeedbackLayers(m);
 }

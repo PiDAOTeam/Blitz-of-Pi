@@ -20,8 +20,109 @@ export function canvasShadeColor(e, t = 0) {
   return `#${s(1)}${s(3)}${s(5)}`;
 }
 
-// 特殊块颜色阈值（与引擎 TILE_H 同值，绘制层用于判断棋子是否高亮）
+// 特殊块颜色阈值（与引擎 TILE_H / TILE_V / TILE_BOMB 同值）
 const wa = 10;
+const ya = 20;
+const ka = 30;
+
+export function drawCanvasSpecialMark(e, t, o, lite = false) {
+  if (t == null || t < wa) return;
+  const s = Math.min(o.w, o.h), l = o.cx, c = o.cy;
+  const bomb = t >= ka, vertical = !bomb && t >= ya;
+  e.save();
+  e.lineCap = "round";
+  e.lineJoin = "round";
+  if (bomb) {
+    e.translate(l, c);
+    e.shadowColor = "rgba(255, 210, 82, .55)";
+    e.shadowBlur = lite ? 0 : s * 0.12;
+    e.strokeStyle = "rgba(255, 236, 150, .92)";
+    e.lineWidth = Math.max(1.6, s * (lite ? 0.04 : 0.045));
+    e.beginPath();
+    e.arc(0, 0, s * 0.2, 0, Math.PI * 2);
+    e.stroke();
+    e.shadowBlur = 0;
+    e.fillStyle = "rgba(255, 248, 210, .96)";
+    e.beginPath();
+    for (let i = 0; i < 6; i += 1) {
+      const a = (Math.PI / 3) * i - Math.PI / 6, r = s * 0.145;
+      const x = Math.cos(a) * r, y = Math.sin(a) * r;
+      if (i === 0) e.moveTo(x, y);
+      else e.lineTo(x, y);
+    }
+    e.closePath();
+    e.fill();
+    e.strokeStyle = "rgba(120, 58, 10, .32)";
+    e.lineWidth = 1;
+    e.stroke();
+    e.fillStyle = "rgba(255,255,255,.92)";
+    e.beginPath();
+    e.arc(-s * 0.04, -s * 0.04, Math.max(1.2, s * 0.032), 0, Math.PI * 2);
+    e.fill();
+    e.strokeStyle = "rgba(255, 230, 120, .88)";
+    e.lineWidth = Math.max(1.2, s * 0.028);
+    for (let i = 0; i < 4; i += 1) {
+      const a = (Math.PI / 2) * i + Math.PI / 4;
+      e.beginPath();
+      e.moveTo(Math.cos(a) * s * 0.17, Math.sin(a) * s * 0.17);
+      e.lineTo(Math.cos(a) * s * 0.26, Math.sin(a) * s * 0.26);
+      e.stroke();
+    }
+    e.restore();
+    return;
+  }
+  e.translate(l, c);
+  if (vertical) e.rotate(Math.PI / 2);
+  const half = s * 0.34, thick = s * 0.085;
+  const u = e.createLinearGradient(-half, 0, half, 0);
+  if (vertical) {
+    u.addColorStop(0, "rgba(255,248,180,.12)");
+    u.addColorStop(0.18, "rgba(130,236,255,.92)");
+    u.addColorStop(0.5, "rgba(255,255,255,1)");
+    u.addColorStop(0.82, "rgba(70,190,255,.88)");
+    u.addColorStop(1, "rgba(255,248,180,.12)");
+    e.shadowColor = "rgba(90,220,255,.7)";
+  } else {
+    u.addColorStop(0, "rgba(255,248,180,.12)");
+    u.addColorStop(0.18, "rgba(255,236,120,.94)");
+    u.addColorStop(0.5, "rgba(255,255,255,1)");
+    u.addColorStop(0.82, "rgba(255,196,70,.88)");
+    u.addColorStop(1, "rgba(255,248,180,.12)");
+    e.shadowColor = "rgba(255,220,80,.7)";
+  }
+  e.shadowBlur = lite ? 0 : s * 0.12;
+  e.fillStyle = u;
+  e.beginPath();
+  e.moveTo(-half, 0);
+  e.lineTo(-half + s * 0.1, -thick);
+  e.lineTo(half - s * 0.1, -thick);
+  e.lineTo(half, 0);
+  e.lineTo(half - s * 0.1, thick);
+  e.lineTo(-half + s * 0.1, thick);
+  e.closePath();
+  e.fill();
+  e.shadowBlur = 0;
+  e.fillStyle = "rgba(255,255,255,.94)";
+  e.beginPath();
+  e.moveTo(-half - s * 0.015, 0);
+  e.lineTo(-half + s * 0.11, -s * 0.105);
+  e.lineTo(-half + s * 0.11, s * 0.105);
+  e.closePath();
+  e.fill();
+  e.beginPath();
+  e.moveTo(half + s * 0.015, 0);
+  e.lineTo(half - s * 0.11, -s * 0.105);
+  e.lineTo(half - s * 0.11, s * 0.105);
+  e.closePath();
+  e.fill();
+  e.strokeStyle = "rgba(255,255,255,.68)";
+  e.lineWidth = Math.max(1.1, s * 0.018);
+  e.beginPath();
+  e.moveTo(-half + s * 0.14, 0);
+  e.lineTo(half - s * 0.14, 0);
+  e.stroke();
+  e.restore();
+}
 
 export function drawCanvasTileBody(e, t, r, o, s, l, c, lite = false) {
   const d = t.color || "#8a35ff", u = Math.min(o.w, o.h);
