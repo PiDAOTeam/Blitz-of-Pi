@@ -3903,7 +3903,7 @@ button:disabled {
   animation: board-wobble .26s ease-out both;
 }
 .game-board.board-local-swap {
-  animation: board-local-swap var(--board-local-swap-duration, .18s) ease-out both;
+  animation: board-local-swap var(--board-local-swap-duration, .18s) cubic-bezier(.16, .84, .22, 1) both;
 }
 .game-board.board-server-settle {
   animation: board-server-settle var(--board-server-settle-duration, .18s) ease-out both;
@@ -7720,34 +7720,34 @@ button:disabled {
 .low-performance .battle-shell.battle-final-countdown .battle-timer-wrap {
   animation-duration: .18s !important;
 }
-.effect-high .tile.tile-dragging {
+:is(.effect-high, .effect-balanced) .tile.tile-dragging {
   filter: brightness(1.28) saturate(1.14);
   box-shadow:
     inset 0 -7px 12px #00000026,
     0 0 18px #ffe29c80,
     0 0 26px #9f5fff5c;
 }
-.effect-high .tile.tile-dragging:after {
+:is(.effect-high, .effect-balanced) .tile.tile-dragging:after {
   width: 136%;
   height: 42%;
   animation-duration: .2s;
   filter: blur(.4px);
 }
-.effect-high .tile.tile-fall-in {
+:is(.effect-high, .effect-balanced) .tile.tile-fall-in {
   animation-duration: .36s;
 }
-.effect-high .tile.tile-fall-heavy {
+:is(.effect-high, .effect-balanced) .tile.tile-fall-heavy {
   box-shadow:
     inset 0 -7px 12px #00000022,
     0 0 14px #ffe26c54,
     0 0 22px #a55eff42;
 }
-.effect-high .battle-burst:before {
+:is(.effect-high, .effect-balanced) .battle-burst:before {
   width: 136px;
   height: 136px;
   filter: blur(.8px) saturate(1.2);
 }
-.effect-high .battle-burst span {
+:is(.effect-high, .effect-balanced) .battle-burst span {
   padding: 10px 16px;
   font-size: clamp(24px, 7vw, 38px);
   box-shadow:
@@ -7755,13 +7755,13 @@ button:disabled {
     0 0 26px #ffd65b6b,
     0 0 42px #a859ff4d;
 }
-.effect-high .battle-burst i {
+:is(.effect-high, .effect-balanced) .battle-burst i {
   filter: saturate(1.24);
 }
-.effect-high .battle-attack-line {
+:is(.effect-high, .effect-balanced) .battle-attack-line {
   height: 54px;
 }
-.effect-high .battle-attack-line i {
+:is(.effect-high, .effect-balanced) .battle-attack-line i {
   height: 6px;
   box-shadow: 0 0 20px #ffe169ad, 0 0 42px #a15bff85;
 }
@@ -7817,7 +7817,7 @@ button:disabled {
 .pi-browser .tile.tile-dragging:after {
   display: none;
 }
-.pi-browser.effect-high .tile.tile-dragging:after {
+.pi-browser:is(.effect-high, .effect-balanced) .tile.tile-dragging:after {
   display: block;
   animation-duration: .16s;
   filter: none;

@@ -5,10 +5,15 @@ export function easeOutQuad(t) {
   return x * (2 - x);
 }
 
+export function easeOutCubic(t) {
+  const x = Math.min(1, Math.max(0, Number(t) || 0));
+  return 1 - (1 - x) ** 3;
+}
+
 export function boardMotionTimings(lite = false, seconds = {}) {
-  const swapMs = lite ? 90 : Math.max(80, Math.round(Number(seconds.localSwapSeconds || 0.15) * 1000));
-  const clearMs = lite ? 70 : 110;
-  const fallMs = lite ? 120 : Math.max(80, Math.round(Number(seconds.tileFallSeconds || 0.22) * 1000));
+  const swapMs = lite ? 90 : Math.max(90, Math.round(Number(seconds.localSwapSeconds || 0.18) * 1000));
+  const clearMs = lite ? 70 : 140;
+  const fallMs = lite ? 120 : Math.max(100, Math.round(Number(seconds.tileFallSeconds || 0.26) * 1000));
   return { swapMs, clearMs, fallMs, totalMs: swapMs + clearMs + fallMs };
 }
 
@@ -76,7 +81,7 @@ export function motionCellEffect(motion, row, col, tileWidth, tileHeight, gap, n
   if (phase.name === "fall") {
     const fall = (motion.falls || []).find((item) => item.toRow === row && item.col === col);
     if (fall) {
-      const eased = easeOutQuad(phase.t);
+      const eased = easeOutCubic(phase.t);
       out.dy = (Number(fall.fromRow) - Number(fall.toRow)) * (Number(tileHeight) + Number(gap || 0)) * (1 - eased);
     }
   }

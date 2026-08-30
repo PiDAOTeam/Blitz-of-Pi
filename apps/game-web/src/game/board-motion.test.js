@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { easeOutQuad, boardMotionTimings, buildBoardMotion, boardMotionPhase, boardMotionActive, pickMotionBoard, motionCellEffect } from "./board-motion.js";
+import { easeOutQuad, easeOutCubic, boardMotionTimings, buildBoardMotion, boardMotionPhase, boardMotionActive, pickMotionBoard, motionCellEffect } from "./board-motion.js";
 
 test("boardMotion 按时长切 swap / clear / fall / done", () => {
   const motion = buildBoardMotion({
@@ -28,6 +28,9 @@ test("boardMotion 按时长切 swap / clear / fall / done", () => {
 
 test("下落位移从 fromRow 插值到 toRow，消除格会淡出", () => {
   assert.ok(easeOutQuad(0.5) > 0.5);
+  assert.ok(easeOutCubic(0.5) > easeOutQuad(0.5));
+  assert.equal(easeOutCubic(0), 0);
+  assert.equal(easeOutCubic(1), 1);
   const timings = boardMotionTimings(false, { localSwapSeconds: 0.1, tileFallSeconds: 0.2 });
   const motion = buildBoardMotion({
     lite: false,

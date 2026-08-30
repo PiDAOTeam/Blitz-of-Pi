@@ -3,7 +3,7 @@ import { DEFAULT_ANIMATION_DURATIONS, DEFAULT_ATTACK_WARNING_TEXT, normalizeAnim
 import { canvasRoundRect, canvasHexToRgba, canvasShadeColor, drawCanvasTileBody, drawCanvasSpecialMark } from "./canvas/draw-utils.js";
 import { clientTileColor, clientIsSpecialTile, clientSpecialKind, clientMakeSpecialTile, clientIsSameMatchTile, clientCreateRandom, clientRandomTile, clientWouldCreateMatchAt, clientSafeRandomTile, clientCloneBoard, clientIsInside, clientSwap, clientFindMatches, clientAddSpecialTargets, clientSpecialCreation, clientDirectSpecialMatches, clientCollapseBoard, clientHasValidMove, clientCreateCandidateBoard, clientRefillBoardIfStuck, clientResolveBoard, clientSettleRemainingMatches, battleClearCount, battleChainCount, battleFeedbackPower, battleIsMegaFeedback, battleBurstText, battlePraiseCue, waPreviewText, yaPreviewSemantic, clientPreviewTone } from "./game/match3-engine.js";
 import { mergeAuthoritativeRoom, shouldClearAllPending, previewSwapOnBoard, isPendingFullyResolved, isBenignSwapReject } from "./game/prediction-sync.js";
-import { buildBoardMotion, boardMotionPhase, boardMotionActive, pickMotionBoard, motionCellEffect, easeOutQuad } from "./game/board-motion.js";
+import { buildBoardMotion, boardMotionPhase, boardMotionActive, pickMotionBoard, motionCellEffect, easeOutCubic } from "./game/board-motion.js";
 const qa = ["localhost", "127.0.0.1"].includes(window.location.hostname), fn = qa ? "http://localhost:3000" : "https://blitzapi.hashpi.app", Gt = fn, Ia = qa ? Gt.replace(/^http/, "ws").replace(/\/$/, "") + "/ws/" : "wss://blitzapi.hashpi.app/ws/", hn = window.location.hostname === "sandbox.minepi.com", R = document.querySelector("#app");
 if (!R) throw new Error("\u672A\u627E\u5230\u5E94\u7528\u6302\u8F7D\u8282\u70B9");
 const BRAND_MARK_HTML = '<img class="brand-logo" src="/assets/brand/blitz-logo-128.jpg" alt="" loading="eager" decoding="async" />';
@@ -35,25 +35,31 @@ function animationMs(e, t = 0) {
 function animationMsAtLeast(e, t, r = 0) {
   return Math.max(t, animationMs(e, r));
 }
+function lowFxMode() {
+  return a.effectiveVisualEffectMode === "low" || document.documentElement.classList.contains("low-performance");
+}
+function richFxEnabled() {
+  return !lowFxMode();
+}
 function burstDurationMs(e, t = 0) {
-  const r = a.effectiveVisualEffectMode === "high", o = a.effectiveVisualEffectMode === "low" || document.documentElement.classList.contains("low-performance");
-  return e?.localPending ? r ? animationMsAtLeast("localBurstHighSeconds", 1080, t) : animationMsAtLeast("localBurstSeconds", 940, t) : o ? animationMs("lowPerformanceBurstSeconds", t) : r ? animationMs("serverBurstHighSeconds", t) : animationMs("serverBurstSeconds", t);
+  const r = richFxEnabled(), o = lowFxMode();
+  return e?.localPending ? r ? animationMsAtLeast("localBurstSeconds", 1000, t) : animationMsAtLeast("localBurstSeconds", 940, t) : o ? animationMs("lowPerformanceBurstSeconds", t) : animationMs("serverBurstSeconds", t);
 }
 function applyAnimationDurationVars() {
-  const e = ve().animationDurations, t = document.documentElement.style, r = a.effectiveVisualEffectMode === "high";
-  const o = r ? e.serverBurstHighSeconds : e.serverBurstSeconds, s = r ? e.localBurstHighSeconds : e.localBurstSeconds;
+  const e = ve().animationDurations, t = document.documentElement.style;
+  const o = e.serverBurstSeconds, s = e.localBurstSeconds;
   t.setProperty("--battle-burst-duration", `${o}s`);
   t.setProperty("--battle-burst-ring-duration", `${Math.min(o, 0.72)}s`);
   t.setProperty("--battle-burst-score-duration", `${Math.max(0.12, o - 0.14)}s`);
   t.setProperty("--battle-burst-particle-duration", `${Math.min(o, 0.68)}s`);
   t.setProperty("--battle-burst-local-ring-duration", `${Math.min(s, 0.52)}s`);
-  t.setProperty("--tile-burst-duration", `${r ? e.tileBurstHighSeconds : e.tileBurstSeconds}s`);
-  t.setProperty("--tile-fall-duration", `${r ? e.tileFallHighSeconds : e.tileFallSeconds}s`);
+  t.setProperty("--tile-burst-duration", `${e.tileBurstSeconds}s`);
+  t.setProperty("--tile-fall-duration", `${e.tileFallSeconds}s`);
   t.setProperty("--board-local-swap-duration", `${e.localSwapSeconds}s`);
   t.setProperty("--board-server-settle-duration", `${e.serverSettleSeconds}s`);
   t.setProperty("--board-invalid-swap-duration", `${e.invalidSwapSeconds}s`);
-  t.setProperty("--board-clear-duration", `${r ? e.boardEffectHighSeconds : e.boardEffectSeconds}s`);
-  t.setProperty("--board-clear-high-duration", `${e.boardEffectHighSeconds}s`);
+  t.setProperty("--board-clear-duration", `${e.boardEffectSeconds}s`);
+  t.setProperty("--board-clear-high-duration", `${e.boardEffectSeconds}s`);
   t.setProperty("--pressure-hit-duration", `${e.pressureHitSeconds}s`);
   t.setProperty("--board-under-attack-duration", `${e.boardUnderAttackSeconds}s`);
   t.setProperty("--attack-line-duration", `${e.attackLineSeconds}s`);
@@ -70,12 +76,11 @@ function yn(e) {
   a.language = e, localStorage.setItem(Da, e), document.documentElement.lang = e;
 }
 function ve() {
-  const e = (t) => t === "high" ? "high" : "balanced";
   const t = (r, o, s = 1) => {
     const l = Number(r);
     return Number.isFinite(l) ? Math.max(0, Math.min(s, l)) : o;
   };
-  return { defaultMode: e(a.gameConfig?.visualEffects?.defaultMode), piBrowserDefaultMode: e(a.gameConfig?.visualEffects?.piBrowserDefaultMode), allowUserChoice: a.gameConfig?.visualEffects?.allowUserChoice !== false, allowHighMode: true, autoDowngradeEnabled: a.gameConfig?.visualEffects?.autoDowngradeEnabled !== false, dragTrailEnabled: a.gameConfig?.visualEffects?.dragTrailEnabled !== false, hapticEnabled: a.gameConfig?.visualEffects?.hapticEnabled !== false, soundEnabled: a.gameConfig?.visualEffects?.soundEnabled !== false, soundVolume: t(a.gameConfig?.visualEffects?.soundVolume, 1, 1.5), bgmEnabled: a.gameConfig?.visualEffects?.bgmEnabled !== false, bgmVolume: t(a.gameConfig?.visualEffects?.bgmVolume, 0.45, 1), attackWarningEnabled: a.gameConfig?.visualEffects?.attackWarningEnabled !== false, attackWarningText: String(a.gameConfig?.visualEffects?.attackWarningText || DEFAULT_ATTACK_WARNING_TEXT).trim() || DEFAULT_ATTACK_WARNING_TEXT, animationDurations: normalizeAnimationDurations(a.gameConfig?.visualEffects?.animationDurations) };
+  return { defaultMode: "balanced", piBrowserDefaultMode: "balanced", allowUserChoice: false, allowHighMode: false, autoDowngradeEnabled: a.gameConfig?.visualEffects?.autoDowngradeEnabled !== false, dragTrailEnabled: a.gameConfig?.visualEffects?.dragTrailEnabled !== false, hapticEnabled: a.gameConfig?.visualEffects?.hapticEnabled !== false, soundEnabled: a.gameConfig?.visualEffects?.soundEnabled !== false, soundVolume: t(a.gameConfig?.visualEffects?.soundVolume, 1, 1.5), bgmEnabled: a.gameConfig?.visualEffects?.bgmEnabled !== false, bgmVolume: t(a.gameConfig?.visualEffects?.bgmVolume, 0.45, 1), attackWarningEnabled: a.gameConfig?.visualEffects?.attackWarningEnabled !== false, attackWarningText: String(a.gameConfig?.visualEffects?.attackWarningText || DEFAULT_ATTACK_WARNING_TEXT).trim() || DEFAULT_ATTACK_WARNING_TEXT, animationDurations: normalizeAnimationDurations(a.gameConfig?.visualEffects?.animationDurations) };
 }
 function extremeRealtimeConfig() {
   const e = a.gameConfig?.extremeRealtime || {};
@@ -123,9 +128,8 @@ function recoverStaleRealtimeConnection(e = Date.now()) {
   lastStaleRealtimeRecoverAt = e, a.networkStatus = "reconnecting", a.realtimeReconnectPending = true, v("client_realtime_stale_reconnect", { roomNo: a.roomNo, mode: a.realtimeRoom?.mode || a.selectedMode, latencyMs: e - t }, 5e3), kt(n("reconnecting"));
   return true;
 }
-function Oa(e) {
-  const t = ve(), r = Zt() ? t.piBrowserDefaultMode : t.defaultMode;
-  return (ot.includes(e) ? e : r) === "high" ? "high" : "balanced";
+function Oa() {
+  return "balanced";
 }
 function kn(e) {
   a.visualEffectMode = ot.includes(e) ? e : "balanced", localStorage.setItem(Wa, a.visualEffectMode), Qe();
@@ -1350,7 +1354,7 @@ function fr(e, t, r = "pi_battle") {
     return;
   }
   V && (window.cancelAnimationFrame(V), V = null);
-  const l = performance.now(), c = a.effectiveVisualEffectMode === "high" ? 900 : 720, d = (u) => {
+  const l = performance.now(), c = richFxEnabled() ? 900 : 720, d = (u) => {
     const h = Math.min(1, (u - l) / c), p = Ka(h);
     if (e.textContent = formatModeAmount(s, o * p), h < 1) {
       V = window.requestAnimationFrame(d);
@@ -1649,22 +1653,13 @@ function Ea(e) {
   return n(e === "balanced" ? "visualEffectBalanced" : e === "high" ? "visualEffectHigh" : e === "locked" ? "visualEffectLocked" : "visualEffectBalanced");
 }
 function Tr() {
-  const e = ve(), t = e.allowUserChoice ? a.visualEffectMode : Oa(e.defaultMode), r = ["balanced", "high"];
   return `
     <section class="effect-setting-panel">
       <div>
         <span>${i(n("visualEffectTitle"))}</span>
-        <small>${i(e.allowUserChoice ? n("visualEffectSummary") : n("visualEffectLocked"))}</small>
+        <small>${i(n("visualEffectSummary"))}</small>
       </div>
-      ${e.allowUserChoice ? `<div class="effect-mode-options">
-              ${r.map((o) => `
-                    <button
-                      type="button"
-                      class="${t === o ? "active" : ""}"
-                      data-effect-mode="${o}"
-                    >${i(Ea(o))}</button>
-                  `).join("")}
-            </div>` : `<strong>${i(Ea(t))}</strong>`}
+      <strong>${i(n("visualEffectBalanced"))}</strong>
     </section>
   `;
 }
@@ -3397,7 +3392,7 @@ function scheduleCanvasBreathFrame() {
   if (canvasBreathTimer || canvasFxFrame || !canvasHasSpecialBreath()) return;
   canvasBreathTimer = window.setTimeout(() => {
     canvasBreathTimer = null, renderCurrentCanvasBoard(), scheduleCanvasBreathFrame();
-  }, a.effectiveVisualEffectMode === "high" ? 220 : 320);
+  }, richFxEnabled() ? 220 : 320);
 }
 function canvasEffectForCell(e, t, r, o, m = null) {
   const s = { scale: 1, dx: 0, dy: 0, glow: 0, tone: "normal", alpha: 1 };
@@ -3405,7 +3400,7 @@ function canvasEffectForCell(e, t, r, o, m = null) {
   const motionPhase = boardMotionPhase(a.boardMotion, o);
   if (boardMotionActive(a.boardMotion, o) && geo) {
     if (motionPhase.name === "swap" && a.boardMotion.from && a.boardMotion.to) {
-      const ease = easeOutQuad(motionPhase.t), from = a.boardMotion.from, to = a.boardMotion.to;
+      const ease = easeOutCubic(motionPhase.t), from = a.boardMotion.from, to = a.boardMotion.to;
       if (from.row === e && from.col === t) s.dx += (to.col - from.col) * (geo.tileWidth + geo.gap) * ease, s.dy += (to.row - from.row) * (geo.tileHeight + geo.gap) * ease, s.scale += Math.sin(ease * Math.PI) * 0.04, s.glow = 0.42;
       else if (to.row === e && to.col === t) s.dx += (from.col - to.col) * (geo.tileWidth + geo.gap) * ease, s.dy += (from.row - to.row) * (geo.tileHeight + geo.gap) * ease, s.scale += Math.sin(ease * Math.PI) * 0.04, s.glow = 0.42;
     } else {
@@ -3516,7 +3511,7 @@ function renderCanvasBoard(e, t) {
   const u = r.getContext("2d");
   if (!u) return false;
   u.setTransform(l, 0, 0, l, 0, 0), u.clearRect(0, 0, s.rect.width, s.rect.height);
-  const h = Math.max(8, Math.min(s.tileWidth, s.tileHeight) * 0.2), f = a.effectiveVisualEffectMode === "high" && !lite;
+  const h = Math.max(8, Math.min(s.tileWidth, s.tileHeight) * 0.2), f = richFxEnabled() && !lite;
   if (lite) {
     u.fillStyle = "rgba(12, 2, 28, .16)", u.fillRect(0, 0, s.rect.width, s.rect.height);
   } else {
@@ -3738,7 +3733,7 @@ function hi(e, t) {
   const s = r.uid === t.uid;
   if (shouldSilenceOwnServerEvent(r, t)) return;
   const l = st(), c = l.selfCard, d = l.opponentCard, u = r.attack > 0 ? s ? d : c : s ? c : d, h = r.attack > 0 ? "impact-attacked" : r.chain > 1 ? "impact-combo" : "impact-score";
-  if (flashOneOf(u, ["impact-score", "impact-combo", "impact-attacked"], h, a.effectiveVisualEffectMode === "high" ? animationMs("impactHighSeconds") : animationMs("impactSeconds")), r.attack > 0) {
+  if (flashOneOf(u, ["impact-score", "impact-combo", "impact-attacked"], h, animationMs("impactSeconds")), r.attack > 0) {
     const p = s ? l.opponentPressureMeter : l.selfPressureMeter;
     flashClass(p, "pressure-hit", animationMs("pressureHitSeconds"));
   }
@@ -3765,7 +3760,7 @@ function showAttackWarning(e) {
   if (!lt(t) || a.battleBursts.some((h) => h.id === t)) return;
   const r = attackWarningText(e).trim();
   if (!r) return;
-  const o = a.effectiveVisualEffectMode === "low" || document.documentElement.classList.contains("low-performance"), s = Math.max(0.92, animationSeconds("hitWarningSeconds")), c = Date.now(), l = { id: t, text: r, tone: "attack", at: c, expiresAt: c + Math.max(120, Math.round(s * 1e3)) + 120, x: 50, y: 34, cleared: Number(e.cleared || 3), chain: Number(e.chain || 1), attack: Number(e.attack || 0), particles: o ? 0 : a.effectiveVisualEffectMode === "high" ? 4 : 2, durationSeconds: s };
+  const o = lowFxMode(), s = Math.max(0.92, animationSeconds("hitWarningSeconds")), c = Date.now(), l = { id: t, text: r, tone: "attack", at: c, expiresAt: c + Math.max(120, Math.round(s * 1e3)) + 120, x: 50, y: 34, cleared: Number(e.cleared || 3), chain: Number(e.chain || 1), attack: Number(e.attack || 0), particles: o ? 0 : 4, durationSeconds: s };
   a.battleBursts = [l], burstLayerKey = "", K = "", window.setTimeout(() => {
     a.battleBursts = a.battleBursts.filter((h) => h.id !== t), burstLayerKey = "", K = "", $();
   }, Math.max(120, Math.round(s * 1e3)));
@@ -3780,7 +3775,7 @@ function gi(e, t) {
 }
 function bi(e) {
   if (a.effectiveVisualEffectMode === "low" || document.documentElement.classList.contains("low-performance")) return 0;
-  const t = battleFeedbackPower(e), r = a.effectiveVisualEffectMode === "high", o = e.localPending ? r ? 8 : 5 : r ? 6 : 3, s = Math.round(o + t * (r ? 1.35 : 0.85));
+  const t = battleFeedbackPower(e), r = richFxEnabled(), o = e.localPending ? r ? 8 : 5 : r ? 6 : 3, s = Math.round(o + t * (r ? 1.35 : 0.85));
   return Math.min(r ? 16 : 9, Math.max(e.localPending ? r ? 8 : 5 : r ? 6 : 3, s));
 }
 function wi(e) {
@@ -3805,7 +3800,7 @@ function Si(e) {
   const o = ki(e);
   r.classList.remove("board-clear-normal", "board-clear-good", "board-clear-big", "board-clear-combo", "board-clear-chain", "board-clear-mega", "board-clear-attack"), r.offsetWidth, r.classList.add(o), window.setTimeout(() => {
     r.classList.remove(o);
-  }, a.effectiveVisualEffectMode === "high" ? animationMs("boardEffectHighSeconds", 120) : animationMs("boardEffectSeconds", 120)), Ci(e);
+  }, animationMs("boardEffectSeconds", 120)), Ci(e);
 }
 function $i(e = false) {
   if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return false;
@@ -3835,7 +3830,7 @@ function Pi(e) {
     s && (s.row < 0 || s.row >= $e || s.col < 0 || s.col >= Pe || t.some((l) => l.row === s.row && l.col === s.col) || t.push(s));
   };
   const o = battleFeedbackPower(e), s = battleIsMegaFeedback(e);
-  if (a.lastSwapPositions.forEach(r), a.effectiveVisualEffectMode === "high" || s) a.lastSwapPositions.forEach((l) => {
+  if (a.lastSwapPositions.forEach(r), richFxEnabled() || s) a.lastSwapPositions.forEach((l) => {
     r({ row: l.row - 1, col: l.col }), r({ row: l.row + 1, col: l.col }), r({ row: l.row, col: l.col - 1 }), r({ row: l.row, col: l.col + 1 });
   });
   if (s && a.lastSwapPositions[0]) {
@@ -3845,14 +3840,14 @@ function Pi(e) {
     const l = a.lastSwapPositions[0];
     l && (r({ row: l.row, col: l.col + 1 }), r({ row: l.row + 1, col: l.col }));
   }
-  const l = a.effectiveVisualEffectMode === "high" ? 8 : 5;
+  const l = richFxEnabled() ? 8 : 5;
   return t.slice(0, Math.min(l, Math.max(2, Math.min(8, Number(e.cleared || 3) + o))));
 }
 function triggerCanvasSpecialFx(e) {
   if (!$i(true)) return;
   const t = (Array.isArray(e.specialFx) ? e.specialFx : []).filter((r) => r?.position && r.kind);
   if (!t.length) return;
-  const r = document.documentElement.classList.contains("low-performance"), o = battleFeedbackPower(e), s = r ? Math.min(2, o) : o, l = a.effectiveVisualEffectMode === "high" && !r ? animationMsAtLeast("boardEffectHighSeconds", 360 + o * 18, 80) : r ? 280 : animationMsAtLeast("boardEffectSeconds", 300 + o * 14, 70), c = Date.now(), d = r ? 1 : a.effectiveVisualEffectMode === "high" ? 3 : 2;
+  const r = document.documentElement.classList.contains("low-performance"), o = battleFeedbackPower(e), s = r ? Math.min(2, o) : o, l = richFxEnabled() && !r ? animationMsAtLeast("boardEffectSeconds", 360 + o * 18, 80) : r ? 280 : animationMsAtLeast("boardEffectSeconds", 300 + o * 14, 70), c = Date.now(), d = r ? 1 : richFxEnabled() ? 3 : 2;
   a.canvasSpecialFx = [...(a.canvasSpecialFx || []), ...t.slice(0, d).map((u) => ({ kind: u.kind, position: u.position, at: c, durationMs: l, cleared: Number(e.cleared || 3), power: s, seed: Math.random() * Math.PI * 2 }))].slice(r ? -2 : -4), renderCurrentCanvasBoard(), scheduleCanvasFxFrame(), window.setTimeout(() => {
     a.canvasSpecialFx = (a.canvasSpecialFx || []).filter((u) => Date.now() - u.at < u.durationMs), renderCurrentCanvasBoard();
   }, l + 40);
@@ -3861,7 +3856,7 @@ function triggerCanvasSpecialBirths(e) {
   if (!$i(true)) return;
   const t = collectCanvasSpecialBirths(e);
   if (!t.length) return;
-  const r = document.documentElement.classList.contains("low-performance"), o = battleFeedbackPower(e), s = r ? 320 : a.effectiveVisualEffectMode === "high" ? 460 + o * 16 : 360 + o * 12, l = Date.now(), c = r ? 1 : a.effectiveVisualEffectMode === "high" ? 2 : 1;
+  const r = document.documentElement.classList.contains("low-performance"), o = battleFeedbackPower(e), s = r ? 320 : richFxEnabled() ? 460 + o * 16 : 360 + o * 12, l = Date.now(), c = r ? 1 : richFxEnabled() ? 2 : 1;
   a.canvasSpecialBirths = [...(a.canvasSpecialBirths || []), ...t.slice(0, c).map((d) => ({ kind: d.kind, position: d.position, tile: d.tile, at: l, durationMs: s, power: r ? Math.min(2, o) : o, seed: Math.random() * Math.PI * 2 }))].slice(r ? -2 : -4), renderCurrentCanvasBoard(), scheduleCanvasFxFrame(), window.setTimeout(() => {
     a.canvasSpecialBirths = (a.canvasSpecialBirths || []).filter((d) => Date.now() - d.at < d.durationMs), renderCurrentCanvasBoard();
   }, s + 40);
@@ -3871,7 +3866,7 @@ function Ci(e) {
   triggerCanvasSpecialFx(e), triggerCanvasSpecialBirths(e);
   const t = Pi(e);
   if (!t.length) return;
-  const r = document.documentElement.classList.contains("low-performance"), o = battleFeedbackPower(e), s = battleIsMegaFeedback(e), l = (a.effectiveVisualEffectMode === "high" || s) && !r && (Number(e.cleared || 0) >= 4 || Number(e.chain || 1) > 1 || e.specialTriggered || e.specialCreated), c = r ? 240 : l ? animationMsAtLeast("tileBurstHighSeconds", 340 + o * 16, 50) : animationMsAtLeast("tileBurstSeconds", 240, 40), d = r ? Math.min(2, o) : o;
+  const r = document.documentElement.classList.contains("low-performance"), o = battleFeedbackPower(e), s = battleIsMegaFeedback(e), l = (richFxEnabled() || s) && !r && (Number(e.cleared || 0) >= 4 || Number(e.chain || 1) > 1 || e.specialTriggered || e.specialCreated), c = r ? 240 : l ? animationMsAtLeast("tileBurstSeconds", 340 + o * 16, 50) : animationMsAtLeast("tileBurstSeconds", 240, 40), d = r ? Math.min(2, o) : o;
   a.canvasTileBursts = [...(a.canvasTileBursts || []), { positions: r ? t.slice(0, 3) : t, at: Date.now(), durationMs: c, strong: l, power: d, tone: e.attack > 0 || e.specialTriggered ? "attack" : s ? "mega" : "score", seed: Math.random() * Math.PI }].slice(r ? -2 : -4), renderCurrentCanvasBoard(), scheduleCanvasFxFrame(), window.setTimeout(() => {
     a.canvasTileBursts = (a.canvasTileBursts || []).filter((c) => Date.now() - c.at < c.durationMs), renderCurrentCanvasBoard();
   }, c + 30);
@@ -3895,7 +3890,7 @@ function Mi(e) {
 function nn(e) {
   const t = `${ne(e)}:burst`;
   if (!lt(t) || a.battleBursts.some((g) => g.id === t)) return;
-  const r = a.effectiveVisualEffectMode === "high", o = a.effectiveVisualEffectMode === "low" || document.documentElement.classList.contains("low-performance"), s = wi(e), l = e.previewText || (e.localPending ? "" : e.specialTriggered ? `\u7206\u53D1 +${e.scoreGain}` : e.specialCreated ? e.cleared >= 5 ? `\u70B8\u5F39 +${e.scoreGain}` : `\u95EA\u7535 +${e.scoreGain}` : e.attack > 0 ? `\u7535\u51FB +${e.attack}` : e.chain > 1 ? `\u8FDE\u51FB x${e.chain}` : e.cleared >= 4 ? `${e.cleared}\u6D88!` : `+${e.scoreGain}`), c = `${s}:${l}`, d = yi(e, s), u = Date.now() - Bt, h = c === Rt && u < va, p = d === Mt && u < va, f = u < vn && (h || p);
+  const r = richFxEnabled(), o = lowFxMode(), s = wi(e), l = e.previewText || (e.localPending ? "" : e.specialTriggered ? `\u7206\u53D1 +${e.scoreGain}` : e.specialCreated ? e.cleared >= 5 ? `\u70B8\u5F39 +${e.scoreGain}` : `\u95EA\u7535 +${e.scoreGain}` : e.attack > 0 ? `\u7535\u51FB +${e.attack}` : e.chain > 1 ? `\u8FDE\u51FB x${e.chain}` : e.cleared >= 4 ? `${e.cleared}\u6D88!` : `+${e.scoreGain}`), c = `${s}:${l}`, d = yi(e, s), u = Date.now() - Bt, h = c === Rt && u < va, p = d === Mt && u < va, f = u < vn && (h || p);
   if (l && (f || h || p)) {
     v("client_burst_suppressed", { roomNo: a.roomNo, mode: a.realtimeRoom?.mode || a.selectedMode, message: l, seq: e.seq || 0, result: ne(e), costMs: u, reason: p ? "same_semantic" : h ? "same_text" : "too_soon" }, 0);
     return;
@@ -3916,7 +3911,7 @@ function Bi(e, t) {
 }
 function Ni(e) {
   if (a.battleImpacts.some((r) => r.id === e.id)) return;
-  const r = Date.now(), o = a.effectiveVisualEffectMode === "high" ? animationMs("impactHighSeconds") : animationMs("impactSeconds");
+  const r = Date.now(), o = animationMs("impactSeconds");
   a.battleImpacts = [...a.battleImpacts, { ...e, at: e.at || r, expiresAt: r + o + 160 }].slice(-4), impactLayerKey = "", K = "";
   const t = oe();
   e.type === "self-hit" && t && (t.classList.remove("board-under-attack"), t.offsetWidth, t.classList.add("board-under-attack"), window.setTimeout(() => t.classList.remove("board-under-attack"), animationMs("boardUnderAttackSeconds", 40))), window.setTimeout(() => {
