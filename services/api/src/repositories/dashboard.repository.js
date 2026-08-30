@@ -172,6 +172,10 @@ async function readDashboard() {
     withdrawRows,
     pendingWithdrawRows,
     playingRows,
+    todayBotFinishedRows,
+    recentBotFinishedRows,
+    frozenPaidRows,
+    releasedDrawRows,
     todayFeeRows,
     totalFeeRows,
     totalRewardRows
@@ -213,6 +217,36 @@ async function readDashboard() {
        FROM battle_rooms
        WHERE status = 'playing'
          AND created_at >= DATE_SUB(NOW(), INTERVAL 30 MINUTE)`
+    ),
+    query(
+      `SELECT COUNT(*) AS count
+       FROM battle_rooms
+       WHERE is_bot_room = 1
+         AND status = 'finished'
+         AND DATE(finished_at) = CURDATE()`
+    ),
+    query(
+      `SELECT COUNT(*) AS count
+       FROM battle_rooms
+       WHERE is_bot_room = 1
+         AND status = 'finished'
+         AND finished_at >= DATE_SUB(NOW(), INTERVAL 2 HOUR)`
+    ),
+    query(
+      `SELECT COUNT(*) AS count
+       FROM battle_rooms
+       WHERE status = 'playing'
+         AND entry_fee > 0
+         AND asset_settlement_status = 'frozen'`
+    ),
+    query(
+      `SELECT COUNT(*) AS count
+       FROM battle_rooms
+       WHERE status = 'finished'
+         AND entry_fee > 0
+         AND COALESCE(winner_uid, '') = ''
+         AND asset_settlement_status = 'released'
+         AND DATE(finished_at) = CURDATE()`
     ),
     query(
       `SELECT
@@ -281,6 +315,11 @@ async function readDashboard() {
     realtimeBroadcastSlowCount: realtimeStats.broadcastSlowCount,
     matchingUsers,
     roomsInBattle: Number(playingRows[0]?.count || 0),
+    todayBotFinishedCount: Number(todayBotFinishedRows[0]?.count || 0),
+    recentBotFinishedCount: Number(recentBotFinishedRows[0]?.count || 0),
+    frozenPaidRoomCount: Number(frozenPaidRows[0]?.count || 0),
+    todayReleasedDrawCount: Number(releasedDrawRows[0]?.count || 0),
+    botStatus: Number(recentBotFinishedRows[0]?.count || 0) > 0 ? "ok" : "idle",
     todayRevenuePi: Number(todayPiBattleRevenue || 0),
     todayBattleRevenueAssets,
     totalBattleRevenueAssets,

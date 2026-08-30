@@ -159,6 +159,30 @@ test("clientCollapseBoard：重力下落，空位由顶部填充", () => {
   for (let row = 0; row < R; row += 1) assert.notEqual(b[row][0], null, `行 ${row} 仍空`);
 });
 
+test("clientCollapseBoard 轨迹不改变落子结果", () => {
+  const make = () => {
+    const b = emptyBoard();
+    b[2][1] = 3;
+    b[5][1] = 4;
+    return b;
+  };
+  const a = make(), c = make(), motions = [];
+  E.clientCollapseBoard(a, E.clientCreateRandom("trace-a"));
+  E.clientCollapseBoard(c, E.clientCreateRandom("trace-a"), motions);
+  assert.deepEqual(a, c);
+  assert.ok(motions.length > 0);
+  assert.ok(motions.some((item) => item.col === 1 && item.toRow === R - 1 && item.tile === 4));
+});
+
+test("clientResolveBoard 额外轨迹字段不影响分数", () => {
+  const make = () => { const b = checkerBoard(); b[R - 1][0] = 0; b[R - 1][1] = 0; b[R - 1][2] = 0; return b; };
+  const r = E.clientResolveBoard(make(), E.clientCreateRandom("same"), null);
+  assert.ok(Array.isArray(r.firstClears));
+  assert.ok(Array.isArray(r.firstFalls));
+  assert.ok(r.totalCleared >= 3);
+  assert.equal(typeof r.scoreGain, "number");
+});
+
 test("clientSwap / clientIsInside：交换与边界判定", () => {
   const b = emptyBoard();
   b[0][0] = 1; b[0][1] = 2;

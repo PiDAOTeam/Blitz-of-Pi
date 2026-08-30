@@ -13,6 +13,7 @@ const {
   findBattleRoom,
   updateBattleRoomStatus
 } = require("../repositories/battle.repository");
+const { expireNeverJoinedPaidRooms } = require("../services/match.service");
 const { addAdminAuditLog, listAdminAuditLogs } = require("../repositories/admin-audit.repository");
 const {
   adminSetUserStatus,
@@ -205,6 +206,9 @@ async function setAdminUserStatus(req, uid, payload) {
 
 async function getAdminBattleRooms() {
   await expireStaleFreeBotRooms();
+  await expireNeverJoinedPaidRooms().catch((error) => {
+    console.error("[admin-ops] unjoined paid room reconcile failed:", error.message);
+  });
   const rows = await listBattleRooms(200);
 
   return rows.map((row) => ({

@@ -3222,8 +3222,21 @@ button:disabled {
   color: var(--muted);
   line-height: 1.55;
 }
+.flow-enter > .shell,
+.flow-enter > .battle-shell {
+  animation: screen-flow-in .34s cubic-bezier(.22, .9, .24, 1) both;
+}
 .matching-card {
   text-align: center;
+}
+.matching-card.matching-entering {
+  animation: matching-flow-out .18s ease forwards;
+}
+.overlay-flow-enter {
+  animation: overlay-flow-in .28s cubic-bezier(.22, .9, .24, 1) both;
+}
+.ready-mask h2.ready-count-pop {
+  animation: ready-count-pop .22s ease;
 }
 .matching-card .brand-mark {
   margin-inline: auto;
@@ -8575,6 +8588,59 @@ button:disabled {
   font-size: 12px;
   font-weight: 1000;
   text-align: center;
+}
+@keyframes screen-flow-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes matching-flow-out {
+  to {
+    opacity: .72;
+    transform: scale(.985);
+  }
+}
+@keyframes overlay-flow-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes ready-count-pop {
+  0% {
+    transform: scale(.86);
+  }
+  70% {
+    transform: scale(1.06);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .flow-enter > .shell,
+  .flow-enter > .battle-shell,
+  .matching-card.matching-entering,
+  .overlay-flow-enter,
+  .ready-mask h2.ready-count-pop {
+    animation: none !important;
+  }
+}
+.low-performance .flow-enter > .shell,
+.low-performance .flow-enter > .battle-shell,
+.low-performance .overlay-flow-enter,
+.hashpi-app .flow-enter > .shell,
+.hashpi-app .flow-enter > .battle-shell {
+  animation-duration: .18s;
 }
 @media (max-width: 420px) {
   .paid-trust-box div {

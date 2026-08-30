@@ -141,7 +141,8 @@ Object.assign($t["zh-CN"], {
   retryMatching: "重新匹配",
   matchBackHome: "返回大厅",
   matchCleanupLeaving: "正在返回大厅...",
-  matchCleanupRetrying: "正在重新匹配..."
+  matchCleanupRetrying: "正在重新匹配...",
+  matchedEntering: "已匹配，正在进入对战"
 });
 Object.assign($t.en, {
   myInviteLink: "My Invite Link",
@@ -271,7 +272,8 @@ Object.assign($t.en, {
   retryMatching: "Retry Match",
   matchBackHome: "Back to Lobby",
   matchCleanupLeaving: "Returning...",
-  matchCleanupRetrying: "Retrying..."
+  matchCleanupRetrying: "Retrying...",
+  matchedEntering: "Matched. Entering battle..."
 });
 
 Object.assign($t["zh-CN"], {

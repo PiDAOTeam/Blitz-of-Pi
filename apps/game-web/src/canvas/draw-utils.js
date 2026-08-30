@@ -23,8 +23,17 @@ export function canvasShadeColor(e, t = 0) {
 // 特殊块颜色阈值（与引擎 TILE_H 同值，绘制层用于判断棋子是否高亮）
 const wa = 10;
 
-export function drawCanvasTileBody(e, t, r, o, s, l, c) {
-  const d = t.color || "#8a35ff", u = Math.min(o.w, o.h), h = canvasShadeColor(d, 0.34), p = canvasShadeColor(d, -0.36);
+export function drawCanvasTileBody(e, t, r, o, s, l, c, lite = false) {
+  const d = t.color || "#8a35ff", u = Math.min(o.w, o.h);
+  if (lite) {
+    canvasRoundRect(e, o.x, o.y + 1, o.w, o.h, s), e.fillStyle = "rgba(0, 0, 0, .22)", e.fill();
+    canvasRoundRect(e, o.x + 0.5, o.y + 0.5, o.w - 1, o.h - 1, s);
+    e.shadowBlur = 0, e.fillStyle = d, e.fill();
+    e.strokeStyle = r >= wa || c.glow > 0 ? "rgba(255, 245, 174, .55)" : "rgba(255, 249, 218, .22)";
+    e.lineWidth = r >= wa ? 1.4 : 1, canvasRoundRect(e, o.x + 0.5, o.y + 0.5, o.w - 1, o.h - 1, s), e.stroke();
+    return;
+  }
+  const h = canvasShadeColor(d, 0.34), p = canvasShadeColor(d, -0.36);
   canvasRoundRect(e, o.x, o.y + Math.max(2, u * 0.055), o.w, o.h, s), e.fillStyle = "rgba(0, 0, 0, .34)", e.fill();
   canvasRoundRect(e, o.x + 0.5, o.y + 0.5, o.w - 1, o.h - 1, s);
   const f = e.createLinearGradient(o.x, o.y, o.x + o.w, o.y + o.h);

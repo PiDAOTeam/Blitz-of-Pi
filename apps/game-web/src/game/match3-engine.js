@@ -120,11 +120,29 @@ function clientDirectSpecialMatches(e, t, r, o = null) {
   });
   return s.size && clientAddSpecialTargets(e, s, o), s;
 }
-function clientCollapseBoard(e, t) {
+function clientCollapseBoard(e, t, motions = null) {
   for (let r = 0; r < Pe; r += 1) {
     const o = [];
-    for (let s = $e - 1; s >= 0; s -= 1) e[s]?.[r] !== null && e[s]?.[r] !== void 0 && o.push(e[s][r]);
-    for (let s = $e - 1; s >= 0; s -= 1) e[s][r] = o[$e - 1 - s] ?? clientSafeRandomTile(e, s, r, t);
+    const src = [];
+    for (let s = $e - 1; s >= 0; s -= 1) {
+      if (e[s]?.[r] !== null && e[s]?.[r] !== void 0) {
+        o.push(e[s][r]);
+        src.push(s);
+      }
+    }
+    const holes = $e - o.length;
+    for (let s = $e - 1; s >= 0; s -= 1) {
+      const idx = $e - 1 - s;
+      if (idx < o.length) {
+        const fromRow = src[idx];
+        e[s][r] = o[idx];
+        if (motions && fromRow !== s) motions.push({ tile: o[idx], col: r, fromRow, toRow: s, spawn: false });
+      } else {
+        const tile = clientSafeRandomTile(e, s, r, t);
+        e[s][r] = tile;
+        if (motions) motions.push({ tile, col: r, fromRow: s - holes, toRow: s, spawn: true });
+      }
+    }
   }
 }
 function clientHasValidMove(e) {
@@ -161,6 +179,7 @@ function clientRefillBoardIfStuck(e, t) {
 function clientResolveBoard(e, t, r = null) {
   const n = [], y = [];
   let o = 0, s = 0, l = 0, c = 0, d = 0, u = r ? clientDirectSpecialMatches(e, r.from, r.to, n) : /* @__PURE__ */ new Set();
+  let firstClears = [], firstFalls = [], afterFirstCollapse = null;
   for (; o < 4; ) {
     const h = u.size > 0 ? u : clientFindMatches(e);
     if (u = /* @__PURE__ */ new Set(), h.size === 0) break;
@@ -169,15 +188,24 @@ function clientResolveBoard(e, t, r = null) {
     c += p > 0 ? 1 : 0;
     const f = clientSpecialCreation(h, o === 1 ? r : null), m = Math.min(h.size, 18), g = Math.min(m, Math.max(0, 18 - s));
     s += g, l += g * 10 + Math.min(o - 1, 3) * 8 + c * 8;
+    if (o === 1) firstClears = [...h].map((P) => {
+      const [C, T] = String(P).split(":").map(Number);
+      return { row: C, col: T };
+    });
     for (const P of h) {
       const [C, T] = P.split(":").map(Number);
       e[C][T] = null;
     }
     f && e[f.position.row]?.[f.position.col] === null && (e[f.position.row][f.position.col] = f.tile, y.push({ kind: f.kind, position: f.position, tile: f.tile }), d += 1);
-    clientCollapseBoard(e, t);
+    const falls = [];
+    clientCollapseBoard(e, t, o === 1 ? falls : null);
+    if (o === 1) {
+      firstFalls = falls;
+      afterFirstCollapse = clientCloneBoard(e);
+    }
     if (s >= 18) break;
   }
-  return { chain: o, totalCleared: s, scoreGain: l, specialTriggered: c, specialCreated: d, specialFx: n, specialBirths: y };
+  return { chain: o, totalCleared: s, scoreGain: l, specialTriggered: c, specialCreated: d, specialFx: n, specialBirths: y, firstClears, firstFalls, afterFirstCollapse };
 }
 function clientSettleRemainingMatches(e, t) {
   let r = 0;

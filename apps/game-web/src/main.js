@@ -2,6 +2,8 @@ import { translations as $t, languageMeta as St, languageCodes as Jt, LANGUAGE_S
 import { DEFAULT_ANIMATION_DURATIONS, DEFAULT_ATTACK_WARNING_TEXT, normalizeAnimationDurations } from "./config/animation.js";
 import { canvasRoundRect, canvasHexToRgba, canvasShadeColor, drawCanvasTileBody } from "./canvas/draw-utils.js";
 import { clientTileColor, clientIsSpecialTile, clientSpecialKind, clientMakeSpecialTile, clientIsSameMatchTile, clientCreateRandom, clientRandomTile, clientWouldCreateMatchAt, clientSafeRandomTile, clientCloneBoard, clientIsInside, clientSwap, clientFindMatches, clientAddSpecialTargets, clientSpecialCreation, clientDirectSpecialMatches, clientCollapseBoard, clientHasValidMove, clientCreateCandidateBoard, clientRefillBoardIfStuck, clientResolveBoard, clientSettleRemainingMatches, battleClearCount, battleChainCount, battleFeedbackPower, battleIsMegaFeedback, battleBurstText, battlePraiseCue, waPreviewText, yaPreviewSemantic, clientPreviewTone } from "./game/match3-engine.js";
+import { mergeAuthoritativeRoom, shouldClearAllPending, previewSwapOnBoard, isPendingFullyResolved, isBenignSwapReject } from "./game/prediction-sync.js";
+import { buildBoardMotion, boardMotionPhase, boardMotionActive, pickMotionBoard, motionCellEffect, easeOutQuad } from "./game/board-motion.js";
 const qa = ["localhost", "127.0.0.1"].includes(window.location.hostname), fn = qa ? "http://localhost:3000" : "https://blitzapi.hashpi.app", Gt = fn, Ia = qa ? Gt.replace(/^http/, "ws").replace(/\/$/, "") + "/ws/" : "wss://blitzapi.hashpi.app/ws/", hn = window.location.hostname === "sandbox.minepi.com", R = document.querySelector("#app");
 if (!R) throw new Error("\u672A\u627E\u5230\u5E94\u7528\u6302\u8F7D\u8282\u70B9");
 const BRAND_MARK_HTML = '<img class="brand-logo" src="/assets/brand/blitz-logo-128.jpg" alt="" loading="eager" decoding="async" />';
@@ -90,7 +92,7 @@ function isExtremeRealtimeActive(e = a.realtimeRoom) {
   return Boolean(e && a.user);
 }
 function resetPredictionState() {
-  a.pendingSwapSeq = 0, a.pendingSwapPositions = [], a.pendingSwapQueue = [], a.clientPredictedBoard = null, a.clientRoomVersion = Number(a.realtimeRoom?.version || 0);
+  a.pendingSwapSeq = 0, a.pendingSwapPositions = [], a.pendingSwapQueue = [], a.queuedGesture = null, a.clientPredictedBoard = null, a.clientRoomVersion = Number(a.realtimeRoom?.version || 0);
 }
 function pendingSwapTimeoutMs() {
   return xn() ? 1600 : 2300;
@@ -118,7 +120,7 @@ function recoverStaleRealtimeConnection(e = Date.now()) {
   if (e - lastStaleRealtimeRecoverAt < 3200) return false;
   const t = Number(a.lastRoomStateAt || 0);
   if (!t || e - t < 6500) return false;
-  lastStaleRealtimeRecoverAt = e, a.networkStatus = "reconnecting", zt(), v("client_realtime_stale_reconnect", { roomNo: a.roomNo, mode: a.realtimeRoom?.mode || a.selectedMode, latencyMs: e - t }, 5e3), kt(n("reconnecting"));
+  lastStaleRealtimeRecoverAt = e, a.networkStatus = "reconnecting", a.realtimeReconnectPending = true, v("client_realtime_stale_reconnect", { roomNo: a.roomNo, mode: a.realtimeRoom?.mode || a.selectedMode, latencyMs: e - t }, 5e3), kt(n("reconnecting"));
   return true;
 }
 function Oa(e) {
@@ -161,7 +163,7 @@ let z = null, W = null, At = 0, q = null;
 const $n = 8e3, Pn = 3, Cn = 9e3, Ha = 1200, Tn = 1800, Ie = 8, Rn = 5e3, Mn = 6, Xt = 8e3, fe = 3, Bn = 12, Nn = 6, $a = 30, $e = 8, Pe = 6, Pa = 0.18, En = 1200;
 function we() {
   Be && (window.clearInterval(Be), Be = null), Ee = "", te = 0, pe = -1;
-  canvasFxFrame && (window.cancelAnimationFrame(canvasFxFrame), canvasFxFrame = null), canvasBreathTimer && (window.clearTimeout(canvasBreathTimer), canvasBreathTimer = null), a.canvasSpecialFx = [], a.canvasSpecialBirths = [], a.canvasTileBursts = [];
+  canvasFxFrame && (window.cancelAnimationFrame(canvasFxFrame), canvasFxFrame = null), canvasBreathTimer && (window.clearTimeout(canvasBreathTimer), canvasBreathTimer = null), a.canvasSpecialFx = [], a.canvasSpecialBirths = [], a.canvasTileBursts = [], a.boardMotion = null;
 }
 function cleanupBoardInputs() {
   try {
@@ -176,7 +178,7 @@ function cleanupBoardInputs() {
   Ne = null;
 }
 function ce() {
-  stopBattleBgm(), be && (window.cancelAnimationFrame(be), be = null), ee && (window.clearTimeout(ee), ee = null), le && (window.cancelAnimationFrame(le), le = null), j && (window.cancelAnimationFrame(j), j = null), V && (window.cancelAnimationFrame(V), V = null), z = null, W = null, At = 0, q = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPerfLockedLow = false, clientPerfFrameCount = 0, clientPerfLongFrameCount = 0, clientPerfSampleStartedAt = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0, lastStaleRealtimeRecoverAt = 0, document.documentElement.classList.remove("low-performance"), we(), Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", burstLayerKey = "", impactLayerKey = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, finishFeedbackKey = "", Se = null, me.clear(), Nt = "", y = null, Et = 0, Lt = "", xt = 0, a.pendingSwapSeq = 0, a.pendingSwapPositions = [], a.pendingSwapQueue = [], cleanupBoardInputs(), x = null, k = null, Yt = 0, a.battleBursts = [], a.battleImpacts = [], a.localBattleEvents = [], a.localSwapFx = null, a.canvasSpecialFx = [], a.canvasSpecialBirths = [], stopBattleCleanupLoop();
+  stopBattleBgm(), be && (window.cancelAnimationFrame(be), be = null), ee && (window.clearTimeout(ee), ee = null), le && (window.cancelAnimationFrame(le), le = null), j && (window.cancelAnimationFrame(j), j = null), V && (window.cancelAnimationFrame(V), V = null), z = null, W = null, At = 0, q = null, Ge = 0, Me = 0, clientPerfStableFrames = 0, clientPerfLowSince = 0, clientPerfLockedLow = false, clientPerfFrameCount = 0, clientPerfLongFrameCount = 0, clientPerfSampleStartedAt = 0, clientPreviewBurstUid = "", clientPreviewBurstSeq = 0, clientPreviewBurstAt = 0, lastStaleRealtimeRecoverAt = 0, document.documentElement.classList.remove("low-performance"), we(), Pt = "", Re = "", je = "", se = [], Ve = "", Ke = "", K = "", burstLayerKey = "", impactLayerKey = "", Ct = "", Tt = "", Rt = "", Mt = "", Bt = 0, finishFeedbackKey = "", Se = null, me.clear(), Nt = "", y = null, Et = 0, Lt = "", xt = 0, a.pendingSwapSeq = 0, a.pendingSwapPositions = [], a.pendingSwapQueue = [], a.queuedGesture = null, a.realtimeReconnectPending = false, a.boardMotion = null, cleanupBoardInputs(), x = null, k = null, Yt = 0, a.battleBursts = [], a.battleImpacts = [], a.localBattleEvents = [], a.localSwapFx = null, a.canvasSpecialFx = [], a.canvasSpecialBirths = [], stopBattleCleanupLoop();
 }
 function ge() {
   ze && (window.clearTimeout(ze), ze = null);
@@ -196,7 +198,9 @@ function ensureBattleCleanupLoop() {
       stopBattleCleanupLoop();
       return;
     }
-    (cleanupExpiredPendingSwaps() || clearStalledPendingSwaps() || cleanupExpiredFeedback() || recoverStaleRealtimeConnection()) && $();
+    const expired = cleanupExpiredPendingSwaps(), stalled = clearStalledPendingSwaps();
+    (expired || stalled) && flushQueuedGesture();
+    (expired || stalled || cleanupExpiredFeedback() || recoverStaleRealtimeConnection()) && $();
   }, 420));
 }
 function flashClass(e, t, r) {
@@ -273,9 +277,26 @@ function dt() {
 function Zt() {
   return !!window.Pi;
 }
+function canvasLiteMode() {
+  return a.effectiveVisualEffectMode === "low" || document.documentElement.classList.contains("low-performance") || isHashPiAppLogin();
+}
+function prefersReducedFlow() {
+  return canvasLiteMode() || !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+}
+function requestFlowEnter() {
+  a.flowEnterPending = true;
+}
+function applyFlowEnter(e = R) {
+  if (!a.flowEnterPending || !e) return;
+  a.flowEnterPending = false;
+  if (prefersReducedFlow()) return;
+  e.classList.remove("flow-enter");
+  void e.offsetWidth;
+  e.classList.add("flow-enter");
+}
 function Qe() {
   const e = Oa(a.visualEffectMode);
-  a.effectiveVisualEffectMode = e, applyAnimationDurationVars(), document.documentElement.classList.toggle("pi-browser", Zt()), document.documentElement.classList.remove("effect-low", "effect-balanced", "effect-high"), document.documentElement.classList.add(`effect-${e}`), document.documentElement.classList.toggle("effect-no-trail", !ve().dragTrailEnabled), document.documentElement.classList.toggle("effect-no-haptic", !ve().hapticEnabled), e === "low" ? document.documentElement.classList.add("low-performance") : a.screen !== "battle" && document.documentElement.classList.remove("low-performance");
+  a.effectiveVisualEffectMode = e, applyAnimationDurationVars(), document.documentElement.classList.toggle("pi-browser", Zt()), document.documentElement.classList.toggle("hashpi-app", isHashPiAppLogin()), document.documentElement.classList.remove("effect-low", "effect-balanced", "effect-high"), document.documentElement.classList.add(`effect-${e}`), document.documentElement.classList.toggle("effect-no-trail", !ve().dragTrailEnabled), document.documentElement.classList.toggle("effect-no-haptic", !ve().hapticEnabled), e === "low" ? document.documentElement.classList.add("low-performance") : a.screen !== "battle" && document.documentElement.classList.remove("low-performance");
 }
 function xn() {
   const e = new URLSearchParams(window.location.search);
@@ -524,13 +545,10 @@ function na(e) {
 }
 function kaPreviewSwap(e, t, r) {
   const o = a.realtimeRoom?.players?.find((m) => m.uid === a.user?.uid);
-  if (!o?.board || !clientIsInside(o.board, e) || !clientIsInside(o.board, t)) return null;
-  const s = clientCloneBoard(o.board);
-  clientSwap(s, e, t);
-  const l = clientCreateRandom(`${a.realtimeRoom?.roomNo || ""}:${a.clientRoomVersion || a.realtimeRoom?.version || 0}:${r}`), c = clientResolveBoard(s, l, { from: e, to: t });
-  if (!c.totalCleared) return null;
-  clientSettleRemainingMatches(s, l), clientRefillBoardIfStuck(s, a.realtimeRoom);
-  const d = Math.min(4, Math.max(0, c.chain - 1) + Math.floor(Math.min(c.totalCleared, 16) / 8) + Math.min(1, Number(c.specialTriggered || 0))), u = { uid: a.user?.uid || "local", type: "local_preview", seq: r, cleared: c.totalCleared, chain: c.chain, scoreGain: c.scoreGain, attack: d, specialTriggered: Number(c.specialTriggered || 0), specialCreated: Number(c.specialCreated || 0), specialFx: c.specialFx || [], specialBirths: c.specialBirths || [], at: Date.now(), localPending: true, board: s };
+  if (!o?.board) return null;
+  const c = previewSwapOnBoard(o.board, e, t, r, { roomNo: a.realtimeRoom?.roomNo || "", version: a.clientRoomVersion || a.realtimeRoom?.version || 0 });
+  if (!c) return null;
+  const u = { uid: a.user?.uid || "local", type: "local_preview", seq: r, cleared: c.cleared, chain: c.chain, scoreGain: c.scoreGain, attack: c.attack, specialTriggered: c.specialTriggered, specialCreated: c.specialCreated, specialFx: c.specialFx || [], specialBirths: c.specialBirths || [], firstClears: c.firstClears || [], firstFalls: c.firstFalls || [], afterFirstCollapse: c.afterFirstCollapse || c.board, at: Date.now(), localPending: true, board: c.board };
   return u.previewSemantic = yaPreviewSemantic(u), u.previewTone = clientPreviewTone(u), u.previewText = waPreviewText(u), u;
 }
 function xaPreviewSwap(e, t, r) {
@@ -541,12 +559,28 @@ function xaPreviewSwap(e, t, r) {
     console.warn("local swap preview failed", o);
   }
 }
+function startPredictedBoardMotion(e, t, r, o) {
+  const s = clientCloneBoard(r);
+  if (clientIsInside(s, e) && clientIsInside(s, t)) clientSwap(s, e, t);
+  a.boardMotion = buildBoardMotion({
+    from: e,
+    to: t,
+    startBoard: r,
+    swappedBoard: s,
+    afterFirstCollapse: o.afterFirstCollapse || o.board,
+    endBoard: o.board,
+    clearCells: o.firstClears || [],
+    falls: o.firstFalls || [],
+    lite: canvasLiteMode(),
+    seconds: ve().animationDurations
+  });
+}
 function applyPredictedSwap(e, t, r, o = null) {
   try {
     const s = o || kaPreviewSwap(e, t, r), l = xa(a.realtimeRoom, a.user?.uid || "");
     if (!s || !l?.board || !clientIsInside(l.board, e) || !clientIsInside(l.board, t)) return false;
-    const c = clientCloneBoard(s.board || l.board), d = a.realtimeRoom?.players?.find((u) => u.uid !== l.uid);
-    l.board = c, l.score = Number(l.score || 0) + Number(s.scoreGain || 0), l.combo = Number(s.chain || 1), l.lastGain = Number(s.scoreGain || 0), l.pressure = Math.max(0, Number(l.pressure || 0) - 1), d && (d.pressure = Number(d.pressure || 0) + Number(s.attack || 0)), a.clientPredictedBoard = clientCloneBoard(c), Re = "", renderCanvasBoard(oe(), l), clientPreviewBurstUid = s.uid || "", clientPreviewBurstSeq = Number(s.seq || 0), clientPreviewBurstAt = Date.now(), nn(s), Si(s), Number(s.attack || 0) > 0 && Ni({ id: `${ne(s)}:attack-line`, type: "attack-line", from: "self", attack: Number(s.attack || 0) }), playBattleEventFeedback(s, true);
+    const startBoard = clientCloneBoard(l.board), c = clientCloneBoard(s.board || l.board), d = a.realtimeRoom?.players?.find((u) => u.uid !== l.uid);
+    l.board = c, l.score = Number(l.score || 0) + Number(s.scoreGain || 0), l.combo = Number(s.chain || 1), l.lastGain = Number(s.scoreGain || 0), l.pressure = Math.max(0, Number(l.pressure || 0) - 1), d && (d.pressure = Number(d.pressure || 0) + Number(s.attack || 0)), a.clientPredictedBoard = clientCloneBoard(c), Re = "", startPredictedBoardMotion(e, t, startBoard, s), renderCanvasBoard(oe(), l), clientPreviewBurstUid = s.uid || "", clientPreviewBurstSeq = Number(s.seq || 0), clientPreviewBurstAt = Date.now(), nn(s), Si(s), Number(s.attack || 0) > 0 && Ni({ id: `${ne(s)}:attack-line`, type: "attack-line", from: "self", attack: Number(s.attack || 0) }), playBattleEventFeedback(s, true);
     return s;
   } catch (s) {
     console.warn("local predicted swap failed", s);
@@ -1326,13 +1360,29 @@ function fr(e, t, r = "pi_battle") {
   };
   e.textContent = formatModeAmount(s, 0), V = window.requestAnimationFrame(d);
 }
+function countUpPlain(e, t, r = 520) {
+  if (!e) return;
+  const o = Number(t || 0);
+  if (!pr()) {
+    e.textContent = String(Math.round(o));
+    return;
+  }
+  const s = performance.now(), l = (c) => {
+    const d = Math.min(1, (c - s) / r);
+    e.textContent = String(Math.round(o * Ka(d)));
+    d < 1 && window.requestAnimationFrame(l);
+  };
+  e.textContent = "0", window.requestAnimationFrame(l);
+}
 function hr(e, t) {
-  if (e.status !== "finished" || e.winnerUid !== t.uid) return;
-  const r = ie(e.mode);
-  if (r <= 0) return;
-  const o = `${e.roomNo}:${e.winnerUid}:${r}`;
+  if (e.status !== "finished") return;
+  const r = ie(e.mode), o = `${e.roomNo}:${e.winnerUid || "draw"}:${r}`;
   if (o === Nt) return;
   Nt = o;
+  const self = xa(e, t.uid), foe = e.players?.find((s) => s.uid !== t.uid);
+  countUpPlain(document.querySelector("#settlement-self-score"), self?.score || 0);
+  countUpPlain(document.querySelector("#settlement-opponent-score"), foe?.score || 0);
+  if (e.winnerUid !== t.uid || r <= 0) return;
   const s = document.querySelector("#settlement-reward-amount");
   s && fr(s, r, e.mode);
 }
@@ -2089,6 +2139,7 @@ function da() {
   });
 }
 function ua(e = n("loadingDefault")) {
+  requestFlowEnter();
   R.innerHTML = `
     <main class="shell">
       <section class="hero">
@@ -2099,7 +2150,7 @@ function ua(e = n("loadingDefault")) {
         <p class="summary">${e}</p>
       </section>
     </main>
-  `;
+  `, applyFlowEnter();
 }
 function Fe(e = n("errorDefault")) {
   R.innerHTML = `
@@ -2314,7 +2365,7 @@ function _() {
     Xa();
   }), Dr(), document.querySelector("#open-daily-rewards")?.addEventListener("click", () => openDailyRewards()), document.querySelector("#open-watch-shareholder")?.addEventListener("click", () => openWatchShareholderSheet()), document.querySelector("#open-home-invite")?.addEventListener("click", () => at()), document.querySelector("#open-game-tips")?.addEventListener("click", () => Hr()), document.querySelector("#open-rank-leaderboard")?.addEventListener("click", async () => {
     await Kt(1), Ot();
-  }), da();
+  }), da(), applyFlowEnter();
 }
 function Ot() {
   document.querySelectorAll("#leaderboard-sheet-mask").forEach((s) => s.remove());
@@ -3236,6 +3287,7 @@ async function Yr(e, t) {
   }
 }
 function nt(e = n("matchingDefault")) {
+  requestFlowEnter();
   const t = Qt(), r = Ce(), o = a.matchCanCancel || t >= r, s = Math.max(0, r - t), l = a.matchCancelling ? n("canceling") : o ? n("cancelMatch") : n("cancelAfter", { seconds: s }), c = matchIsRecoverable(), d = c ? n("matchRecoverHint") : o ? n("canCancelHint") : n("cancelAfter", { seconds: s }), u = c ? `
           <button type="button" class="primary-action" id="retry-match" ${a.matchCancelling ? "disabled" : ""}>${i(n("retryMatching"))}</button>
           <button type="button" class="secondary" id="match-back-home" ${a.matchCancelling ? "disabled" : ""}>${i(n("matchBackHome"))}</button>
@@ -3256,7 +3308,7 @@ function nt(e = n("matchingDefault")) {
         <p id="match-cancel-status" class="summary danger-text">${i(a.matchCancelMessage)}</p>
       </section>
     </main>
-  `, document.querySelector("#cancel-match")?.addEventListener("click", Qi), document.querySelector("#retry-match")?.addEventListener("click", retryMatchAfterFailure), document.querySelector("#match-back-home")?.addEventListener("click", backHomeAfterMatchFailure);
+  `, applyFlowEnter(), document.querySelector("#cancel-match")?.addEventListener("click", Qi), document.querySelector("#retry-match")?.addEventListener("click", retryMatchAfterFailure), document.querySelector("#match-back-home")?.addEventListener("click", backHomeAfterMatchFailure);
 }
 function J(e = n("matchingDefault")) {
   const t = matchIsRecoverable();
@@ -3318,7 +3370,7 @@ function canvasCellRect(e, t, r) {
   return { x: o, y: s, w: Math.max(2, e.tileWidth - 1), h: Math.max(2, e.tileHeight - 1), cx: o + e.tileWidth / 2, cy: s + e.tileHeight / 2, row: t, col: r };
 }
 function canvasHasActiveFx(e = Date.now()) {
-  return !!(a.tileEffect && e - a.tileEffect.at < Math.max(180, animationMs("localSwapSeconds", 80)) || a.localSwapFx && e - a.localSwapFx.at < animationMs("localSwapSeconds", 60) || x && e - x.at < 220 || k && e - k.at < 320 || (a.canvasTileBursts || []).some((t) => e - t.at < t.durationMs) || (a.canvasSpecialFx || []).some((t) => e - t.at < t.durationMs) || (a.canvasSpecialBirths || []).some((t) => e - t.at < t.durationMs));
+  return !!(boardMotionActive(a.boardMotion, e) || a.tileEffect && e - a.tileEffect.at < Math.max(180, animationMs("localSwapSeconds", 80)) || a.localSwapFx && e - a.localSwapFx.at < animationMs("localSwapSeconds", 60) || x && e - x.at < 220 || k && e - k.at < 320 || (a.canvasTileBursts || []).some((t) => e - t.at < t.durationMs) || (a.canvasSpecialFx || []).some((t) => e - t.at < t.durationMs) || (a.canvasSpecialBirths || []).some((t) => e - t.at < t.durationMs));
 }
 function renderCurrentCanvasBoard() {
   const e = oe(), t = Zr()?.self;
@@ -3335,7 +3387,7 @@ function scheduleCanvasFxFrame() {
 function canvasHasSpecialBreath() {
   if (document.visibilityState === "hidden") return false;
   if (a.screen !== "battle" || a.realtimeRoom?.status !== "playing") return false;
-  if (a.effectiveVisualEffectMode === "low" || document.documentElement.classList.contains("low-performance")) return false;
+  if (canvasLiteMode()) return false;
   if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return false;
   const e = Zr()?.self?.board || [];
   return e.some((t) => (t || []).some((r) => clientIsSpecialTile(r)));
@@ -3348,9 +3400,21 @@ function scheduleCanvasBreathFrame() {
   }, a.effectiveVisualEffectMode === "high" ? 220 : 320);
 }
 function canvasEffectForCell(e, t, r, o, m = null) {
-  const s = { scale: 1, dx: 0, dy: 0, glow: 0, tone: "normal" };
+  const s = { scale: 1, dx: 0, dy: 0, glow: 0, tone: "normal", alpha: 1 };
+  const geo = m || getBoardGeometry(oe());
+  const motionPhase = boardMotionPhase(a.boardMotion, o);
+  if (boardMotionActive(a.boardMotion, o) && geo) {
+    if (motionPhase.name === "swap" && a.boardMotion.from && a.boardMotion.to) {
+      const ease = easeOutQuad(motionPhase.t), from = a.boardMotion.from, to = a.boardMotion.to;
+      if (from.row === e && from.col === t) s.dx += (to.col - from.col) * (geo.tileWidth + geo.gap) * ease, s.dy += (to.row - from.row) * (geo.tileHeight + geo.gap) * ease, s.scale += Math.sin(ease * Math.PI) * 0.04, s.glow = 0.42;
+      else if (to.row === e && to.col === t) s.dx += (from.col - to.col) * (geo.tileWidth + geo.gap) * ease, s.dy += (from.row - to.row) * (geo.tileHeight + geo.gap) * ease, s.scale += Math.sin(ease * Math.PI) * 0.04, s.glow = 0.42;
+    } else {
+      const motionFx = motionCellEffect(a.boardMotion, e, t, geo.tileWidth, geo.tileHeight, geo.gap, o);
+      s.dx += motionFx.dx, s.dy += motionFx.dy, s.scale *= motionFx.scale, s.alpha = motionFx.alpha;
+    }
+  }
   const l = Math.max(180, animationMs("localSwapSeconds", 80));
-  if (a.localSwapFx && o - a.localSwapFx.at < l) {
+  if (a.localSwapFx && o - a.localSwapFx.at < l && !boardMotionActive(a.boardMotion, o)) {
     const c = Math.min(1, Math.max(0, (o - a.localSwapFx.at) / l)), d = Math.sin(c * Math.PI), u = 1 - c, h = a.localSwapFx.from, p = a.localSwapFx.to;
     if (h?.row === e && h.col === t || p?.row === e && p.col === t) {
       const f = m || getBoardGeometry(oe());
@@ -3369,7 +3433,7 @@ function canvasEffectForCell(e, t, r, o, m = null) {
 function drawCanvasSpecial(e, t, r, o) {
   const s = Math.min(o.w, o.h), l = o.cx, c = o.cy;
   e.save(), e.lineCap = "round", e.lineJoin = "round";
-  if (t >= wa && a.screen === "battle" && a.effectiveVisualEffectMode !== "low" && !document.documentElement.classList.contains("low-performance") && !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+  if (t >= wa && a.screen === "battle" && !canvasLiteMode() && !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
     const d = (Math.sin(Date.now() / 430 + o.row * 0.7 + o.col * 0.45) + 1) / 2, u = t >= ka ? "rgba(255, 207, 72," : t >= ya ? "rgba(123, 236, 255," : "rgba(255, 237, 112,", h = 0.22 + d * 0.22;
     e.globalCompositeOperation = "lighter", e.strokeStyle = `${u} ${h})`, e.lineWidth = Math.max(1.4, s * (0.035 + d * 0.018)), e.shadowColor = `${u} ${0.42 + d * 0.18})`, e.shadowBlur = s * (0.12 + d * 0.07), canvasRoundRect(e, o.x + s * 0.06, o.y + s * 0.06, o.w - s * 0.12, o.h - s * 0.12, Math.max(5, s * 0.16)), e.stroke(), e.shadowBlur = 0, e.globalCompositeOperation = "source-over";
   }
@@ -3427,7 +3491,7 @@ function drawCanvasSpecialBirths(e, t) {
     const m = e.createRadialGradient(c.cx, c.cy, d * 0.08, c.cx, c.cy, d * (0.7 + s * 0.6));
     m.addColorStop(0, "rgba(255, 255, 255, .96)"), m.addColorStop(0.3, p ? "rgba(255, 214, 90, .72)" : "rgba(119, 235, 255, .62)"), m.addColorStop(0.7, p ? "rgba(255, 91, 97, .24)" : "rgba(255, 239, 125, .22)"), m.addColorStop(1, "rgba(255, 255, 255, 0)"), e.fillStyle = m, e.beginPath(), e.arc(c.cx, c.cy, d * (0.62 + s * 0.58), 0, Math.PI * 2), e.fill();
     e.strokeStyle = p ? `rgba(255, 235, 144, ${0.88 * l})` : `rgba(124, 237, 255, ${0.78 * l})`, e.lineWidth = Math.max(2, d * 0.055 * l), e.beginPath(), e.arc(c.cx, c.cy, d * (0.34 + s * 0.46), 0, Math.PI * 2), e.stroke();
-    e.globalAlpha = Math.max(0, l * 0.95), e.translate(c.cx, c.cy), e.scale(f, f), e.translate(-c.cx, -c.cy), drawCanvasTileBody(e, h, u, c, Math.max(8, d * 0.2), true, { glow: l, tone: "success" }), drawCanvasSpecial(e, u, h, c);
+    e.globalAlpha = Math.max(0, l * 0.95), e.translate(c.cx, c.cy), e.scale(f, f), e.translate(-c.cx, -c.cy), drawCanvasTileBody(e, h, u, c, Math.max(8, d * 0.2), !canvasLiteMode(), { glow: l, tone: "success" }, canvasLiteMode()), drawCanvasSpecial(e, u, h, c);
     e.restore();
   }
 }
@@ -3446,26 +3510,36 @@ function drawCanvasTileBursts(e, t) {
   }
 }
 function renderCanvasBoard(e, t) {
-  const r = e?.querySelector?.("#battle-board-canvas"), o = t?.board || [], s = getBoardGeometry(e);
-  if (!r || !o.length || !s) return false;
-  const l = Math.max(1, Math.min(2, window.devicePixelRatio || 1)), c = Math.max(1, Math.floor(s.rect.width * l)), d = Math.max(1, Math.floor(s.rect.height * l));
+  const r = e?.querySelector?.("#battle-board-canvas"), logicalBoard = t?.board || [], s = getBoardGeometry(e);
+  if (!r || !logicalBoard.length || !s) return false;
+  const p = Date.now(), lite = canvasLiteMode();
+  if (a.boardMotion && !boardMotionActive(a.boardMotion, p)) a.boardMotion = null;
+  const o = pickMotionBoard(a.boardMotion, logicalBoard, p);
+  const l = lite ? 1 : Math.max(1, Math.min(2, window.devicePixelRatio || 1)), c = Math.max(1, Math.floor(s.rect.width * l)), d = Math.max(1, Math.floor(s.rect.height * l));
   (r.width !== c || r.height !== d) && (r.width = c, r.height = d);
   const rWidth = `${s.rect.width}px`, rHeight = `${s.rect.height}px`;
   r.style.width !== rWidth && (r.style.width = rWidth), r.style.height !== rHeight && (r.style.height = rHeight);
   const u = r.getContext("2d");
   if (!u) return false;
   u.setTransform(l, 0, 0, l, 0, 0), u.clearRect(0, 0, s.rect.width, s.rect.height);
-  const h = Math.max(8, Math.min(s.tileWidth, s.tileHeight) * 0.2), p = Date.now(), f = a.effectiveVisualEffectMode === "high" && !document.documentElement.classList.contains("low-performance");
-  const m = u.createLinearGradient(0, 0, 0, s.rect.height);
-  m.addColorStop(0, "rgba(255, 231, 133, .08)"), m.addColorStop(0.45, "rgba(122, 76, 210, .08)"), m.addColorStop(1, "rgba(12, 2, 28, .18)"), u.fillStyle = m, u.fillRect(0, 0, s.rect.width, s.rect.height);
-  for (let g = 0; g < $e; g += 1) for (let P = 0; P < Pe; P += 1) {
-    const C = canvasCellRect(s, g, P);
-    u.save(), canvasRoundRect(u, C.x + 1, C.y + 1, C.w - 2, C.h - 2, h * 0.9), u.fillStyle = "rgba(255, 255, 255, .035)", u.fill(), u.restore();
+  const h = Math.max(8, Math.min(s.tileWidth, s.tileHeight) * 0.2), f = a.effectiveVisualEffectMode === "high" && !lite;
+  if (lite) {
+    u.fillStyle = "rgba(12, 2, 28, .16)", u.fillRect(0, 0, s.rect.width, s.rect.height);
+  } else {
+    const m = u.createLinearGradient(0, 0, 0, s.rect.height);
+    m.addColorStop(0, "rgba(255, 231, 133, .08)"), m.addColorStop(0.45, "rgba(122, 76, 210, .08)"), m.addColorStop(1, "rgba(12, 2, 28, .18)"), u.fillStyle = m, u.fillRect(0, 0, s.rect.width, s.rect.height);
+    for (let g = 0; g < $e; g += 1) for (let P = 0; P < Pe; P += 1) {
+      const C = canvasCellRect(s, g, P);
+      u.save(), canvasRoundRect(u, C.x + 1, C.y + 1, C.w - 2, C.h - 2, h * 0.9), u.fillStyle = "rgba(255, 255, 255, .035)", u.fill(), u.restore();
+    }
   }
   for (let g = 0; g < $e; g += 1) {
     for (let P = 0; P < Pe; P += 1) {
-      const C = o[g]?.[P], T = na(C), U = canvasCellRect(s, g, P), Te = Math.min(U.w, U.h), qe = canvasEffectForCell(g, P, C, p, s), gt = a.selectedTile?.row === g && a.selectedTile?.col === P, ha = a.selectedTile && !gt && _e(a.selectedTile, { row: g, col: P });
-      u.save(), u.translate(U.cx + qe.dx, U.cy + qe.dy), u.scale(qe.scale, qe.scale), u.translate(-U.cx, -U.cy), drawCanvasTileBody(u, T, C, U, h, f, qe);
+      const C = o[g]?.[P];
+      if (C === null || C === void 0) continue;
+      const T = na(C), U = canvasCellRect(s, g, P), qe = canvasEffectForCell(g, P, C, p, s), gt = a.selectedTile?.row === g && a.selectedTile?.col === P, ha = a.selectedTile && !gt && _e(a.selectedTile, { row: g, col: P });
+      if (qe.alpha <= 0.02) continue;
+      u.save(), u.globalAlpha = qe.alpha, u.translate(U.cx + qe.dx, U.cy + qe.dy), u.scale(qe.scale, qe.scale), u.translate(-U.cx, -U.cy), drawCanvasTileBody(u, T, C, U, h, f, qe, lite);
       if (ha) u.strokeStyle = "rgba(255, 239, 159, .28)", u.lineWidth = 2, u.stroke();
       if (gt) {
         const H = 0.72 + Math.sin(p / 110) * 0.2;
@@ -3475,7 +3549,9 @@ function renderCanvasBoard(e, t) {
       drawCanvasSpecial(u, C, T, U), u.restore();
     }
   }
-  drawCanvasSpecialFx(u, s), drawCanvasTileBursts(u, s), drawCanvasSpecialBirths(u, s), canvasHasActiveFx(p) ? scheduleCanvasFxFrame() : scheduleCanvasBreathFrame();
+  if (!lite) drawCanvasSpecialFx(u, s), drawCanvasTileBursts(u, s), drawCanvasSpecialBirths(u, s);
+  else drawCanvasTileBursts(u, s);
+  canvasHasActiveFx(p) ? scheduleCanvasFxFrame() : scheduleCanvasBreathFrame();
   return true;
 }
 function Je(e) {
@@ -3507,16 +3583,21 @@ function ft(e) {
 function xa(e, t = a.user?.uid || "") {
   return !e || !t ? null : e.players.find((r) => r.uid === t) || null;
 }
+function pendingSwapSeqs() {
+  const queued = a.queuedGesture?.seq ? [Number(a.queuedGesture.seq)] : [];
+  return [...(a.pendingSwapQueue || []).map((e) => Number(e.seq || 0)), ...queued].filter((e) => e > 0);
+}
+function remainingPredictionSwaps() {
+  const queued = a.queuedGesture?.from && a.queuedGesture?.to ? [{ seq: a.queuedGesture.seq, positions: [a.queuedGesture.from, a.queuedGesture.to] }] : [];
+  return [...(a.pendingSwapQueue || []), ...queued];
+}
 function li(e, t, r) {
-  if (!a.pendingSwapSeq) return false;
-  if (t.status === "finished") return true;
-  const o = xa(e, r), s = xa(t, r);
-  if (!s) return false;
-  const l = t.events.find((c) => c.uid === r);
-  return l?.seq && Number(l.seq) >= a.pendingSwapSeq || l?.at && l.at >= a.lastSwapSentAt - 250 ? true : o ? s.score !== o.score || s.lastGain !== o.lastGain || s.combo !== o.combo || s.pressure !== o.pressure || jt(s) !== jt(o) : false;
+  if (!pendingSwapSeqs().length) return false;
+  const l = t.events?.find((c) => c.uid === r);
+  return isPendingFullyResolved({ pendingSeqs: pendingSwapSeqs(), latestEventSeq: Number(l?.seq || 0), finished: t.status === "finished" });
 }
 function zt() {
-  a.pendingSwapSeq = 0, a.pendingSwapPositions = [], a.pendingSwapQueue = [];
+  a.pendingSwapSeq = 0, a.pendingSwapPositions = [], a.pendingSwapQueue = [], a.queuedGesture = null;
 }
 function clearPendingSwapSeq(e) {
   const t = Number(e || 0);
@@ -3536,10 +3617,14 @@ function syncAuthoritativeRoom(e, t = "state") {
   if (!e) return;
   const r = a.realtimeRoom, o = xa(r, a.user?.uid || ""), s = xa(e, a.user?.uid || "");
   const l = roomPlayerCorrectionReason(o, s);
-  t !== "delta" && (t !== "state" || !a.pendingSwapQueue.length || e.status !== "playing") && zt();
-  a.realtimeRoom = e, a.clientRoomVersion = Number(e.version || a.clientRoomVersion || 0), a.clientPredictedBoard = s?.board ? clientCloneBoard(s.board) : null, a.lastRoomStateAt = Date.now(), a.screen = "battle";
+  shouldClearAllPending(t, e.status) && (zt(), a.boardMotion = null);
+  const pendingSwaps = remainingPredictionSwaps();
+  const merged = mergeAuthoritativeRoom(r, e, a.user?.uid || "", { reason: t, pendingCount: pendingSwaps.length, pendingSwaps });
+  a.realtimeRoom = merged.room, a.clientRoomVersion = Number(e.version || a.clientRoomVersion || 0);
+  const self = xa(a.realtimeRoom, a.user?.uid || "");
+  a.clientPredictedBoard = self?.board ? clientCloneBoard(self.board) : null, a.lastRoomStateAt = Date.now(), a.screen = "battle";
   updateBattleBgm();
-  l && t !== "state" && (a.clientPredictionStats.corrected += 1, v("client_snapshot_corrected", { roomNo: e.roomNo, mode: e.mode, result: l, message: t, version: a.clientRoomVersion }, 5e3));
+  l && t !== "state" && !merged.preserved && (a.clientPredictionStats.corrected += 1, v("client_snapshot_corrected", { roomNo: e.roomNo, mode: e.mode, result: l, message: t, version: a.clientRoomVersion }, 5e3));
   xi(e);
 }
 function mergeRoomDelta(e) {
@@ -3556,10 +3641,19 @@ function handleSwapAck(e) {
   clearPendingSwapSeq(e.seq), a.clientPredictionStats.ack += 1, e.version && (a.clientRoomVersion = Number(e.version));
   e.room && syncAuthoritativeRoom(e.room, "ack");
   v("client_prediction_ack", { roomNo: a.roomNo, mode: a.realtimeRoom?.mode || a.selectedMode, seq: e.seq || 0, latencyMs: e.serverAt && e.clientAt ? Math.max(0, Number(e.serverAt) - Number(e.clientAt)) : a.networkLatencyMs }, 2e3);
-  $();
+  flushQueuedGesture(), $();
 }
 function handleSwapReject(e) {
-  clearPendingSwapSeq(e.seq), a.clientPredictionStats.reject += 1, a.clientPredictionStats.rollback += 1;
+  if (isBenignSwapReject(e)) {
+    if (e.reason === "duplicate_seq" || e.reasonCode === "duplicate_seq") {
+      handleSwapAck(e);
+      return;
+    }
+    v("client_prediction_reject", { roomNo: a.roomNo, mode: a.realtimeRoom?.mode || a.selectedMode, seq: e.seq || 0, message: e.reason || "", result: e.reasonCode || "rate_limited" }, 2e3);
+    flushQueuedGesture(), $();
+    return;
+  }
+  clearPendingSwapSeq(e.seq), a.clientPredictionStats.reject += 1, a.clientPredictionStats.rollback += 1, a.boardMotion = null, a.queuedGesture = null;
   e.room && syncAuthoritativeRoom(e.room, "reject");
   v("client_prediction_reject", { roomNo: a.roomNo, mode: a.realtimeRoom?.mode || a.selectedMode, seq: e.seq || 0, message: e.reason || "", result: e.reasonCode || "" }, 2e3);
   $();
@@ -3876,7 +3970,7 @@ function Aa(e) {
     return;
   }
   const r = ht(t), o = document.querySelector("#ready-countdown-number");
-  o && o.textContent !== String(r) && (o.textContent = String(r)), r <= 0 && (t.roomNo && (Xe = t.roomNo), we(), $());
+  o && o.textContent !== String(r) && (o.textContent = String(r), o.classList.remove("ready-count-pop"), void o.offsetWidth, o.classList.add("ready-count-pop")), r <= 0 && (t.roomNo && (Xe = t.roomNo), we(), $());
 }
 function xi(e) {
   if (e.status !== "playing") {
@@ -3942,8 +4036,8 @@ function Ai(e, t, r, o) {
         <p class="finish-reason">${i(h)}</p>
         <p class="settlement-mood ${m ? "win" : "steady"}">${i(gt)}</p>
         <div class="result-score-grid">
-          <span>${i(n("yourScore"))}<strong>${r.score}</strong></span>
-          <span>${i(n("opponentScore"))}<strong>${o.score}</strong></span>
+          <span>${i(n("yourScore"))}<strong id="settlement-self-score">${r.score}</strong></span>
+          <span>${i(n("opponentScore"))}<strong id="settlement-opponent-score">${o.score}</strong></span>
         </div>
         <div class="settlement-insight-grid">
           <span class="settlement-reward-cell ${T ? "has-reward" : ""}">
@@ -3985,7 +4079,7 @@ async function handleBattleFinishAction(e, t) {
   r.disabled = true, r.classList.add("is-busy");
   const s = r.dataset.battleFinishAction || (r.id === "battle-back-home" ? "home" : r.id === "battle-restart" ? "restart" : r.id === "battle-paid-next" ? "paid-next" : "");
   if (s === "home") {
-    resetBattleViewState(), _(), refreshHomeDataInBackground();
+    resetBattleViewState(), requestFlowEnter(), _(), refreshHomeDataInBackground();
     return true;
   }
   if (s === "restart") {
@@ -3993,7 +4087,7 @@ async function handleBattleFinishAction(e, t) {
     return true;
   }
   if (s === "paid-next") {
-    resetBattleViewState(), _(), ma("points_battle"), refreshHomeDataInBackground();
+    resetBattleViewState(), requestFlowEnter(), _(), ma("points_battle"), refreshHomeDataInBackground();
     return true;
   }
   return false;
@@ -4210,7 +4304,7 @@ function Hi() {
       <div id="battle-burst-layer"></div>
       <div id="battle-impact-layer"></div>
     </div>
-  `, Ui(), Ua()), ensureBattleCleanupLoop(), cleanupExpiredFeedback(), l || gi(t, e);
+  `, Ui(), Ua(), requestFlowEnter(), applyFlowEnter()), ensureBattleCleanupLoop(), cleanupExpiredFeedback(), l || gi(t, e);
   const m = st(), g = (E, H) => {
     E && E.textContent !== H && (E.textContent = H);
   };
@@ -4236,7 +4330,10 @@ function Hi() {
   const qe = ft(t.events).slice(0, 4).map(ne).join("|");
   qe !== Ke && (hi(t, e), an(t, e), Ke = qe);
   const gt = on(t), ha = `${c ? "waiting" : za() ? "vs" : !l && ht(t) > 0 ? "ready" : l ? "finished" : "none"}:${t.roomNo}:${t.winnerUid}:${o.score}:${s.score}:${o.pressure}:${s.pressure}:${t.finishReason || ""}:${gt}:${o.readyAt || 0}:${s.readyAt || 0}`;
-  ha !== Ve && (m.overlay && (m.overlay.innerHTML = Ai(t, e, o, s)), Ve = ha), l && (hr(t, e), playFinishFeedback(t, e));
+  ha !== Ve && (m.overlay && (m.overlay.innerHTML = Ai(t, e, o, s), (() => {
+    const overlayChild = m.overlay.firstElementChild;
+    overlayChild && !overlayChild.classList.contains("finish-reveal") && !overlayChild.classList.contains("vs-intro-mask") && overlayChild.classList.add("overlay-flow-enter");
+  })()), Ve = ha), l && (hr(t, e), playFinishFeedback(t, e));
   const ga = [a.battleBursts.map((E) => E.id).join("|"), a.battleImpacts.map((E) => E.id).join("|")].join("::");
   ga !== K && renderFeedbackLayers(m);
 }
@@ -4265,7 +4362,12 @@ function rt() {
   A && (A.onopen = null, A.onmessage = null, A.onerror = null, A.onclose = null, A.close(), A = null);
 }
 async function pa(e, t) {
-  a.screen !== "matching" || t !== a.matchSessionId || a.matchCancelling || e.status !== "matched" || !e.roomNo || (v("client_match_enter_room", { roomNo: e.roomNo, mode: e.mode || a.selectedMode, status: e.status, queueLength: e.queueLength || 0, waitingSeconds: e.waitingSeconds || ct(), costMs: a.matchStartedAt ? Date.now() - a.matchStartedAt : 0 }, 0), rt(), a.matchPollTimer && (window.clearTimeout(a.matchPollTimer), a.matchPollTimer = null), a.roomNo = e.roomNo, a.roomJoinToken = e.roomJoinToken || "", await eo(), !(a.screen !== "matching" || t !== a.matchSessionId || a.matchCancelling) && (a.screen = "battle", ua(n("connectingRealtime")), ln()));
+  if (a.screen !== "matching" || t !== a.matchSessionId || a.matchCancelling || e.status !== "matched" || !e.roomNo) return;
+  v("client_match_enter_room", { roomNo: e.roomNo, mode: e.mode || a.selectedMode, status: e.status, queueLength: e.queueLength || 0, waitingSeconds: e.waitingSeconds || ct(), costMs: a.matchStartedAt ? Date.now() - a.matchStartedAt : 0 }, 0), rt(), a.matchPollTimer && (window.clearTimeout(a.matchPollTimer), a.matchPollTimer = null), a.roomNo = e.roomNo, a.roomJoinToken = e.roomJoinToken || "", J(n("matchedEntering")), document.querySelector(".matching-card")?.classList.add("matching-entering");
+  await eo();
+  if (!prefersReducedFlow()) await new Promise((l) => window.setTimeout(l, 160));
+  if (a.screen !== "matching" || t !== a.matchSessionId || a.matchCancelling) return;
+  a.screen = "battle", requestFlowEnter(), ua(n("connectingRealtime")), ln();
 }
 function Vi(e) {
   const t = a.user;
@@ -4311,7 +4413,13 @@ function sn(e = n("roomGoneAlert")) {
 function ln(e = true) {
   const t = a.user;
   if (!t || !a.roomNo) return;
-  Q(), e && (he = 0), a.battleConnectingAt = Date.now(), a.battleEnteredAt = 0, a.feedback = null, a.feedbackEventId = "", a.networkStatus = "connecting", a.networkLatencyMs = 0, a.lastRoomStateAt = 0, a.lastSwapSentAt = 0, resetPredictionState(), a.lastSwapPositions = [];
+  Q(), e && (he = 0), a.battleConnectingAt = Date.now();
+  if (e) {
+    a.battleEnteredAt = 0, a.feedback = null, a.feedbackEventId = "", a.lastRoomStateAt = 0, a.lastSwapSentAt = 0, resetPredictionState(), a.lastSwapPositions = [], a.realtimeReconnectPending = false;
+  } else {
+    a.realtimeReconnectPending = true;
+  }
+  a.networkStatus = e ? "connecting" : "reconnecting", a.networkLatencyMs = e ? 0 : a.networkLatencyMs;
   const r = new URL(Ia, window.location.href);
   r.searchParams.set("roomNo", a.roomNo), r.searchParams.set("uid", t.uid), M = new WebSocket(r.toString()), v("client_realtime_connect_start", { roomNo: a.roomNo, mode: a.selectedMode, result: e ? "fresh" : "retry" }, 0), ze = window.setTimeout(() => {
     (!a.realtimeRoom || a.realtimeRoom.roomNo !== a.roomNo) && (v("client_realtime_connect_slow", { roomNo: a.roomNo, mode: a.selectedMode, costMs: Date.now() - a.battleConnectingAt }, 0), kt(n("realtimeConnectingSlow")));
@@ -4322,7 +4430,7 @@ function ln(e = true) {
     if (s.type === "room_state" && s.room) {
       ge(), he = 0;
       const l = a.realtimeRoom, c = !l || l.roomNo !== s.room.roomNo, d = Date.now(), u = a.lastRoomStateAt, h = s.room.status === "playing" && (!l || l.roomNo !== s.room.roomNo || l.status !== "playing");
-      if (li(l || null, s.room, t.uid) && zt(), syncAuthoritativeRoom(s.room, "state"), a.networkLatencyMs = u ? Math.max(0, d - u) : a.networkLatencyMs, a.networkStatus = a.networkLatencyMs > 1900 ? "slow" : "online", c ? v("client_realtime_first_state", { roomNo: s.room.roomNo, mode: s.room.mode, status: s.room.status, costMs: a.battleConnectingAt ? d - a.battleConnectingAt : 0 }, 0) : a.networkStatus === "slow" && v("client_realtime_slow", { roomNo: s.room.roomNo, mode: s.room.mode, status: s.room.status, latencyMs: a.networkLatencyMs }, 5e3), h) {
+      if (li(l || null, s.room, t.uid) && zt(), syncAuthoritativeRoom(s.room, "state"), a.networkLatencyMs = u ? Math.max(0, d - u) : a.networkLatencyMs, a.networkStatus = a.networkLatencyMs > 1900 ? "slow" : "online", a.realtimeReconnectPending && (a.realtimeReconnectPending = false, resendPendingSwaps(), flushQueuedGesture()), c ? v("client_realtime_first_state", { roomNo: s.room.roomNo, mode: s.room.mode, status: s.room.status, costMs: a.battleConnectingAt ? d - a.battleConnectingAt : 0 }, 0) : a.networkStatus === "slow" && v("client_realtime_slow", { roomNo: s.room.roomNo, mode: s.room.mode, status: s.room.status, latencyMs: a.networkLatencyMs }, 5e3), h) {
         const p = Ei(s.room);
         a.vsIntroUntil = p > 0 ? d + p : 0, window.setTimeout(() => {
           a.screen === "battle" && a.roomNo === s.room?.roomNo && $();
@@ -4358,7 +4466,7 @@ function ln(e = true) {
   }, M.onerror = () => {
     a.networkStatus = "offline", v("client_realtime_error", { roomNo: a.roomNo, mode: a.selectedMode, costMs: a.battleConnectingAt ? Date.now() - a.battleConnectingAt : 0 }, 0), kt(n("realtimeError"));
   }, M.onclose = () => {
-    ge(), a.screen === "battle" && a.roomNo && a.realtimeRoom?.status !== "finished" && (a.networkStatus = "reconnecting", zt(), v("client_realtime_closed", { roomNo: a.roomNo, mode: a.selectedMode, latencyMs: a.networkLatencyMs }, 3e3), kt(n("reconnecting")), he < Mn && window.setTimeout(() => {
+    ge(), a.screen === "battle" && a.roomNo && a.realtimeRoom?.status !== "finished" && (a.networkStatus = "reconnecting", a.realtimeReconnectPending = true, v("client_realtime_closed", { roomNo: a.roomNo, mode: a.selectedMode, latencyMs: a.networkLatencyMs }, 3e3), kt(n("reconnecting")), he < Mn && window.setTimeout(() => {
       a.screen === "battle" && a.roomNo && (!M || M.readyState === WebSocket.CLOSED) && (he += 1, ln(false));
     }, Math.min(2500, 500 + he * 300)));
   };
@@ -4369,32 +4477,71 @@ function cn() {
   (a.pendingSwapQueue || []).length >= e.maxPendingSwaps && clearStalledPendingSwaps();
   return (a.pendingSwapQueue || []).length >= e.maxPendingSwaps ? (a.networkStatus = "slow", false) : a.realtimeRoom?.status === "waiting_ready" ? (a.battleMessage = n("waitBothReady"), $(), false) : a.realtimeRoom && ht(a.realtimeRoom) > 0 ? (a.battleMessage = n("waitReady"), $(), false) : !M || M.readyState !== WebSocket.OPEN ? (a.battleMessage = n("socketNotReady"), $(), false) : true;
 }
-function dn(e, t) {
-  const r = Date.now(), o = `${e.row}:${e.col}:${t.row}:${t.col}`;
-  if (o === Lt && r - xt < 120) return;
-  const s = Number(a.clientRoomVersion || a.realtimeRoom?.version || 0), l = a.lastSwapSeq + 1;
-  const c = kaPreviewSwap(e, t, l);
-  if (!c) {
-    Lt = o, xt = r, ut(), a.selectedTile = null, a.lastSwapPositions = [e, t], Mi([e, t]);
-    return;
+function canBufferGesture() {
+  return !a.queuedGesture && a.realtimeRoom?.status === "playing" && ht(a.realtimeRoom) <= 0 && ((a.pendingSwapQueue || []).length >= extremeRealtimeConfig().maxPendingSwaps || !M || M.readyState !== WebSocket.OPEN);
+}
+function queueGesture(e, t) {
+  const r = a.lastSwapSeq + 1, o = kaPreviewSwap(e, t, r);
+  if (!o) {
+    Mi([e, t]);
+    return false;
   }
-  Lt = o, xt = r, ut(), a.selectedTile = null, a.lastSwapSentAt = r, a.lastSwapPositions = [e, t], a.lastSwapSeq = l, a.pendingSwapSeq = l, a.pendingSwapPositions = [e, t], a.battleMessage = "", v("client_swap_send", { roomNo: a.roomNo, mode: a.realtimeRoom?.mode || a.selectedMode, seq: a.lastSwapSeq, latencyMs: a.networkLatencyMs, protocol: "swap_cmd" }, 1800), Yn(e, t), Bi(e, t);
-  a.pendingSwapQueue = [...(a.pendingSwapQueue || []), { seq: a.lastSwapSeq, positions: [e, t], sentAt: r, baseVersion: s }].slice(-extremeRealtimeConfig().maxPendingSwaps), a.clientPredictionStats.sent += 1;
-  applyPredictedSwap(e, t, a.lastSwapSeq, c), window.setTimeout(() => {
-    M?.readyState === WebSocket.OPEN && M.send(JSON.stringify({ type: "swap_cmd", roomNo: a.roomNo, seq: l, baseVersion: s, from: e, to: t, clientAt: r }));
+  a.queuedGesture = { from: e, to: t, at: Date.now(), seq: r, predicted: true };
+  Yn(e, t), Bi(e, t), applyPredictedSwap(e, t, r, o);
+  return true;
+}
+function flushQueuedGesture() {
+  const e = a.queuedGesture;
+  if (!e) return false;
+  if ((a.pendingSwapQueue || []).length >= extremeRealtimeConfig().maxPendingSwaps) return false;
+  if (!M || M.readyState !== WebSocket.OPEN) return false;
+  if (a.realtimeRoom?.status === "waiting_ready" || ht(a.realtimeRoom) > 0) return false;
+  a.queuedGesture = null;
+  dn(e.from, e.to, { alreadyPredicted: true });
+  return true;
+}
+function resendPendingSwaps() {
+  const e = [...(a.pendingSwapQueue || [])];
+  e.forEach((t, r) => {
+    window.setTimeout(() => {
+      if (!M || M.readyState !== WebSocket.OPEN) return;
+      if (!(a.pendingSwapQueue || []).some((o) => Number(o.seq) === Number(t.seq))) return;
+      M.send(JSON.stringify({ type: "swap_cmd", roomNo: a.roomNo, seq: t.seq, baseVersion: t.baseVersion || a.clientRoomVersion, from: t.positions[0], to: t.positions[1], clientAt: Date.now() }));
+    }, r * 130);
+  });
+}
+function dn(e, t, r = {}) {
+  const o = Date.now(), s = `${e.row}:${e.col}:${t.row}:${t.col}`;
+  if (!r.alreadyPredicted && s === Lt && o - xt < 120) return;
+  const l = Number(a.clientRoomVersion || a.realtimeRoom?.version || 0), c = a.lastSwapSeq + 1;
+  let d = r.preview || null;
+  if (!r.alreadyPredicted) {
+    d = kaPreviewSwap(e, t, c);
+    if (!d) {
+      Lt = s, xt = o, ut(), a.selectedTile = null, a.lastSwapPositions = [e, t], Mi([e, t]);
+      return;
+    }
+  }
+  Lt = s, xt = o, ut(), a.selectedTile = null, a.lastSwapSentAt = o, a.lastSwapPositions = [e, t], a.lastSwapSeq = c, a.pendingSwapSeq = c, a.pendingSwapPositions = [e, t], a.battleMessage = "", v("client_swap_send", { roomNo: a.roomNo, mode: a.realtimeRoom?.mode || a.selectedMode, seq: a.lastSwapSeq, latencyMs: a.networkLatencyMs, protocol: "swap_cmd" }, 1800);
+  if (!r.alreadyPredicted) Yn(e, t), Bi(e, t);
+  a.pendingSwapQueue = [...(a.pendingSwapQueue || []), { seq: a.lastSwapSeq, positions: [e, t], sentAt: o, baseVersion: l }].slice(-extremeRealtimeConfig().maxPendingSwaps), a.clientPredictionStats.sent += 1;
+  if (!r.alreadyPredicted) applyPredictedSwap(e, t, a.lastSwapSeq, d);
+  window.setTimeout(() => {
+    M?.readyState === WebSocket.OPEN && M.send(JSON.stringify({ type: "swap_cmd", roomNo: a.roomNo, seq: c, baseVersion: l, from: e, to: t, clientAt: o }));
   }, 0);
 }
 function Gi(e, t) {
-  if (Yt = Date.now(), ut(), !!cn()) {
-    if (!_e(e, t)) {
-      a.battleMessage = n("onlyAdjacent"), ae("fail", [e, t]), de([12, 18, 12]), $();
-      return;
-    }
-    dn(e, t), $();
+  if (Yt = Date.now(), ut(), !_e(e, t)) {
+    a.battleMessage = n("onlyAdjacent"), ae("fail", [e, t]), de([12, 18, 12]), $();
+    return;
   }
+  if (cn()) {
+    dn(e, t), $();
+    return;
+  }
+  if (canBufferGesture() && queueGesture(e, t)) $();
 }
 function Ji(e) {
-  if (!cn()) return;
   if (!a.selectedTile) {
     a.selectedTile = e, ae("success", [e]), a.battleMessage = n("selectNeighbor"), $();
     return;
@@ -4408,7 +4555,11 @@ function Ji(e) {
     a.battleMessage = n("onlyAdjacent"), ae("fail", [t, e]), de([12, 18, 12]), $();
     return;
   }
-  dn(t, e), $();
+  if (cn()) {
+    dn(t, e), $();
+    return;
+  }
+  if (canBufferGesture() && queueGesture(t, e)) $();
 }
 async function Yi() {
   const e = await An();

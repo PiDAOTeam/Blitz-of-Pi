@@ -16,6 +16,7 @@ const {
   findBattleRoom,
   findBattleRoomForUpdate,
   listStaleRemoteAssetBotRooms,
+  listStaleFrozenPaidRooms,
   markRemoteAssetBotRoomReleased,
   updateBattleRoomStatus,
   updateBattleAssetStatus,
@@ -24,6 +25,7 @@ const {
 } = require("../repositories/battle.repository");
 const { settleRankBotMatch, settleRankMatch } = require("../repositories/rank.repository");
 const { settleBattleInviteCommission } = require("./growth.service");
+const { isWaitingReadyLifecycleTimedOut, shouldReconcileUnjoinedPaidRoom } = require("./unjoined-paid-room");
 const { observeBattleStage } = require("./battle-observer.service");
 const { findUserByUid } = require("../repositories/user.repository");
 const {
@@ -380,7 +382,8 @@ function createRoom(playerA, playerB, mode = "quick_battle", timing = DEFAULT_TI
       toRoomPlayer(playerB, 2002)
     ],
     winnerUid: "",
-    battleLog: []
+    battleLog: [],
+    waitingReadyEndsAt: Date.now() + Number(timing.waitingReadyTimeoutSeconds || DEFAULT_TIMING.waitingReadyTimeoutSeconds) * 1000
   };
 
   return room;
@@ -838,7 +841,7 @@ function isRoomExpired(room) {
 }
 
 function isWaitingReadyTimedOut(room) {
-  return room?.status === "waiting_ready" && Number(room.waitingReadyEndsAt || 0) > 0 && Date.now() >= Number(room.waitingReadyEndsAt);
+  return isWaitingReadyLifecycleTimedOut(room);
 }
 
 async function expireTimedOutWaitingReadyRoom(room, uid, roomNo) {
@@ -920,6 +923,71 @@ async function expireStaleRemoteAssetBotRooms(minutes = 5, limit = 20) {
       });
     } catch (error) {
       console.error("[room-maintenance] stale asset bot room release failed:", battle.room_no, error.message);
+      results.push({ roomNo: battle.room_no, status: "failed", error: error.message || "release failed" });
+    }
+  }
+
+  return results;
+}
+
+function toUnjoinedPaidSettlementRoom(battle) {
+  return {
+    roomNo: battle.room_no,
+    mode: battle.mode,
+    status: "finished",
+    winnerUid: "",
+    finishReason: "ready_timeout",
+    endsAt: Date.now(),
+    players: [toPlayerIdentityFromBattle(battle, "player_a"), toPlayerIdentityFromBattle(battle, "player_b")]
+  };
+}
+
+async function expireOneUnjoinedPaidRoom(battle) {
+  const roomNo = battle.room_no;
+  const realtimeRoom = await readJson(`${REDIS_REALTIME_ROOM_PREFIX}${roomNo}`);
+  const baseRoom = await readJson(`${REDIS_ROOM_PREFIX}${roomNo}`);
+
+  if (!shouldReconcileUnjoinedPaidRoom({ battle, baseRoom, realtimeRoom })) {
+    return { roomNo, status: "skipped" };
+  }
+
+  await redisDel(`${REDIS_ROOM_PREFIX}${roomNo}`);
+  const realtimeAfterCut = await readJson(`${REDIS_REALTIME_ROOM_PREFIX}${roomNo}`);
+  if (realtimeAfterCut && !shouldReconcileUnjoinedPaidRoom({ battle, baseRoom: null, realtimeRoom: realtimeAfterCut })) {
+    return { roomNo, status: "skipped", reason: "started" };
+  }
+  await redisDel(`${REDIS_REALTIME_ROOM_PREFIX}${roomNo}`);
+
+  const room = toUnjoinedPaidSettlementRoom(battle);
+  await settleFinishedRoom(room);
+  await clearRoomBindings(roomNo, room.players);
+
+  observeMatchStage("match_unjoined_paid_released", {
+    roomNo,
+    mode: battle.mode,
+    status: "finished",
+    result: String(battle.asset_type || ""),
+    message: "ready_timeout"
+  });
+
+  return {
+    roomNo,
+    status: "released",
+    uid: room.players.find((player) => player.uid && !isBotUid(player.uid))?.uid || "",
+    assetType: battle.asset_type,
+    amount: Number(battle.entry_fee || 0)
+  };
+}
+
+async function expireNeverJoinedPaidRooms(minAgeSeconds = 45, limit = 20) {
+  const rooms = await listStaleFrozenPaidRooms(minAgeSeconds, limit);
+  const results = [];
+
+  for (const battle of rooms) {
+    try {
+      results.push(await expireOneUnjoinedPaidRoom(battle));
+    } catch (error) {
+      console.error("[room-maintenance] unjoined paid room release failed:", battle.room_no, error.message);
       results.push({ roomNo: battle.room_no, status: "failed", error: error.message || "release failed" });
     }
   }
@@ -1803,5 +1871,6 @@ module.exports = {
   getRoomsSnapshot,
   settleFinishedRoom,
   expireStaleFreeBotRooms,
-  expireStaleRemoteAssetBotRooms
+  expireStaleRemoteAssetBotRooms,
+  expireNeverJoinedPaidRooms
 };
