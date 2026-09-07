@@ -26,6 +26,11 @@ const {
 const { settleRankBotMatch, settleRankMatch } = require("../repositories/rank.repository");
 const { settleBattleInviteCommission } = require("./growth.service");
 const { isWaitingReadyLifecycleTimedOut, shouldReconcileUnjoinedPaidRoom } = require("./unjoined-paid-room");
+const {
+  takePairForUser,
+  recentOpponentPairKey,
+  shouldRememberRecentOpponent
+} = require("./recent-opponent");
 const { observeBattleStage } = require("./battle-observer.service");
 const { findUserByUid } = require("../repositories/user.repository");
 const {
@@ -84,6 +89,7 @@ const DEFAULT_TIMING = {
   quickBotFallbackSeconds: 30,
   matchCancelWaitSeconds: 20,
   matchCancelCooldownSeconds: 10,
+  recentOpponentCooldownSeconds: 180,
   waitingReadyTimeoutSeconds: 30,
   vsIntroSeconds: 5,
   readyCountdownSeconds: 6,
@@ -597,25 +603,34 @@ async function persistRoomBindings(room) {
   bindRoomInMemory(room);
 }
 
-function takePairForUser(queue, uid) {
-  const selfIndex = queue.findIndex((item) => item.uid === uid);
-  const opponentIndex = queue.findIndex((item) => item.uid !== uid);
+async function collectBlockedRecentOpponents(uid, queue = []) {
+  const others = [...new Set(queue.map((item) => item.uid).filter((other) => other && other !== uid))];
+  const blocked = new Set();
 
-  if (selfIndex < 0 || opponentIndex < 0) {
-    return null;
-  }
+  await Promise.all(
+    others.map(async (other) => {
+      const key = recentOpponentPairKey(uid, other);
+      if (key && (await redisGet(key))) {
+        blocked.add(other);
+      }
+    })
+  );
 
-  const pairIndexes = [selfIndex, opponentIndex].sort((a, b) => b - a);
-  const players = [];
+  return blocked;
+}
 
-  for (const index of pairIndexes) {
-    players.push(queue.splice(index, 1)[0]);
-  }
+async function rememberRecentOpponentPair(uidA, uidB, ttlSeconds) {
+  if (!shouldRememberRecentOpponent(uidA, uidB)) return;
+  const seconds = Math.round(Number(ttlSeconds) || 0);
+  if (seconds <= 0) return;
+  const key = recentOpponentPairKey(uidA, uidB);
+  if (!key) return;
+  await redisSet(key, String(Date.now()), seconds);
+}
 
-  const self = players.find((item) => item.uid === uid);
-  const opponent = players.find((item) => item.uid !== uid);
-
-  return [self, opponent];
+async function takeAvailablePairForUser(queue, uid) {
+  const blockedOpponentUids = await collectBlockedRecentOpponents(uid, queue);
+  return takePairForUser(queue, uid, blockedOpponentUids);
 }
 
 function attachFailedPlayer(error, player, assetType) {
@@ -717,6 +732,7 @@ async function createRoomInStore(playerA, playerB, mode = "quick_battle") {
     entryFee > 0 && (!isBotRoom || modeConfig.botRewardsEnabled) ? getRewardAmount(entryFee, rewardRate, assetType) : 0;
 
   await persistRoomBindings(room);
+  await rememberRecentOpponentPair(playerA.uid, playerB.uid, timing.recentOpponentCooldownSeconds);
 
   try {
     if (entryFee > 0 && isRemoteAssetType(assetType)) {
@@ -1417,9 +1433,16 @@ async function joinQueueWithLock(user, mode) {
       });
     }
 
-    const pair = takePairForUser(redisQueue, user.uid);
+    const pair = await takeAvailablePairForUser(redisQueue, user.uid);
 
     if (!pair) {
+      if (redisQueue.length >= 2) {
+        observeMatchStage("match_recent_opponent_skipped", {
+          uid: user.uid,
+          mode,
+          queueLength: redisQueue.length
+        });
+      }
       await writeJson(queueKey, redisQueue, 3600);
       return getQueueingResponse({
         mode,
@@ -1642,8 +1665,15 @@ async function getMatchStatusWithoutLock(user) {
           });
         }
 
-        const pair = takePairForUser(latestQueue, user.uid);
+        const pair = await takeAvailablePairForUser(latestQueue, user.uid);
         if (!pair) {
+          if (latestQueue.length >= 2) {
+            observeMatchStage("match_recent_opponent_skipped", {
+              uid: user.uid,
+              mode,
+              queueLength: latestQueue.length
+            });
+          }
           await writeJson(getQueueKey(mode), latestQueue, 3600);
           return getQueueingResponse({
             mode,

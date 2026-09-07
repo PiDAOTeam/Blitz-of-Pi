@@ -101,6 +101,7 @@ async function readBattleObserverSnapshot() {
     "match_room_created",
     "match_status_room_created",
     "match_bot_room_created",
+    "match_recent_opponent_skipped",
     "match_cancel",
     "match_watch_join",
     "match_watch_failed",

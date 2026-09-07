@@ -321,6 +321,7 @@
         "quickBotFallbackSeconds": 25,
         "matchCancelWaitSeconds": 20,
         "matchCancelCooldownSeconds": 2,
+        "recentOpponentCooldownSeconds": 180,
         "waitingReadyTimeoutSeconds": 30,
         "vsIntroSeconds": 3,
         "readyCountdownSeconds": 3,

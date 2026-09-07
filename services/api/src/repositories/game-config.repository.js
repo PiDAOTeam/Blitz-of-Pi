@@ -377,6 +377,7 @@ const DEFAULT_GAME_CONFIG = {
     "quickBotFallbackSeconds": 25,
     "matchCancelWaitSeconds": 20,
     "matchCancelCooldownSeconds": 2,
+    "recentOpponentCooldownSeconds": 180,
     "waitingReadyTimeoutSeconds": 30,
     "vsIntroSeconds": 3,
     "readyCountdownSeconds": 5,
@@ -1095,6 +1096,12 @@ function normalizeTimingConfig(timing = {}) {
       defaults.matchCancelCooldownSeconds,
       0,
       60
+    ),
+    recentOpponentCooldownSeconds: normalizeNumberInRange(
+      timing.recentOpponentCooldownSeconds,
+      defaults.recentOpponentCooldownSeconds,
+      0,
+      1800
     ),
     waitingReadyTimeoutSeconds: normalizeNumberInRange(
       timing.waitingReadyTimeoutSeconds,
