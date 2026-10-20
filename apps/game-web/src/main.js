@@ -1056,6 +1056,16 @@ function formatRewardList(e = [], t = 0) {
   if (!r.length && Number(t || 0) > 0) r.push(b(t));
   return r.join(" / ");
 }
+function formatPiAndPoints(e = 0, t = 0) {
+  const r = [];
+  if (Number(e || 0) > 0) r.push(b(e));
+  if (Math.round(Number(t || 0)) > 0) r.push(`${Math.round(Number(t || 0))} ${n("pointsAsset")}`);
+  return r.join(" + ") || b(0);
+}
+function chestPointRewardOf(e) {
+  const t = F().chestPointRewards || {}, r = e ? Number(t[e]) : NaN;
+  return Number.isFinite(r) ? Math.round(r) : Math.round(Number(a.rankStatus?.dailyChestRewardPoints || 0));
+}
 function formatHistoryTotal(e = []) {
   const t = e.reduce((r, o) => {
     const s = modeAssetType(o.mode);
@@ -1570,7 +1580,7 @@ function Sr() {
 function $r() {
   const e = a.rankStatus;
   if (!e) return "";
-  const t = Math.min(100, Math.round(e.todayRankedBattles / Math.max(1, e.dailyChestRequiredBattles) * 100)), r = e.dailyChestClaimed ? n("claimedToday") : e.dailyChestEligible ? n("claimPi", { amount: e.dailyChestRewardAmount.toFixed(4) }) : n("notReached");
+  const t = Math.min(100, Math.round(e.todayRankedBattles / Math.max(1, e.dailyChestRequiredBattles) * 100)), s = formatPiAndPoints(e.dailyChestRewardAmount, e.dailyChestRewardPoints), r = e.dailyChestClaimed ? n("claimedToday") : e.dailyChestEligible ? (a.language === "zh-CN" ? `\u9886\u53D6 ${s}` : `Claim ${s}`) : n("notReached");
   return `
     <section class="rank-chest-card">
       <div class="section-title">
@@ -1582,7 +1592,7 @@ function $r() {
       </div>
       ${rankStarsHtml(e.rankKey, e.stars)}
       <div class="chest-progress"><i style="width: ${t}%"></i></div>
-      <p>${i(n("chestRuleText", { required: e.dailyChestRequiredBattles, amount: e.dailyChestRewardAmount.toFixed(4) }))}</p>
+      <p>${i(a.language === "zh-CN" ? `\u4ECA\u65E5\u5B8C\u6210 ${e.dailyChestRequiredBattles} \u573A\u6709\u6548\u5BF9\u5C40\u53EF\u9886 ${s}` : `Finish ${e.dailyChestRequiredBattles} ranked matches today to claim ${s}`)}</p>
       <button type="button" id="claim-rank-chest" ${e.dailyChestEligible ? "" : "disabled"}>${r}</button>
     </section>
   `;
@@ -1604,11 +1614,11 @@ function Cr() {
       </article>
       ${$r()}
     `;
-  const o = e.rankKey || Ae(t.rankName), s = It(o), l = ke(o), c = Math.max(0, e.starsPerRank - e.stars), d = Math.min(100, Math.round(e.todayRankedBattles / Math.max(1, e.dailyChestRequiredBattles) * 100)), u = e.dailyChestClaimed ? n("claimedToday") : e.dailyChestEligible ? n("claimPi", { amount: e.dailyChestRewardAmount.toFixed(4) }) : n("goPlay"), h = r.slice(s + 1), f = (h.length ? h : r.slice(Math.max(0, r.length - 6))).map((m) => `
+  const o = e.rankKey || Ae(t.rankName), s = It(o), l = ke(o), c = Math.max(0, e.starsPerRank - e.stars), d = Math.min(100, Math.round(e.todayRankedBattles / Math.max(1, e.dailyChestRequiredBattles) * 100)), chestLabel = formatPiAndPoints(e.dailyChestRewardAmount, e.dailyChestRewardPoints), u = e.dailyChestClaimed ? n("claimedToday") : e.dailyChestEligible ? (a.language === "zh-CN" ? `\u9886\u53D6 ${chestLabel}` : `Claim ${chestLabel}`) : n("goPlay"), h = r.slice(s + 1), f = (h.length ? h : r.slice(Math.max(0, r.length - 6))).map((m) => `
       <div class="rank-reward-row">
         <b style="--rank-color: ${i(m.color)}">${i(m.icon)}</b>
         <span>${i(G(m.key))}</span>
-        <strong>${Pr(m.key).toFixed(4)} Pi</strong>
+        <strong>${formatPiAndPoints(Pr(m.key), chestPointRewardOf(m.key))}</strong>
       </div>
     `);
   return `
@@ -1629,7 +1639,7 @@ function Cr() {
           <small>\u5386\u53F2\u6700\u9AD8</small>
         </div>
         <div class="chest-progress"><i style="width: ${d}%"></i></div>
-        <p>${i(n("todayChestProgress", { done: e.todayRankedBattles, required: e.dailyChestRequiredBattles, amount: e.dailyChestRewardAmount.toFixed(4) }))}</p>
+        <p>${i(a.language === "zh-CN" ? `\u4ECA\u65E5 ${e.todayRankedBattles}/${e.dailyChestRequiredBattles} \u573A \xB7 \u53EF\u9886 ${chestLabel}` : `Today ${e.todayRankedBattles}/${e.dailyChestRequiredBattles} \xB7 Claim ${chestLabel}`)}</p>
         <div class="rank-growth-actions">
           <button type="button" id="claim-rank-chest" ${e.dailyChestEligible ? "" : "disabled"}>${u}</button>
           <button type="button" class="secondary" id="open-rank-rules">${i(n("rules"))}</button>
@@ -2377,7 +2387,7 @@ function Ot() {
             <section class="leaderboard-my-rank">
               ${r ? `<div><span>${i(n("myWeeklyRank"))}</span><strong>#${r.rankNo}</strong></div>
                      <div><span>${i(n("weeklyRecord"))}</span><strong>${i(formatWeeklyRankMeta(r.weeklyStarGain, r.weeklyWinCount))}</strong></div>
-                     <div><span>${i(n("expectedReward"))}</span><strong>${b(r.rewardAmount || 0)}</strong></div>` : `<div><span>${i(n("myWeeklyRank"))}</span><strong>${i(n("notRanked"))}</strong></div>
+                     <div><span>${i(n("expectedReward"))}</span><strong>${formatPiAndPoints(r.rewardAmount || 0, r.rewardPoints || 0)}</strong></div>` : `<div><span>${i(n("myWeeklyRank"))}</span><strong>${i(n("notRanked"))}</strong></div>
                      <div><span>${i(n("weeklyRecord"))}</span><strong>${i(formatWeeklyRankMeta(0, 0))}</strong></div>
                      <div><span>${i(n("rankHow"))}</span><strong>${i(n("winPaidMatch"))}</strong></div>`}
             </section>
@@ -2411,7 +2421,7 @@ function renderLeaderboardPageBody() {
     <section class="leaderboard-my-rank">
       ${r ? `<div><span>${i(n("myWeeklyRank"))}</span><strong>#${r.rankNo}</strong></div>
              <div><span>${i(n("weeklyRecord"))}</span><strong>${i(formatWeeklyRankMeta(r.weeklyStarGain, r.weeklyWinCount))}</strong></div>
-             <div><span>${i(n("expectedReward"))}</span><strong>${b(r.rewardAmount || 0)}</strong></div>` : `<div><span>${i(n("myWeeklyRank"))}</span><strong>${i(n("notRanked"))}</strong></div>
+             <div><span>${i(n("expectedReward"))}</span><strong>${formatPiAndPoints(r.rewardAmount || 0, r.rewardPoints || 0)}</strong></div>` : `<div><span>${i(n("myWeeklyRank"))}</span><strong>${i(n("notRanked"))}</strong></div>
              <div><span>${i(n("weeklyRecord"))}</span><strong>${i(formatWeeklyRankMeta(0, 0))}</strong></div>
              <div><span>${i(n("rankHow"))}</span><strong>${i(n("winPaidMatch"))}</strong></div>`}
     </section>
@@ -2431,10 +2441,11 @@ function formatWeeklyRankMeta(e = 0, t = 0) {
   const o = Number(t || 0);
   return a.language === "zh-CN" ? `本周+${r}星 · ${o}胜` : `Weekly +${r} stars · ${o} wins`;
 }
-function formatWeeklyRewardMeta(e = 0, t = 0, r = 0) {
+function formatWeeklyRewardMeta(e = 0, t = 0, r = 0, points = 0) {
   const o = Number(e || 0);
   const s = Number(t || 0);
-  return a.language === "zh-CN" ? `本周+${o}星 · ${s}胜 · 奖${b(r)}` : `Weekly +${o} stars · ${s} wins · Reward ${b(r)}`;
+  const l = formatPiAndPoints(r, points);
+  return a.language === "zh-CN" ? `本周+${o}星 · ${s}胜 · 奖${l}` : `Weekly +${o} stars · ${s} wins · Reward ${l}`;
 }
 async function updateLeaderboardPage(e) {
   const t = document.querySelector(".leaderboard-scroll-body"), r = document.querySelector(".leaderboard-pager");
@@ -2457,7 +2468,7 @@ function Or(e) {
     return `
             <article class="${o < 3 ? `top top-${o + 1}` : "wide"}">
               <span>${i(s)}</span>
-              <strong>${a.rankLeaderboard?.type === "season" ? `${Math.round(Number(r.points || r.amount || 0))} POINTS` : b(r.amount)}</strong>
+              <strong>${a.rankLeaderboard?.type === "season" ? `${Math.round(Number(r.points || r.amount || 0))} POINTS` : formatPiAndPoints(r.amount, r.points)}</strong>
               <small>${i(o === 0 ? n("championPool") : o < 3 ? n("leaderboardReward") : n("listedReward"))}</small>
             </article>
           `;
@@ -2466,7 +2477,7 @@ function Or(e) {
   ` : `<section class="reward-tier-board empty">${i(n("rewardNotConfigured"))}</section>`;
 }
 function Ur(e) {
-  const t = { nickname: e.nickname || e.piUsername || n("piPlayer"), piUsername: e.piUsername || "", avatarKey: e.avatarKey }, r = ke(e.rankKey || e.rankName), o = e.rankNo <= 3 ? [n("champion"), n("runnerUp"), n("thirdPlace")][e.rankNo - 1] : n("rankNo", { rank: e.rankNo }), s = e.weeklyBattleCount !== void 0 ? formatWeeklyRewardMeta(e.weeklyStarGain, e.weeklyWinCount, e.rewardAmount || 0) : e.seasonBattleCount !== void 0 ? `${e.seasonStarGain || 0}\u661F \xB7 ${e.seasonWinCount || 0}\u80DC \xB7 ${Math.round(Number(e.rewardAmount || 0))} POINTS` : n("rankMeta", { stars: e.stars, wins: e.winCount });
+  const t = { nickname: e.nickname || e.piUsername || n("piPlayer"), piUsername: e.piUsername || "", avatarKey: e.avatarKey }, r = ke(e.rankKey || e.rankName), o = e.rankNo <= 3 ? [n("champion"), n("runnerUp"), n("thirdPlace")][e.rankNo - 1] : n("rankNo", { rank: e.rankNo }), s = e.weeklyBattleCount !== void 0 ? formatWeeklyRewardMeta(e.weeklyStarGain, e.weeklyWinCount, e.rewardAmount || 0, e.rewardPoints || 0) : e.seasonBattleCount !== void 0 ? `${e.seasonStarGain || 0}\u661F \xB7 ${e.seasonWinCount || 0}\u80DC \xB7 ${Math.round(Number(e.rewardAmount || 0))} POINTS` : n("rankMeta", { stars: e.stars, wins: e.winCount });
   return `
     <article class="leaderboard-item ${e.rankNo <= 3 ? "top" : ""}">
       <b>${i(o)}</b>
@@ -4630,7 +4641,7 @@ function isHashPiBridgeEntry() {
     return false;
   }
 }
-const HASHPI_BRIDGE_ENTRY_URL = "https://hashpi.app/blitz-bridge-app/?app=blitz_of_pi&force_ticket=1&renew=1&v=202606152040";
+const HASHPI_BRIDGE_ENTRY_URL = "https://hashpi.app/blitz-bridge-app/?app=blitz_of_pi&force_ticket=1&renew=1&v=202609100248";
 function redirectToHashPiBridgeLogin() {
   const e = HASHPI_BRIDGE_ENTRY_URL;
   try {
@@ -4823,7 +4834,7 @@ async function ao() {
         console.warn("[init] stored token restore failed", N(e));
       }
     }
-    if (isHashPiBridgeEntry()) {
+    if (isHashPiBridgeEntry() || !Zt()) {
       ua("正在重新确认 HashPi 登录状态..."), redirectToHashPiBridgeLogin();
       return;
     }

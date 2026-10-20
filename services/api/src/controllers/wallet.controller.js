@@ -194,7 +194,7 @@ async function listUserRankMonthlyAssetRewardRows(uid, limit = 80) {
     `SELECT id, uid, claim_date, claim_type, task_key, title, asset_type, amount, remark, status, processed_at, created_at
      FROM engagement_asset_reward_jobs
      WHERE uid = ?
-       AND claim_type = 'rank_monthly_season_reward'
+       AND claim_type IN ('rank_monthly_season_reward', 'rank_daily_chest', 'rank_weekly_reward')
        AND asset_type = 'POINTS'
        AND status = 'paid'
      ORDER BY id DESC
@@ -203,27 +203,56 @@ async function listUserRankMonthlyAssetRewardRows(uid, limit = 80) {
   );
 }
 
+function rankPointsLedgerMeta(row = {}) {
+  const claimType = String(row.claim_type || "");
+  if (claimType === "rank_daily_chest") {
+    return {
+      idPrefix: "rank_chest",
+      type: "rank_daily_chest_reward",
+      relatedType: "rank_daily_chest_points_reward",
+      remark: "每日段位宝箱积分奖励"
+    };
+  }
+  if (claimType === "rank_weekly_reward") {
+    return {
+      idPrefix: "rank_weekly",
+      type: "rank_weekly_reward",
+      relatedType: "rank_weekly_points_reward",
+      remark: row.remark || "周榜积分奖励"
+    };
+  }
+  return {
+    idPrefix: "rank_monthly",
+    type: "rank_monthly_season_reward",
+    relatedType: "rank_monthly_season_points_reward",
+    remark: formatLedgerRemark({
+      related_type: "rank_monthly_season_points_reward",
+      related_id: row.task_key || "",
+      remark: row.remark || ""
+    })
+  };
+}
+
 function buildRankMonthlyAssetLedgers(rows, uid) {
   return (Array.isArray(rows) ? rows : [])
     .filter((row) => Number(row.amount || 0) > 0)
-    .map((row) => ({
-      id: `rank_monthly:${row.id}`,
-      uid,
-      type: "rank_monthly_season_reward",
-      direction: "in",
-      amount: Math.floor(Number(row.amount || 0)),
-      balance_after: null,
-      related_type: "rank_monthly_season_points_reward",
-      related_id: row.task_key || row.external_order_no || "",
-      remark: formatLedgerRemark({
-        related_type: "rank_monthly_season_points_reward",
-        related_id: row.task_key || "",
-        remark: row.remark || ""
-      }),
-      created_at: row.processed_at || row.created_at,
-      asset_type: "POINTS",
-      synthetic: true
-    }));
+    .map((row) => {
+      const meta = rankPointsLedgerMeta(row);
+      return {
+        id: `${meta.idPrefix}:${row.id}`,
+        uid,
+        type: meta.type,
+        direction: "in",
+        amount: Math.floor(Number(row.amount || 0)),
+        balance_after: null,
+        related_type: meta.relatedType,
+        related_id: row.task_key || row.external_order_no || "",
+        remark: meta.remark,
+        created_at: row.processed_at || row.created_at,
+        asset_type: "POINTS",
+        synthetic: true
+      };
+    });
 }
 
 function buildWatchShareholderLedgers(rows, uid) {

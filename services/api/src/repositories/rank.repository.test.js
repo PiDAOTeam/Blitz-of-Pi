@@ -7,6 +7,8 @@ const {
   getWeeklyRewardTiers,
   getSeasonReward,
   getSeasonRewardTiers,
+  getWeeklyRewardPoints,
+  getSeasonResetTarget,
   buildRankDailyChestRelatedId
 } = require("./rank.repository");
 
@@ -104,6 +106,25 @@ test("weekly rewards stay in Pi tier amounts", () => {
   assert.equal(getWeeklyReward(101, tiers), 0);
 });
 
+test("weekly reward tiers keep configurable points alongside Pi", () => {
+  const tiers = getWeeklyRewardTiers({
+    weeklyRewardTiers: [
+      { fromRank: 1, toRank: 1, amount: 5, points: 100 },
+      { fromRank: 2, toRank: 10, amount: 0, points: 20 },
+      { fromRank: 11, toRank: 100, amount: 0.2, points: 0 }
+    ]
+  });
+
+  assert.equal(getWeeklyReward(1, tiers), 5);
+  assert.equal(getWeeklyRewardPoints(1, tiers), 100);
+  assert.equal(getWeeklyReward(2, tiers), 0);
+  assert.equal(getWeeklyRewardPoints(2, tiers), 20);
+  assert.equal(getWeeklyReward(11, tiers), 0.2);
+  assert.equal(getWeeklyRewardPoints(11, tiers), 0);
+  assert.equal(getWeeklyRewardPoints(101, tiers), 0);
+  assert.equal(tiers.length, 3);
+});
+
 test("monthly season rewards stay integer POINTS tiers", () => {
   const tiers = getSeasonRewardTiers(rankConfig().operation.rankRules);
 
@@ -121,4 +142,27 @@ test("daily chest ledger id uses the database business date", () => {
     buildRankDailyChestRelatedId("pi-user-1", "2026-08-08"),
     "pi-user-1:2026-08-08"
   );
+});
+
+test("season reset follows current admin rules for every rank band", () => {
+  const config = rankConfig({
+    seasonResetRules: {
+      king50Plus: { rankKey: "silver", stars: 2 },
+      king10To49: { rankKey: "bronze", stars: 1 },
+      king0To9: { rankKey: "bronze", stars: 2 },
+      starlight: { rankKey: "bronze", stars: 0 },
+      diamond: { rankKey: "bronze", stars: 0 },
+      defaultDropTiers: 1
+    }
+  });
+
+  assert.deepEqual(getSeasonResetTarget(config, "king", 3784), { rankKey: "silver", rankName: "白银", stars: 2, score: 1240 });
+  assert.deepEqual(getSeasonResetTarget(config, "king", 12), { rankKey: "bronze", rankName: "青铜", stars: 1, score: 1020 });
+  assert.deepEqual(getSeasonResetTarget(config, "king", 3), { rankKey: "bronze", rankName: "青铜", stars: 2, score: 1040 });
+  assert.deepEqual(getSeasonResetTarget(config, "starlight", 2), { rankKey: "bronze", rankName: "青铜", stars: 0, score: 1000 });
+  assert.deepEqual(getSeasonResetTarget(config, "diamond", 2), { rankKey: "bronze", rankName: "青铜", stars: 0, score: 1000 });
+  assert.equal(getSeasonResetTarget(config, "platinum", 7).rankKey, "gold");
+  assert.equal(getSeasonResetTarget(config, "gold", 4).rankKey, "silver");
+  assert.equal(getSeasonResetTarget(config, "silver", 3).rankKey, "bronze");
+  assert.deepEqual(getSeasonResetTarget(config, "bronze", 2), { rankKey: "bronze", rankName: "青铜", stars: 2, score: 1040 });
 });

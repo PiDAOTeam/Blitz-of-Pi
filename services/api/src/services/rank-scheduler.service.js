@@ -85,7 +85,7 @@ async function runAutoMonthlySeasonSettlementCheck(now = new Date()) {
     if (result?.alreadySettled) {
       console.log(`[rank-scheduler] monthly season already settled: ${seasonNo}`);
     } else {
-      console.log(`[rank-scheduler] monthly season settled: ${seasonNo}, rewards=${result.rewards.length}`);
+      console.log(`[rank-scheduler] monthly season settled: ${seasonNo}, rewards=${result.rewards.length}, reset=${result.resetCount || 0}, dropped=${result.changedCount || 0}`);
     }
 
     return result;

@@ -32,6 +32,7 @@ const {
   shouldRememberRecentOpponent
 } = require("./recent-opponent");
 const { observeBattleStage } = require("./battle-observer.service");
+const { getFixedPointsBotRange, resolvePointsBotRange } = require("./points-bot-difficulty");
 const { findUserByUid } = require("../repositories/user.repository");
 const {
   countFinishedBattlesForInviteTrial,
@@ -187,46 +188,30 @@ function createBotPlayer(modeConfig = {}) {
   };
 }
 
-function getPointsBotRange(modeConfig = {}) {
-  const difficulty = ["easy", "normal", "hard", "expert"].includes(String(modeConfig.botDifficulty))
-    ? String(modeConfig.botDifficulty)
-    : "normal";
-  const fallbackRanges = {
-    easy: { minScore: 1800, maxScore: 2600, moveIntervalSeconds: 1.5 },
-    normal: { minScore: 2600, maxScore: 3600, moveIntervalSeconds: 1.2 },
-    hard: { minScore: 3600, maxScore: 4600, moveIntervalSeconds: 1 },
-    expert: { minScore: 4600, maxScore: 5600, moveIntervalSeconds: 0.85 }
-  };
-  const range = modeConfig.botDifficultyRanges?.[difficulty] || fallbackRanges[difficulty];
-  return {
-    difficulty,
-    minScore: Math.max(0, Math.round(Number(range.minScore || fallbackRanges[difficulty].minScore))),
-    maxScore: Math.max(0, Math.round(Number(range.maxScore || fallbackRanges[difficulty].maxScore))),
-    moveIntervalSeconds: Math.max(0.5, Math.min(10, Number(range.moveIntervalSeconds || fallbackRanges[difficulty].moveIntervalSeconds)))
-  };
-}
-
-function getRoomTimingForMode(mode, timing = DEFAULT_TIMING, modeConfig = {}) {
-  if (mode !== "points_battle") {
+function getRoomTimingForMode(mode, timing = DEFAULT_TIMING, botRange = null) {
+  if (mode !== "points_battle" || !botRange) {
     return timing;
   }
-  const botRange = getPointsBotRange(modeConfig);
   return {
     ...timing,
     botMoveIntervalSeconds: botRange.moveIntervalSeconds
   };
 }
 
-function getRoomBotConfig(mode, modeConfig = {}) {
+function getRoomBotConfig(mode, modeConfig = {}, botRange = null) {
   if (mode !== "points_battle") return {};
-  const botRange = getPointsBotRange(modeConfig);
+  const range = botRange || getFixedPointsBotRange(modeConfig);
   return {
-    difficulty: botRange.difficulty,
-    targetScoreMin: botRange.minScore,
-    targetScoreMax: botRange.maxScore,
-    moveIntervalSeconds: botRange.moveIntervalSeconds,
-    moveIntervalJitterMin: 0.85,
-    moveIntervalJitterMax: 1.25,
+    difficulty: range.difficulty,
+    targetScoreMin: range.minScore,
+    targetScoreMax: range.maxScore,
+    moveIntervalSeconds: range.moveIntervalSeconds,
+    moveIntervalJitterMin: 0.7,
+    moveIntervalJitterMax: 1.8,
+    matchMode: range.matchMode || "fixed",
+    rankKey: range.rankKey || "",
+    recentMedian: Number(range.recentMedian || 0),
+    overTargetAllowance: Number(range.overTargetAllowance || 0),
     countInRank: modeConfig.botCountInRank !== false,
     countInWeekly: modeConfig.botCountInWeekly !== false,
     countInWatchShareholder: modeConfig.botCountInWatchShareholder !== false
@@ -714,8 +699,18 @@ async function createRoomInStore(playerA, playerB, mode = "quick_battle") {
     throw new Error(`${BATTLE_MODES[battleMode].name}只允许真人匹配，不能创建机器人房间`);
   }
 
-  const roomTiming = getRoomTimingForMode(battleMode, timing, modeConfig);
-  const room = createRoom(playerA, playerB, battleMode, roomTiming, getRoomBotConfig(battleMode, modeConfig));
+  const humanPlayer = isBotUid(playerA.uid) ? playerB : isBotUid(playerB.uid) ? playerA : null;
+  const botRange = battleMode === "points_battle" && humanPlayer
+    ? await resolvePointsBotRange(modeConfig, humanPlayer.uid)
+    : battleMode === "points_battle"
+      ? getFixedPointsBotRange(modeConfig)
+      : null;
+  if (botRange?.rankKey && hasBotPlayer) {
+    const botPlayer = isBotUid(playerA.uid) ? playerA : playerB;
+    botPlayer.rankName = getRankNameByKey(config, botRange.rankKey);
+  }
+  const roomTiming = getRoomTimingForMode(battleMode, timing, botRange);
+  const room = createRoom(playerA, playerB, battleMode, roomTiming, getRoomBotConfig(battleMode, modeConfig, botRange));
 
   const assetType = getModeAssetType(battleMode, modeConfig);
   const entryFee = normalizeEntryAmount(assetType, modeConfig.entryFee || 0);

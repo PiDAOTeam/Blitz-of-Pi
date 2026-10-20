@@ -57,6 +57,7 @@ async function ensureRankSchema() {
       claim_date DATE NOT NULL,
       rank_key VARCHAR(32) NOT NULL,
       reward_amount DECIMAL(18, 8) NOT NULL DEFAULT 0,
+      reward_points INT NOT NULL DEFAULT 0,
       created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       UNIQUE KEY uk_rank_chest_uid_date (uid, claim_date),
       KEY idx_rank_chest_uid_id (uid, id)
@@ -71,6 +72,7 @@ async function ensureRankSchema() {
       rank_key VARCHAR(32) NOT NULL,
       stars INT NOT NULL DEFAULT 0,
       reward_amount DECIMAL(18, 8) NOT NULL DEFAULT 0,
+      reward_points INT NOT NULL DEFAULT 0,
       created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       UNIQUE KEY uk_rank_weekly_season_uid (season_no, uid),
       KEY idx_rank_weekly_season_rank (season_no, rank_no)
@@ -82,6 +84,7 @@ async function ensureRankSchema() {
       season_no VARCHAR(32) NOT NULL,
       reward_count INT NOT NULL DEFAULT 0,
       total_reward_amount DECIMAL(18, 8) NOT NULL DEFAULT 0,
+      total_reward_points INT NOT NULL DEFAULT 0,
       created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       UNIQUE KEY uk_rank_weekly_run_season (season_no)
     )`
@@ -117,6 +120,9 @@ async function ensureRankSchema() {
       UNIQUE KEY uk_rank_monthly_run_season (season_no)
     )`
   );
+  await ignoreDuplicateColumn("ALTER TABLE rank_daily_chests ADD COLUMN reward_points INT NOT NULL DEFAULT 0");
+  await ignoreDuplicateColumn("ALTER TABLE rank_weekly_settlements ADD COLUMN reward_points INT NOT NULL DEFAULT 0");
+  await ignoreDuplicateColumn("ALTER TABLE rank_weekly_settlement_runs ADD COLUMN total_reward_points INT NOT NULL DEFAULT 0");
 
   schemaReady = true;
 }
@@ -507,6 +513,7 @@ async function getRankStatus(uid) {
   const current = getRankMeta(config, rank.rank_key && rank.rank_key !== "bronze" ? rank.rank_key : rank.rank_name);
   const required = Number(rules.dailyChestRequiredBattles || 3);
   const rewardAmount = Number(rules.chestRewards?.[current.key] || 0);
+  const rewardPoints = Math.max(0, Math.round(Number(rules.chestPointRewards?.[current.key] || 0)));
 
   return {
     rankKey: current.key,
@@ -527,11 +534,13 @@ async function getRankStatus(uid) {
     dailyChestRequiredBattles: required,
     dailyChestClaimed: Boolean(claimed),
     dailyChestEligible: todayRankedBattles >= required && !claimed,
-    dailyChestRewardAmount: rewardAmount
+    dailyChestRewardAmount: rewardAmount,
+    dailyChestRewardPoints: rewardPoints
   };
 }
 
 async function claimDailyRankChest(uid) {
+  await ensureEngagementRewardJobSchema();
   return transaction(async (connection) => {
     const status = await getRankStatus(uid);
 
@@ -558,9 +567,9 @@ async function claimDailyRankChest(uid) {
     }
 
     const [insertResult] = await executor(connection).execute(
-      `INSERT IGNORE INTO rank_daily_chests (uid, claim_date, rank_key, reward_amount)
-       VALUES (?, ?, ?, ?)`,
-      [uid, businessDate, status.rankKey, status.dailyChestRewardAmount]
+      `INSERT IGNORE INTO rank_daily_chests (uid, claim_date, rank_key, reward_amount, reward_points)
+       VALUES (?, ?, ?, ?, ?)`,
+      [uid, businessDate, status.rankKey, status.dailyChestRewardAmount, status.dailyChestRewardPoints]
     );
 
     if (Number(insertResult?.affectedRows || 0) === 0) {
@@ -584,6 +593,20 @@ async function claimDailyRankChest(uid) {
         },
         connection
       );
+    }
+
+    if (status.dailyChestRewardPoints > 0) {
+      await enqueueAssetRewardJobs({
+        uid,
+        claimId: 0,
+        claimType: "rank_daily_chest",
+        taskKey: businessDate,
+        title: "每日段位宝箱",
+        today: businessDate,
+        orderPrefix: "rank",
+        remark: "Pi闪电战每日段位宝箱积分奖励",
+        rewards: [{ assetType: "POINTS", amount: status.dailyChestRewardPoints }]
+      }, connection);
     }
 
     return {
@@ -619,7 +642,7 @@ async function listAdminRankDailyChests(limit = 200) {
 
   return query(
     `SELECT c.id, c.uid, u.pi_username, u.nickname, u.avatar_key,
-            c.claim_date, c.rank_key, c.reward_amount, c.created_at
+            c.claim_date, c.rank_key, c.reward_amount, c.reward_points, c.created_at
      FROM rank_daily_chests c
      LEFT JOIN users u ON u.uid = c.uid
      ORDER BY c.id DESC
@@ -633,7 +656,7 @@ async function listAdminRankWeeklySettlements(limit = 200) {
 
   return query(
     `SELECT s.id, s.season_no, s.uid, u.pi_username, u.nickname, u.avatar_key,
-            s.rank_no, s.rank_key, s.stars, s.reward_amount, s.created_at
+            s.rank_no, s.rank_key, s.stars, s.reward_amount, s.reward_points, s.created_at
      FROM rank_weekly_settlements s
      LEFT JOIN users u ON u.uid = s.uid
      ORDER BY s.id DESC
@@ -869,9 +892,10 @@ function getWeeklyRewardTiers(rankRules = {}) {
     .map((tier) => ({
       fromRank: Math.max(1, Number.parseInt(String(tier.fromRank), 10) || 1),
       toRank: Math.max(1, Number.parseInt(String(tier.toRank), 10) || 1),
-      amount: Number(tier.amount || 0)
+      amount: Number(tier.amount || 0),
+      points: Math.max(0, Math.round(Number(tier.points || 0)))
     }))
-    .filter((tier) => tier.amount > 0)
+    .filter((tier) => tier.amount > 0 || tier.points > 0)
     .sort((a, b) => a.fromRank - b.fromRank || a.toRank - b.toRank);
 }
 
@@ -879,6 +903,11 @@ function getWeeklyReward(rankNo, weeklyRewardTiers = []) {
   const matched = weeklyRewardTiers.find((tier) => rankNo >= tier.fromRank && rankNo <= tier.toRank);
   if (matched) return Number(matched.amount || 0);
   return 0;
+}
+
+function getWeeklyRewardPoints(rankNo, weeklyRewardTiers = []) {
+  const matched = weeklyRewardTiers.find((tier) => rankNo >= tier.fromRank && rankNo <= tier.toRank);
+  return matched ? Math.max(0, Math.round(Number(matched.points || 0))) : 0;
 }
 
 async function listWeeklyRankLeaderboard(seasonNo, limit = 50, connection = null, configOverride = null) {
@@ -1025,6 +1054,54 @@ async function listAdminRankMonthlySettlements(limit = 200) {
   );
 }
 
+function chunkItems(items, size) {
+  const chunks = [];
+  const step = Math.max(1, Number(size) || 1);
+  for (let index = 0; index < items.length; index += step) {
+    chunks.push(items.slice(index, index + step));
+  }
+  return chunks;
+}
+
+async function resetAllUserRanksForSeason(connection, config, nextSeasonNo) {
+  const [rows] = await executor(connection).execute(
+    "SELECT uid, rank_key, rank_name, stars FROM user_ranks"
+  );
+  const groups = new Map();
+  let changedCount = 0;
+
+  for (const row of rows || []) {
+    const rankKey = row.rank_key || getRankMeta(config, row.rank_name).key;
+    const stars = Number(row.stars || 0);
+    const reset = getSeasonResetTarget(config, rankKey, stars);
+    const groupKey = `${reset.rankKey}\0${reset.rankName}\0${reset.stars}\0${reset.score}`;
+    if (!groups.has(groupKey)) {
+      groups.set(groupKey, { reset, uids: [] });
+    }
+    groups.get(groupKey).uids.push(row.uid);
+    if (reset.rankKey !== rankKey || reset.stars !== stars) {
+      changedCount += 1;
+    }
+  }
+
+  for (const { reset, uids } of groups.values()) {
+    for (const chunk of chunkItems(uids, 400)) {
+      const placeholders = chunk.map(() => "?").join(",");
+      await executor(connection).execute(
+        `UPDATE user_ranks
+         SET rank_key = ?, rank_name = ?, stars = ?, rank_score = ?, win_streak = 0, season_no = ?
+         WHERE uid IN (${placeholders})`,
+        [reset.rankKey, reset.rankName, reset.stars, reset.score, nextSeasonNo, ...chunk]
+      );
+    }
+  }
+
+  return {
+    resetCount: (rows || []).length,
+    changedCount
+  };
+}
+
 async function settleMonthlySeason(options = {}) {
   await ensureRankSchema();
   await ensureEngagementRewardJobSchema();
@@ -1085,13 +1162,6 @@ async function settleMonthlySeason(options = {}) {
         ]
       );
 
-      await executor(connection).execute(
-        `UPDATE user_ranks
-         SET rank_key = ?, rank_name = ?, stars = ?, rank_score = ?, win_streak = 0, season_no = ?
-         WHERE uid = ?`,
-        [reset.rankKey, reset.rankName, reset.stars, reset.score, getMonthSeasonNo(), item.uid]
-      );
-
       if (points > 0) {
         rewardCount += 1;
         totalRewardPoints += points;
@@ -1111,18 +1181,27 @@ async function settleMonthlySeason(options = {}) {
       rewards.push({ ...item, seasonNo, rewardPoints: points, reset });
     }
 
+    const resetResult = await resetAllUserRanksForSeason(connection, config, getMonthSeasonNo());
+
     await executor(connection).execute(
       `INSERT INTO rank_monthly_season_runs (season_no, reward_count, total_reward_points, reset_count)
        VALUES (?, ?, ?, ?)`,
-      [seasonNo, rewardCount, totalRewardPoints, leaderboard.length]
+      [seasonNo, rewardCount, totalRewardPoints, resetResult.resetCount]
     );
 
-    return { seasonNo, alreadySettled: false, rewards };
+    return {
+      seasonNo,
+      alreadySettled: false,
+      rewards,
+      resetCount: resetResult.resetCount,
+      changedCount: resetResult.changedCount
+    };
   });
 }
 
 async function settleWeeklyLeaderboard(options = {}) {
   await ensureRankSchema();
+  await ensureEngagementRewardJobSchema();
   const config = await readGameConfig();
   const seasonNo = getWeekRangeFromSeasonNo(options.seasonNo || getWeekSeasonNo()).seasonNo;
   const silentIfSettled = Boolean(options.silentIfSettled);
@@ -1156,14 +1235,16 @@ async function settleWeeklyLeaderboard(options = {}) {
     const rewards = [];
     let rewardCount = 0;
     let totalRewardAmount = 0;
+    let totalRewardPoints = 0;
 
     for (const item of leaderboard) {
       const amount = Number(getWeeklyReward(item.rankNo, weeklyRewardTiers).toFixed(8));
+      const points = getWeeklyRewardPoints(item.rankNo, weeklyRewardTiers);
       await executor(connection).execute(
         `INSERT INTO rank_weekly_settlements
-           (season_no, uid, rank_no, rank_key, stars, reward_amount)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [seasonNo, item.uid, item.rankNo, item.rankKey, item.stars, amount]
+           (season_no, uid, rank_no, rank_key, stars, reward_amount, reward_points)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [seasonNo, item.uid, item.rankNo, item.rankKey, item.stars, amount, points]
       );
 
       if (amount > 0) {
@@ -1182,17 +1263,34 @@ async function settleWeeklyLeaderboard(options = {}) {
         );
       }
 
+      if (points > 0) {
+        if (amount <= 0) rewardCount += 1;
+        totalRewardPoints += points;
+        await enqueueAssetRewardJobs({
+          uid: item.uid,
+          claimId: 0,
+          claimType: "rank_weekly_reward",
+          taskKey: `${seasonNo}:${item.rankNo}`,
+          title: `${seasonNo}周赛季第${item.rankNo}名奖励`,
+          today: seasonNo,
+          orderPrefix: "rank",
+          remark: `Pi闪电战${seasonNo}周赛季第${item.rankNo}名积分奖励`,
+          rewards: [{ assetType: "POINTS", amount: points }]
+        }, connection);
+      }
+
       rewards.push({
         ...item,
         seasonNo,
-        rewardAmount: amount
+        rewardAmount: amount,
+        rewardPoints: points
       });
     }
 
     await executor(connection).execute(
-      `INSERT INTO rank_weekly_settlement_runs (season_no, reward_count, total_reward_amount)
-       VALUES (?, ?, ?)`,
-      [seasonNo, rewardCount, Number(totalRewardAmount.toFixed(8))]
+      `INSERT INTO rank_weekly_settlement_runs (season_no, reward_count, total_reward_amount, total_reward_points)
+       VALUES (?, ?, ?, ?)`,
+      [seasonNo, rewardCount, Number(totalRewardAmount.toFixed(8)), totalRewardPoints]
     );
 
     return {
@@ -1225,6 +1323,7 @@ module.exports = {
   getSeasonTimeInfo,
   getWeeklyRewardTiers,
   getWeeklyReward,
+  getWeeklyRewardPoints,
   getSeasonRewardTiers,
   getSeasonReward,
   getKingTitle,

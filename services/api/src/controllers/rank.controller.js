@@ -13,6 +13,7 @@ const {
   getMonthSeasonNo,
   getWeeklyRewardTiers,
   getWeeklyReward,
+  getWeeklyRewardPoints,
   getSeasonRewardTiers,
   getSeasonReward,
   getPreviousWeekSeasonNo,
@@ -70,6 +71,7 @@ async function getAdminRankDailyChests() {
     claimDate: row.claim_date,
     rankKey: row.rank_key,
     rewardAmount: Number(row.reward_amount || 0),
+    rewardPoints: Number(row.reward_points || 0),
     createdAt: row.created_at
   }));
 }
@@ -88,6 +90,7 @@ async function getAdminRankWeeklySettlements() {
     rankKey: row.rank_key,
     stars: Number(row.stars || 0),
     rewardAmount: Number(row.reward_amount || 0),
+    rewardPoints: Number(row.reward_points || 0),
     createdAt: row.created_at
   }));
 }
@@ -148,7 +151,10 @@ async function getRankLeaderboard(req, params = {}) {
     ...item,
     rewardAmount: type === "season"
       ? Number(getSeasonReward(item.rankNo, seasonRewardTiers))
-      : Number(getWeeklyReward(item.rankNo, weeklyRewardTiers).toFixed(8))
+      : Number(getWeeklyReward(item.rankNo, weeklyRewardTiers).toFixed(8)),
+    rewardPoints: type === "season"
+      ? 0
+      : getWeeklyRewardPoints(item.rankNo, weeklyRewardTiers)
   }));
   const myRank = withRewards.find((item) => item.uid === user.uid) || null;
 

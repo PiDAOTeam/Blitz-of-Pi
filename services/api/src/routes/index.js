@@ -783,7 +783,26 @@ async function handleRoutes(req, res) {
   if (url.startsWith("/admin-api/withdraw/approve/") && method === "POST") {
     const orderNo = decodeURIComponent(url.replace("/admin-api/withdraw/approve/", ""));
     const payload = await readJsonBody(req);
-    ok(res, await approveWithdrawOrder(req, orderNo, payload), "审核通过");
+    let order = await approveWithdrawOrder(req, orderNo, payload);
+    let payoutMessage = "审核通过";
+
+    if (order.status === "approved" && order.autoPayoutEligible && order.autoPayoutStatus === "queued") {
+      try {
+        const immediatePayout = await processAutoPayoutImmediately(order.orderNo);
+        order = immediatePayout?.result?.order || order;
+        const payoutStatus = immediatePayout?.result?.status || "";
+        payoutMessage =
+          payoutStatus === "paid"
+            ? "审核通过，已自动打款"
+            : payoutStatus === "review"
+              ? "审核通过，链上已提交请人工核对"
+              : "审核通过，已进入自动打款队列";
+      } catch {
+        payoutMessage = "审核通过，已进入自动打款队列";
+      }
+    }
+
+    ok(res, order, payoutMessage);
     return;
   }
 

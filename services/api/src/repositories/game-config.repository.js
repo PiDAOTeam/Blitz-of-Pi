@@ -101,7 +101,7 @@ const DEFAULT_GAME_CONFIG = {
     "botMatchEnabled": true,
     "botRewardsEnabled": true,
     "botFallbackSeconds": 15,
-    "botDifficulty": "normal",
+    "botDifficulty": "smart",
     "botDifficultyRanges": {
       "easy": {
         "minScore": 1800,
@@ -861,6 +861,15 @@ const DEFAULT_GAME_CONFIG = {
         "starlight": 0.8,
         "king": 1.6
       },
+      "chestPointRewards": {
+        "bronze": 0,
+        "silver": 0,
+        "gold": 0,
+        "platinum": 0,
+        "diamond": 0,
+        "starlight": 0,
+        "king": 0
+      },
       "weeklyRewards": {
         "top1": 0.05,
         "top2": 0.03,
@@ -1014,7 +1023,7 @@ function normalizeBattleModeConfig(modeKey, incoming = {}, defaults = {}) {
       5,
       120
     );
-    normalized.botDifficulty = ["easy", "normal", "hard", "expert"].includes(String(incoming.botDifficulty || defaults.botDifficulty))
+    normalized.botDifficulty = ["easy", "normal", "hard", "expert", "smart"].includes(String(incoming.botDifficulty || defaults.botDifficulty))
       ? String(incoming.botDifficulty || defaults.botDifficulty)
       : DEFAULT_GAME_CONFIG.pointsBattle.botDifficulty;
     normalized.botDifficultyRanges = Object.fromEntries(
@@ -1706,10 +1715,11 @@ function normalizeRankRules(rankRules = {}) {
         return {
           fromRank: Math.min(fromRank, toRank),
           toRank: Math.max(fromRank, toRank),
-          amount: safeAmount(tier?.amount, 0, 100)
+          amount: safeAmount(tier?.amount, 0, 100),
+          points: safeInt(tier?.points, 0, 0, 1000000)
         };
       })
-      .filter((tier) => tier.amount > 0)
+      .filter((tier) => tier.amount > 0 || tier.points > 0)
       .sort((a, b) => a.fromRank - b.fromRank || a.toRank - b.toRank)
       .slice(0, 30);
   }
@@ -1778,6 +1788,15 @@ function normalizeRankRules(rankRules = {}) {
     acc[rank.key] = safeAmount(rankRules.chestRewards?.[rank.key], defaults.chestRewards[rank.key] || 0, 100);
     return acc;
   }, {});
+  const chestPointRewards = DEFAULT_GAME_CONFIG.operation.ranks.reduce((acc, rank) => {
+    acc[rank.key] = safeInt(
+      rankRules.chestPointRewards?.[rank.key],
+      Number(defaults.chestPointRewards?.[rank.key] || 0),
+      0,
+      1000000
+    );
+    return acc;
+  }, {});
   const weeklyRewards = {
     top1: safeAmount(rankRules.weeklyRewards?.top1, defaults.weeklyRewards.top1, 100),
     top2: safeAmount(rankRules.weeklyRewards?.top2, defaults.weeklyRewards.top2, 100),
@@ -1813,6 +1832,7 @@ function normalizeRankRules(rankRules = {}) {
     seasonRewardTiers: normalizeSeasonRewardTiers(rankRules.seasonRewardTiers),
     seasonResetRules: normalizeSeasonResetRules(rankRules.seasonResetRules),
     chestRewards,
+    chestPointRewards,
     weeklyRewards,
     weeklyRewardTiers,
     ruleSummary: String(rankRules.ruleSummary || defaults.ruleSummary).trim().slice(0, 160)

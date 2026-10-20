@@ -354,6 +354,29 @@ async function updateBattleRoomStatus(roomNo, status, connection = null) {
   );
 }
 
+async function listRecentValidPointsScores(uid, limit = 8) {
+  const userId = String(uid || "").trim();
+  if (!userId || userId.startsWith("bot_")) return [];
+
+  const size = Math.max(1, Math.min(20, Math.round(Number(limit) || 8)));
+  const rows = await query(
+    `SELECT IF(player_a_uid = ?, player_a_score, player_b_score) AS score
+     FROM battle_rooms
+     WHERE mode = 'points_battle'
+       AND status IN ('finished', 'settled')
+       AND finished_at IS NOT NULL
+       AND (player_a_uid = ? OR player_b_uid = ?)
+       AND IF(player_a_uid = ?, player_a_score, player_b_score) >= 400
+     ORDER BY id DESC
+     LIMIT ${size}`,
+    [userId, userId, userId, userId]
+  );
+
+  return (rows || [])
+    .map((row) => Math.round(Number(row.score || 0)))
+    .filter((score) => score >= 400);
+}
+
 async function updateBattleAssetStatus(roomNo, status, error = "", connection = null) {
   await ensureBattleAssetColumns();
   await executor(connection).execute(
@@ -379,6 +402,7 @@ module.exports = {
   listStaleFrozenPaidRooms,
   listStaleRemoteAssetBotRooms,
   markRemoteAssetBotRoomReleased,
+  listRecentValidPointsScores,
   updateBattleRoomStatus,
   updateBattleAssetStatus
 };

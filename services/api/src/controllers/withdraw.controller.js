@@ -96,6 +96,14 @@ function getAutoPayoutDecision({ amount, walletInspection, risk, todayAmount }) 
   };
 }
 
+function canQueueApprovedWithdraw({ amount, walletAddress, risk }) {
+  if (!risk.autoPayoutEnabled) return false;
+  const autoPayoutMaxAmount = Number(risk.autoPayoutMaxAmount || 0);
+  if (autoPayoutMaxAmount > 0 && Number(amount || 0) > autoPayoutMaxAmount) return false;
+  if (risk.walletValidationRequired === false) return true;
+  return inspectWithdrawWalletAddress(walletAddress).valid;
+}
+
 function buildAdminRequest(username = "system-auto-payout") {
   return {
     admin: {
@@ -320,6 +328,21 @@ async function approveWithdrawOrder(req, orderNo, payload) {
       },
       connection
     );
+
+    const config = await readGameConfig();
+    const risk = config.withdrawRisk || {};
+    if (
+      canQueueApprovedWithdraw({
+        amount: locked.amount,
+        walletAddress: locked.wallet_address,
+        risk
+      })
+    ) {
+      const queued = await queueManualWithdrawForAutoPayout(orderNo, connection);
+      if (queued) {
+        return queued;
+      }
+    }
 
     return updated;
   });

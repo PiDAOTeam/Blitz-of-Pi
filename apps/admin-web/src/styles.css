@@ -1530,6 +1530,9 @@ body {
   border-radius: 14px;
   background: #fffdf8;
 }
+.weekly-pi-points-row {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+}
 .weekly-tier-row label {
   margin: 0;
 }
